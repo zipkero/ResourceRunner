@@ -294,6 +294,8 @@ TOP 5·앱 집계·전체 상태 계산
 
 - 가능한 경우 Physical Footprint
 - Resident Memory 보조 정보
+- App Sandbox를 유지하면 Physical Footprint를 얻을 수 없으므로 Resident Memory가 주 지표가 됩니다.
+  이 경우 Activity Monitor의 메모리 값과 절대값이 달라지므로 표시 기준을 별도로 정합니다.
 - 앱 단위 메모리 합산
 - 현재 사용량 TOP 5
 - 최근 1분·10분 증가량
@@ -554,6 +556,28 @@ Xcode를 프로젝트와 빌드 설정의 기준 도구로 사용합니다.
   정보의 접근 범위를 검증합니다. 결과에 따라 Sandbox 유지 여부와 직접 배포 기준을 확정하고,
   Mac App Store는 Sandbox 영향 확인 후 결정합니다.
 
+2026-08-06에 macOS 26.5.2 Apple silicon에서 App Sandbox를 적용한 GUI 앱과 적용하지 않은 GUI 앱으로
+접근 범위를 확인했습니다. 아래는 관찰 결과이며, Sandbox 유지 여부 자체는 여전히
+core-resource-monitoring에서 확정합니다.
+
+| 항목 | App Sandbox 결과 |
+| --- | --- |
+| CPU 전체·코어별·Load Average | 사용 가능 |
+| Memory 통계·물리 메모리·Swap·Memory Pressure | 사용 가능 |
+| 인터페이스별 누적 RX·TX | 사용 가능 |
+| 볼륨 용량·마운트 목록·블록 장치 I/O 통계 | 사용 가능 |
+| `proc_listallpids` 프로세스 열거 | **차단**, `sysctl(KERN_PROC_ALL)`로 대체 가능 |
+| 아는 PID의 실행 경로·이름 | 사용 가능 |
+| 아는 PID의 CPU 시간·Resident Memory·스레드 수 | 사용 가능 |
+| 아는 PID의 uid·시작 시각·부모 PID | 사용 가능 |
+| 프로세스별 Physical Footprint | **차단** |
+| 앱 번들 식별자·이름·아이콘 | 사용 가능 |
+
+Sandbox와 무관한 제약도 함께 확인했습니다. root 소유 프로세스의 CPU 시간과 메모리는 Sandbox 여부와
+관계없이 읽을 수 없으며, 전체 프로세스 중 약 40%가 여기 해당합니다. 관리자 권한과 별도 Helper를
+두지 않는 1.0 정책에서는 TOP 5가 사실상 사용자 소유 프로세스로 한정됩니다. 시스템 프로세스 포함
+설정의 표시 방식은 core-resource-monitoring에서 확정합니다.
+
 ## 미확정 기술 결정
 
 다음 항목은 관련 feature를 시작하기 전에 확정해야 합니다.
@@ -567,7 +591,7 @@ Xcode를 프로젝트와 빌드 설정의 기준 도구로 사용합니다.
 - VPN과 복수 인터페이스 합산 방식
 - Disk 장치 통계와 프로세스별 I/O의 공개 API 제공 수준
 - 정확성 검증의 비교 도구, 허용 오차와 반복 횟수
-- App Sandbox 유지 여부와 직접 배포 기준: core-resource-monitoring 전에 확정
+- App Sandbox 유지 여부와 직접 배포 기준: 접근 범위 실측은 완료했고 결정은 core-resource-monitoring에서 확정
 - 업데이트, 서명과 공증 방식: release-readiness에서 확정
 
 ## 후속 feature 문서

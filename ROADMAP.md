@@ -53,8 +53,8 @@
 
 | 마일스톤 | 상태 | 현재 근거 |
 | --- | --- | --- |
-| M1. 메뉴바 기반 | 준비 중 | 기본 Xcode 프로젝트, 테스트 대상과 루트 문서가 존재하지만 메뉴바 기능은 미구현 |
-| M2. 핵심 리소스 모니터링 | 예정 | CPU·Memory Collector와 대시보드 미구현 |
+| M1. 메뉴바 기반 | 계획 확정 | menu-bar-foundation의 spec·analysis·implement와 11개 Task가 확정되고 화면 잠금 신호를 실행 환경에서 검증했으나, 앱은 여전히 기본 Xcode 프로젝트이며 메뉴바 기능은 미구현 |
+| M2. 핵심 리소스 모니터링 | 예정 | CPU·Memory Collector와 대시보드 미구현. App Sandbox에서 시스템 전체 지표와 프로세스 단위 CPU·메모리 접근이 가능함은 확인됐고, Physical Footprint는 사용할 수 없음 |
 | M3. 확장 리소스 모니터링 | 예정 | Network·Disk Collector 미구현 |
 | M4. 앱 설정 | 예정 | 제품 설정과 로그인 항목 관리 미구현 |
 | M5. 출시 준비 | 예정 | 정확성·성능·장기 안정성 검증과 배포 산출물 없음 |

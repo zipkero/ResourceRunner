@@ -58,6 +58,13 @@ final class StatusBarController: NSObject {
     /// `LSUIElement` 앱은 일반 창이 없어 팝오버를 띄워도 저절로 활성화되지 않는데,
     /// 그 상태에서는 다른 앱을 클릭해도 이벤트가 이 앱에 오지 않아
     /// `.transient`가 닫을 계기를 얻지 못합니다. 활성화해 두면 외부 클릭이 활성 해제로 이어져 팝오버가 닫힙니다.
+    ///
+    /// 활성화는 팝오버를 열 때마다 이전 최전면 앱의 포커스를 가져가는 대가를 치릅니다.
+    /// 그럼에도 지우면 안 됩니다 — 비활성 앱의 창은 key window가 될 수 없어 키 이벤트를 받지 못하므로,
+    /// 활성화를 없애면 외부 클릭 닫힘과 함께 대시보드의 키보드 탐색까지 깨집니다.
+    /// 키보드 탐색은 ROADMAP 최종 관문의 접근성 항목이자 docs/product.md의 대시보드 요구사항입니다.
+    /// 포커스를 뺏지 않으면서 키 이벤트를 받으려면 `NSPanel`의 `.nonactivatingPanel`이 필요한데,
+    /// 그건 ANALYSIS §5 DP1이 기각한 옵션 C입니다.
     @objc func togglePopover() {
         guard let button = statusItem.button else { return }
 

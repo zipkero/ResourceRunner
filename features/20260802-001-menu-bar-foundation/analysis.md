@@ -4,33 +4,34 @@
 
 ### 확인 사실
 
-- [spec.md](./spec.md)는 Dock 아이콘 없는 메뉴바 앱, transient 팝오버, 주입 상태 기반 캐릭터 표현,
-  수집 일정과 순환 버퍼를 M1 범위로 고정하고, 저전력·화면 잠금에 따른 애니메이션 감속·정지를 M1에 포함시킵니다.
-- [ROADMAP.md](../../ROADMAP.md)의 `M1. 메뉴바 앱과 모니터링 기반`은 실제 Collector 없이 UI와 상태 전환을
-  검증하고 공통 모니터링 기반과 지원 정책을 완성하도록 요구합니다.
-- [ROADMAP.md](../../ROADMAP.md)의 `프로젝트 완료 기준` 5번은 팝오버 상태, 저전력 모드와 화면 잠금에 따라
-  수집과 애니메이션 비용이 조절되는 것을 1.0 필수 결과로 둡니다.
-- [docs/product.md](../../docs/product.md)는 낮음·보통·높음·매우 높음에 걷기·달리기·전력 질주를 대응시키고,
-  동작 줄이기와 애니메이션 비활성화에서는 같은 상태를 구분하는 정적 표현을 요구합니다.
+- [spec.md](./spec.md)는 Dock 아이콘 없는 메뉴바 앱, transient 팝오버, 주입 상태를 접근성 값으로 구분하는 메뉴바 표현,
+  수집 일정과 순환 버퍼를 M1 범위로 고정합니다. 메뉴바 항목은 현재 저장소의 `StatusCatStatic` 하나만 사용하고
+  표시 중에 이미지를 바꾸지 않습니다.
+- [spec.md](./spec.md)의 제외 범위는 캐릭터 자산 제작, 메뉴바 애니메이션, 프레임 일정과 FPS 정책,
+  동작 줄이기·애니메이션 비활성화에 따른 표시 전환, 저전력·화면 잠금에 따른 애니메이션 감속·정지를 M1에서 제외합니다.
+- [ROADMAP.md](../../ROADMAP.md)의 `M1. 메뉴바 앱과 모니터링 기반`은 실제 Collector 없이 UI와 상태 전환을 검증하고
+  공통 모니터링 기반과 지원 정책을 완성하도록 요구하며, 메뉴바는 기존 정적 아이콘 하나로 표시하고 상태 구분은
+  VoiceOver 설명으로 제공하라고 명시합니다.
+- [ROADMAP.md](../../ROADMAP.md)의 `M2. CPU·Memory 핵심 리소스 모니터링`이 캐릭터 자산 제작, 실제 부하에 따른 애니메이션과
+  저전력·화면 잠금의 애니메이션 감속·정지를 전환 기준으로 가져갑니다.
+- [ROADMAP.md](../../ROADMAP.md)의 `프로젝트 완료 기준` 5번은 팝오버 상태, 저전력 모드와 화면 잠금에 따라 수집과
+  애니메이션 비용이 조절되는 것을 1.0 필수 결과로 둡니다. M1이 담당하는 몫은 이 중 수집 비용 조절입니다.
+- [docs/product.md](../../docs/product.md)는 낮음·보통·높음·매우 높음과 장시간 고부하를 메뉴바 상태 집합으로 두고,
+  `대시보드 > 접근성`에서 색상만으로 상태를 구분하지 말고 현재 상태에 의미 있는 VoiceOver 레이블을 제공하도록 요구합니다.
 - [docs/product.md](../../docs/product.md)의 `최근 그래프와 데이터 보관`은 1.0 기본 그래프 시간 범위를
   최근 10분으로, 기본 전체 지표 주기를 대시보드 열림 1초로 고정합니다.
 - [docs/design.md](../../docs/design.md)의 `기술 방향`은 공개 macOS API를 우선하고 비공개 API, 별도 Helper,
   관리자 권한과 시스템 확장이 필요한 기능을 1.0 필수 기능으로 가정하지 않는다고 못 박습니다.
-- [docs/design.md](../../docs/design.md)의 `상태 통합과 애니메이션`은 저전력 모드, 화면 잠금과 동작 줄이기에서
-  애니메이션을 감속하거나 정지하라고 요구하고, `주요 기술 위험과 대응 > 애니메이션 전력 소비`도 같은 대응을 둡니다.
 - [docs/design.md](../../docs/design.md)는 AppKit이 메뉴바 항목과 팝오버 생명주기를, SwiftUI가 대시보드를 담당하는
   목표 경계와 수집 일정·순환 버퍼·생명주기 정책을 정의합니다. 순환 버퍼 예시는 10분 범위에서 1초 600개,
   2초 300개, 5초 120개입니다.
-- [ResourceRunnerApp.swift](../../ResourceRunner/ResourceRunnerApp.swift)는 현재 `WindowGroup`에서
-  [ContentView.swift](../../ResourceRunner/ContentView.swift)를 여는 일반 SwiftUI 창 앱입니다.
 - [project.pbxproj](../../ResourceRunner.xcodeproj/project.pbxproj)는 macOS 앱, 단위 테스트와 UI 테스트 대상을 가지며
-  파일 시스템 동기화 그룹을 사용합니다. 현재 deployment target은 26.5이고 `LSUIElement`과 arm64 전용 설정은 없습니다.
+  파일 시스템 동기화 그룹을 사용합니다. 앱·테스트 대상의 deployment target은 26.5이고 앱 대상 Debug·Release에
+  `INFOPLIST_KEY_LSUIElement = YES`가 있습니다. 아키텍처를 제한하는 `ARCHS` 설정은 아직 없습니다.
 - 애플리케이션 대상은 Swift 5 언어 모드, `SWIFT_APPROACHABLE_CONCURRENCY`와 `MainActor` 기본 격리를 사용하고
   App Sandbox가 활성화돼 있습니다.
-- [ResourceRunnerTests.swift](../../ResourceRunnerTests/ResourceRunnerTests.swift)는 Swift Testing,
-  [ResourceRunnerUITests.swift](../../ResourceRunnerUITests/ResourceRunnerUITests.swift)는 XCTest 템플릿 상태입니다.
-- [StatusCatStatic.imageset](../../ResourceRunner/Assets.xcassets/StatusCatStatic.imageset/Contents.json)은 현재 기본 고양이 얼굴을
-  22×22px와 44×44px template image로 제공합니다. 상태별 정적 변형은 아직 없습니다.
+- [StatusCatStatic.imageset](../../ResourceRunner/Assets.xcassets/StatusCatStatic.imageset/Contents.json)은 기본 고양이 얼굴을
+  22×22px와 44×44px template image로 제공합니다. M1이 사용하는 메뉴바 자산은 이것 하나입니다.
 - 조사 환경과 M1 지원 기준은 Apple silicon, macOS 26.5.2, Xcode 26.6이며 macOS 26.5 미만과 Intel Mac은 제외됩니다.
 - 설치된 macOS 26.5 SDK의 공개 `NSWorkspace` API에는 사용자 세션 전환과 화면 sleep·wake 알림만 있고,
   화면 잠금·해제를 직접 나타내는 공개 알림은 확인되지 않았습니다.
@@ -59,10 +60,28 @@
   `sysctl(KERN_PROC_ALL)`은 동작하고, 아는 PID의 `PROC_PIDTASKINFO`·`PROC_PIDTBSDINFO`·`proc_pidpath`는 읽히며
   `proc_pid_rusage`는 막힙니다.
 
+메뉴바 셸은 commit `692105b`으로 이미 구현·커밋됐고, 아래는 그 코드와 실행 앱에서 확인한 사실입니다.
+
+- [ResourceRunnerApp.swift](../../ResourceRunner/ResourceRunnerApp.swift)는 `@NSApplicationDelegateAdaptor`와
+  `Settings { EmptyView() }`만 선언하고 일반 창을 만들지 않습니다.
+  [AppDelegate.swift](../../ResourceRunner/AppDelegate.swift)가 하나의
+  [ApplicationCoordinator](../../ResourceRunner/ApplicationCoordinator.swift)를 만들어 강하게 보유하고,
+  coordinator가 [StatusBarController](../../ResourceRunner/StatusBarController.swift)를 소유하며
+  `StatusBarControllerOutput.popoverPresented(_:)`로 팝오버 표시·닫힘을 받습니다.
+  팝오버 콘텐츠는 [DashboardView.swift](../../ResourceRunner/DashboardView.swift)의 M1 셸입니다.
+- `LSUIElement` 앱은 팝오버를 표시해도 활성화되지 않아, 여는 경로에서 `NSApp.activate()`와 팝오버 창 `makeKey()`를
+  호출하지 않으면 `.transient` behavior가 외부 클릭에서 닫힐 계기를 얻지 못합니다. 실행 앱에서 결함으로 확인해 고쳤고,
+  수정 뒤 다른 앱 창과 바탕화면 클릭 모두에서 팝오버가 닫히는 것을 확인했습니다.
+- 메뉴바 높이가 22pt라 22pt 자산을 그대로 표시하면 여백 없이 꽉 차 다른 메뉴바 항목보다 커 보입니다.
+  현재 구현은 자산 카탈로그 공유 인스턴스의 복사본에 18pt 크기를 적용해 위아래 여백을 남깁니다.
+- [StatusBarControllerTests.swift](../../ResourceRunnerTests/StatusBarControllerTests.swift)가 고정 길이,
+  `.transient` behavior와 delegate 출력의 AppKit 통합 테스트를 가지고 있고,
+  [ResourceRunnerUITests.swift](../../ResourceRunnerUITests/ResourceRunnerUITests.swift)가 메뉴바 클릭으로 팝오버가
+  열리고 반복 클릭에서 표시 상태가 어긋나지 않는 것을 확인합니다.
+  [ResourceRunnerTests.swift](../../ResourceRunnerTests/ResourceRunnerTests.swift)는 아직 템플릿 상태입니다.
+
 ### 추정
 
-- 다섯 상태의 전신 애니메이션 프레임과 상태별 정적 얼굴은 아직 존재하지 않습니다. 제품 문서의 움직임 의미와
-  SPEC §5.4를 함께 유지하려면 현재 기본 얼굴과 같은 캐릭터 정체성을 공유하는 두 자산 계열이 필요합니다.
 - M1 대상 환경에서 세션 사전이 `nil`인 경우는 관찰되지 않았습니다. 다만 공개 헤더가 `NULL` 반환을 명시하므로
   사전을 얻지 못하는 경로에 대한 명시적 fallback은 유지해야 합니다.
 - 현재 OS의 문서화되지 않은 잠금 신호는 변경될 수 있습니다. macOS 26.5 전용 어댑터에 이름과 키를 격리하고,
@@ -79,7 +98,6 @@
 `ApplicationCoordinator`는 다음 객체와 관찰 작업을 한 번만 구성하고 앱 종료 때까지 수명을 소유합니다.
 
 - `StatusBarController`: `NSStatusItem`, `NSPopover`, 팝오버 delegate와 실제 메뉴바 렌더링을 소유하는 `MainActor` 경계
-- `CharacterPresentationStore`: 주입 상태, 표시 정책, 프레임 일정과 현재 프레임을 소유하는 `MainActor` 표시 저장소
 - `CharacterStateSource`: 실제 Collector와 분리된 M1 캐릭터 상태 입력
 - `SystemLifecycleObserver`: 저전력·화면 잠금의 초기 combined snapshot과 이후 최신 snapshot stream을 제공하는
   `MainActor` 시스템 어댑터
@@ -88,42 +106,37 @@
 - `ScheduledSampleSource`: 실제 Collector 대신 일정 동작을 검증하는 M1 샘플 입력
 - `MonitoringSampleStore`: `CircularBuffer`와 시간 범위·용량 변경을 소유하는 actor
 
-`SystemLifecycleObserver`의 snapshot은 coordinator에서 두 갈래로 갈라져 `CharacterPresentationStore`와
-`MonitoringLifecycleStore`에 각각 전달됩니다. 시스템 관찰은 한 곳에만 두고 프레임 일정과 수집 일정은
-각자의 순수 정책으로 따로 계산합니다.
+`SystemLifecycleObserver`의 snapshot은 `MonitoringLifecycleStore` 한 곳으로만 전달됩니다. 저전력과 화면 잠금은
+M1에서 수집 일정만 바꾸며 메뉴바 표현에는 영향을 주지 않습니다.
 
 `LSUIElement = YES`를 생성 Info.plist의 제품 설정으로 사용해 프로세스 시작부터 Dock과 앱 전환기에 나타나지 않게 합니다.
 런타임 activation policy만으로 Dock을 숨기는 방식은 시작 시점의 노출을 막는 기준으로 사용하지 않습니다. 이 구조가
-SPEC §5.1과 SPEC §5.10을 담당합니다.
+SPEC §5.1과 SPEC §5.8을 담당합니다.
 
 ### 표시 계층
 
 `StatusBarController`는 `NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)`로 고정 폭 항목을 만들고
-`NSStatusBarButton`의 이미지만 교체합니다. `CharacterAssetCatalog`는 메뉴바 항목을 표시하기 전에 다섯 상태의 정적 얼굴과
-상태별 최소 두 애니메이션 프레임을 선로딩합니다. 모든 자산은 같은 22pt 캔버스, 기준선과 시각적 중심을 사용합니다.
-누락 자산은 초기 구성 실패로 기록하고 기본 `StatusCatStatic`과 실패 VoiceOver 값을 표시하되, 이 fallback을 M1 완료로
-간주하지 않습니다. 이 경계가 SPEC §5.3의 프레임 전환과 폭·기준 위치 안정성을 담당합니다.
+`NSStatusBarButton`의 이미지를 초기 구성에서 한 번만 설정합니다. 이미지는 `StatusCatStatic` template image 하나이며
+상태가 바뀌어도 교체하지 않습니다. 자산은 22pt이고 메뉴바 높이도 22pt라 그대로 쓰면 여백 없이 꽉 차므로,
+메뉴바 글리프 관례에 맞춰 18pt로 줄여 표시합니다. 자산 카탈로그가 돌려주는 공유 인스턴스의 크기를 직접 바꾸지 않도록
+복사본에 크기를 적용합니다. 항목 길이와 이미지가 모두 구성 시점에 고정되므로 상태 변경은 메뉴바 항목의 폭과 기준 위치를
+건드리지 않습니다. 이 경계가 SPEC §5.3의 안정성을 담당합니다.
 
 팝오버는 `NSPopover`와 SwiftUI `NSHostingController` 조합을 사용합니다. `behavior = .transient`로 외부 상호작용에서
 닫히게 하고 delegate의 표시 상태를 단일 소스로 사용해 클릭 토글과 실제 닫힘 상태가 어긋나지 않게 합니다.
+여는 경로에서는 `NSApp.activate()`를 호출하고 팝오버 창을 `makeKey()`로 만듭니다. `LSUIElement` 앱은 일반 창이 없어
+팝오버만으로는 활성화되지 않고, 활성화되지 않은 상태에서는 외부 클릭 이벤트가 이 앱에 도달하지 않아 `.transient`가
+닫을 계기를 얻지 못합니다. 활성화해 두면 외부 클릭이 활성 해제로 이어져 팝오버가 닫힙니다.
 SwiftUI 콘텐츠는 M1 대시보드 셸만 제공하고 완성된 자원 카드는 포함하지 않습니다. 이 구조가 SPEC §5.2를 담당합니다.
-
-캐릭터 표현은 다음 두 자산 계열을 사용합니다.
-
-- 애니메이션 활성화: 상태별 최소 두 프레임의 전신 걷기·달리기·전력 질주·장시간 고부하 표현
-- 정지 조건: 현재 기본 얼굴 외곽과 귀 비율을 유지한 상태별 정적 얼굴 5종
-
-두 계열은 같은 캐릭터의 귀, 얼굴 비율과 표정 언어를 공유합니다. 각 상태는 고유한 정적 형태와 VoiceOver value를 가지며,
-표시 모드가 바뀌어도 상태와 접근성 설명은 유지하고 이미지만 전환합니다. 정지 조건은 동작 줄이기와 애니메이션
-비활성화(SPEC §5.4)뿐 아니라 화면 잠금(SPEC §5.5)도 포함하므로, 정적 얼굴은 두 조건이 공유하는 단일 표현입니다.
 
 ### 상태와 동시성 경계
 
-표시 흐름은 `CharacterStateSource/SystemLifecycleObserver → ApplicationCoordinator → CharacterPresentationStore →
-CharacterPresentationSink`로 한정합니다. `ApplicationCoordinator`가 store와 sink 구현체인 `StatusBarController`를
-강하게 소유하고 store는 sink를 약하게 참조합니다. 상태, 표시 정책이나 프레임이 바뀌면 store가
-`CharacterPresentation`을 만들어 `render(_:)`를 호출합니다. 상태 수신, 프레임 전환과 메뉴바 갱신은
-`MainActor`에서만 수행합니다. 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다.
+표시 흐름은 `CharacterStateSource → ApplicationCoordinator → CharacterPresentationSink`로 한정합니다.
+coordinator가 sink 구현체인 `StatusBarController`를 강하게 소유하고, 상태 stream을 `MainActor`에서 소비해
+순수 매핑으로 `CharacterPresentation`을 만든 뒤 `render(_:)`를 호출합니다. 상태 수신과 메뉴바 갱신은 `MainActor`에서만
+수행합니다. 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다. 표시 흐름은
+`SystemLifecycleSnapshot`과 팝오버 상태를 입력으로 받지 않으므로, 잠금 신호를 해석하지 못하거나 저전력으로 바뀌어도
+메뉴바 표현은 그대로 동작합니다.
 
 생명주기 흐름은 `StatusBarController/SystemLifecycleObserver → ApplicationCoordinator → MonitoringLifecycleStore →
 MonitoringScheduler`로 한정합니다. 모든 입력은 `MonitoringLifecycleStore.update(_:)`를 통과하며 actor가 snapshot 변경,
@@ -133,12 +146,11 @@ MonitoringScheduler`로 한정합니다. 모든 입력은 `MonitoringLifecycleSt
 `SystemLifecycleSnapshot`과 stream continuation을 `MainActor`에서 소유합니다. 시스템 callback이 다른 queue에서
 도착하면 값을 직접 바꾸지 않고 내부 직렬 생산자에 전달합니다. stream은 증가하는 revision과 저전력·화면 잠금을 함께 담은
 snapshot을 `.bufferingNewest(1)`로 제공하므로 소비가 늦어져도 두 필드의 최신 조합 하나만 남습니다.
-`MonitoringLifecycleStore`는 마지막 system revision보다 큰 snapshot만 적용하고, `CharacterPresentationStore`도
-같은 revision 규칙으로 오래된 snapshot을 거부합니다.
+`MonitoringLifecycleStore`는 마지막 system revision보다 큰 snapshot만 적용합니다.
 
 샘플 흐름은 `ScheduledSampleSource → MonitoringScheduler → MonitoringSampleStore → CircularBuffer`로 분리합니다.
 Scheduler는 일정, 취소와 generation만 소유하고 버퍼를 직접 변경하지 않습니다. 저장소는 샘플과 버퍼 용량만 소유하며
-표시 저장소를 호출하지 않습니다. 이 분리가 SPEC §5.6과 SPEC §5.8의 독립성과 단일 쓰기 경계를 담당합니다.
+표시 계층을 호출하지 않습니다. 이 분리가 SPEC §5.4와 SPEC §5.6의 독립성과 단일 쓰기 경계를 담당합니다.
 
 ### 최근 데이터 경계
 
@@ -152,88 +164,52 @@ M1의 그래프 시간 범위는 `docs/product.md`가 정한 1.0 기본값인 �
 용량은 `ceil(시간 범위 / 유효 수집 주기)`로 계산합니다. 기본 10분에서 1초 주기는 600개, 2초는 300개, 5초는 120개입니다.
 실행 주기가 바뀌거나 pause에서 resume할 때만 새 주기로 resize하고 최신 샘플만 보존합니다. pause 중에는 유효 주기가
 없으므로 버퍼와 용량을 그대로 유지합니다. 늘어난 공간이나 앱 시작 직후의 과거 구간은 채우지 않으며 샘플과 버퍼는
-메모리에만 존재합니다. 이 경계가 SPEC §5.8을 담당합니다.
+메모리에만 존재합니다. 이 경계가 SPEC §5.6을 담당합니다.
 
 ## 2. 데이터 흐름
 
 ### 앱 시작과 메뉴바 상호작용
 
 1. SwiftUI `App`이 `AppDelegate`를 연결하고 `Settings { EmptyView() }`만 선언합니다.
-2. `AppDelegate`가 하나의 `ApplicationCoordinator`를 만들고 coordinator가 필수 캐릭터 자산과
-   `CharacterPresentationProfileSet`을 구성합니다.
-3. coordinator가 `StatusBarController`를 표시 sink로 연결하고 생명주기 store와 Scheduler를 구성합니다.
+2. `AppDelegate`가 하나의 `ApplicationCoordinator`를 만들고 coordinator가 `StatusBarController`를 표시 sink로
+   연결한 뒤 생명주기 store와 Scheduler를 구성합니다.
+3. coordinator가 `CharacterStateSource`의 초기 상태를 읽어 첫 `CharacterPresentation`을 sink에 전달하고
+   이후 상태 stream 소비 Task를 시작합니다.
 4. coordinator가 `SystemLifecycleObserver.start()`를 한 번 호출합니다. observer는 combined snapshot stream과 continuation을
    먼저 만들고 화면 잠금·저전력 관찰자를 모두 등록한 뒤 현재 두 값을 읽어 `SystemLifecycleSubscription`을 반환합니다.
-5. coordinator가 subscription의 initial snapshot을 `CharacterPresentationStore`와 `MonitoringLifecycleStore`에
-   각각 적용하고, 초기 `popoverPresented = false`도 생명주기 store에 적용합니다.
-6. coordinator가 이미 만들어진 snapshot stream 소비 Task를 시작합니다. 소비한 snapshot은 매번 두 store에 함께
-   전달됩니다. 시작 중 도착한 callback은 초기값 위에 도착 순서로 반영되고 더 큰 revision의 combined snapshot으로
-   버퍼링됩니다.
-7. 메뉴바 버튼 클릭 시 팝오버가 닫혀 있으면 버튼에 고정해 열고, 열려 있으면 닫습니다.
+5. coordinator가 subscription의 initial snapshot을 `MonitoringLifecycleStore`에 적용하고,
+   초기 `popoverPresented = false`도 함께 적용합니다.
+6. coordinator가 이미 만들어진 snapshot stream 소비 Task를 시작합니다. 시작 중 도착한 callback은 초기값 위에 도착 순서로
+   반영되고 더 큰 revision의 combined snapshot으로 버퍼링됩니다.
+7. 메뉴바 버튼 클릭 시 팝오버가 닫혀 있으면 앱을 활성화하고 버튼에 고정해 연 뒤 팝오버 창을 key로 만들며,
+   열려 있으면 닫습니다.
 8. delegate의 표시·닫힘 이벤트를 coordinator가 `popoverPresented` 입력으로 생명주기 store에만 전달합니다.
-9. 팝오버 상태는 수집 일정에만 반영되고 캐릭터 프레임 일정의 입력이 아닙니다.
+9. 팝오버 상태는 수집 일정에만 반영되고 메뉴바 표현의 입력이 아닙니다.
 
 초기 팝오버 값은 `false`이며 system initial snapshot을 적용하기 전에는 Scheduler를 시작하지 않습니다. observer의 직렬 생산자는
 관찰자 등록 뒤 초기 조회 중 도착한 callback을 보관하고, 조회한 initial 값 위에 도착 순서로 반영한 snapshot마다 revision을
-증가시킵니다. 여러 update가 소비 전에 도착하면 `.bufferingNewest(1)`이 가장 큰 revision의 조합만 남깁니다. 두 소비자는
-낮거나 같은 revision을 거부하고, 생명주기 store는 일정 결과가 같으면 Scheduler를 다시 호출하지 않습니다. 이 흐름이
-SPEC §5.1, §5.2와 §5.6을 지원합니다.
+증가시킵니다. 여러 update가 소비 전에 도착하면 `.bufferingNewest(1)`이 가장 큰 revision의 조합만 남깁니다. 생명주기 store는
+낮거나 같은 revision을 거부하고, 일정 결과가 같으면 Scheduler를 다시 호출하지 않습니다. 이 흐름이
+SPEC §5.1, §5.2와 §5.4를 지원합니다.
 
-### 주입 상태와 캐릭터 전환
+### 주입 상태와 접근성 표현
 
 M1의 `CharacterStateSource`는 실제 CPU 값을 읽지 않고 다음 표시 상태 중 하나를 주입합니다. 기본 실행은 `low`에서 시작하고
 테스트와 M1 검증 구성은 동일한 source의 `send(_:)`로 상태를 순서와 시점에 관계없이 바꿀 수 있습니다.
-FPS는 기본값과 저전력 감속값을 함께 가집니다.
 
-| 상태 | 동작 | 기본 FPS | 저전력 FPS |
-| --- | --- | ---: | ---: |
-| `low` | 걷기 | 2 | 1 |
-| `moderate` | 달리기 | 4 | 2 |
-| `high` | 빠른 달리기 | 8 | 4 |
-| `veryHigh` | 전력 질주 | 10 | 5 |
-| `sustainedHigh` | 장시간 고부하 전용 표현 | 6 | 3 |
+| 상태 | 접근성 value |
+| --- | --- |
+| `low` | 낮음 |
+| `moderate` | 보통 |
+| `high` | 높음 |
+| `veryHigh` | 매우 높음 |
+| `sustainedHigh` | 장시간 고부하 |
 
-`sustainedHigh`는 `veryHigh`보다 심각한 상태지만 지친 움직임을 표현하기 위해 평상시 대역인 6 FPS를 의도적으로
-사용합니다. 부하 크기와 FPS를 비례시키지 않는 유일한 상태이며 오타가 아닙니다.
-
-정적 얼굴은 바깥 얼굴선과 귀를 바꾸지 않고 내부 형태로 구분합니다. `low`는 편안한 눈, `moderate`는 열린 눈과 기본 입,
-`high`는 집중한 눈, `veryHigh`는 크게 뜬 눈과 열린 입, `sustainedHigh`는 처진 눈과 피로 표시를 사용합니다. 색상만으로
-상태를 나누지 않으며 1x와 2x 크기에서 서로 다른 형태로 읽혀야 합니다.
-
-표시 상태가 바뀌면 `CharacterPresentationStore`가 현재 프레임을 새 상태의 첫 프레임으로 치환하고 하나의 프레임 일정만
-다시 구성합니다. 프레임 변경은 수집 작업과 독립적입니다. 런타임 이미지 설정 실패는 해당 상태의 정적 얼굴과 접근성 값으로
-후퇴합니다. 이 흐름이 SPEC §5.3을 담당합니다.
-
-동작 줄이기는 `NSWorkspace.accessibilityDisplayShouldReduceMotion`의 현재값과 접근성 표시 옵션 변경 알림으로 반영합니다.
-사용자가 애니메이션을 비활성화한 상태는 M1에서 주입 가능한 정책으로 제공합니다. 접근성 label은 `ResourceRunner`,
-value는 `낮음`, `보통`, `높음`, `매우 높음`, `장시간 고부하` 중 현재 상태를 설명하며 표시 모드와 무관하게 유지됩니다.
-이 흐름이 SPEC §5.4를 담당합니다.
-
-### 캐릭터 프레임 일정과 생명주기
-
-`CharacterPresentationStore`는 현재 상태, 동작 정책(`CharacterMotionMode`)과 최신 `SystemLifecycleSnapshot`을
-순수 `CharacterFramePolicy`에 전달해 프레임 일정 하나를 계산합니다. 입력 중 하나라도 바뀌면 기존 프레임 일정을
-취소하고 새 결과를 적용합니다. 결과가 이전과 같으면 일정을 다시 만들지 않아 상태 변경이 프레임을 흔들지 않습니다.
-
-| 조건 | 우선순위 | 결과 |
-| --- | ---: | --- |
-| 동작 줄이기 또는 애니메이션 비활성화 | 1 | 정지, 현재 상태의 정적 얼굴 |
-| `screenLockState == locked` | 2 | 정지, 현재 상태의 정적 얼굴 |
-| 저전력 모드 | 3 | 현재 상태의 저전력 FPS로 실행 |
-| 그 외 | 4 | 현재 상태의 기본 FPS로 실행 |
-
-`unknown`은 프레임 정책에서 정지 사유가 아닙니다. 잠금 신호를 해석하지 못하는 동안에도 메뉴바와 캐릭터 표현이 계속
-동작해야 한다는 spec.md 제약 때문이며, 이 지점에서 수집 정책과 의도적으로 다릅니다. 수집은 잠긴 화면에서 비용을 쓰지
-않는 것이 목적이라 신호 불명에서 보수적으로 pause하지만, 표시는 신호 불명에서 멈추면 앱이 죽은 것처럼 보입니다.
-
-정지 상태에서 상태가 바뀌면 프레임 일정을 만들지 않고 새 상태의 정적 얼굴과 접근성 값만 갱신합니다. 정지 사유가
-풀리면 현재 상태의 해당 FPS로 첫 프레임부터 다시 시작합니다. 저전력 진입·해제는 정지가 아니라 일정 재구성이므로
-현재 프레임을 유지한 채 간격만 바뀝니다. 프레임 일정은 수집 일정과 어떤 타이머도 공유하지 않습니다.
-이 흐름이 SPEC §5.5를 담당합니다.
-
-모든 FPS 값은 `CharacterPresentationProfileSet`으로 표시 계층 바깥에서 주입되고, `CharacterFrameRateLimit`가
-1...12 범위로 클램프합니다. 상한을 넘는 프로필은 구성 검증이 초과 항목으로 보고하고 실제 일정은 12를 넘지 않습니다.
-기본 프로필의 최대값은 10이므로 상한 검증은 테스트가 구성한 초과 프로필로만 관찰할 수 있습니다.
+상태가 바뀌면 coordinator가 새 상태에 대응하는 `CharacterPresentation`을 만들어 sink에 전달하고,
+`StatusBarController`는 메뉴바 버튼의 접근성 value만 갱신합니다. 접근성 label은 `ResourceRunner`로 고정합니다.
+이 경로는 버튼 이미지, 항목 길이와 팝오버 표시 상태를 건드리지 않으므로 상태 변경이 메뉴바 폭·기준 위치나
+열려 있는 팝오버를 흔들지 않습니다. M1에서 다섯 상태를 구분하는 수단은 접근성 값 하나뿐이며 이미지나 색상 차이는
+사용하지 않습니다. 이 흐름이 SPEC §5.3을 담당합니다.
 
 ### 수집 일정과 생명주기
 
@@ -278,11 +254,11 @@ subscription은 initial `SystemLifecycleSnapshot`과 이후 combined snapshot을
 사전이 잠김을 보고하는 경쟁이 실측으로 확인됐기 때문이며, 사전을 우선하면 짧은 잠금·해제 순환에서 해제 알림이 폐기돼
 다음 잠금까지 pause에 갇힙니다. 세션 사용자 ID를 읽지 못한 경우에도 이름을 버리지 않는 이유는 같습니다. 다른 세션의
 이벤트를 잘못 반영하면 잠깐 pause했다가 그 세션의 해제 알림으로 복귀하지만, 유효한 해제 알림을 버리면 복귀할 신호가
-없습니다. 이 흐름이 SPEC §5.7의 짧은 순환 재개를 담당합니다.
+없습니다. 이 흐름이 SPEC §5.5의 짧은 순환 재개를 담당합니다.
 
 문서화되지 않은 알림 이름과 세션 키는 이 어댑터에만 존재합니다. 나머지 계층과 자동 테스트는
 `SystemLifecycleSource` 계약과 메모리 구현을 사용합니다. 세션 사전을 얻지 못하고 유효한 알림도 받지 못하면
-`unknown`을 유지하고 수집을 pause하며, 표시 계층은 계속 동작합니다.
+`unknown`을 유지하고 수집을 pause하며, 메뉴바와 팝오버는 계속 동작합니다.
 
 `MonitoringLifecycleStore`는 마지막 system revision과 `popoverPresented`, `lowPowerMode`, `screenLockState`의 최종
 snapshot을 단독 소유합니다. coordinator가 전달한 `MonitoringLifecycleEvent`를 actor의 `update(_:)` 하나로 직렬화하고, 순수
@@ -300,8 +276,8 @@ deadline을 전진시켜 계산합니다. 실행 주기 변경은 기존 작업�
 
 pause에서는 작업만 취소하고 버퍼를 유지하며 resize하지 않습니다. resume에서는 새 주기로 버퍼를 resize한 뒤 새 generation을
 시작하고 중지 동안 놓친 실행은 따라잡지 않습니다. 공급자 실패나 취소는 0 샘플로 바꾸지 않습니다. `locked`, `unlocked`,
-`unknown`과 시작 중 상태 변경은 주입 가능한 lifecycle source와 수동 시계로 자동 검증합니다. 이 흐름이 SPEC §5.6과
-SPEC §5.8을 담당합니다.
+`unknown`과 시작 중 상태 변경은 주입 가능한 lifecycle source와 수동 시계로 자동 검증합니다. 이 흐름이 SPEC §5.4와
+SPEC §5.6을 담당합니다.
 
 ### 샘플과 순환 버퍼
 
@@ -311,7 +287,7 @@ SPEC §5.8을 담당합니다.
 교체합니다.
 
 시간 범위나 유효 수집 주기가 바뀌면 용량 정책이 새 크기를 계산하고 버퍼는 최신 항목만 보존해 재구성됩니다. 데이터는
-다른 저장 경계로 전달되지 않으며 앱 재시작 시 초기화됩니다. 이 흐름이 SPEC §5.8을 담당합니다.
+다른 저장 경계로 전달되지 않으며 앱 재시작 시 초기화됩니다. 이 흐름이 SPEC §5.6을 담당합니다.
 
 ## 3. 인터페이스
 
@@ -320,35 +296,23 @@ SPEC §5.8을 담당합니다.
 - `CharacterActivityState`: `low`, `moderate`, `high`, `veryHigh`, `sustainedHigh`의 닫힌 상태 집합
 - `CharacterStateSource`: 초기 상태와 이후 변경을 `AsyncStream<CharacterActivityState>`로 제공하고 M1 검증에서
   `send(_:)`로 상태를 주입하는 메모리 입력 계약
-- `CharacterMotionMode`: `animated`, `reduceMotion`, `disabled`의 표시 정책
-- `CharacterAssetCatalog`: 상태마다 정적 얼굴 하나와 최소 두 애니메이션 프레임을 선로딩하는 자산 계약
-- `CharacterPresentationProfile`: 한 상태의 선로딩 프레임, 기본 FPS, 저전력 FPS와 정적 얼굴을 묶는 값
-- `CharacterPresentationProfileSet`: 다섯 상태의 프로필을 묶어 표시 계층 바깥에서 주입하는 구성 값.
-  production 기본값은 coordinator가 제공하고 테스트는 상한을 넘는 값을 포함한 임의 구성을 만들 수 있습니다.
-- `CharacterFrameRateLimit`: 최대 12 FPS 상한을 소유하고 FPS를 1...12로 클램프하며 프로필 구성의 초과 항목을
-  보고하는 순수 정책
-- `CharacterFrameSchedule`: `stopped` 또는 `running(framesPerSecond:)`의 프레임 일정 결과
-- `CharacterFramePolicy`: 상태, `CharacterMotionMode`와 `SystemLifecycleSnapshot`을 받아 `CharacterFrameSchedule`을
-  반환하는 순수 계산
-- `CharacterPresentation`: 렌더링할 이미지와 지역화 가능한 접근성 label·value를 묶는 값
+- `CharacterPresentation`: 한 상태에 대응하는 지역화 가능한 접근성 label·value를 묶는 값.
+  `CharacterActivityState`에서 값을 만드는 순수 매핑을 함께 둡니다. M1에서는 이미지를 담지 않습니다.
 - `CharacterPresentationSink: AnyObject`: `@MainActor render(_:)`만 제공하며 `StatusBarController`가 구현하는 출력 계약
-- `CharacterPresentationStore`: 상태, 표시 정책, 최신 생명주기 snapshot과 프레임을 `MainActor`에서 소유하고 sink를
-  약하게 참조하는 내부 계약
-- `CharacterFrameClock`: production 프레임 일정과 수동 테스트 일정을 교체할 수 있는 시간 계약
 
-애니메이션 자산 이름과 프레임 인덱스는 `CharacterAssetCatalog` 내부에만 존재합니다. UI나 Scheduler는 자산 이름을 알지 않고
-상태와 표시 정책만 전달합니다. `CharacterFramePolicy`는 팝오버 상태를 입력으로 받지 않습니다.
-이 경계가 SPEC §5.3~5.5를 지원합니다.
+메뉴바 자산 이름과 이미지 크기는 `StatusBarController` 안에만 존재하고 상태 입력 경로는 이미지에 관여하지 않습니다.
+표시 계약은 팝오버 상태와 `SystemLifecycleSnapshot`을 입력으로 받지 않습니다. 이 경계가 SPEC §5.3을 지원합니다.
 
 ### 팝오버와 접근성 계약
 
-- `StatusBarController.togglePopover()`: 현재 `NSPopover.isShown`에 맞춰 버튼 입력을 열기 또는 닫기로 변환
+- `StatusBarController.togglePopover()`: 현재 `NSPopover.isShown`에 맞춰 버튼 입력을 열기 또는 닫기로 변환하며,
+  여는 경로에서 앱 활성화와 팝오버 창 key 전환을 함께 수행
 - 팝오버 delegate event: 실제 표시 완료와 닫힘을 coordinator에 전달하는 `popoverPresented(Bool)` 출력
 - 접근성 label: `ResourceRunner`
 - 접근성 value: 현재 캐릭터 상태의 지역화 가능한 설명
 
 실제 팝오버 표시 상태는 `StatusBarController`가 소유하고 SwiftUI 셸은 이를 변경하지 않습니다. coordinator가 delegate
-출력을 생명주기 store에 전달하므로 표시 계층이 Scheduler를 직접 호출하지 않습니다. 이 경계가 SPEC §5.2와 §5.6을 지원합니다.
+출력을 생명주기 store에 전달하므로 표시 계층이 Scheduler를 직접 호출하지 않습니다. 이 경계가 SPEC §5.2와 §5.4를 지원합니다.
 
 ### 수집 일정 계약
 
@@ -374,7 +338,7 @@ SPEC §5.8을 담당합니다.
 
 M1 일정 값은 normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5초입니다. 화면 상태가 `locked` 또는 `unknown`이면
 다른 입력과 무관하게 paused입니다. M1은 실제 자원별 Collector 인터페이스나 시스템 지표 타입을 확정하지 않습니다.
-이 경계가 SPEC §5.6과 §5.7을 지원하면서 M2의 공개 수집 contract를 선결하지 않습니다.
+이 경계가 SPEC §5.4와 §5.5를 지원하면서 M2의 공개 수집 contract를 선결하지 않습니다.
 
 ### 최근 데이터 계약
 
@@ -384,40 +348,46 @@ M1 일정 값은 normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5
 
 `CircularBuffer`는 `MonitoringSampleStore` 밖으로 가변 참조를 노출하지 않습니다. pause는 저장소의 resize를 호출하지 않고,
 resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다. 공급자 오류나 취소는 Scheduler에서 샘플 부재로 처리합니다.
-이 계약이 SPEC §5.8을 지원합니다.
+이 계약이 SPEC §5.6을 지원합니다.
 
 ### 빌드와 산출물 계약
 
 앱·단위 테스트·UI 테스트 대상의 deployment target은 26.5로 통일하고 앱 실행 파일의 지원 아키텍처는 arm64로 제한합니다.
 생성 Info.plist에는 `LSUIElement = YES`를 포함합니다. 기존 단일 애플리케이션 대상과 두 테스트 대상은 유지하고 새 Helper,
-로그인 항목 또는 실행 대상을 추가하지 않습니다. 이 계약이 SPEC §5.1, §5.9와 §5.10을 지원합니다.
+로그인 항목 또는 실행 대상을 추가하지 않습니다. 이 계약이 SPEC §5.1, §5.7과 §5.8을 지원합니다.
 
 ## 4. 영향 범위
 
 ### 기존 애플리케이션
 
-- [ResourceRunnerApp.swift](../../ResourceRunner/ResourceRunnerApp.swift): `WindowGroup`을 제거하고
-  `NSApplicationDelegateAdaptor`와 `Settings { EmptyView() }` 구성으로 바꿉니다.
-- [ContentView.swift](../../ResourceRunner/ContentView.swift): 템플릿 콘텐츠를 M1 팝오버의 SwiftUI 대시보드 셸 책임으로
-  제한하거나 같은 책임의 새 뷰로 대체합니다.
-- [Assets.xcassets](../../ResourceRunner/Assets.xcassets): 현재 기본 얼굴을 유지하고 같은 외곽의 상태별 정적 얼굴 5종과
-  각 상태의 전신 애니메이션 프레임을 최소 2개씩 추가합니다.
-- 애플리케이션 내부에는 `AppDelegate`, `ApplicationCoordinator`, StatusBar, Character, Dashboard, Lifecycle와 Monitoring
-  책임 경계가 생깁니다. 파일 시스템 동기화 그룹이므로 새 소스의 PBX 파일 참조를 수동 생성할 필요는 없습니다.
+- [ResourceRunnerApp.swift](../../ResourceRunner/ResourceRunnerApp.swift): `NSApplicationDelegateAdaptor`와
+  `Settings { EmptyView() }` 구성이 이미 반영돼 있어 추가 변경이 없습니다.
+- [AppDelegate.swift](../../ResourceRunner/AppDelegate.swift): 단일 coordinator 보유 책임을 유지합니다.
+- [ApplicationCoordinator.swift](../../ResourceRunner/ApplicationCoordinator.swift): 캐릭터 상태 입력 소비,
+  표시 sink 연결, 생명주기 관찰과 수집 일정 구성이 추가되고, 현재 비어 있는 `popoverPresented(_:)`가
+  생명주기 store 전달로 채워집니다.
+- [StatusBarController.swift](../../ResourceRunner/StatusBarController.swift): `CharacterPresentationSink` 구현과
+  메뉴바 버튼 접근성 label·value 갱신 경로가 추가됩니다. 이미지 구성, 고정 폭, `.transient` 팝오버와 활성화 처리는
+  현재 구현을 유지합니다.
+- [DashboardView.swift](../../ResourceRunner/DashboardView.swift): M1 팝오버 셸 책임을 유지하며 자원 카드는 추가하지 않습니다.
+- 애플리케이션 내부에는 Character, Lifecycle와 Monitoring 책임 경계가 추가로 생깁니다. 파일 시스템 동기화 그룹이므로
+  새 소스의 PBX 파일 참조를 수동 생성할 필요는 없습니다.
+
+[Assets.xcassets](../../ResourceRunner/Assets.xcassets)는 M1에서 변경하지 않습니다. 상태별 자산은 M2 범위입니다.
 
 ### 프로젝트 설정과 대상
 
-- [project.pbxproj](../../ResourceRunner.xcodeproj/project.pbxproj)의 Debug·Release와 테스트 대상 deployment target,
-  지원 아키텍처와 생성 Info.plist 설정을 macOS 26.5·arm64·`LSUIElement` 계약에 맞춥니다.
+- [project.pbxproj](../../ResourceRunner.xcodeproj/project.pbxproj)의 앱 실행 파일 지원 아키텍처를 arm64로 제한합니다.
+  deployment target 26.5와 생성 Info.plist의 `LSUIElement`는 이미 반영돼 있어 확인만 필요합니다.
 - 현재 App Sandbox 설정은 M1 범위에서 유지합니다. 잠금 신호에 필요한 알림 배달과 세션 사전 접근은 Sandbox 상태에서
   실측으로 확인됐습니다. 실제 CPU·Memory 접근과 배포를 위한 최종 Sandbox 판단은 후속 feature에 남깁니다.
 - 번들 식별자, 제품 버전, 서명 방식, 로그인 항목, Helper와 외부 package 의존성은 변경하지 않습니다.
 
 ### 테스트 대상
 
-- [ResourceRunnerTests](../../ResourceRunnerTests)는 다섯 정적 표현과 VoiceOver 값, 상태별 최소 프레임 수와 선로딩,
-  상태별 기본·저전력 FPS, `CharacterFrameRateLimit`의 12 FPS 클램프와 초과 프로필 보고,
-  잠금·동작 줄이기·저전력 조합의 프레임 일정 우선순위와 정지 사유 해제 후 복귀를 검증합니다.
+- [ResourceRunnerTests](../../ResourceRunnerTests)는 다섯 상태의 접근성 value 매핑과 상태 변경마다 sink에 전달되는
+  `CharacterPresentation`을 테스트 전용 sink로 검증하고, `StatusBarController`가 그 값을 메뉴바 버튼의 접근성
+  label·value에 반영하며 항목 길이와 버튼 이미지를 바꾸지 않는 것을 AppKit 통합 테스트로 검증합니다.
 - observer 등록 뒤 초기 조회, 시작 중 update 병합, 수집 일정 우선순위와 1·2·5초 선택, 중복 일정 억제,
   generation 교체, pause/resume 및 버퍼 용량·순서·resize를 검증합니다.
 - 메모리 `SystemLifecycleSource`와 수동 시계로 `locked`·`unlocked`·`unknown`, UID 정수 정규화 후 불일치 무시,
@@ -427,7 +397,7 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
 - [ResourceRunnerUITests](../../ResourceRunnerUITests)는 메뉴바 항목과 transient 팝오버의 자동화 가능한 실제 상호작용을
   담당합니다. 시스템 메뉴바 접근이 안정적이지 않은 동작은 AppKit 통합 상태와 현재 OS의 직접 관찰 근거를 함께 사용합니다.
 - macOS 26.5 Apple silicon 환경에서 실제 잠금·해제와 5초 내외의 짧은 잠금·해제 순환에서 수집 중지·재개를 확인하고
-  (SPEC §5.7), 앱·테스트 실행과 arm64 산출물을 확인합니다.
+  (SPEC §5.5), 앱·테스트 실행과 arm64 산출물을 확인합니다.
 
 ### 저장과 외부 경계
 
@@ -436,29 +406,18 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
 
 ## 5. Decision Points
 
+번호는 이전 분석의 식별자를 그대로 유지합니다. 캐릭터 애니메이션이 M2로 이동하면서 사라진 항목의 번호는 다시 쓰지 않습니다.
+
 ### DP1. 메뉴바와 팝오버 구성
 
-- 옵션 A: SwiftUI `MenuBarExtra(.window)`를 사용합니다. 코드량은 적지만 상태 항목 폭, 이미지 프레임과 실제 닫힘
+- 옵션 A: SwiftUI `MenuBarExtra(.window)`를 사용합니다. 코드량은 적지만 상태 항목 폭, 이미지와 실제 닫힘
   생명주기를 세밀하게 소유하기 어렵습니다.
-- 옵션 B: `NSStatusItem + NSPopover + NSHostingController`를 사용합니다. AppKit 코드는 늘지만 고정 폭, 프레임 교체,
+- 옵션 B: `NSStatusItem + NSPopover + NSHostingController`를 사용합니다. AppKit 코드는 늘지만 고정 폭,
   transient 닫힘과 SwiftUI 콘텐츠 경계가 명확합니다.
 - 옵션 C: `NSStatusItem + NSPanel`을 사용합니다. 창 제어는 가장 크지만 외부 클릭, 위치, 포커스와 접근성을 직접 구현합니다.
 - 채택안: 옵션 B. `ApplicationCoordinator`가 AppKit 객체를 소유하고 일반 창은 만들지 않습니다.
-
-### DP2. 애니메이션과 정적 표현의 자산 구조
-
-- 옵션 A: 현재 단일 얼굴을 모든 정적 상태에 재사용합니다. 자산은 적지만 SPEC §5.4의 정적 상태 구분을 충족하지 못합니다.
-- 옵션 B: 전신 애니메이션의 정지 프레임을 재사용합니다. 연속성은 높지만 22pt에서 상태 구분이 약합니다.
-- 옵션 C: 활성 상태는 전신 애니메이션, 정지 상태는 현재 기본 얼굴 외곽을 유지한 상태별 얼굴 5종으로 구성합니다.
-- 채택안: 옵션 C. 제품 문서의 움직임 의미와 현재 기본 얼굴의 정체성을 유지하고 표정 형태와 VoiceOver로 상태를 구분합니다.
-  같은 정적 얼굴을 동작 줄이기와 화면 잠금 정지에 함께 사용하므로 자산이 늘지 않습니다.
-
-### DP3. 프레임 일정
-
-- 옵션 A: 디스플레이 동기화 콜백에서 프레임을 건너뜁니다. 화면 주기와 맞지만 12 FPS 이하 표현을 위해 자주 깨어납니다.
-- 옵션 B: `MainActor`의 저주기 타이머와 허용 오차를 사용하고 상태별 FPS로 재구성합니다.
-- 채택안: 옵션 B. 최대 12 FPS 제약과 수집 일정 독립성을 직접 표현하고 수동 프레임 시계로 검증합니다.
-  저전력 감속과 잠금 정지도 같은 재구성 경로로 처리합니다.
+  `LSUIElement` 앱은 팝오버만으로 활성화되지 않으므로 여는 경로에서 앱 활성화와 팝오버 창 key 전환을 함께 수행해야
+  `.transient`가 성립합니다.
 
 ### DP4. 수집 일정 동시성
 
@@ -497,8 +456,8 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
   반대 매핑은 현재 OS의 정상 해제 상태를 `unknown`으로 읽어 앱이 시작부터 영구히 pause하므로 채택할 수 없습니다.
   안전 방향은 한 단계 내려가지만 앱이 동작하지 않는 실패보다 낫습니다.
 - 신호가 깨졌을 때의 대체 동작: 알림이 배달되지 않으면 초기 조회 결과가 유지되고, 세션 사전마저 얻지 못하면 `unknown`으로
-  수집을 pause합니다. 어느 경우에도 메뉴바 항목, 팝오버와 캐릭터 표현은 계속 동작하며 프레임 정책은 `unknown`을
-  정지 사유로 보지 않습니다. 잠금 대응만 비활성화되고 앱 기능은 유지됩니다.
+  수집을 pause합니다. 어느 경우에도 메뉴바 항목, 팝오버와 접근성 표현은 계속 동작합니다. 표시 경로가 잠금 신호를
+  입력으로 받지 않기 때문이며, 잠금 대응만 비활성화되고 앱 기능은 유지됩니다.
 - 배포 영향: 문서화되지 않은 신호 의존은 Mac App Store 심사에서 문제가 될 수 있어 M5의 배포 선택지를 좁힙니다.
   ROADMAP은 직접 배포를 우선 검토하고 Mac App Store는 별도 검증 후 결정하도록 두고 있으므로, 이 예외는 그 결정의
   입력으로 release-readiness에 넘깁니다. Helper나 관리자 권한은 추가하지 않습니다.
@@ -508,7 +467,7 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
 - 옵션 A: deployment target 26.5를 유지하되 기본 아키텍처 설정을 사용합니다. 현재 빌드는 단순하지만 arm64 전용 산출물을
   설정에서 명시하지 못합니다.
 - 옵션 B: 앱·테스트 대상의 deployment target을 26.5로 통일하고 앱 실행 파일을 arm64로 제한합니다.
-- 채택안: 옵션 B. macOS 26.5 이상 Apple silicon이라는 SPEC §5.9를 프로젝트와 산출물에서 관찰 가능하게 만듭니다.
+- 채택안: 옵션 B. macOS 26.5 이상 Apple silicon이라는 SPEC §5.7을 프로젝트와 산출물에서 관찰 가능하게 만듭니다.
   App Sandbox는 유지하고 최종 정책은 실제 Collector 접근을 다루는 후속 feature에 남깁니다.
 
 ### DP8. 생명주기 초기화와 update 병합
@@ -519,8 +478,8 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
 - 옵션 C: 저전력과 화면 잠금을 별도 stream으로 전달합니다. source는 단순하지만 소비가 밀릴 때 한 필드 update가 다른 필드의
   최신값을 덮지 않도록 coordinator가 별도 병합 상태를 소유해야 합니다.
 - 채택안: 옵션 B. source가 초기화 순서, revision과 두 시스템 필드의 병합을 단독 소유하고, coordinator는 initial snapshot을
-  먼저 적용한 뒤 update를 소비합니다. 소비자는 낮거나 같은 revision을 거부해 시작 중 변경 유실과 오래된 snapshot 재적용을
-  막으면서 일정 중복 제거 책임을 유지합니다.
+  먼저 적용한 뒤 update를 소비합니다. 생명주기 store는 낮거나 같은 revision을 거부해 시작 중 변경 유실과 오래된 snapshot
+  재적용을 막으면서 일정 중복 제거 책임을 유지합니다.
 
 ### DP9. 잠금·해제 알림과 세션 사전의 우선순위
 
@@ -532,27 +491,21 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
   재개가 늦어집니다.
 - 채택안: 옵션 B. 알림은 잠금·해제 시점에 맞춰 도착하고 사전은 늦게 따라오므로, 짧은 잠금·해제 순환에서 재개를 놓치지
   않는 것을 우선합니다. 알림 누락 위험은 잠금 상태가 오래 유지되는 경우에만 문제이고 그때는 사전도 갱신돼 있으므로
-  다음 시작 시 초기 조회가 교정합니다. 이 선택이 SPEC §5.7의 짧은 순환 재개를 성립시킵니다.
+  다음 시작 시 초기 조회가 교정합니다. 이 선택이 SPEC §5.5의 짧은 순환 재개를 성립시킵니다.
 
-### DP10. 저전력·잠금의 애니메이션 반영 경로
+### DP12. 주입 상태에서 메뉴바 접근성 값까지의 경로
 
-- 옵션 A: `MonitoringLifecycleStore`가 프레임 일정까지 계산해 표시 계층에 돌려줍니다. 정책이 한곳에 모이지만 수집 actor가
-  표시 계층을 호출하게 되고 수집 일정과 프레임 일정이 같은 결정에 묶입니다.
-- 옵션 B: coordinator가 같은 `SystemLifecycleSnapshot`을 두 store에 각각 전달하고, 표시 계층은 순수
-  `CharacterFramePolicy`로 프레임 일정만 계산합니다. 시스템 관찰은 하나로 유지되고 두 일정은 독립합니다.
-- 옵션 C: 표시 계층이 저전력·잠금을 직접 관찰합니다. 두 계층이 완전히 독립하지만 관찰자와 문서화되지 않은 잠금 신호
-  해석이 두 곳으로 늘어나 DP6의 격리 범위가 무너집니다.
-- 채택안: 옵션 B. 수집 일정과 프레임 일정이 독립이어야 한다는 제약을 유지하면서 같은 입력을 공유합니다.
-  팝오버 상태는 프레임 정책 입력에서 제외해 팝오버 개폐가 캐릭터 표현을 끊지 않게 합니다.
+메뉴바 이미지가 고정되면서 표시 경로에 남는 일은 상태 하나를 접근성 값 하나로 바꾸는 것뿐입니다.
+프레임 일정, 표시 정책과 생명주기 입력이 모두 사라져 표시 저장소가 소유할 상태가 없어졌으므로 경로 구성을 다시 정합니다.
 
-### DP11. FPS 구성과 12 FPS 상한 검증
-
-- 옵션 A: 상태별 FPS를 표시 계층 안의 상수로 둡니다. 코드는 짧지만 상태 집합이 닫혀 있고 FPS가 상태에 고정돼 있어
-  상한을 넘는 입력을 만들 수 없고, 12 FPS 상한 정책을 코드에서 검증할 수 없습니다.
-- 옵션 B: 상태별 기본·저전력 FPS를 `CharacterPresentationProfileSet`으로 표시 계층 바깥에서 주입하고,
-  순수 `CharacterFrameRateLimit`가 1...12로 클램프하며 구성 검증이 초과 항목을 보고합니다. 타입이 하나 늘지만
-  테스트가 상한 초과 프로필을 구성해 상한이 실제로 걸리는지 관찰할 수 있습니다.
-- 옵션 C: 최대 FPS를 사용자 설정으로 노출합니다. `docs/product.md`의 최종 형태지만 설정 저장은 M4 범위이고
-  M1 제외 범위입니다.
-- 채택안: 옵션 B. 기본 프로필의 최대값은 10이라 production 경로만으로는 상한을 확인할 수 없으므로, 상한 정책을
-  검증 가능한 위치로 끌어내는 최소 구성을 택합니다.
+- 옵션 A: 기존 `CharacterPresentationStore`와 `CharacterPresentationSink`를 그대로 둡니다. M2에서 애니메이션이 들어올 때
+  자리를 바꾸지 않아도 되지만, M1에서는 store가 현재 상태를 들고 그대로 넘기기만 해 정책 없는 우회 계층이 됩니다.
+- 옵션 B: store를 없애고 coordinator가 상태 stream을 소비해 순수 매핑으로 만든 `CharacterPresentation`을
+  `CharacterPresentationSink`에 전달합니다. 타입은 줄지만 상태 소비 위치가 coordinator로 올라옵니다.
+- 옵션 C: sink 계약까지 없애고 coordinator가 `NSStatusItem` 버튼의 접근성 값을 직접 설정합니다. 가장 짧지만
+  coordinator가 AppKit 객체를 직접 만지게 되고, 실제 메뉴바 항목 없이는 상태 매핑을 검증할 수 없습니다.
+- 채택안: 옵션 B. sink는 표시 계층을 가로지르는 경계이자 테스트 이중 구현을 끼울 지점이라 유지할 값이 있지만,
+  store는 애니메이션과 함께 소유할 상태가 사라져 유지할 근거가 없습니다. 상태 → 접근성 값 매핑을 순수 함수로 두면
+  다섯 상태의 값 검증이 AppKit 없이 가능하고, `StatusBarController`는 받은 값을 버튼에 반영하는 책임만 갖습니다.
+  M2에서 이미지와 프레임 일정이 들어오면 그때 표시 상태를 소유할 타입을 다시 도입하며, 그 시점의 정책을 모른 채
+  빈 저장소를 미리 두지 않습니다.

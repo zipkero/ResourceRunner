@@ -36,6 +36,15 @@ struct StatusBarControllerTests {
         #expect(controller.popover.behavior == .transient)
     }
 
+    /// 아래 출력 테스트는 delegate 메서드를 직접 호출하므로 `NSPopover`를 거치지 않습니다.
+    /// 배선이 끊겨도 그 테스트는 통과하므로, 실제 delegate 연결은 여기서 따로 확인합니다.
+    /// 이 연결이 끊기면 `popoverPresented(_:)`가 영영 호출되지 않고 수집 일정이 팝오버 상태에 반응하지 않습니다.
+    @Test func popoverDelegateIsWiredToController() {
+        let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+
+        #expect(controller.popover.delegate === controller)
+    }
+
     @Test func delegateOutputReflectsActualShowAndCloseInOrder() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
         let output = RecordingOutput()

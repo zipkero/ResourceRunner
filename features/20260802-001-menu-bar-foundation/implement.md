@@ -32,35 +32,50 @@
   - 참조: SPEC §5.1, SPEC §5.2, ANALYSIS §1 「애플리케이션 구성」, ANALYSIS §1 「표시 계층」,
     ANALYSIS §2 「앱 시작과 메뉴바 상호작용」, ANALYSIS §3 「팝오버와 접근성 계약」, ANALYSIS §5 DP1
 
-- [ ] task-012: 주입 상태에서 메뉴바 접근성 값까지의 표시 경로
-  - 목적: 낮음·보통·높음·매우 높음·장시간 고부하 상태를 주입하면 메뉴바 항목의 VoiceOver 설명이 현재 상태를 말하도록 바뀌고,
+- [x] task-012: 주입 상태에서 메뉴바 접근성 이름까지의 표시 경로
+  - 목적: 낮음·보통·높음·매우 높음·장시간 고부하 상태를 주입하면 메뉴바 항목의 접근성 이름이 현재 상태를 포함하도록 바뀌고,
+    그 이름이 실행 중인 앱의 접근성 트리에서 실제로 읽히며,
     상태가 바뀌어도 메뉴바 항목의 폭과 기준 위치, 열려 있던 팝오버는 흔들리지 않습니다.
-  - 접근: `CharacterActivityState`의 다섯 상태와, 상태를 접근성 label·value로 바꾸는 순수 매핑을 담은
+  - 접근: `CharacterActivityState`의 다섯 상태와, 앱 이름에 상태 설명을 쉼표로 이어 하나의 접근성 이름을 만드는 순수 매핑을 담은
     `CharacterPresentation`, `AsyncStream`으로 상태를 제공하고 `send(_:)`로 주입하는 `CharacterStateSource`,
     `@MainActor render(_:)`만 가진 `CharacterPresentationSink`를 정의합니다.
     `ApplicationCoordinator`가 초기 상태를 읽어 첫 표현을 sink에 전달한 뒤 상태 stream 소비 Task를 `MainActor`에서 유지하고,
-    sink 구현체인 `StatusBarController`는 메뉴바 버튼의 접근성 label·value만 갱신합니다.
+    sink 구현체인 `StatusBarController`는 메뉴바 버튼의 접근성 이름만 갱신하며 접근성 값은 설정하지 않습니다.
+    실행 앱에서 상태를 바꿀 수 있도록 `#if DEBUG`로 격리한 우클릭 상태 메뉴를 `StatusBarController`에 두고
+    고른 상태를 `CharacterStateSource.send(_:)`로만 넘깁니다.
     중간 표시 저장소는 두지 않고 버튼 이미지와 항목 길이는 구성 시점 값을 그대로 유지합니다.
   - 검증 조건:
-    - 결과: 기본 실행은 `low`에서 시작하고, 접근성 label은 항상 `ResourceRunner`이며
-      value는 `low`→`낮음`, `moderate`→`보통`, `high`→`높음`, `veryHigh`→`매우 높음`, `sustainedHigh`→`장시간 고부하`입니다.
+    - 결과: 기본 실행은 `low`에서 시작하고, 메뉴바 항목의 접근성 이름은
+      `low`→`ResourceRunner, 낮음`, `moderate`→`ResourceRunner, 보통`, `high`→`ResourceRunner, 높음`,
+      `veryHigh`→`ResourceRunner, 매우 높음`, `sustainedHigh`→`ResourceRunner, 장시간 고부하`입니다.
+      표시 경로는 메뉴바 항목의 접근성 값을 설정하지 않으며 상태 문자열은 접근성 이름 한 자리에만 존재합니다.
       다섯 상태를 임의 순서로 주입할 때마다 sink가 해당 상태의 표현을 한 번씩 받고,
-      상태 변경 경로가 버튼 이미지·`NSStatusItem` 길이·팝오버 표시 상태를 건드리지 않습니다.
+      상태 변경 경로가 버튼 이미지·`NSStatusItem` 길이·팝오버 표시 상태를 건드리지 않아
+      팝오버가 열린 채 상태가 바뀌어도 표시 상태가 그대로 유지됩니다.
       표시 경로는 팝오버 상태와 `SystemLifecycleSnapshot`을 입력으로 받지 않아
-      잠금 신호를 해석하지 못하거나 저전력으로 바뀌어도 접근성 값이 그대로 갱신됩니다.
-      M1에서 다섯 상태를 구분하는 수단은 접근성 값 하나뿐이며 이미지나 색상 차이는 사용하지 않습니다.
-    - 확인: Swift Testing으로 다섯 상태 → label·value 매핑을 AppKit 없이 전수 검증하고,
+      잠금 신호를 해석하지 못하거나 저전력으로 바뀌어도 접근성 이름이 그대로 갱신됩니다.
+      실행 중인 앱에서 이 접근성 이름이 접근성 클라이언트에 노출되고, Debug 주입으로 상태를 바꾸면 이름이 따라 바뀝니다.
+      Debug 우클릭 주입 메뉴를 여는 동작은 메뉴바 항목 클릭이라 `NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다.
+      이는 주입 수단의 성질이며 표시 경로가 만든 변화가 아닙니다.
+      Release 산출물에는 이 주입 진입점이 존재하지 않습니다.
+      M1에서 다섯 상태를 구분하는 수단은 접근성 이름 하나뿐이며 이미지나 색상 차이는 사용하지 않습니다.
+    - 확인: Swift Testing으로 다섯 상태 → 접근성 이름 매핑을 AppKit 없이 전수 검증하고,
       테스트 전용 sink로 상태 주입마다 전달되는 `CharacterPresentation` 순서와 횟수를 확인합니다.
-      `StatusBarController`가 받은 값을 버튼 접근성 label·value에 반영하고
+      `StatusBarController`가 받은 값을 버튼 접근성 이름에 반영하고 접근성 값을 설정하지 않으며,
       상태를 다섯 번 순환시켜도 `NSStatusItem.length`와 버튼 이미지 참조가 변하지 않는 것은 AppKit 통합 테스트로 확인합니다.
-      표시 계약에 팝오버 상태와 생명주기 snapshot이 없는 것은 타입 시그니처로 확인하고,
-      실제 VoiceOver 읽기는 macOS 26.5에서 팝오버를 연 채 다섯 상태를 순환시키며
-      접근성 검사 도구와 VoiceOver로 직접 확인하고 그동안 팝오버가 닫히지 않는 것을 함께 관찰합니다.
+      팝오버 열림 상태 보존은 같은 AppKit 통합 테스트에서 팝오버를 연 뒤 표시 경로만 실행해
+      `NSPopover.isShown`이 유지되는 것으로 확인합니다 — 이 관찰은 주입 수단을 거치지 않으므로 우클릭 메뉴의 닫힘과 무관합니다.
+      표시 계약에 팝오버 상태와 생명주기 snapshot이 없는 것은 타입 시그니처로 확인합니다.
+      실행 앱의 노출은 XCUITest로 확인합니다 — `app.statusItems.firstMatch`의 접근성 이름이
+      기동 직후 `ResourceRunner, 낮음`이고, Debug 우클릭 메뉴로 다른 상태를 주입하면 그 상태의 이름으로 바뀌는 것을
+      다섯 상태 전부에 대해 단언합니다. 이 UI 테스트는 팝오버 열림 유지를 관찰 대상으로 두지 않습니다.
+      주입 진입점의 Release 부재는 `#if DEBUG` 격리를 소스 검색으로 확인합니다.
+      VoiceOver의 실제 낭독은 spec.md 제외 범위이므로 이 Task에서 확인하지 않습니다.
   - 참조: SPEC §5.3, ANALYSIS §1 「표시 계층」, ANALYSIS §1 「상태와 동시성 경계」,
     ANALYSIS §2 「주입 상태와 접근성 표현」, ANALYSIS §3 「캐릭터 표시 계약」,
     ANALYSIS §3 「팝오버와 접근성 계약」, ANALYSIS §5 DP12
 
-- [ ] task-008: 메모리 전용 최근 샘플 순환 버퍼
+- [x] task-008: 메모리 전용 최근 샘플 순환 버퍼
   - 목적: 실제로 수집된 최근 샘플만 시간 범위와 수집 주기에 맞는 고정 용량으로 메모리에 유지하고,
     용량을 넘으면 가장 오래된 샘플만 사라지며 존재하지 않는 과거 데이터를 만들어내지 않습니다.
   - 접근: 단조 증가 시각과 값을 묶는 `TimestampedSample`,
@@ -84,7 +99,7 @@
   - 참조: SPEC §5.6, ANALYSIS §1 「최근 데이터 경계」, ANALYSIS §2 「샘플과 순환 버퍼」,
     ANALYSIS §3 「최근 데이터 계약」, ANALYSIS §5 DP5
 
-- [ ] task-005: 시스템 생명주기 관찰과 combined snapshot 병합
+- [x] task-005: 시스템 생명주기 관찰과 combined snapshot 병합
   - 목적: 저전력 모드와 화면 잠금 상태를 하나의 관찰 지점에서 읽어,
     앱 시작 도중에 상태가 바뀌어도 두 값의 최신 조합이 유실되거나 오래된 값으로 되돌아가지 않고 소비자에게 전달됩니다.
   - 접근: `ScreenLockState`, `SystemLifecycleSnapshot`, `SystemLifecycleSubscription`, `SystemLifecycleSource` 계약과
@@ -214,6 +229,8 @@
       생성 Info.plist에 `LSUIElement = YES`가 있고 App Sandbox가 유지됩니다.
       앱 번들 `Contents/MacOS`에는 ResourceRunner 실행 파일 하나만 있고 로그인 항목·Helper 위치는 비어 있습니다.
       M1 Debug 빌드와 Swift Testing·XCTest 전체가 성공합니다.
+      production 배선은 실제 시스템 값을 읽습니다 — 저전력은 `ProcessInfo.isLowPowerModeEnabled`,
+      알림은 기본 `NotificationCenter`를 사용하며 테스트용 대체 구현이 배선에 남지 않습니다.
     - 확인: macOS 26.5 Apple silicon에서 격리된 DerivedData로 Debug 빌드와 전체 테스트를 실행해 성공을 확인합니다.
       `xcodebuild -showBuildSettings`로 세 대상의 deployment target, Debug·Release 앱 아키텍처와
       생성 Info.plist 설정을 확인하고,
@@ -221,8 +238,12 @@
       `Contents/MacOS`와 `Contents/Library/LoginItems` 목록,
       `project.pbxproj`의 native target·package 목록과 최종 diff를 검사합니다.
       실행 앱에서는 Dock 없음, 안정적인 메뉴바 항목, 반복 팝오버 토글,
-      다섯 상태의 접근성 값 전환이 한 세션 안에서 함께 동작하는지 통합 관찰합니다.
+      다섯 상태의 접근성 이름 전환이 한 세션 안에서 함께 동작하는지 통합 관찰합니다.
       구성 방향과 계층 간 호출 금지는 coordinator 초기화 순서 테스트와 소스 검색으로 확인합니다.
+      `SystemLifecycleObserver`의 production 기본 인자(`readLowPowerMode`, `notificationCenter`)는
+      자동 테스트가 항상 값을 주입하므로 실행되지 않아 회귀 방어가 없습니다.
+      task-005 검증 중 변이 테스트로 확인된 공백이며, 여기서 배선을 소스로 확인하고
+      실기기에서 저전력 모드를 켜고 끄며 수집 일정이 실제로 바뀌는지 직접 관찰해 메웁니다.
   - 참조: SPEC §5.1, SPEC §5.7, SPEC §5.8, ANALYSIS §1 「애플리케이션 구성」, ANALYSIS §1 「상태와 동시성 경계」,
     ANALYSIS §2 「앱 시작과 메뉴바 상호작용」, ANALYSIS §3 「빌드와 산출물 계약」,
     ANALYSIS §4 「프로젝트 설정과 대상」, ANALYSIS §4 「저장과 외부 경계」, ANALYSIS §5 DP7

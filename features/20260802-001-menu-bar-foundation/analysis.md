@@ -4,11 +4,13 @@
 
 ### 확인 사실
 
-- [spec.md](./spec.md)는 Dock 아이콘 없는 메뉴바 앱, transient 팝오버, 주입 상태를 접근성 값으로 구분하는 메뉴바 표현,
+- [spec.md](./spec.md)는 Dock 아이콘 없는 메뉴바 앱, transient 팝오버, 주입 상태를 접근성 이름으로 구분하는 메뉴바 표현,
   수집 일정과 순환 버퍼를 M1 범위로 고정합니다. 메뉴바 항목은 현재 저장소의 `StatusCatStatic` 하나만 사용하고
   표시 중에 이미지를 바꾸지 않습니다.
 - [spec.md](./spec.md)의 제외 범위는 캐릭터 자산 제작, 메뉴바 애니메이션, 프레임 일정과 FPS 정책,
   동작 줄이기·애니메이션 비활성화에 따른 표시 전환, 저전력·화면 잠금에 따른 애니메이션 감속·정지를 M1에서 제외합니다.
+- [spec.md](./spec.md)의 제외 범위는 VoiceOver의 실제 음성 출력 확인도 M1에서 뺍니다. 접근성 이름이 AX 트리에 노출되는
+  것까지가 M1 범위이고, 음성 확인은 대시보드가 완성되는 M5 접근성 관문이 핵심 사용자 흐름 전체를 대상으로 수행합니다.
 - [ROADMAP.md](../../ROADMAP.md)의 `M1. 메뉴바 앱과 모니터링 기반`은 실제 Collector 없이 UI와 상태 전환을 검증하고
   공통 모니터링 기반과 지원 정책을 완성하도록 요구하며, 메뉴바는 기존 정적 아이콘 하나로 표시하고 상태 구분은
   VoiceOver 설명으로 제공하라고 명시합니다.
@@ -77,8 +79,23 @@
 - [StatusBarControllerTests.swift](../../ResourceRunnerTests/StatusBarControllerTests.swift)가 고정 길이,
   `.transient` behavior와 delegate 출력의 AppKit 통합 테스트를 가지고 있고,
   [ResourceRunnerUITests.swift](../../ResourceRunnerUITests/ResourceRunnerUITests.swift)가 메뉴바 클릭으로 팝오버가
-  열리고 반복 클릭에서 표시 상태가 어긋나지 않는 것을 확인합니다.
+  열리고 반복 클릭에서 표시 상태가 어긋나지 않는 것을 확인합니다. 이 UI 테스트는 `app.statusItems.firstMatch`로
+  실행 앱의 메뉴바 항목을 접근성 트리에서 직접 찾아 조작합니다.
   [ResourceRunnerTests.swift](../../ResourceRunnerTests/ResourceRunnerTests.swift)는 아직 템플릿 상태입니다.
+
+메뉴바 항목의 접근성 표현은 task-001 이후 실행 앱에서 별도로 관찰했습니다. 아래가 그 결과이며
+spec.md의 `확인한 실행 환경 사실` 마지막 항목이 같은 사실을 요약합니다.
+
+- 메뉴바 상태 항목의 접근성 role은 `Status Menu`입니다. Accessibility Inspector로 확인했습니다.
+- VoiceOver는 이 role에서 접근성 이름을 읽고 접근성 값은 읽지 않습니다. 사용자가 실행 앱에서 직접 확인했습니다.
+- 접근성 값 자체는 AX 트리에 정상 노출됩니다. XCUITest가 주입 전 `낮음`, 주입 후 `보통`을 값으로 읽었습니다.
+  상태가 전달되지 않은 원인은 값의 부재가 아니라, 그 role에서 값이 읽히는 자리가 아니라는 데 있습니다.
+- 상태를 접근성 이름에 합쳐 `ResourceRunner, 낮음`으로 두면 Accessibility Inspector에 그대로 노출됩니다.
+  실험 구현으로 확인했습니다.
+- Debug 빌드의 메뉴바 항목 우클릭이 다섯 상태를 고르는 주입 메뉴를 엽니다. 이 진입점은 `#if DEBUG`로 격리돼
+  Release 산출물에 존재하지 않으며, 고른 상태는 `CharacterStateSource.send(_:)`로만 들어갑니다.
+- 이 우클릭 메뉴를 여는 동작 자체가 열려 있던 `.transient` 팝오버를 닫습니다. XCUITest로 확인했습니다.
+  메뉴바 항목 클릭을 `NSPopover`가 외부 클릭으로 판정하기 때문이며, 표시 경로에는 팝오버 참조가 없습니다.
 
 ### 추정
 
@@ -86,6 +103,8 @@
   사전을 얻지 못하는 경로에 대한 명시적 fallback은 유지해야 합니다.
 - 현재 OS의 문서화되지 않은 잠금 신호는 변경될 수 있습니다. macOS 26.5 전용 어댑터에 이름과 키를 격리하고,
   나머지 생명주기와 일정 정책은 주입 가능한 공개 계약만 의존해야 영향 범위를 제한할 수 있습니다.
+- `Status Menu` role에서 접근성 값이 낭독되지 않는 것은 현재 OS의 VoiceOver 동작이며 SDK가 보장하는 계약은 아닙니다.
+  이후 OS에서 달라질 수 있으므로 상태를 어느 속성에 담을지는 M5 접근성 관문에서 실제 낭독으로 다시 확인해야 합니다.
 
 ## 1. 구조
 
@@ -137,6 +156,9 @@ coordinator가 sink 구현체인 `StatusBarController`를 강하게 소유하고
 수행합니다. 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다. 표시 흐름은
 `SystemLifecycleSnapshot`과 팝오버 상태를 입력으로 받지 않으므로, 잠금 신호를 해석하지 못하거나 저전력으로 바뀌어도
 메뉴바 표현은 그대로 동작합니다.
+
+Debug 전용 상태 주입 진입점도 같은 경계를 지킵니다. `StatusBarController`의 우클릭 메뉴는 고른 상태를
+`CharacterStateSource.send(_:)`로만 넘기고 sink를 직접 호출하지 않으므로, 주입 경로와 실행 경로가 같은 매핑을 통과합니다.
 
 생명주기 흐름은 `StatusBarController/SystemLifecycleObserver → ApplicationCoordinator → MonitoringLifecycleStore →
 MonitoringScheduler`로 한정합니다. 모든 입력은 `MonitoringLifecycleStore.update(_:)`를 통과하며 actor가 snapshot 변경,
@@ -197,19 +219,33 @@ SPEC §5.1, §5.2와 §5.4를 지원합니다.
 M1의 `CharacterStateSource`는 실제 CPU 값을 읽지 않고 다음 표시 상태 중 하나를 주입합니다. 기본 실행은 `low`에서 시작하고
 테스트와 M1 검증 구성은 동일한 source의 `send(_:)`로 상태를 순서와 시점에 관계없이 바꿀 수 있습니다.
 
-| 상태 | 접근성 value |
+| 상태 | 메뉴바 항목의 접근성 이름 |
 | --- | --- |
-| `low` | 낮음 |
-| `moderate` | 보통 |
-| `high` | 높음 |
-| `veryHigh` | 매우 높음 |
-| `sustainedHigh` | 장시간 고부하 |
+| `low` | `ResourceRunner, 낮음` |
+| `moderate` | `ResourceRunner, 보통` |
+| `high` | `ResourceRunner, 높음` |
+| `veryHigh` | `ResourceRunner, 매우 높음` |
+| `sustainedHigh` | `ResourceRunner, 장시간 고부하` |
+
+접근성 이름은 앱 이름과 상태 설명을 쉼표와 공백으로 이은 한 문자열입니다. 앱 이름을 앞에 두는 이유는 메뉴바에 여러 앱의
+항목이 나란히 놓이기 때문이며, 상태만 남기면 어느 앱의 상태인지 알 수 없습니다. 쉼표 구분자는 실험 구현에서 노출을 확인한
+형태이자 접근성 클라이언트가 짧은 끊어 읽기로 다루는 macOS 관례입니다.
+
+표시 경로는 메뉴바 항목의 접근성 값을 설정하지 않습니다. 메뉴바 상태 항목의 role인 `Status Menu`에서는 접근성 값이
+낭독되지 않아 값에 담은 상태가 사용자에게 도달하지 않고, 이름과 값을 모두 읽는 클라이언트에서는 같은 상태가 두 번 나옵니다.
+상태 문자열의 자리를 접근성 이름 하나로 유지하는 근거는 DP12에 있습니다.
 
 상태가 바뀌면 coordinator가 새 상태에 대응하는 `CharacterPresentation`을 만들어 sink에 전달하고,
-`StatusBarController`는 메뉴바 버튼의 접근성 value만 갱신합니다. 접근성 label은 `ResourceRunner`로 고정합니다.
-이 경로는 버튼 이미지, 항목 길이와 팝오버 표시 상태를 건드리지 않으므로 상태 변경이 메뉴바 폭·기준 위치나
-열려 있는 팝오버를 흔들지 않습니다. M1에서 다섯 상태를 구분하는 수단은 접근성 값 하나뿐이며 이미지나 색상 차이는
-사용하지 않습니다. 이 흐름이 SPEC §5.3을 담당합니다.
+`StatusBarController`는 메뉴바 버튼의 접근성 이름만 갱신합니다. 이 경로는 버튼 이미지, 항목 길이와 팝오버 표시 상태를
+건드리지 않으므로 상태 변경이 메뉴바 폭·기준 위치나 열려 있는 팝오버를 흔들지 않습니다. M1에서 다섯 상태를 구분하는 수단은
+접근성 이름 하나뿐이며 이미지나 색상 차이는 사용하지 않습니다. 이 흐름이 SPEC §5.3을 담당합니다.
+
+Debug 빌드에서는 메뉴바 항목 우클릭이 다섯 상태 주입 메뉴를 열고, 고른 상태가 `CharacterStateSource.send(_:)`를 통해
+위와 같은 경로를 통과합니다. 이 메뉴를 여는 동작은 메뉴바 항목 클릭이므로 `NSPopover`가 외부 클릭으로 판정해
+열려 있던 팝오버를 닫습니다. 이것은 주입 수단이 만드는 부수 효과이며 표시 경로의 성질이 아닙니다. 표시 경로는
+팝오버를 입력으로도 출력으로도 갖지 않으므로 팝오버가 열린 채 상태가 바뀌어도 표시 경로 때문에 표시 상태가 변하지
+않습니다. 검증에서는 두 가지를 분리해 관찰합니다 — 실행 앱의 접근성 이름 전환은 Debug 주입으로, 팝오버 열림 상태 보존은
+팝오버를 연 채 표시 경로만 직접 실행하는 AppKit 통합 테스트로 확인합니다.
 
 ### 수집 일정과 생명주기
 
@@ -296,9 +332,12 @@ SPEC §5.6을 담당합니다.
 - `CharacterActivityState`: `low`, `moderate`, `high`, `veryHigh`, `sustainedHigh`의 닫힌 상태 집합
 - `CharacterStateSource`: 초기 상태와 이후 변경을 `AsyncStream<CharacterActivityState>`로 제공하고 M1 검증에서
   `send(_:)`로 상태를 주입하는 메모리 입력 계약
-- `CharacterPresentation`: 한 상태에 대응하는 지역화 가능한 접근성 label·value를 묶는 값.
-  `CharacterActivityState`에서 값을 만드는 순수 매핑을 함께 둡니다. M1에서는 이미지를 담지 않습니다.
+- `CharacterPresentation`: 한 상태에 대응하는 지역화 가능한 메뉴바 접근성 이름 하나를 담는 값.
+  `CharacterActivityState`에서 앱 이름과 상태 설명을 합쳐 이 값을 만드는 순수 매핑을 함께 둡니다.
+  M1에서는 접근성 값도 이미지도 담지 않습니다.
 - `CharacterPresentationSink: AnyObject`: `@MainActor render(_:)`만 제공하며 `StatusBarController`가 구현하는 출력 계약
+- Debug 전용 상태 주입 진입점: `StatusBarController`가 우클릭에서 다섯 상태 메뉴를 띄우고 고른 상태를
+  `CharacterStateSource.send(_:)`로 넘기는 콜백. `#if DEBUG`로 격리되며 Release 산출물에는 존재하지 않습니다.
 
 메뉴바 자산 이름과 이미지 크기는 `StatusBarController` 안에만 존재하고 상태 입력 경로는 이미지에 관여하지 않습니다.
 표시 계약은 팝오버 상태와 `SystemLifecycleSnapshot`을 입력으로 받지 않습니다. 이 경계가 SPEC §5.3을 지원합니다.
@@ -308,8 +347,8 @@ SPEC §5.6을 담당합니다.
 - `StatusBarController.togglePopover()`: 현재 `NSPopover.isShown`에 맞춰 버튼 입력을 열기 또는 닫기로 변환하며,
   여는 경로에서 앱 활성화와 팝오버 창 key 전환을 함께 수행
 - 팝오버 delegate event: 실제 표시 완료와 닫힘을 coordinator에 전달하는 `popoverPresented(Bool)` 출력
-- 접근성 label: `ResourceRunner`
-- 접근성 value: 현재 캐릭터 상태의 지역화 가능한 설명
+- 메뉴바 항목의 접근성 이름: `ResourceRunner, <현재 캐릭터 상태의 지역화 가능한 설명>`
+- 메뉴바 항목의 접근성 값: 표시 경로가 설정하지 않습니다
 
 실제 팝오버 표시 상태는 `StatusBarController`가 소유하고 SwiftUI 셸은 이를 변경하지 않습니다. coordinator가 delegate
 출력을 생명주기 store에 전달하므로 표시 계층이 Scheduler를 직접 호출하지 않습니다. 이 경계가 SPEC §5.2와 §5.4를 지원합니다.
@@ -364,11 +403,11 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
   `Settings { EmptyView() }` 구성이 이미 반영돼 있어 추가 변경이 없습니다.
 - [AppDelegate.swift](../../ResourceRunner/AppDelegate.swift): 단일 coordinator 보유 책임을 유지합니다.
 - [ApplicationCoordinator.swift](../../ResourceRunner/ApplicationCoordinator.swift): 캐릭터 상태 입력 소비,
-  표시 sink 연결, 생명주기 관찰과 수집 일정 구성이 추가되고, 현재 비어 있는 `popoverPresented(_:)`가
-  생명주기 store 전달로 채워집니다.
+  표시 sink 연결, Debug 전용 주입 콜백 연결, 생명주기 관찰과 수집 일정 구성이 추가되고,
+  현재 비어 있는 `popoverPresented(_:)`가 생명주기 store 전달로 채워집니다.
 - [StatusBarController.swift](../../ResourceRunner/StatusBarController.swift): `CharacterPresentationSink` 구현과
-  메뉴바 버튼 접근성 label·value 갱신 경로가 추가됩니다. 이미지 구성, 고정 폭, `.transient` 팝오버와 활성화 처리는
-  현재 구현을 유지합니다.
+  메뉴바 버튼 접근성 이름 갱신 경로, Debug 전용 우클릭 상태 주입 메뉴가 추가됩니다. 이미지 구성, 고정 폭,
+  `.transient` 팝오버와 활성화 처리는 현재 구현을 유지합니다.
 - [DashboardView.swift](../../ResourceRunner/DashboardView.swift): M1 팝오버 셸 책임을 유지하며 자원 카드는 추가하지 않습니다.
 - 애플리케이션 내부에는 Character, Lifecycle와 Monitoring 책임 경계가 추가로 생깁니다. 파일 시스템 동기화 그룹이므로
   새 소스의 PBX 파일 참조를 수동 생성할 필요는 없습니다.
@@ -385,9 +424,10 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
 
 ### 테스트 대상
 
-- [ResourceRunnerTests](../../ResourceRunnerTests)는 다섯 상태의 접근성 value 매핑과 상태 변경마다 sink에 전달되는
+- [ResourceRunnerTests](../../ResourceRunnerTests)는 다섯 상태의 접근성 이름 매핑과 상태 변경마다 sink에 전달되는
   `CharacterPresentation`을 테스트 전용 sink로 검증하고, `StatusBarController`가 그 값을 메뉴바 버튼의 접근성
-  label·value에 반영하며 항목 길이와 버튼 이미지를 바꾸지 않는 것을 AppKit 통합 테스트로 검증합니다.
+  이름에 반영하며 항목 길이와 버튼 이미지를 바꾸지 않는 것을 AppKit 통합 테스트로 검증합니다. 팝오버를 연 채
+  표시 경로만 실행해 팝오버 표시 상태가 유지되는 것도 같은 계층에서 확인합니다.
 - observer 등록 뒤 초기 조회, 시작 중 update 병합, 수집 일정 우선순위와 1·2·5초 선택, 중복 일정 억제,
   generation 교체, pause/resume 및 버퍼 용량·순서·resize를 검증합니다.
 - 메모리 `SystemLifecycleSource`와 수동 시계로 `locked`·`unlocked`·`unknown`, UID 정수 정규화 후 불일치 무시,
@@ -395,7 +435,11 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
 - `ScreenLockStateReader`의 세 매핑은 잠금 키 부재를 `unlocked`로 읽는 경우를 포함해 세션 사전 입력을 주입한 단위
   테스트로 검증합니다.
 - [ResourceRunnerUITests](../../ResourceRunnerUITests)는 메뉴바 항목과 transient 팝오버의 자동화 가능한 실제 상호작용을
-  담당합니다. 시스템 메뉴바 접근이 안정적이지 않은 동작은 AppKit 통합 상태와 현재 OS의 직접 관찰 근거를 함께 사용합니다.
+  담당하며, `app.statusItems.firstMatch`로 실행 앱의 접근성 트리를 읽습니다. 접근성 이름이 실제 접근성 클라이언트에
+  노출되는지와 Debug 주입 뒤 이름이 따라 바뀌는지를 이 계층에서 단언합니다. 시스템 메뉴바 접근이 안정적이지 않은 동작은
+  AppKit 통합 상태와 현재 OS의 직접 관찰 근거를 함께 사용합니다.
+- VoiceOver의 실제 낭독은 spec.md 제외 범위에 따라 M1에서 확인하지 않습니다. M1은 접근성 이름이 AX 트리에 노출되는
+  것까지를 자동 검증하고, 낭독 확인은 M5 접근성 관문이 담당합니다.
 - macOS 26.5 Apple silicon 환경에서 실제 잠금·해제와 5초 내외의 짧은 잠금·해제 순환에서 수집 중지·재개를 확인하고
   (SPEC §5.5), 앱·테스트 실행과 arm64 산출물을 확인합니다.
 
@@ -493,19 +537,55 @@ resume과 실행 주기 변경만 새 유효 주기로 resize를 요청합니다
   않는 것을 우선합니다. 알림 누락 위험은 잠금 상태가 오래 유지되는 경우에만 문제이고 그때는 사전도 갱신돼 있으므로
   다음 시작 시 초기 조회가 교정합니다. 이 선택이 SPEC §5.5의 짧은 순환 재개를 성립시킵니다.
 
-### DP12. 주입 상태에서 메뉴바 접근성 값까지의 경로
+### DP12. 주입 상태에서 메뉴바 접근성 표현까지의 경로
 
-메뉴바 이미지가 고정되면서 표시 경로에 남는 일은 상태 하나를 접근성 값 하나로 바꾸는 것뿐입니다.
-프레임 일정, 표시 정책과 생명주기 입력이 모두 사라져 표시 저장소가 소유할 상태가 없어졌으므로 경로 구성을 다시 정합니다.
+메뉴바 이미지가 고정되면서 표시 경로에 남는 일은 상태 하나를 접근성 표현 하나로 바꾸는 것뿐입니다.
+프레임 일정, 표시 정책과 생명주기 입력이 모두 사라져 표시 저장소가 소유할 상태가 없어졌으므로 경로 구성을 다시 정하고,
+그 표현을 어느 접근성 속성에 담을지도 함께 확정합니다.
+
+**경로 구성**
 
 - 옵션 A: 기존 `CharacterPresentationStore`와 `CharacterPresentationSink`를 그대로 둡니다. M2에서 애니메이션이 들어올 때
   자리를 바꾸지 않아도 되지만, M1에서는 store가 현재 상태를 들고 그대로 넘기기만 해 정책 없는 우회 계층이 됩니다.
 - 옵션 B: store를 없애고 coordinator가 상태 stream을 소비해 순수 매핑으로 만든 `CharacterPresentation`을
   `CharacterPresentationSink`에 전달합니다. 타입은 줄지만 상태 소비 위치가 coordinator로 올라옵니다.
-- 옵션 C: sink 계약까지 없애고 coordinator가 `NSStatusItem` 버튼의 접근성 값을 직접 설정합니다. 가장 짧지만
+- 옵션 C: sink 계약까지 없애고 coordinator가 `NSStatusItem` 버튼의 접근성 표현을 직접 설정합니다. 가장 짧지만
   coordinator가 AppKit 객체를 직접 만지게 되고, 실제 메뉴바 항목 없이는 상태 매핑을 검증할 수 없습니다.
 - 채택안: 옵션 B. sink는 표시 계층을 가로지르는 경계이자 테스트 이중 구현을 끼울 지점이라 유지할 값이 있지만,
-  store는 애니메이션과 함께 소유할 상태가 사라져 유지할 근거가 없습니다. 상태 → 접근성 값 매핑을 순수 함수로 두면
+  store는 애니메이션과 함께 소유할 상태가 사라져 유지할 근거가 없습니다. 상태 → 접근성 표현 매핑을 순수 함수로 두면
   다섯 상태의 값 검증이 AppKit 없이 가능하고, `StatusBarController`는 받은 값을 버튼에 반영하는 책임만 갖습니다.
   M2에서 이미지와 프레임 일정이 들어오면 그때 표시 상태를 소유할 타입을 다시 도입하며, 그 시점의 정책을 모른 채
   빈 저장소를 미리 두지 않습니다.
+
+**상태를 담을 접근성 속성**
+
+이전 분석은 접근성 이름을 `ResourceRunner`로 고정하고 상태를 접근성 값에만 담았습니다. 구현 뒤 실행 앱 관찰에서
+이 매핑이 사용자에게 상태를 전달하지 못하는 것이 확인돼 다시 정합니다. 메뉴바 상태 항목의 접근성 role은 `Status Menu`이고
+VoiceOver는 이 role에서 이름만 읽고 값은 읽지 않습니다. 값은 AX 트리에 정상 노출됐으므로 원인은 값의 부재가 아니라
+값이 읽히는 자리가 아니라는 데 있습니다.
+
+- 옵션 A: 상태를 접근성 값에만 담고 이름은 `ResourceRunner`로 고정합니다. 두 속성의 책임이 깔끔하게 갈리지만,
+  실측상 사용자에게 상태가 도달하지 않아 SPEC §5.3이 요구하는 관찰 결과를 만들지 못합니다.
+- 옵션 B: 이름을 `ResourceRunner, <상태>`로 두고 값에도 `<상태>`를 함께 둡니다. 값을 읽는 클라이언트가 상태만 따로 얻지만,
+  이름과 값을 모두 읽는 클라이언트에서는 상태가 두 번 나오고 상태 문자열을 반영해야 할 자리가 둘로 늘어납니다.
+- 옵션 C: 이름을 `ResourceRunner, <상태>`로 두고 표시 경로는 접근성 값을 설정하지 않습니다. 상태 문자열의 자리가 하나로
+  유지되지만 값만 읽는 클라이언트는 상태를 얻지 못합니다.
+- 채택안: 옵션 C.
+
+근거는 다음과 같습니다.
+
+- M1이 상태를 전달해야 하는 대상은 VoiceOver이고 실측상 값을 읽지 않으므로, 값에 남긴 상태는 사용자에게 도달하는
+  경로가 없습니다. 옵션 A는 이 지점에서 탈락합니다.
+- M1의 자동 검증도 접근성 이름을 단언하므로 값을 소비하는 관찰자가 M1 안에 존재하지 않습니다. 옵션 B가 지키려는 이득은
+  아직 가정이고, 중복 낭독과 두 속성의 불일치 가능성은 지금 실재하는 대가입니다.
+- 상태 문자열을 한 자리에만 두면 갱신 경로가 하나여서 이름과 값이 어긋날 여지가 없습니다. 값을 읽는 클라이언트가
+  실제로 확인되면 sink 구현에 한 줄을 더하는 되돌리기 쉬운 변경으로 옵션 B에 도달할 수 있습니다.
+- 이름은 앱 이름을 앞에 두고 쉼표와 공백으로 상태를 잇습니다. 앱 이름을 빼면 메뉴바에 나란히 놓인 다른 앱 항목과
+  구분되지 않고, 쉼표 구분자는 실험 구현에서 Accessibility Inspector 노출을 확인한 형태입니다.
+- 이 결정의 최종 확인인 실제 낭독은 spec.md 제외 범위에 따라 M5 접근성 관문으로 미룹니다. M1은 접근성 이름이
+  AX 트리에 노출되고 상태 주입에 따라 바뀌는 것을 XCUITest로 단언하는 데서 멈춥니다.
+
+Debug 전용 우클릭 주입 메뉴는 이 경로의 검증 수단이지 경로의 일부가 아닙니다. 메뉴를 여는 동작이 메뉴바 항목 클릭이라
+`NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다. 표시 경로에는 팝오버 참조가 없으므로 이 닫힘은 주입 수단의
+성질이며, SPEC §5.3이 요구하는 "팝오버 열림 상태가 흔들리지 않는다"는 팝오버를 연 채 표시 경로만 실행하는 방식으로
+따로 관찰합니다.

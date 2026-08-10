@@ -16,9 +16,11 @@ protocol StatusBarControllerOutput: AnyObject {
 }
 
 /// `NSStatusItem`, `NSPopover`와 팝오버 delegate를 소유하는 AppKit 경계.
-/// 메뉴바 항목은 고정 폭(`NSStatusItem.squareLength`)이며 버튼 이미지만 교체합니다.
+/// 메뉴바 항목은 고정 폭(`NSStatusItem.squareLength`)이고 버튼 이미지는 구성 시점에 한 번만 설정합니다.
+/// 상태가 바뀌어도 갱신되는 것은 버튼의 접근성 이름 하나뿐입니다.
 /// 팝오버는 `.transient` behavior로 외부 상호작용에서 스스로 닫히고,
 /// delegate가 보고하는 실제 표시 상태를 단일 소스로 삼아 클릭 토글과 어긋나지 않게 합니다.
+/// Debug 빌드에서는 우클릭이 다섯 상태를 주입하는 디버그 메뉴를 열며, 이 경로는 Release 빌드 산출물에 존재하지 않습니다.
 @MainActor
 final class StatusBarController: NSObject {
     /// 메뉴바 항목에 표시할 이미지의 한 변 길이.
@@ -30,6 +32,11 @@ final class StatusBarController: NSObject {
     let popover: NSPopover
 
     weak var output: StatusBarControllerOutput?
+
+#if DEBUG
+    /// 우클릭 디버그 메뉴에서 상태를 고르면 호출되는 콜백. Release 빌드에는 이 진입점이 존재하지 않습니다.
+    var debugStateInjector: ((CharacterActivityState) -> Void)?
+#endif
 
     init<Content: View>(popoverContent: Content) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -49,6 +56,10 @@ final class StatusBarController: NSObject {
             button.image = image
             button.target = self
             button.action = #selector(togglePopover)
+#if DEBUG
+            // 좌클릭은 기존 팝오버 토글을 그대로 쓰고, 우클릭만 디버그 상태 메뉴로 분기합니다.
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+#endif
         }
     }
 
@@ -68,6 +79,13 @@ final class StatusBarController: NSObject {
     @objc func togglePopover() {
         guard let button = statusItem.button else { return }
 
+#if DEBUG
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            showDebugStateMenu(relativeTo: button)
+            return
+        }
+#endif
+
         if popover.isShown {
             popover.performClose(nil)
         } else {
@@ -76,6 +94,29 @@ final class StatusBarController: NSObject {
             popover.contentViewController?.view.window?.makeKey()
         }
     }
+
+#if DEBUG
+    /// 다섯 상태를 고를 수 있는 디버그 메뉴를 띄웁니다.
+    /// 이 메뉴를 여는 동작은 메뉴바 항목 클릭이라 `NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다.
+    /// 표시 경로에는 팝오버 참조가 없으므로 이 닫힘은 주입 수단의 성질입니다.
+    /// 메뉴 항목 제목은 XCUITest가 상태를 고르는 식별자이기도 하므로 상태 이름을 그대로 씁니다.
+    private func showDebugStateMenu(relativeTo button: NSStatusBarButton) {
+        let menu = NSMenu()
+        let states: [CharacterActivityState] = [.low, .moderate, .high, .veryHigh, .sustainedHigh]
+        for state in states {
+            let item = NSMenuItem(title: "\(state)", action: #selector(injectDebugState(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = state
+            menu.addItem(item)
+        }
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
+    }
+
+    @objc private func injectDebugState(_ sender: NSMenuItem) {
+        guard let state = sender.representedObject as? CharacterActivityState else { return }
+        debugStateInjector?(state)
+    }
+#endif
 }
 
 extension StatusBarController: NSPopoverDelegate {
@@ -85,5 +126,14 @@ extension StatusBarController: NSPopoverDelegate {
 
     func popoverDidClose(_ notification: Notification) {
         output?.popoverPresented(false)
+    }
+}
+
+/// 메뉴바 버튼의 접근성 이름만 갱신합니다. 이름은 매핑에서 이미 완성돼 오므로 여기서 조합하지 않습니다.
+/// 접근성 값은 설정하지 않습니다 — 상태 문자열은 접근성 이름 한 자리에만 존재합니다.
+/// 버튼 이미지와 `NSStatusItem.length`는 구성 시점 값을 그대로 유지하며 이 경로가 건드리지 않습니다.
+extension StatusBarController: CharacterPresentationSink {
+    func render(_ presentation: CharacterPresentation) {
+        statusItem.button?.setAccessibilityLabel(presentation.accessibilityLabel)
     }
 }

@@ -6,6 +6,17 @@
 //
 
 import Foundation
+import OSLog
+
+#if DEBUG
+/// `MonitoringSampleStore`가 제네릭 actor라 정적 저장 속성을 직접 가질 수 없으므로 분리해 둡니다.
+/// task-011 관찰 수단(누적 샘플 수·버퍼 용량)이며 task-010의 실제 잠금·해제 관찰에서도 재사용합니다.
+/// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
+/// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
+enum MonitoringSampleStoreDebugLog {
+    static let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "MonitoringSampleStore")
+}
+#endif
 
 /// 단조 증가 시각과 값을 묶는 M1 최근 샘플.
 /// 값 타입은 어느 격리에서도 전달할 수 있어야 하므로 `nonisolated`로 선언합니다.
@@ -108,6 +119,16 @@ actor MonitoringSampleStore<Value: Sendable> {
     /// 새 샘플을 추가합니다. 첫 샘플은 그대로 현재 데이터가 됩니다.
     func append(_ sample: TimestampedSample<Value>) {
         buffer.append(sample)
+#if DEBUG
+        // 로그 자체는 실기기 관찰에만 필요하고 이 actor의 임계 구간에 영향을 주면 안 되므로,
+        // `notice` 호출을 별도 Task로 분리합니다. 여기서 직접(동기적으로) 호출하면 로깅 시스템
+        // 호출 지연이 그대로 이 actor 차례를 늦춰 `ManualMonotonicClock` 기반 타이밍 테스트의
+        // 협력 스케줄링 가정을 흔들 수 있습니다.
+        let status = debugStatusDescription
+        Task.detached(priority: .utility) {
+            MonitoringSampleStoreDebugLog.logger.notice("\(status, privacy: .public)")
+        }
+#endif
     }
 
     /// 오래된 것부터 시간순으로 정렬된 불변 스냅샷을 반환합니다.
@@ -124,4 +145,12 @@ actor MonitoringSampleStore<Value: Sendable> {
         let capacity = HistoryCapacity.capacity(timeRange: self.timeRange, samplingInterval: samplingInterval)
         buffer = buffer.resized(to: capacity)
     }
+
+#if DEBUG
+    /// task-011 관찰 수단: 누적 샘플 수와 현재 버퍼 용량을 사람이 읽을 수 있는 문자열로 남깁니다.
+    /// `MonitoringScheduler`의 실기기 관찰 로그와 task-010의 잠금·해제 관찰에서 재사용합니다.
+    var debugStatusDescription: String {
+        "count=\(buffer.count) capacity=\(buffer.capacity)"
+    }
+#endif
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// production과 수동 테스트 시계를 바꿔 끼우는 시간 계약.
 /// `MonitoringScheduler`는 이 계약만으로 deadline을 전진시키고 잠들며, 실제 시각 종류(`ContinuousClock.Instant`)는
@@ -34,6 +35,30 @@ nonisolated protocol ScheduledSampleSource: Sendable {
     associatedtype Value: Sendable
     func sample() async throws -> Value
 }
+
+/// 실제 Collector가 없는 M1에서 값 자체에는 의미가 없는 최소 placeholder 샘플.
+/// M2에서 실제 CPU·메모리 수집으로 교체됩니다.
+nonisolated struct PlaceholderMonitoringSample: Sendable {}
+
+/// 실제 Collector 대신 항상 같은 placeholder 값을 반환하는 M1 production `ScheduledSampleSource`.
+/// `MonitoringScheduler`가 실행 앱에서 실제로 일정·취소·버퍼 배선을 태울 수 있게 하는 용도이며,
+/// 값 생성 실패나 실제 자원 측정은 다루지 않습니다.
+final class PlaceholderScheduledSampleSource: ScheduledSampleSource {
+    func sample() async throws -> PlaceholderMonitoringSample {
+        PlaceholderMonitoringSample()
+    }
+}
+
+#if DEBUG
+/// `MonitoringScheduler`가 제네릭 actor라 정적 저장 속성을 직접 가질 수 없으므로,
+/// task-011 관찰 수단(적용된 일정 전이·generation·누적 샘플 수·버퍼 용량)을 여기 분리해 둡니다.
+/// task-010의 실제 잠금·해제 관찰에서도 그대로 재사용합니다.
+/// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
+/// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
+enum MonitoringSchedulerDebugLog {
+    static let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "MonitoringScheduler")
+}
+#endif
 
 /// 적용 일정, 단일 Task와 generation별 실행을 직렬화하는 actor.
 /// 일정, 취소와 generation만 소유하고 버퍼는 `MonitoringSampleStore`에만 맡깁니다.
@@ -75,6 +100,18 @@ actor MonitoringScheduler<Clock: MonotonicClock, Source: ScheduledSampleSource> 
         // actor 차례를 기다리던 `appendIfCurrentGeneration` 호출이 끼어들었을 때 아직 갱신 전인
         // generation과 우연히 일치해 이전 세대 결과가 저장될 수 있습니다.
         generation += 1
+
+#if DEBUG
+        // 로그 자체는 실기기 관찰에만 필요하고 이 actor의 임계 구간에 영향을 주면 안 되므로,
+        // `notice` 호출을 별도 Task로 분리해 `apply(_:)`의 동기 구간을 그대로 유지합니다.
+        // 여기서 직접(동기적으로) 호출하면 로깅 시스템 호출 지연이 그대로 이 actor 차례를 늦춰
+        // `ManualMonotonicClock` 기반 타이밍 테스트의 협력 스케줄링 가정을 흔들 수 있습니다.
+        let debugSchedule = schedule
+        let debugGeneration = generation
+        Task.detached(priority: .utility) {
+            MonitoringSchedulerDebugLog.logger.notice("apply schedule=\(String(describing: debugSchedule), privacy: .public) generation=\(debugGeneration, privacy: .public)")
+        }
+#endif
 
         switch schedule {
         case .paused:
@@ -134,7 +171,20 @@ actor MonitoringScheduler<Clock: MonotonicClock, Source: ScheduledSampleSource> 
         sample: TimestampedSample<Source.Value>,
         into sampleStore: MonitoringSampleStore<Source.Value>
     ) async {
-        guard resultGeneration == generation else { return }
+        guard resultGeneration == generation else {
+#if DEBUG
+            let debugCurrentGeneration = generation
+            Task.detached(priority: .utility) {
+                MonitoringSchedulerDebugLog.logger.notice("discarded stale generation result=\(resultGeneration, privacy: .public) current=\(debugCurrentGeneration, privacy: .public)")
+            }
+#endif
+            return
+        }
         await sampleStore.append(sample)
+#if DEBUG
+        Task.detached(priority: .utility) {
+            MonitoringSchedulerDebugLog.logger.notice("appended sample generation=\(resultGeneration, privacy: .public)")
+        }
+#endif
     }
 }

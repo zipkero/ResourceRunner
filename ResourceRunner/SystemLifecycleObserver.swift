@@ -86,6 +86,137 @@ final class CombinedSnapshotProducer {
     }
 }
 
+/// `CGSessionCopyCurrentDictionary()`는 공개 헤더가 없는 문서화되지 않은 API라
+/// 심볼을 직접 선언합니다. DP6 채택안(옵션 B)에 따라 이 파일에만 존재해야 합니다.
+@_silgen_name("CGSessionCopyCurrentDictionary")
+private func CGSessionCopyCurrentDictionary() -> CFDictionary?
+
+/// 세션 사전에서 화면 잠금 상태를 읽는 순수 판정 규칙.
+/// 문서화되지 않은 세션 키 문자열(`CGSSessionScreenIsLocked`)은 이 타입에만 존재합니다.
+/// 값 타입이 아니지만 저장 상태가 없는 순수 계산이라 `nonisolated`로 선언해 어느 격리에서도 호출할 수 있습니다.
+nonisolated enum ScreenLockStateReader {
+    static let lockedKey = "CGSSessionScreenIsLocked"
+
+    /// 잠금 키가 Boolean `true`면 `locked`, `false`거나 키가 없으면 `unlocked`,
+    /// 사전이 `nil`이거나 잠금 키를 Boolean으로 해석할 수 없으면 `unknown`.
+    static func read(from sessionDictionary: [String: Any]?) -> ScreenLockState {
+        guard let sessionDictionary else {
+            return .unknown
+        }
+        guard let lockedValue = sessionDictionary[lockedKey] else {
+            return .unlocked
+        }
+        guard let locked = lockedValue as? Bool else {
+            return .unknown
+        }
+        return locked ? .locked : .unlocked
+    }
+
+    /// 세션 사전 값과 notification object를 같은 방식으로 비교하려면 둘 다 정수로 정규화해야 합니다.
+    /// object는 문자열, 세션 사전 값은 32-bit unsigned integer라 정규화 없이는 항상 불일치합니다.
+    static func normalizeSessionUserID(_ value: Any?) -> Int? {
+        if let number = value as? NSNumber {
+            return number.intValue
+        }
+        if let string = value as? String {
+            return Int(string)
+        }
+        return nil
+    }
+}
+
+/// macOS 26.5 전용 화면 잠금 관찰 어댑터.
+/// 문서화되지 않은 알림 이름(`com.apple.screenIsLocked`·`com.apple.screenIsUnlocked`)과
+/// 세션 사용자 ID 키(`kCGSSessionUserIDKey`)는 이 타입에만 존재합니다.
+/// `SystemLifecycleObserver`의 `readInitialScreenLockState`·`registerScreenLockObserver` 주입점에
+/// 이 어댑터가 만든 클로저를 연결하면 실제 macOS 화면 잠금·해제를 관찰합니다.
+/// DP9 채택안에 따라 세션 사전은 초기 조회에서 세션 사용자 ID를 캐시하는 데만 쓰고,
+/// 알림 처리 경로에서는 사전을 다시 읽지 않고 notification 이름을 그대로 신뢰합니다.
+final class ScreenLockObservationAdapter {
+    private static let lockedNotificationName = Notification.Name("com.apple.screenIsLocked")
+    private static let unlockedNotificationName = Notification.Name("com.apple.screenIsUnlocked")
+    private static let sessionUserIDKey = "kCGSSessionUserIDKey"
+
+    // 자동 테스트가 실제 distributed notification(시스템 전역에 배달됨)을 발생시키지 않도록,
+    // 타입은 production 기본값(`DistributedNotificationCenter.default()`)이 만족하는 `NotificationCenter`로
+    // 두고 테스트에서는 이 프로세스 안에서만 도는 일반 `NotificationCenter`를 주입합니다.
+    private let distributedNotificationCenter: NotificationCenter
+    private let readSessionDictionary: () -> [String: Any]?
+
+    /// 알림 callback이 도착하는 스레드에서도 안전하게 읽고 쓸 수 있어야 하므로
+    /// actor 격리 대신 lock으로 보호합니다.
+    private let cachedSessionUserIDLock = NSLock()
+    private var cachedSessionUserID: Int?
+
+    private var tokens: [NSObjectProtocol] = []
+
+    init(
+        distributedNotificationCenter: NotificationCenter = DistributedNotificationCenter.default(),
+        readSessionDictionary: @escaping () -> [String: Any]? = {
+            CGSessionCopyCurrentDictionary() as? [String: Any]
+        }
+    ) {
+        self.distributedNotificationCenter = distributedNotificationCenter
+        self.readSessionDictionary = readSessionDictionary
+    }
+
+    deinit {
+        for token in tokens {
+            distributedNotificationCenter.removeObserver(token)
+        }
+    }
+
+    /// 초기 잠금 상태를 조회하면서 이후 알림 처리에서 쓸 세션 사용자 ID를 함께 캐시합니다.
+    func readInitialScreenLockState() -> ScreenLockState {
+        let sessionDictionary = readSessionDictionary()
+        let sessionUserID = ScreenLockStateReader.normalizeSessionUserID(sessionDictionary?[Self.sessionUserIDKey])
+        cachedSessionUserIDLock.withLock { cachedSessionUserID = sessionUserID }
+        return ScreenLockStateReader.read(from: sessionDictionary)
+    }
+
+    /// 잠금·해제 distributed notification을 등록합니다.
+    /// object와 캐시한 세션 사용자 ID가 둘 다 정수로 해석되고 값이 다를 때만 다른 GUI 세션의 이벤트로 보고 무시합니다.
+    /// 그 밖의 모든 경우(값이 같거나 어느 한쪽이라도 정수로 해석되지 않으면) notification 이름을 그대로 적용합니다.
+    func registerScreenLockObserver(_ onChange: @escaping @Sendable (ScreenLockState) -> Void) {
+        let cachedSessionUserIDLock = cachedSessionUserIDLock
+        let readCachedSessionUserID: () -> Int? = { [weak self] in
+            guard let self else { return nil }
+            return cachedSessionUserIDLock.withLock { self.cachedSessionUserID }
+        }
+
+        let lockedToken = distributedNotificationCenter.addObserver(
+            forName: Self.lockedNotificationName,
+            object: nil,
+            queue: nil
+        ) { notification in
+            Self.handle(notification, candidate: .locked, readCachedSessionUserID: readCachedSessionUserID, onChange: onChange)
+        }
+        let unlockedToken = distributedNotificationCenter.addObserver(
+            forName: Self.unlockedNotificationName,
+            object: nil,
+            queue: nil
+        ) { notification in
+            Self.handle(notification, candidate: .unlocked, readCachedSessionUserID: readCachedSessionUserID, onChange: onChange)
+        }
+        tokens = [lockedToken, unlockedToken]
+    }
+
+    // 자동 테스트가 실제 알림 등록·배달 없이 판정 규칙만 직접 검증할 수 있도록 module 내부에 노출합니다.
+    static func handle(
+        _ notification: Notification,
+        candidate: ScreenLockState,
+        readCachedSessionUserID: () -> Int?,
+        onChange: @Sendable (ScreenLockState) -> Void
+    ) {
+        let objectUserID = ScreenLockStateReader.normalizeSessionUserID(notification.object)
+        let cachedSessionUserID = readCachedSessionUserID()
+        if let objectUserID, let cachedSessionUserID, objectUserID != cachedSessionUserID {
+            return // 다른 GUI 세션의 이벤트이므로 무시합니다.
+        }
+        onChange(candidate)
+    }
+}
+
 /// 저전력 모드와 화면 잠금을 하나의 관찰 지점에서 읽는 production 어댑터.
 /// 저전력은 `NSNotification.Name.NSProcessInfoPowerStateDidChange`로 변경을 관찰하고,
 /// 실제 값 조회는 `readLowPowerMode` 클로저로 주입받습니다(기본값은 `ProcessInfo.isLowPowerModeEnabled`).
@@ -165,6 +296,20 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
         }
 
         return SystemLifecycleSubscription(initial: initial, updates: updates)
+    }
+}
+
+extension SystemLifecycleObserver {
+    /// `ScreenLockObservationAdapter`를 실제 macOS 화면 잠금 신호에 연결한 production 인스턴스를 만듭니다.
+    /// 어댑터를 클로저 캡처로 계속 붙잡고 있어야 등록한 알림 관찰이 살아 있으므로,
+    /// 이 인스턴스가 살아있는 동안에만 실제 잠금·해제를 관찰합니다.
+    static func makeMacOSAdapter(notificationCenter: NotificationCenter = .default) -> SystemLifecycleObserver {
+        let screenLockAdapter = ScreenLockObservationAdapter()
+        return SystemLifecycleObserver(
+            notificationCenter: notificationCenter,
+            readInitialScreenLockState: { screenLockAdapter.readInitialScreenLockState() },
+            registerScreenLockObserver: { onChange in screenLockAdapter.registerScreenLockObserver(onChange) }
+        )
     }
 }
 

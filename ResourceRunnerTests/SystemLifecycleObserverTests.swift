@@ -392,3 +392,150 @@ struct MemorySystemLifecycleSourceTests {
         #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown))
     }
 }
+
+/// task-006 검증 조건: 「`ScreenLockStateReader`는 세션 사전을 주입받아 세 값을 반환합니다 —
+/// 잠금 키가 Boolean `true`면 `locked`, Boolean `false`이거나 잠금 키가 사전에 없으면 `unlocked`,
+/// 사전이 `nil`이거나 잠금 키를 Boolean으로 해석할 수 없으면 `unknown`」을 네 경우와 비Boolean 값으로 검증합니다.
+struct ScreenLockStateReaderTests {
+
+    @Test func lockedKeyTrueIsLocked() {
+        #expect(ScreenLockStateReader.read(from: ["CGSSessionScreenIsLocked": true]) == .locked)
+    }
+
+    @Test func lockedKeyFalseIsUnlocked() {
+        #expect(ScreenLockStateReader.read(from: ["CGSSessionScreenIsLocked": false]) == .unlocked)
+    }
+
+    @Test func missingLockedKeyIsUnlocked() {
+        #expect(ScreenLockStateReader.read(from: ["kCGSSessionUserIDKey": 501]) == .unlocked)
+    }
+
+    @Test func nilDictionaryIsUnknown() {
+        #expect(ScreenLockStateReader.read(from: nil) == .unknown)
+    }
+
+    @Test func nonBooleanLockedValueIsUnknown() {
+        #expect(ScreenLockStateReader.read(from: ["CGSSessionScreenIsLocked": "yes"]) == .unknown)
+    }
+
+    @Test func normalizesNumberAndStringToSameInt() {
+        #expect(ScreenLockStateReader.normalizeSessionUserID(NSNumber(value: 501)) == 501)
+        #expect(ScreenLockStateReader.normalizeSessionUserID("501") == 501)
+    }
+
+    @Test func normalizeReturnsNilForUnparseableValue() {
+        #expect(ScreenLockStateReader.normalizeSessionUserID(NSObject()) == nil)
+        #expect(ScreenLockStateReader.normalizeSessionUserID(nil) == nil)
+    }
+}
+
+/// task-006 검증 조건: 「알림 처리는 이름만으로 후보 값을 정하고, object와 캐시 UID가 둘 다 정수로
+/// 해석되며 값이 다를 때만 무시합니다. 어느 한쪽이라도 정수로 해석되지 않으면 알림 이름을 그대로 적용합니다」와
+/// 「알림을 받은 뒤 세션 사전을 다시 읽는 경로는 존재하지 않습니다」를 UID 일치·불일치·해석 실패
+/// 조합으로 검증합니다. `ScreenLockObservationAdapter.handle`을 직접 호출해 실제 distributed
+/// notification 배달 없이 판정 규칙만 검증합니다(시스템 전역 알림을 발생시키지 않기 위함).
+struct ScreenLockObservationAdapterHandleTests {
+
+    @Test func matchingUserIDAppliesCandidate() {
+        var applied: [ScreenLockState] = []
+        ScreenLockObservationAdapter.handle(
+            Notification(name: .init("x"), object: "501"),
+            candidate: .locked,
+            readCachedSessionUserID: { 501 },
+            onChange: { applied.append($0) }
+        )
+        #expect(applied == [.locked])
+    }
+
+    @Test func mismatchingUserIDIsIgnored() {
+        var applied: [ScreenLockState] = []
+        ScreenLockObservationAdapter.handle(
+            Notification(name: .init("x"), object: "999"),
+            candidate: .unlocked,
+            readCachedSessionUserID: { 501 },
+            onChange: { applied.append($0) }
+        )
+        #expect(applied.isEmpty)
+    }
+
+    @Test func unparseableObjectAppliesCandidateDespiteCachedUserID() {
+        var applied: [ScreenLockState] = []
+        ScreenLockObservationAdapter.handle(
+            Notification(name: .init("x"), object: NSObject()),
+            candidate: .unlocked,
+            readCachedSessionUserID: { 501 },
+            onChange: { applied.append($0) }
+        )
+        #expect(applied == [.unlocked])
+    }
+
+    @Test func missingCachedUserIDAppliesCandidateDespiteParsableObject() {
+        var applied: [ScreenLockState] = []
+        ScreenLockObservationAdapter.handle(
+            Notification(name: .init("x"), object: "501"),
+            candidate: .unlocked,
+            readCachedSessionUserID: { nil },
+            onChange: { applied.append($0) }
+        )
+        #expect(applied == [.unlocked])
+    }
+
+    /// DP9 검증: 해제 알림이 사전 값(또는 그로 인한 판단) 때문에 폐기되지 않아야 합니다.
+    /// `handle`이 세션 사전을 전혀 참조하지 않고 candidate를 그대로 적용하는 것으로 이를 보장합니다.
+    @Test func unlockCandidateIsNeverDiscardedWhenUserIDsMatch() {
+        var applied: [ScreenLockState] = []
+        ScreenLockObservationAdapter.handle(
+            Notification(name: .init("x"), object: "501"),
+            candidate: .unlocked,
+            readCachedSessionUserID: { 501 },
+            onChange: { applied.append($0) }
+        )
+        #expect(applied == [.unlocked])
+    }
+}
+
+/// task-006 검증 조건: 실제 알림 등록·초기 조회 전체 경로(`readInitialScreenLockState`·
+/// `registerScreenLockObserver`)를 일반 `NotificationCenter`로 주입해 검증합니다.
+/// production 기본값(`DistributedNotificationCenter.default()`)은 시스템 전역에 알림을 배달하므로
+/// 테스트에서는 쓰지 않고, 주입 가능한 `NotificationCenter` 하나로 등록·배달을 직접 통제합니다.
+@MainActor
+struct ScreenLockObservationAdapterIntegrationTests {
+
+    @Test func readInitialScreenLockStateCachesUserIDForLaterNotificationHandling() {
+        let notificationCenter = NotificationCenter()
+        let adapter = ScreenLockObservationAdapter(
+            distributedNotificationCenter: notificationCenter,
+            readSessionDictionary: { ["kCGSSessionUserIDKey": 501, "CGSSessionScreenIsLocked": true] }
+        )
+
+        #expect(adapter.readInitialScreenLockState() == .locked)
+
+        var applied: [ScreenLockState] = []
+        adapter.registerScreenLockObserver { applied.append($0) }
+
+        // 다른 세션(999)의 해제 알림은 무시되어야 합니다.
+        notificationCenter.post(name: .init("com.apple.screenIsUnlocked"), object: "999")
+        #expect(applied.isEmpty)
+
+        // 같은 세션(501)의 해제 알림은 세션 사전을 다시 읽지 않고 그대로 적용되어야 합니다.
+        notificationCenter.post(name: .init("com.apple.screenIsUnlocked"), object: "501")
+        #expect(applied == [.unlocked])
+    }
+
+    @Test func registeredObserverAppliesLockedAndUnlockedNotificationNamesRespectively() {
+        let notificationCenter = NotificationCenter()
+        let adapter = ScreenLockObservationAdapter(
+            distributedNotificationCenter: notificationCenter,
+            readSessionDictionary: { nil }
+        )
+        _ = adapter.readInitialScreenLockState()
+
+        var applied: [ScreenLockState] = []
+        adapter.registerScreenLockObserver { applied.append($0) }
+
+        notificationCenter.post(name: .init("com.apple.screenIsLocked"), object: nil)
+        notificationCenter.post(name: .init("com.apple.screenIsUnlocked"), object: nil)
+
+        #expect(applied == [.locked, .unlocked])
+    }
+}

@@ -349,10 +349,9 @@ App Memory·Compressed·Swap처럼 값 자체가 정의된 지표를 사용합�
 
 ### 프로세스 Memory
 
-- 가능한 경우 Physical Footprint
-- Resident Memory 보조 정보
-- App Sandbox를 유지하면 Physical Footprint를 얻을 수 없으므로 Resident Memory가 주 지표가 됩니다.
-  이 경우 Activity Monitor의 메모리 값과 절대값이 달라지므로 표시 기준을 별도로 정합니다.
+- Resident Memory. App Sandbox를 유지하기로 확정했으므로 Physical Footprint를 얻을 수 없고
+  Resident Memory가 주 지표입니다. Activity Monitor의 메모리 값과 절대값이 달라지므로
+  표시 기준을 별도로 정합니다.
 - 앱 단위 메모리 합산
 - 현재 사용량 TOP 5
 - 최근 1분·10분 증가량

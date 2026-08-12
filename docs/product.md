@@ -181,10 +181,13 @@ macOS 메모리는 단순 사용률보다 Memory Pressure와 Swap 상태를 중�
 - Cached Files
 - Swap Used
 - 최근 Swap 증가량
-- 프로세스별 Physical Footprint
-- 가능한 경우 Resident Memory 보조 정보
+- 프로세스별 Resident Memory
 - 현재 메모리 사용량 순위
 - 최근 1분·10분 메모리 증가량 순위
+
+프로세스 메모리는 Resident Memory를 기준으로 합니다.
+App Sandbox를 유지하기로 확정해 프로세스별 Physical Footprint를 얻을 수 없으며,
+그래서 Activity Monitor가 보여주는 메모리 값과 절대값이 다를 수 있습니다.
 
 현재 메모리를 많이 사용하는 앱과 최근 빠르게 증가한 앱을 구분합니다.
 

@@ -29,20 +29,32 @@ M2는 아직 시작하지 않았습니다.
 - 캐릭터 자산 제작과 애니메이션은 M2에서 실제 부하 값과 함께 다룹니다.
 - App Sandbox 접근 범위는 실측을 마쳤습니다. 결과는 [docs/design.md](./docs/design.md) §권한과 배포에 있습니다.
 
+M2 SPEC 작성 전에 2026-08-12에 확정한 항목입니다.
+
+- App Sandbox를 유지합니다. 포기하는 것은 프로세스별 Physical Footprint 하나이고,
+  Mac App Store 배포 가능성을 열어 둡니다.
+  root 소유 프로세스를 읽지 못하는 제약은 Sandbox와 무관하므로 이 결정으로 달라지지 않습니다.
+- 프로세스 CPU 사용률은 코어를 합산하는 Activity Monitor 관례를 따릅니다.
+  M5 정확성 검증이 Activity Monitor와 비교하므로 같은 단위를 씁니다.
+- Memory Pressure는 문서화된 3단계 신호를 그대로 사용합니다.
+  `DispatchSource.makeMemoryPressureSource`와 `kern.memorystatus_vm_pressure_level`로
+  정상·경고·위험을 얻을 수 있음을 2026-08-12 probe로 확인했습니다.
+  Activity Monitor의 연속 압력 곡선은 계산식이 공개돼 있지 않으므로 따라 그리지 않습니다.
+- 최근 그래프는 샘플의 실제 시각을 기준으로 그리고, 수집하지 않은 구간은 비워 둡니다.
+  "존재하지 않는 과거를 현재값으로 채우지 않는다"는 기존 버퍼 원칙과 같은 방향입니다.
+- 공백을 정직하게 표현하므로 디스플레이 슬립과 빠른 사용자 전환에서도 수집을 중지합니다.
+  둘 다 공개 알림이 있어 화면 잠금 어댑터와 달리 문서화되지 않은 신호에 기대지 않습니다.
+  시스템 슬립 복귀는 성격이 달라 복귀 첫 샘플을 변화량 기준점으로만 쓰는 문제로 남습니다.
+
 ## 미확정 판단
 
-- CPU 정규화 단위와 Memory Pressure의 공개 정보 사용 방식. [docs/design.md](./docs/design.md) §미확정 기술 결정
-- App Sandbox 유지 여부와 직접 배포 기준. 접근 범위 실측은 끝났고 결정만 남았습니다. [docs/design.md](./docs/design.md) §미확정 기술 결정
-- 수집이 중지됐다 재개된 구간을 최근 그래프에서 어떻게 보여줄 것인가.
-  버퍼가 시간 기준으로 축출하지 않아 범위를 벗어난 샘플이 남습니다. [docs/design.md](./docs/design.md) §최근 데이터 순환 버퍼
-- 디스플레이 슬립·빠른 사용자 전환·시스템 슬립 복귀를 생명주기 입력으로 다룰지와 그 시점.
-  세 상태 모두 공개 알림이 있으며, 앞의 둘은 화면 잠금과 같은 처리가 자연스럽지만 위 그래프 공백 표현과 함께 정해야 합니다. [docs/design.md](./docs/design.md) §생명주기 반영
+없음.
 
 ## 다음 작업
 
-- 작업: 위 미확정 판단 넷을 사용자와 정리한 뒤 `/spec-init core-resource-monitoring`을 실행합니다.
+- 작업: `/spec-init core-resource-monitoring`을 실행합니다.
 - 완료 기준: `features/<yyyyMMdd>-<nnn>-core-resource-monitoring/spec.md`와 `README.md`가 생성되고,
-  정리한 판단이 spec.md의 범위·제약·제외 범위·완료 조건 본문에 반영돼 있습니다.
+  위 확정된 결정이 spec.md의 범위·제약·제외 범위·완료 조건 본문에 자체 완결적으로 반영돼 있습니다.
 
 ## 먼저 읽을 문서
 
@@ -53,4 +65,4 @@ M2는 아직 시작하지 않았습니다.
 
 ## 문서 반영 필요
 
-없음.
+없음. 확정된 결정은 모두 [docs/design.md](./docs/design.md)에 반영했습니다.

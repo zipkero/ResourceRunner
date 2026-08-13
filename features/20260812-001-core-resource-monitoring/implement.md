@@ -4,7 +4,7 @@
 
 ## Section: 시스템 지표 수집과 일정
 
-- [ ] task-001: CPU·Memory 시스템 지표 한 tick 수집
+- [x] task-001: CPU·Memory 시스템 지표 한 tick 수집
   - 목적: 한 번의 수집으로 전체 CPU 사용률, User·System·Idle 비율, 논리 코어별 사용률, Load Average,
     전체 물리 메모리, 사용 중 메모리, App·Wired·Compressed·Cached, Swap 사용량, Memory Pressure 단계가
     같은 시각에 묶인 결과 하나로 나오고,
@@ -38,7 +38,7 @@
   - 참조: SPEC §5.1, SPEC §5.10, ANALYSIS §1 「수집 경계」, ANALYSIS §2 「시스템 지표 tick」,
     ANALYSIS §3 「수집 계약」, ANALYSIS §5 DP2, ANALYSIS §5 DP9, ANALYSIS §5 DP11
 
-- [ ] task-002: 주기 변경에서 살아남는 최근 10분 이력
+- [x] task-002: 주기 변경에서 살아남는 최근 10분 이력
   - 목적: 팝오버 열림·닫힘이나 저전력 모드로 수집 주기가 바뀌어도 이미 쌓인 최근 10분 이력이 사라지지 않고,
     사용률을 만들지 못한 tick은 이력에 남지 않으며,
     표시로 넘어가는 구간이 최신 샘플 시각 기준 10분 창으로 한정됩니다.
@@ -46,6 +46,9 @@
     링 용량을 이 feature가 쓸 수 있는 가장 짧은 주기 기준으로 고정해 resize 경로를 제거합니다.
     저장소는 `MonitoringSampleSink` 계약을 구현하고 `MonitoringScheduler`는 저장 대상을 구체 타입 대신 이 계약으로 받습니다.
     표시용 값을 내보낼 때 최신 샘플 시각에서 10분을 뺀 시점 이후의 항목만 선별합니다.
+    저장소가 `SystemMetricsSample` 전용이 되면서 자리표시 source와 타입이 맞지 않으므로
+    코디네이터 배선을 실제 시스템 지표 source로 바꾸고, `MonitoringSampleSink` 제네릭 파라미터는
+    Scheduler를 보유하는 타입까지 전파됩니다. 자리표시 심볼 제거는 task-014에 남깁니다.
   - 검증 조건:
     - 결과: 수집 주기가 1초에서 2초, 5초로 바뀌어도 링 용량이 그대로이고 이미 담긴 항목의 값과 순서가 변하지 않습니다.
       CPU 사용률과 Swap 값이 모두 있는 tick만 링에 추가되고, 사용률을 만들지 못한 tick은 링에 들어가지 않아
@@ -65,7 +68,7 @@
   - 참조: SPEC §5.1, SPEC §5.11, ANALYSIS §1 「이력 경계」, ANALYSIS §2 「시스템 지표 tick」,
     ANALYSIS §4 「기존 코드」, ANALYSIS §5 DP1, ANALYSIS §5 DP3
 
-- [ ] task-003: 두 수집 축의 일정과 화면을 볼 수 없는 상태
+- [x] task-003: 두 수집 축의 일정과 화면을 볼 수 없는 상태
   - 목적: 팝오버 열림·닫힘과 저전력 모드에 따라 시스템 지표와 프로세스 조사의 주기가 각각 정해진 값으로 바뀌고,
     화면 잠금·디스플레이 슬립·빠른 사용자 전환 중 하나라도 성립하면 두 수집이 모두 멈춰 새 샘플이 쌓이지 않습니다.
   - 접근: `SystemLifecycleSnapshot`과 `SystemLifecycleFieldChange`에 디스플레이 슬립과 세션 활성 필드를 더하고,

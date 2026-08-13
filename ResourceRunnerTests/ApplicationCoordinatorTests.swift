@@ -30,10 +30,19 @@ struct ApplicationCoordinatorTests {
     /// Scheduler가 시작(첫 apply)되어야 합니다.
     @Test func startMonitoringAppliesInitialSnapshotWithoutAnyFurtherStreamUpdate() async {
         let clock = ManualMonotonicClock()
-        let sampleStore = MonitoringSampleStore<Int>(timeRange: .seconds(600), samplingInterval: .seconds(1))
+        let sink = MemorySampleSink<Int>()
         let source = MemoryScheduledSampleSource(outcomes: [])
-        let scheduler = MonitoringScheduler(clock: clock, source: source, sampleStore: sampleStore)
-        let store = MonitoringLifecycleStore(definition: .m1, scheduler: scheduler)
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
+        let processScheduler = MonitoringScheduler(
+            clock: clock,
+            source: MemoryScheduledSampleSource(outcomes: []),
+            sink: MemorySampleSink<Int>()
+        )
+        let store = MonitoringLifecycleStore(
+            definition: .m2,
+            systemMetricsTarget: scheduler,
+            processSurveyTarget: processScheduler
+        )
 
         // 이후 어떤 send도 호출하지 않는 순수 initial-only 소스입니다.
         let lifecycleSource = MemorySystemLifecycleSource(initialLowPowerMode: false, initialScreenLockState: .unlocked)
@@ -52,10 +61,19 @@ struct ApplicationCoordinatorTests {
     /// 이후 도착하는 update가 초기 적용 위에 순서대로 반영되는지 함께 확인합니다.
     @Test func startMonitoringAppliesInitialThenForwardsSubsequentUpdatesInOrder() async {
         let clock = ManualMonotonicClock()
-        let sampleStore = MonitoringSampleStore<Int>(timeRange: .seconds(600), samplingInterval: .seconds(1))
+        let sink = MemorySampleSink<Int>()
         let source = MemoryScheduledSampleSource(outcomes: [])
-        let scheduler = MonitoringScheduler(clock: clock, source: source, sampleStore: sampleStore)
-        let store = MonitoringLifecycleStore(definition: .m1, scheduler: scheduler)
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
+        let processScheduler = MonitoringScheduler(
+            clock: clock,
+            source: MemoryScheduledSampleSource(outcomes: []),
+            sink: MemorySampleSink<Int>()
+        )
+        let store = MonitoringLifecycleStore(
+            definition: .m2,
+            systemMetricsTarget: scheduler,
+            processSurveyTarget: processScheduler
+        )
 
         let lifecycleSource = MemorySystemLifecycleSource(initialLowPowerMode: false, initialScreenLockState: .locked)
 
@@ -76,12 +94,27 @@ struct ApplicationCoordinatorTests {
     /// 일정이 실제로 바뀌는지 확인합니다.
     @Test func forwardPopoverPresentedChangesAppliedSchedule() async {
         let clock = ManualMonotonicClock()
-        let sampleStore = MonitoringSampleStore<Int>(timeRange: .seconds(600), samplingInterval: .seconds(1))
+        let sink = MemorySampleSink<Int>()
         let source = MemoryScheduledSampleSource(outcomes: [])
-        let scheduler = MonitoringScheduler(clock: clock, source: source, sampleStore: sampleStore)
-        let store = MonitoringLifecycleStore(definition: .m1, scheduler: scheduler)
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
+        let processScheduler = MonitoringScheduler(
+            clock: clock,
+            source: MemoryScheduledSampleSource(outcomes: []),
+            sink: MemorySampleSink<Int>()
+        )
+        let store = MonitoringLifecycleStore(
+            definition: .m2,
+            systemMetricsTarget: scheduler,
+            processSurveyTarget: processScheduler
+        )
 
-        await store.update(.systemSnapshot(SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked)))
+        await store.update(.systemSnapshot(SystemLifecycleSnapshot(
+            revision: 0,
+            lowPowerMode: false,
+            screenLockState: .unlocked,
+            displayAsleep: false,
+            sessionActive: true
+        )))
         #expect(await scheduler.applyCallCount == 1) // normal 닫힘 2초로 시작
 
         await ApplicationCoordinator.forwardPopoverPresented(true, to: store)

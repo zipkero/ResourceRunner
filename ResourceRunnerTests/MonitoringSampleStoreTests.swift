@@ -5,12 +5,11 @@
 //  Created by zipkero on 8/10/26.
 //
 
+import Foundation
 import Testing
 @testable import ResourceRunner
 
-/// task-008 검증 조건: 10분 × 1·2·5초의 600·300·120 용량, 나누어떨어지지 않는 주기의 올림,
-/// 용량 경계 직전·직후·연속 초과 append, wrap-around 전후 순서,
-/// 축소·확대 resize의 최신 항목 보존과 빈 공간 미충전, 빈 버퍼와 첫 샘플을 검증합니다.
+/// 10분 × 1·2·5초의 600·300·120 용량, 나누어떨어지지 않는 주기의 올림, 결과 하한을 검증합니다.
 struct HistoryCapacityTests {
 
     @Test(arguments: [
@@ -119,106 +118,234 @@ struct CircularBufferTests {
 
         #expect(buffer.elements == [2, 3, 4, 5])
     }
+}
 
-    @Test func shrinkingResizeKeepsOnlyTheNewestElements() {
-        var buffer = CircularBuffer<Int>(capacity: 5)
-        for value in 1...5 {
-            buffer.append(value)
-        }
+// MARK: - 테스트용 샘플 조립
 
-        let resized = buffer.resized(to: 2)
+/// 전체 사용률만 의미 있게 두고 나머지는 이력 링과 무관한 자리를 채우는 CPU 지표.
+private func cpuMetrics(overallUsage: Double) -> CPUSystemMetrics {
+    CPUSystemMetrics(
+        overallUsage: overallUsage,
+        userRatio: overallUsage,
+        systemRatio: 0,
+        idleRatio: 100 - overallUsage,
+        coreUsages: [overallUsage],
+        loadAverage: LoadAverage(oneMinute: 0, fiveMinutes: 0, fifteenMinutes: 0)
+    )
+}
 
-        #expect(resized.elements == [4, 5])
-        #expect(resized.capacity == 2)
-    }
+/// Swap 사용 바이트만 의미 있게 두는 Memory 지표.
+private func memoryMetrics(swapUsedBytes: UInt64) -> MemorySystemMetrics {
+    MemorySystemMetrics(
+        totalPhysicalBytes: 16 * 1024 * 1024 * 1024,
+        usedBytes: 8 * 1024 * 1024 * 1024,
+        appBytes: 4 * 1024 * 1024 * 1024,
+        wiredBytes: 2 * 1024 * 1024 * 1024,
+        compressedBytes: 2 * 1024 * 1024 * 1024,
+        cachedBytes: 1024 * 1024 * 1024,
+        swapUsedBytes: swapUsedBytes,
+        pressureLevel: .normal
+    )
+}
 
-    @Test func growingResizeDoesNotFillNewSpace() {
-        var buffer = CircularBuffer<Int>(capacity: 2)
-        buffer.append(1)
-        buffer.append(2)
+/// 두 지표가 모두 성공한 tick. `cpuUsage`가 `nil`이면 값 없이 기준점만 갱신한 tick입니다.
+private func sample(
+    at timestamp: ContinuousClock.Instant,
+    cpuUsage: Double?,
+    swapUsedBytes: UInt64 = 0
+) -> TimestampedSample<SystemMetricsSample> {
+    TimestampedSample(
+        timestamp: timestamp,
+        value: SystemMetricsSample(
+            cpu: .success(cpuUsage.map(cpuMetrics(overallUsage:))),
+            memory: .success(memoryMetrics(swapUsedBytes: swapUsedBytes))
+        )
+    )
+}
 
-        let resized = buffer.resized(to: 5)
+private let cpuFailure = CollectorFailure(metric: .cpu, cause: .systemCall(name: "host_processor_info", code: 5))
+private let memoryFailure = CollectorFailure(metric: .memory, cause: .systemCall(name: "host_statistics64", code: 5))
 
-        #expect(resized.elements == [1, 2])
-        #expect(resized.count == 2)
-        #expect(resized.capacity == 5)
-    }
-
-    @Test func growingResizeAllowsFurtherAppendsWithoutPrematureEviction() {
-        var buffer = CircularBuffer<Int>(capacity: 2)
-        buffer.append(1)
-        buffer.append(2)
-
-        var resized = buffer.resized(to: 4)
-        resized.append(3)
-        resized.append(4)
-
-        #expect(resized.elements == [1, 2, 3, 4])
+/// 값을 만들지 않는 최소 시스템 지표 source.
+/// 주기 변경(`apply(_:)`)이 저장소의 이력에 손대지 않는지만 관찰하므로 샘플을 공급할 필요가 없습니다.
+nonisolated private struct SilentSystemMetricsSampleSource: ScheduledSampleSource {
+    func sample() async throws -> SystemMetricsSample {
+        throw CancellationError()
     }
 }
 
+// MARK: - MonitoringSampleStore
+
+/// task-002 검증 조건: 주기 변경에서의 이력 보존, 값 없는 tick의 링 미추가, 10분 창 선별,
+/// 용량 초과 시 가장 오래된 항목만 교체, 긴 중지 뒤 표시용 값이 빈 목록이 되는 것,
+/// stream이 최신 조합 하나만 보존하는 것을 검증합니다.
 struct MonitoringSampleStoreTests {
 
-    @Test func appendingFirstSampleMakesItTheOnlySnapshotEntry() async {
-        let store = MonitoringSampleStore<Int>(samplingInterval: .seconds(1))
-        let clock = ContinuousClock()
-        let sample = TimestampedSample(timestamp: clock.now, value: 42)
+    /// 이 테스트가 고정하는 것은 M1의 resize 회귀입니다 —
+    /// 1초 주기로 이력을 채운 뒤 주기를 2초·5초로 바꿔도 저장된 값 배열 전체가 그대로여야 합니다.
+    /// 용량을 유효 주기로 재계산하도록 되돌리면(2초 -> 300, 5초 -> 120) 400개 중 일부가 사라져 이 테스트가 실패합니다.
+    @Test func historySurvivesSamplingIntervalChanges() async {
+        let store = MonitoringSampleStore()
+        let clock = ManualMonotonicClock()
+        let scheduler = MonitoringScheduler(
+            clock: clock,
+            source: SilentSystemMetricsSampleSource(),
+            sink: store
+        )
+        let base = ContinuousClock().now
 
-        await store.append(sample)
-        let snapshot = await store.snapshot()
+        // 1초 주기로 400개를 채웁니다. 용량 600(10분 / 1초)이라 아직 축출은 일어나지 않습니다.
+        for index in 0..<400 {
+            await store.append(sample(at: base.advanced(by: .seconds(index)), cpuUsage: Double(index % 100)))
+        }
+        let beforeChange = await store.snapshot().recentHistory
+        #expect(beforeChange.count == 400)
 
-        #expect(snapshot.map(\.value) == [42])
+        // 팝오버 닫힘·저전력 모드에 해당하는 주기 변경을 실제 `apply(_:)` 경로로 통과시킵니다.
+        await scheduler.apply(.running(.seconds(2)))
+        await scheduler.apply(.running(.seconds(5)))
+        await scheduler.apply(.paused)
+
+        let afterChange = await store.snapshot().recentHistory
+        #expect(afterChange == beforeChange)
     }
 
-    @Test func emptyStoreReturnsEmptySnapshot() async {
-        let store = MonitoringSampleStore<Int>(samplingInterval: .seconds(1))
+    /// 전체 CPU 사용률과 Swap 값이 모두 있는 tick만 링에 들어가고, 그렇지 않은 tick의 시각은 이력에서 비어 있습니다.
+    /// 최신 스냅샷은 그런 tick에서도 교체됩니다.
+    @Test func onlyTicksWithBothCPUUsageAndSwapEnterHistory() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
 
-        let snapshot = await store.snapshot()
+        await store.append(sample(at: base, cpuUsage: 10, swapUsedBytes: 100))
+        // 값 없이 기준점만 갱신한 tick
+        await store.append(sample(at: base.advanced(by: .seconds(1)), cpuUsage: nil))
+        // CPU 조회 실패
+        await store.append(TimestampedSample(
+            timestamp: base.advanced(by: .seconds(2)),
+            value: SystemMetricsSample(cpu: .failure(cpuFailure), memory: .success(memoryMetrics(swapUsedBytes: 100)))
+        ))
+        // Memory 조회 실패 -> Swap 값이 없으므로 이력 항목을 만들 수 없습니다.
+        await store.append(TimestampedSample(
+            timestamp: base.advanced(by: .seconds(3)),
+            value: SystemMetricsSample(cpu: .success(cpuMetrics(overallUsage: 20)), memory: .failure(memoryFailure))
+        ))
+        await store.append(sample(at: base.advanced(by: .seconds(4)), cpuUsage: 30, swapUsedBytes: 300))
 
-        #expect(snapshot.isEmpty)
+        let displayValue = await store.snapshot()
+
+        #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [10, 30])
+        #expect(displayValue.recentHistory.map(\.swapUsedBytes) == [100, 300])
+        // 값이 빠진 세 tick의 시각은 이력에 없습니다.
+        #expect(displayValue.recentHistory.map(\.timestamp) == [base, base.advanced(by: .seconds(4))])
+        // 최신 스냅샷은 매 tick 교체되므로 마지막 tick을 담고 있습니다.
+        #expect(displayValue.latest?.timestamp == base.advanced(by: .seconds(4)))
     }
 
-    @Test func snapshotOrdersOldestFirstAfterOverflow() async {
-        // 10분 / 5초 = 120 용량이지만 여기서는 작은 주기로 빠르게 경계를 넘기기 위해
-        // 시간 범위를 직접 좁혀 용량 3으로 만듭니다.
-        let store = MonitoringSampleStore<Int>(timeRange: .seconds(3), samplingInterval: .seconds(1))
-        let clock = ContinuousClock()
+    /// 최신 스냅샷은 이력에 들어가지 못한 tick으로도 교체되고, 코어별 사용률처럼 현재값만 필요한 지표를 담습니다.
+    @Test func latestSnapshotIsReplacedEvenByTicksWithoutHistoryEntry() async throws {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
 
-        for value in 1...5 {
-            await store.append(TimestampedSample(timestamp: clock.now, value: value))
+        await store.append(sample(at: base, cpuUsage: 10))
+        await store.append(TimestampedSample(
+            timestamp: base.advanced(by: .seconds(1)),
+            value: SystemMetricsSample(cpu: .failure(cpuFailure), memory: .success(memoryMetrics(swapUsedBytes: 0)))
+        ))
+
+        let displayValue = await store.snapshot()
+
+        #expect(displayValue.latest?.timestamp == base.advanced(by: .seconds(1)))
+        #expect(displayValue.latest?.value.cpu == .failure(cpuFailure))
+        // 실패한 tick이 직전 성공값을 이력에 한 번 더 넣지 않습니다.
+        #expect(displayValue.recentHistory.count == 1)
+        // 이력 링에 담지 않는 현재값 지표(Memory 세부 구성)는 최신 스냅샷 쪽에 그대로 남습니다.
+        #expect(try displayValue.latest?.value.memory.get().appBytes == 4 * 1024 * 1024 * 1024)
+    }
+
+    /// 표시용 값은 최신 샘플 시각에서 10분을 뺀 시점 이후의 항목만 담습니다.
+    /// 창 경계 직전 항목은 빠지고 경계 항목과 그 이후 항목은 남습니다.
+    @Test func displayValueSelectsOnlyTheTenMinuteWindowFromLatestSampleTime() async {
+        let store = MonitoringSampleStore()
+        let latestInstant = ContinuousClock().now
+        // 링 용량은 600이므로 아래 네 항목은 개수로는 축출되지 않습니다. 창 선별만 관찰합니다.
+        let outsideWindow = latestInstant.advanced(by: .seconds(-601))
+        let onWindowBoundary = latestInstant.advanced(by: .seconds(-600))
+        let insideWindow = latestInstant.advanced(by: .seconds(-599))
+
+        await store.append(sample(at: outsideWindow, cpuUsage: 1))
+        await store.append(sample(at: onWindowBoundary, cpuUsage: 2))
+        await store.append(sample(at: insideWindow, cpuUsage: 3))
+        await store.append(sample(at: latestInstant, cpuUsage: 4))
+
+        let displayValue = await store.snapshot()
+
+        #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [2, 3, 4])
+    }
+
+    /// 링 용량(10분 / 1초 = 600)을 넘으면 가장 오래된 항목 하나만 교체됩니다.
+    /// 개수 축출만 관찰하려면 601개가 모두 10분 창 안에 있어야 하므로 0.5초 간격으로 채웁니다.
+    @Test func exceedingCapacityReplacesOnlyTheOldestEntry() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+
+        for index in 0...600 {
+            await store.append(
+                sample(at: base.advanced(by: .milliseconds(500 * index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
+            )
         }
 
-        let snapshot = await store.snapshot()
+        let history = await store.snapshot().recentHistory
 
-        #expect(snapshot.map(\.value) == [3, 4, 5])
+        #expect(history.count == 600)
+        // 첫 항목(swap 0)만 밀려나고 두 번째 항목부터 순서대로 남습니다.
+        #expect(history.first?.swapUsedBytes == 1)
+        #expect(history.last?.swapUsedBytes == 600)
     }
 
-    @Test func resizeToShorterIntervalKeepsOnlyNewestSamples() async {
-        let store = MonitoringSampleStore<Int>(timeRange: .seconds(5), samplingInterval: .seconds(1))
-        let clock = ContinuousClock()
+    /// 1시간 중지를 시각으로 재현합니다.
+    /// 재개 첫 tick은 간격이 허용 범위를 넘어 값 없이 기준점만 갱신하므로 링에 들어가지 않고,
+    /// 중지 전 항목은 링에 남아 있어도 최신 샘플 시각 기준 10분 창 밖이라 표시용 값에서 빠집니다.
+    @Test func displayValueIsEmptyAfterAnHourLongStop() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
 
-        for value in 1...5 {
-            await store.append(TimestampedSample(timestamp: clock.now, value: value))
+        for index in 0..<10 {
+            await store.append(sample(at: base.advanced(by: .seconds(index)), cpuUsage: Double(index)))
         }
+        #expect(await store.snapshot().recentHistory.count == 10)
 
-        // 용량 5 -> 시간 범위를 그대로 두고 주기를 5초로 늘리면 용량은 1로 줄어듭니다.
-        await store.resize(samplingInterval: .seconds(5))
-        let snapshot = await store.snapshot()
+        let resumeInstant = base.advanced(by: .seconds(3600))
+        await store.append(sample(at: resumeInstant, cpuUsage: nil))
 
-        #expect(snapshot.map(\.value) == [5])
+        let displayValue = await store.snapshot()
+
+        #expect(displayValue.recentHistory.isEmpty)
+        #expect(displayValue.latest?.timestamp == resumeInstant)
     }
 
-    @Test func resizeToLargerCapacityDoesNotFabricatePastData() async {
-        let store = MonitoringSampleStore<Int>(timeRange: .seconds(2), samplingInterval: .seconds(1))
-        let clock = ContinuousClock()
+    @Test func emptyStoreHasNoLatestSnapshotAndNoHistory() async {
+        let store = MonitoringSampleStore()
 
-        await store.append(TimestampedSample(timestamp: clock.now, value: 1))
-        await store.append(TimestampedSample(timestamp: clock.now, value: 2))
+        let displayValue = await store.snapshot()
 
-        // 시간 범위를 늘려 용량을 키웁니다. 기존 두 샘플만 남아야 하며 빈 자리를 채우지 않습니다.
-        await store.resize(samplingInterval: .seconds(1), timeRange: .seconds(10))
-        let snapshot = await store.snapshot()
+        #expect(displayValue.latest == nil)
+        #expect(displayValue.recentHistory.isEmpty)
+    }
 
-        #expect(snapshot.map(\.value) == [1, 2])
+    /// stream은 최신 조합 하나만 보존하므로 소비가 밀려도 오래된 조합이 쌓이지 않습니다.
+    /// 세 tick을 먼저 넣은 뒤 처음 받는 값이 마지막 tick의 조합이어야 합니다.
+    @Test func displayValueStreamKeepsOnlyTheNewestCombination() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+        var iterator = store.displayValues.makeAsyncIterator()
+
+        await store.append(sample(at: base, cpuUsage: 10))
+        await store.append(sample(at: base.advanced(by: .seconds(1)), cpuUsage: 20))
+        await store.append(sample(at: base.advanced(by: .seconds(2)), cpuUsage: 30))
+
+        let received = await iterator.next()
+
+        #expect(received?.latest?.timestamp == base.advanced(by: .seconds(2)))
+        #expect(received?.recentHistory.map(\.overallCPUUsage) == [10, 20, 30])
     }
 }

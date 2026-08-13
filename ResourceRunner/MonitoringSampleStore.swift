@@ -9,8 +9,7 @@ import Foundation
 import OSLog
 
 #if DEBUG
-/// `MonitoringSampleStore`가 제네릭 actor라 정적 저장 속성을 직접 가질 수 없으므로 분리해 둡니다.
-/// task-011 관찰 수단(누적 샘플 수·버퍼 용량)이며 task-010의 실제 잠금·해제 관찰에서도 재사용합니다.
+/// 실기기 중지·재개 관찰에서 이력 링의 누적 개수와 고정 용량을 읽기 위한 로그 경계.
 /// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
 /// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
 enum MonitoringSampleStoreDebugLog {
@@ -18,20 +17,26 @@ enum MonitoringSampleStoreDebugLog {
 }
 #endif
 
-/// 단조 증가 시각과 값을 묶는 M1 최근 샘플.
+/// 단조 증가 시각과 값을 묶는 한 tick의 수집 결과.
 /// 값 타입은 어느 격리에서도 전달할 수 있어야 하므로 `nonisolated`로 선언합니다.
 nonisolated struct TimestampedSample<Value: Sendable>: Sendable {
     let timestamp: ContinuousClock.Instant
     let value: Value
 }
 
-/// 시간 범위와 유효 수집 주기에서 양의 고정 용량을 계산하는 순수 정책.
-/// M1의 그래프 시간 범위는 `docs/product.md`가 정한 최근 10분을 기본값으로 둡니다.
+/// 시간 범위와 수집 주기에서 양의 고정 용량을 계산하는 순수 정책.
+/// 그래프 시간 범위는 `docs/product.md`가 정한 최근 10분 하나입니다.
 nonisolated enum HistoryCapacity {
-    /// M1 기본 시간 범위. 범위 변경은 저장소 API로만 노출하고 UI로는 노출하지 않습니다.
+    /// 이력 링과 표시용 선별이 함께 쓰는 시간 범위. 사용자에게 범위 선택을 노출하지 않습니다.
     static let defaultTimeRange: Duration = .seconds(600)
 
-    /// `ceil(시간 범위 / 유효 수집 주기)`로 고정 용량을 계산합니다.
+    /// 이 feature가 시스템 지표에 쓸 수 있는 가장 짧은 수집 주기(normal·팝오버 열림 1초).
+    /// 용량을 그때그때의 유효 주기로 재계산하면 주기가 느려지는 순간 이미 쌓인 이력이 함께 잘려 나가므로,
+    /// 가장 짧은 주기 기준으로 한 번 고정하고 이후 다시 계산하지 않습니다.
+    /// 주기가 느려지면 링이 덜 찰 뿐이고, 범위를 벗어난 오래된 항목은 표시 직전 선별이 걸러냅니다.
+    static let shortestSamplingInterval: Duration = .seconds(1)
+
+    /// `ceil(시간 범위 / 수집 주기)`로 고정 용량을 계산합니다.
     /// 결과는 항상 1 이상입니다.
     static func capacity(timeRange: Duration, samplingInterval: Duration) -> Int {
         let rangeSeconds = timeRange.secondsAsDouble
@@ -88,37 +93,65 @@ nonisolated struct CircularBuffer<Element> {
             storage[(oldestIndex + offset) % capacity]!
         }
     }
-
-    /// 새 용량으로 재구성합니다. 축소는 최신 항목만 보존하고, 확대는 새 공간을 채우지 않습니다.
-    func resized(to newCapacity: Int) -> CircularBuffer<Element> {
-        precondition(newCapacity > 0, "용량은 1 이상이어야 합니다.")
-
-        var newBuffer = CircularBuffer<Element>(capacity: newCapacity)
-        let current = elements
-        let preserved = current.suffix(newCapacity)
-        for element in preserved {
-            newBuffer.append(element)
-        }
-        return newBuffer
-    }
 }
 
-/// 최근 샘플 순환 버퍼만 변경하는 actor.
-/// append·시간순 snapshot·resize만 수행하고 가변 버퍼 참조를 밖으로 내보내지 않습니다.
-/// 샘플과 버퍼는 프로세스 메모리에만 존재하며 재시작 복원 경로가 없습니다.
-actor MonitoringSampleStore<Value: Sendable> {
-    private var buffer: CircularBuffer<TimestampedSample<Value>>
-    private var timeRange: Duration
+/// 이력 링에 담는 한 tick의 시계열 값.
+/// CPU 최근 10분 그래프와 Swap 최근 변화량만 시계열을 요구하므로 그 둘에 필요한 스칼라만 담습니다.
+/// 코어별 사용률과 Memory 세부 구성처럼 현재값만 필요한 지표는 최신 스냅샷 쪽에 남습니다.
+nonisolated struct SystemMetricsHistoryPoint: Sendable, Equatable {
+    let timestamp: ContinuousClock.Instant
+    let overallCPUUsage: Double
+    let swapUsedBytes: UInt64
+}
 
-    init(timeRange: Duration = HistoryCapacity.defaultTimeRange, samplingInterval: Duration) {
+/// 저장소가 표시 계층으로 내보내는 값. 최신 스냅샷 하나와 시간 범위 안의 이력을 함께 담습니다.
+/// 가변 버퍼가 아니라 이 값 하나만 저장소 밖으로 나갑니다.
+nonisolated struct SystemMetricsDisplayValue: Sendable {
+    /// 마지막으로 수집된 tick. 값을 만들지 못한 tick과 실패한 tick도 그대로 담깁니다.
+    let latest: TimestampedSample<SystemMetricsSample>?
+    /// 최신 샘플 시각 기준 시간 범위 안의 이력만 오래된 것부터 시간순으로 담습니다.
+    let recentHistory: [SystemMetricsHistoryPoint]
+}
+
+/// 시스템 지표 이력을 최신 스냅샷 하나와 고정 크기 이력 링으로 나눠 소유하는 actor.
+/// 링 용량은 `HistoryCapacity.shortestSamplingInterval` 기준으로 한 번 고정되고 수집 주기가 바뀌어도 변하지 않으므로,
+/// 팝오버를 닫거나 저전력 모드로 들어가 주기가 느려져도 이미 쌓인 이력이 사라지지 않습니다.
+/// 밖으로 나가는 경로는 `displayValues` stream과 `snapshot()`뿐이며, 샘플과 링은 프로세스 메모리에만 존재하고
+/// 재시작 복원 경로가 없습니다.
+actor MonitoringSampleStore: MonitoringSampleSink {
+    private let timeRange: Duration
+    private var history: CircularBuffer<SystemMetricsHistoryPoint>
+    private var latest: TimestampedSample<SystemMetricsSample>?
+
+    /// 매 tick의 표시용 값을 내보내는 stream. 최신 조합 하나만 보존하므로 소비가 밀려도
+    /// 오래된 조합이 쌓이지 않고 소비자는 항상 마지막 상태를 받습니다.
+    nonisolated let displayValues: AsyncStream<SystemMetricsDisplayValue>
+
+    private let continuation: AsyncStream<SystemMetricsDisplayValue>.Continuation
+
+    init(timeRange: Duration = HistoryCapacity.defaultTimeRange) {
         self.timeRange = timeRange
-        let capacity = HistoryCapacity.capacity(timeRange: timeRange, samplingInterval: samplingInterval)
-        self.buffer = CircularBuffer(capacity: capacity)
+        self.history = CircularBuffer(
+            capacity: HistoryCapacity.capacity(
+                timeRange: timeRange,
+                samplingInterval: HistoryCapacity.shortestSamplingInterval
+            )
+        )
+
+        var continuation: AsyncStream<SystemMetricsDisplayValue>.Continuation!
+        self.displayValues = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
+        self.continuation = continuation
     }
 
-    /// 새 샘플을 추가합니다. 첫 샘플은 그대로 현재 데이터가 됩니다.
-    func append(_ sample: TimestampedSample<Value>) {
-        buffer.append(sample)
+    /// 한 tick의 결과를 반영합니다.
+    /// 최신 스냅샷은 매 tick 교체되고, 이력 링에는 전체 CPU 사용률과 Swap 값이 모두 있는 tick만 추가됩니다.
+    /// 값을 만들지 못한 tick(`.success(nil)`)과 실패한 tick은 링에 들어가지 않으므로 그 시각이 이력에서 비어 있게 됩니다.
+    func append(_ sample: TimestampedSample<SystemMetricsSample>) {
+        latest = sample
+        if let point = Self.historyPoint(from: sample) {
+            history.append(point)
+        }
+        continuation.yield(snapshot())
 #if DEBUG
         // 로그 자체는 실기기 관찰에만 필요하고 이 actor의 임계 구간에 영향을 주면 안 되므로,
         // `notice` 호출을 별도 Task로 분리합니다. 여기서 직접(동기적으로) 호출하면 로깅 시스템
@@ -131,26 +164,43 @@ actor MonitoringSampleStore<Value: Sendable> {
 #endif
     }
 
-    /// 오래된 것부터 시간순으로 정렬된 불변 스냅샷을 반환합니다.
-    func snapshot() -> [TimestampedSample<Value>] {
-        buffer.elements
+    /// 현재 표시용 값을 반환합니다. 이력은 최신 샘플 시각 기준 시간 범위 안의 항목만 담깁니다.
+    func snapshot() -> SystemMetricsDisplayValue {
+        SystemMetricsDisplayValue(latest: latest, recentHistory: recentHistory())
     }
 
-    /// 새 유효 수집 주기로 용량을 재계산해 버퍼를 재구성합니다. 최신 항목만 보존합니다.
-    /// 시간 범위 변경도 이 API로만 노출합니다.
-    func resize(samplingInterval: Duration, timeRange: Duration? = nil) {
-        if let timeRange {
-            self.timeRange = timeRange
+    /// 축출 기준(개수)과 표시 기준(시각)을 분리합니다.
+    /// 링은 개수로만 축출하므로 중지 구간이 있으면 범위를 벗어난 오래된 항목이 남아 있을 수 있고,
+    /// 그 항목을 표시로 넘기지 않으려면 최신 샘플 시각에서 시간 범위를 뺀 시점 이후만 골라야 합니다.
+    /// 기준을 마지막 이력 항목이 아니라 최신 샘플 시각으로 잡아야, 오래 중지된 뒤 값 없는 tick만 들어온 상황에서도
+    /// 이미 범위를 벗어난 이력이 되살아나지 않습니다.
+    private func recentHistory() -> [SystemMetricsHistoryPoint] {
+        guard let latest else { return [] }
+
+        let windowStart = latest.timestamp - timeRange
+        return history.elements.filter { $0.timestamp >= windowStart }
+    }
+
+    /// 전체 CPU 사용률과 Swap 값이 모두 있는 tick에서만 이력 항목을 만듭니다.
+    /// 한쪽이라도 없으면 그 시각은 이력에서 비어 있어야 하므로 값을 지어내지 않고 `nil`을 돌려줍니다.
+    private static func historyPoint(from sample: TimestampedSample<SystemMetricsSample>) -> SystemMetricsHistoryPoint? {
+        guard case .success(let cpu) = sample.value.cpu, let cpu,
+              case .success(let memory) = sample.value.memory else {
+            return nil
         }
-        let capacity = HistoryCapacity.capacity(timeRange: self.timeRange, samplingInterval: samplingInterval)
-        buffer = buffer.resized(to: capacity)
+
+        return SystemMetricsHistoryPoint(
+            timestamp: sample.timestamp,
+            overallCPUUsage: cpu.overallUsage,
+            swapUsedBytes: memory.swapUsedBytes
+        )
     }
 
 #if DEBUG
-    /// task-011 관찰 수단: 누적 샘플 수와 현재 버퍼 용량을 사람이 읽을 수 있는 문자열로 남깁니다.
-    /// `MonitoringScheduler`의 실기기 관찰 로그와 task-010의 잠금·해제 관찰에서 재사용합니다.
+    /// 실기기 관찰 수단: 이력 링의 현재 개수와 고정 용량을 사람이 읽을 수 있는 문자열로 남깁니다.
+    /// 주기가 바뀌어도 capacity가 그대로인지를 로그에서 바로 확인할 수 있습니다.
     var debugStatusDescription: String {
-        "count=\(buffer.count) capacity=\(buffer.capacity)"
+        "history=\(history.count) capacity=\(history.capacity)"
     }
 #endif
 }

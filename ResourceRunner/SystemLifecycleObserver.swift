@@ -5,6 +5,7 @@
 //  Created by zipkero on 8/10/26.
 //
 
+import AppKit
 import Foundation
 
 /// 화면 잠금 상태 세 값의 닫힌 집합.
@@ -16,12 +17,16 @@ nonisolated enum ScreenLockState: Sendable, Equatable {
     case unknown
 }
 
-/// 저전력 모드와 화면 잠금을 하나로 묶은 combined snapshot.
+/// 저전력 모드와 화면을 볼 수 없는 세 신호(화면 잠금·디스플레이 슬립·세션 비활성)를 하나로 묶은 combined snapshot.
 /// `revision`은 initial에서 0으로 시작해 필드 값이 실제로 바뀔 때마다 증가합니다.
 nonisolated struct SystemLifecycleSnapshot: Sendable, Equatable {
     let revision: Int
     let lowPowerMode: Bool
     let screenLockState: ScreenLockState
+    /// 디스플레이가 잠들어 화면을 볼 수 없는 상태인지 여부.
+    let displayAsleep: Bool
+    /// 이 GUI 세션이 활성인지 여부. 빠른 사용자 전환으로 다른 세션이 앞에 오면 `false`입니다.
+    let sessionActive: Bool
 }
 
 /// initial snapshot과 `.bufferingNewest(1)`인 이후 update stream을 묶는 값.
@@ -43,6 +48,8 @@ protocol SystemLifecycleSource: AnyObject {
 nonisolated enum SystemLifecycleFieldChange: Sendable {
     case lowPowerMode(Bool)
     case screenLock(ScreenLockState)
+    case displayAsleep(Bool)
+    case sessionActive(Bool)
 }
 
 /// 등록 뒤 도착한 이벤트를 도착 순서대로 병합해 combined snapshot을 만드는 내부 직렬 생산자.
@@ -61,25 +68,37 @@ final class CombinedSnapshotProducer {
 
     /// 이벤트 하나를 현재 snapshot에 병합합니다. 값이 바뀔 때만 revision을 올리고 stream에 내보냅니다.
     func apply(_ change: SystemLifecycleFieldChange) {
-        let lowPowerMode: Bool
-        let screenLockState: ScreenLockState
+        // 현재 snapshot 전체를 복사해 두고 이벤트가 가리키는 필드 하나만 교체합니다.
+        // 그래야 필드가 늘어나도 한 필드의 갱신이 다른 필드의 최신값을 되돌리는 경로가 생기지 않습니다.
+        var lowPowerMode = currentSnapshot.lowPowerMode
+        var screenLockState = currentSnapshot.screenLockState
+        var displayAsleep = currentSnapshot.displayAsleep
+        var sessionActive = currentSnapshot.sessionActive
+
         switch change {
         case .lowPowerMode(let value):
             lowPowerMode = value
-            screenLockState = currentSnapshot.screenLockState
         case .screenLock(let value):
-            lowPowerMode = currentSnapshot.lowPowerMode
             screenLockState = value
+        case .displayAsleep(let value):
+            displayAsleep = value
+        case .sessionActive(let value):
+            sessionActive = value
         }
 
-        guard lowPowerMode != currentSnapshot.lowPowerMode || screenLockState != currentSnapshot.screenLockState else {
+        guard lowPowerMode != currentSnapshot.lowPowerMode
+            || screenLockState != currentSnapshot.screenLockState
+            || displayAsleep != currentSnapshot.displayAsleep
+            || sessionActive != currentSnapshot.sessionActive else {
             return
         }
 
         let updated = SystemLifecycleSnapshot(
             revision: currentSnapshot.revision + 1,
             lowPowerMode: lowPowerMode,
-            screenLockState: screenLockState
+            screenLockState: screenLockState,
+            displayAsleep: displayAsleep,
+            sessionActive: sessionActive
         )
         currentSnapshot = updated
         continuation.yield(updated)
@@ -217,30 +236,44 @@ final class ScreenLockObservationAdapter {
     }
 }
 
-/// 저전력 모드와 화면 잠금을 하나의 관찰 지점에서 읽는 production 어댑터.
+/// 저전력 모드와 화면을 볼 수 없는 세 신호를 하나의 관찰 지점에서 읽는 production 어댑터.
 /// 저전력은 `NSNotification.Name.NSProcessInfoPowerStateDidChange`로 변경을 관찰하고,
 /// 실제 값 조회는 `readLowPowerMode` 클로저로 주입받습니다(기본값은 `ProcessInfo.isLowPowerModeEnabled`).
 /// 화면 잠금과 마찬가지로 자동 테스트가 실제 시스템 상태를 바꿀 수 없으므로,
 /// 이 주입점이 있어야 저전력 쪽 병합·순서 규칙도 검증할 수 있습니다.
 /// 화면 잠금은 이 Task의 범위가 아니므로(task-006 소관) 초기 조회와 이후 변경 등록을
 /// 생성자로 주입받습니다. task-006은 이 두 클로저를 실제 macOS 어댑터로 채웁니다.
+/// 디스플레이 슬립과 세션 활성은 `NSWorkspace`의 공개 알림이라 별도 격리 어댑터 없이 여기서 직접 등록하고,
+/// 두 신호는 상태 변경 알림만 공개돼 있어 초기값을 읽을 공개 API가 없으므로
+/// 「화면이 켜져 있고 세션이 활성」으로 시작한 뒤 알림으로 교정합니다(DP12).
 final class SystemLifecycleObserver: SystemLifecycleSource {
+    /// 앱이 실행되는 시점은 화면이 켜져 있고 그 세션이 활성인 시점이므로 이 값으로 시작합니다.
+    /// 알림이 한 번도 오지 않아도 수집을 시작할 수 있어야 하며, 어긋나면 다음 알림이 교정합니다.
+    /// 이 클래스는 프로젝트 기본 격리(`MainActor`)에 묶이지만 두 값은 생명주기 store와 메모리 source가
+    /// 다른 격리에서 읽어야 하므로 격리에서 떼어냅니다.
+    nonisolated static let initialDisplayAsleep = false
+    nonisolated static let initialSessionActive = true
+
     private let notificationCenter: NotificationCenter
+    private let workspaceNotificationCenter: NotificationCenter
     private let readLowPowerMode: @Sendable () -> Bool
     private let readInitialScreenLockState: () -> ScreenLockState
     private let registerScreenLockObserver: (@escaping @Sendable (ScreenLockState) -> Void) -> Void
 
     private var powerStateToken: NSObjectProtocol?
+    private var workspaceTokens: [NSObjectProtocol] = []
     private var producer: CombinedSnapshotProducer?
     private var consumerTask: Task<Void, Never>?
 
     init(
         notificationCenter: NotificationCenter = .default,
+        workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
         readLowPowerMode: @escaping @Sendable () -> Bool = { ProcessInfo.processInfo.isLowPowerModeEnabled },
         readInitialScreenLockState: @escaping () -> ScreenLockState,
         registerScreenLockObserver: @escaping (@escaping @Sendable (ScreenLockState) -> Void) -> Void
     ) {
         self.notificationCenter = notificationCenter
+        self.workspaceNotificationCenter = workspaceNotificationCenter
         self.readLowPowerMode = readLowPowerMode
         self.readInitialScreenLockState = readInitialScreenLockState
         self.registerScreenLockObserver = registerScreenLockObserver
@@ -249,6 +282,9 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
     deinit {
         if let powerStateToken {
             notificationCenter.removeObserver(powerStateToken)
+        }
+        for token in workspaceTokens {
+            workspaceNotificationCenter.removeObserver(token)
         }
     }
 
@@ -281,10 +317,24 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
             rawContinuation.yield(.screenLock(state))
         }
 
+        // 디스플레이 슬립·세션 활성은 값 조회 없이 알림 이름만으로 상태가 정해집니다.
+        workspaceTokens = [
+            (NSWorkspace.screensDidSleepNotification, SystemLifecycleFieldChange.displayAsleep(true)),
+            (NSWorkspace.screensDidWakeNotification, .displayAsleep(false)),
+            (NSWorkspace.sessionDidResignActiveNotification, .sessionActive(false)),
+            (NSWorkspace.sessionDidBecomeActiveNotification, .sessionActive(true)),
+        ].map { name, change in
+            workspaceNotificationCenter.addObserver(forName: name, object: nil, queue: nil) { _ in
+                rawContinuation.yield(change)
+            }
+        }
+
         let initial = SystemLifecycleSnapshot(
             revision: 0,
             lowPowerMode: readLowPowerMode(),
-            screenLockState: readInitialScreenLockState()
+            screenLockState: readInitialScreenLockState(),
+            displayAsleep: Self.initialDisplayAsleep,
+            sessionActive: Self.initialSessionActive
         )
 
         let producer = CombinedSnapshotProducer(initial: initial, continuation: updatesContinuation)
@@ -319,11 +369,20 @@ extension SystemLifecycleObserver {
 final class MemorySystemLifecycleSource: SystemLifecycleSource {
     private let initialLowPowerMode: Bool
     private let initialScreenLockState: ScreenLockState
+    private let initialDisplayAsleep: Bool
+    private let initialSessionActive: Bool
     private var producer: CombinedSnapshotProducer?
 
-    init(initialLowPowerMode: Bool = false, initialScreenLockState: ScreenLockState = .unlocked) {
+    init(
+        initialLowPowerMode: Bool = false,
+        initialScreenLockState: ScreenLockState = .unlocked,
+        initialDisplayAsleep: Bool = SystemLifecycleObserver.initialDisplayAsleep,
+        initialSessionActive: Bool = SystemLifecycleObserver.initialSessionActive
+    ) {
         self.initialLowPowerMode = initialLowPowerMode
         self.initialScreenLockState = initialScreenLockState
+        self.initialDisplayAsleep = initialDisplayAsleep
+        self.initialSessionActive = initialSessionActive
     }
 
     func start() -> SystemLifecycleSubscription {
@@ -335,7 +394,9 @@ final class MemorySystemLifecycleSource: SystemLifecycleSource {
         let initial = SystemLifecycleSnapshot(
             revision: 0,
             lowPowerMode: initialLowPowerMode,
-            screenLockState: initialScreenLockState
+            screenLockState: initialScreenLockState,
+            displayAsleep: initialDisplayAsleep,
+            sessionActive: initialSessionActive
         )
         producer = CombinedSnapshotProducer(initial: initial, continuation: continuationSlot!)
         return SystemLifecycleSubscription(initial: initial, updates: updates)
@@ -349,5 +410,15 @@ final class MemorySystemLifecycleSource: SystemLifecycleSource {
     /// 화면 잠금 상태 변경을 주입합니다. `start()` 호출 전에는 아무 효과가 없습니다.
     func sendScreenLockState(_ value: ScreenLockState) {
         producer?.apply(.screenLock(value))
+    }
+
+    /// 디스플레이 슬립 변경을 주입합니다. `start()` 호출 전에는 아무 효과가 없습니다.
+    func sendDisplayAsleep(_ value: Bool) {
+        producer?.apply(.displayAsleep(value))
+    }
+
+    /// 세션 활성 변경을 주입합니다. `start()` 호출 전에는 아무 효과가 없습니다.
+    func sendSessionActive(_ value: Bool) {
+        producer?.apply(.sessionActive(value))
     }
 }

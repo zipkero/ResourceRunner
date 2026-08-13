@@ -7,13 +7,21 @@
 
 import Foundation
 
-/// 팝오버 열림·저전력 모드·화면 잠금을 하나로 묶은 수집 일정 결정용 최종 snapshot.
+/// 팝오버 열림·저전력 모드와 화면을 볼 수 없는 세 신호를 하나로 묶은 수집 일정 결정용 최종 snapshot.
 /// `MonitoringLifecycleStore`가 단독 소유하며, 값 타입이라 어느 격리에서도 전달할 수 있어야 하므로
 /// `nonisolated`로 선언합니다.
 nonisolated struct MonitoringLifecycle: Sendable, Equatable {
     let popoverPresented: Bool
     let lowPowerMode: Bool
     let screenLockState: ScreenLockState
+    let displayAsleep: Bool
+    let sessionActive: Bool
+
+    /// 화면을 볼 수 없는 상태. 셋 중 하나라도 성립하면 두 수집 축이 모두 중지됩니다.
+    /// 잠금 상태가 `unknown`일 때도 중지하는 M1 규칙을 그대로 둡니다.
+    var screenUnobservable: Bool {
+        screenLockState != .unlocked || displayAsleep || !sessionActive
+    }
 }
 
 /// `MonitoringLifecycleStore.update(_:)`가 받는 입력 이벤트.
@@ -29,69 +37,137 @@ nonisolated enum CollectionSchedule: Sendable, Equatable {
     case paused
 }
 
-/// normal·lowPower 각각의 팝오버 열림·닫힘 interval을 묶는 M1 일정 정의.
-nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
-    let normalPresented: Duration
-    let normalDismissed: Duration
-    let lowPowerPresented: Duration
-    let lowPowerDismissed: Duration
+/// 시스템 지표와 프로세스 조사 두 축의 일정을 묶는 계산 결과.
+/// 축마다 값이 따로이므로 한 축만 바뀌는 변경을 다른 축에 옮기지 않고 구분할 수 있습니다.
+nonisolated struct CollectionSchedulePlan: Sendable, Equatable {
+    let systemMetrics: CollectionSchedule
+    let processSurvey: CollectionSchedule
 
-    /// SPEC·ANALYSIS가 정한 M1 값: normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5초.
-    static let m1 = CollectionScheduleDefinition(
-        normalPresented: .seconds(1),
-        normalDismissed: .seconds(2),
-        lowPowerPresented: .seconds(2),
-        lowPowerDismissed: .seconds(5)
+    static let paused = CollectionSchedulePlan(systemMetrics: .paused, processSurvey: .paused)
+}
+
+/// 두 수집 축 각각의 전력·팝오버 조합별 interval 여덟 값을 담는 일정 정의.
+nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
+    /// 한 수집 축의 전력·팝오버 조합 넷.
+    nonisolated struct AxisIntervals: Sendable, Equatable {
+        let normalPresented: Duration
+        let normalDismissed: Duration
+        let lowPowerPresented: Duration
+        let lowPowerDismissed: Duration
+
+        func interval(lowPowerMode: Bool, popoverPresented: Bool) -> Duration {
+            switch (lowPowerMode, popoverPresented) {
+            case (false, true): normalPresented
+            case (false, false): normalDismissed
+            case (true, true): lowPowerPresented
+            case (true, false): lowPowerDismissed
+            }
+        }
+    }
+
+    let systemMetrics: AxisIntervals
+    let processSurvey: AxisIntervals
+
+    /// ANALYSIS §2 「수집 중지와 재개」의 표: 시스템 지표는 normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5초,
+    /// 프로세스 조사는 normal 열림 2초·닫힘 5초, lowPower 열림 4초·닫힘 10초.
+    static let m2 = CollectionScheduleDefinition(
+        systemMetrics: AxisIntervals(
+            normalPresented: .seconds(1),
+            normalDismissed: .seconds(2),
+            lowPowerPresented: .seconds(2),
+            lowPowerDismissed: .seconds(5)
+        ),
+        processSurvey: AxisIntervals(
+            normalPresented: .seconds(2),
+            normalDismissed: .seconds(5),
+            lowPowerPresented: .seconds(4),
+            lowPowerDismissed: .seconds(10)
+        )
     )
 }
 
-/// 일정 정의와 최종 snapshot에서 `running(interval)` 또는 `paused`를 계산하는 순수 정책.
-/// 화면이 `locked` 또는 `unknown`이면 팝오버·전력과 무관하게 `paused`입니다.
+/// 일정 정의와 최종 snapshot에서 두 축의 일정을 함께 계산하는 순수 정책.
+/// 화면을 볼 수 없는 세 신호(잠금·`unknown` 포함, 디스플레이 슬립, 세션 비활성) 중 하나라도 성립하면
+/// 팝오버·전력과 무관하게 두 축이 모두 `paused`입니다.
 nonisolated enum CollectionSchedulePolicy {
-    static func schedule(
+    static func plan(
         for lifecycle: MonitoringLifecycle,
         definition: CollectionScheduleDefinition
-    ) -> CollectionSchedule {
-        guard lifecycle.screenLockState == .unlocked else {
+    ) -> CollectionSchedulePlan {
+        guard !lifecycle.screenUnobservable else {
             return .paused
         }
 
-        if lifecycle.lowPowerMode {
-            return .running(lifecycle.popoverPresented ? definition.lowPowerPresented : definition.lowPowerDismissed)
-        } else {
-            return .running(lifecycle.popoverPresented ? definition.normalPresented : definition.normalDismissed)
-        }
+        return CollectionSchedulePlan(
+            systemMetrics: .running(
+                definition.systemMetrics.interval(
+                    lowPowerMode: lifecycle.lowPowerMode,
+                    popoverPresented: lifecycle.popoverPresented
+                )
+            ),
+            processSurvey: .running(
+                definition.processSurvey.interval(
+                    lowPowerMode: lifecycle.lowPowerMode,
+                    popoverPresented: lifecycle.popoverPresented
+                )
+            )
+        )
     }
 }
 
-/// 팝오버·저전력·화면 잠금 입력을 `update(_:)` 하나로 직렬화해 최종 snapshot과
+/// 계산된 일정 하나를 적용받는 수집 축의 계약.
+/// `MonitoringLifecycleStore`가 두 Scheduler를 구체 타입 대신 이 계약으로 보유하므로,
+/// 축마다 서로 다른 source·sink 타입을 가져도 생명주기 계층에 제네릭이 전파되지 않습니다.
+nonisolated protocol CollectionScheduleTarget: Sendable {
+    func apply(_ schedule: CollectionSchedule) async
+}
+
+/// 팝오버·저전력과 화면을 볼 수 없는 세 신호를 `update(_:)` 하나로 직렬화해 최종 snapshot과
 /// 마지막 system revision, 마지막 적용 일정을 단독 소유하는 actor.
-/// 계산 결과가 마지막 적용 결과와 다를 때만 `MonitoringScheduler.apply(_:)`를 호출해 중복 수집을 막습니다.
-actor MonitoringLifecycleStore<Clock: MonotonicClock, Source: ScheduledSampleSource> {
+/// 두 수집 축을 `CollectionScheduleTarget`으로 보유하고, 계산 결과가 마지막 적용 결과와 다른 축에만
+/// `apply(_:)`를 호출해 중복 수집과 불필요한 재시작을 막습니다.
+actor MonitoringLifecycleStore {
     private let definition: CollectionScheduleDefinition
-    private let scheduler: MonitoringScheduler<Clock, Source>
+    private let systemMetricsTarget: any CollectionScheduleTarget
+    private let processSurveyTarget: any CollectionScheduleTarget
 
     /// system snapshot이 한 번도 도착하지 않은 시작 상태는 화면 상태를 알 수 없으므로
     /// 가장 안전한 `paused` 쪽(`unknown`)을 기본값으로 둡니다.
-    private var lifecycle = MonitoringLifecycle(popoverPresented: false, lowPowerMode: false, screenLockState: .unknown)
+    /// 디스플레이 슬립과 세션 활성은 값 조회 경로가 없어 snapshot이 늘 초기값을 실어 오므로,
+    /// 여기서도 그 초기값(화면이 켜져 있고 세션이 활성)을 그대로 둡니다.
+    private var lifecycle = MonitoringLifecycle(
+        popoverPresented: false,
+        lowPowerMode: false,
+        screenLockState: .unknown,
+        displayAsleep: SystemLifecycleObserver.initialDisplayAsleep,
+        sessionActive: SystemLifecycleObserver.initialSessionActive
+    )
     private var lastSystemRevision: Int?
-    private var lastAppliedSchedule: CollectionSchedule?
+    private var lastAppliedPlan: CollectionSchedulePlan?
 
-    init(definition: CollectionScheduleDefinition, scheduler: MonitoringScheduler<Clock, Source>) {
+    init(
+        definition: CollectionScheduleDefinition,
+        systemMetricsTarget: any CollectionScheduleTarget,
+        processSurveyTarget: any CollectionScheduleTarget
+    ) {
         self.definition = definition
-        self.scheduler = scheduler
+        self.systemMetricsTarget = systemMetricsTarget
+        self.processSurveyTarget = processSurveyTarget
     }
 
     /// 입력 이벤트 하나를 반영합니다. `systemSnapshot`은 최초 revision은 항상 적용하고
     /// 이후에는 마지막 system revision보다 작거나 같은 snapshot을 거부합니다.
-    /// 계산된 일정이 마지막 적용 결과와 같으면 `scheduler.apply(_:)`를 호출하지 않습니다.
+    /// 계산된 일정이 마지막 적용 결과와 같은 축에는 `apply(_:)`를 호출하지 않으므로,
+    /// 한 축의 일정만 바뀌면 다른 축의 실행 중 작업은 취소되지 않습니다.
     func update(_ event: MonitoringLifecycleEvent) async {
         switch event {
         case .popoverPresented(let presented):
             lifecycle = MonitoringLifecycle(
                 popoverPresented: presented,
                 lowPowerMode: lifecycle.lowPowerMode,
-                screenLockState: lifecycle.screenLockState
+                screenLockState: lifecycle.screenLockState,
+                displayAsleep: lifecycle.displayAsleep,
+                sessionActive: lifecycle.sessionActive
             )
         case .systemSnapshot(let snapshot):
             if let lastSystemRevision, snapshot.revision <= lastSystemRevision {
@@ -101,13 +177,22 @@ actor MonitoringLifecycleStore<Clock: MonotonicClock, Source: ScheduledSampleSou
             lifecycle = MonitoringLifecycle(
                 popoverPresented: lifecycle.popoverPresented,
                 lowPowerMode: snapshot.lowPowerMode,
-                screenLockState: snapshot.screenLockState
+                screenLockState: snapshot.screenLockState,
+                displayAsleep: snapshot.displayAsleep,
+                sessionActive: snapshot.sessionActive
             )
         }
 
-        let schedule = CollectionSchedulePolicy.schedule(for: lifecycle, definition: definition)
-        guard schedule != lastAppliedSchedule else { return }
-        lastAppliedSchedule = schedule
-        await scheduler.apply(schedule)
+        let plan = CollectionSchedulePolicy.plan(for: lifecycle, definition: definition)
+        guard plan != lastAppliedPlan else { return }
+
+        let previousPlan = lastAppliedPlan
+        lastAppliedPlan = plan
+        if plan.systemMetrics != previousPlan?.systemMetrics {
+            await systemMetricsTarget.apply(plan.systemMetrics)
+        }
+        if plan.processSurvey != previousPlan?.processSurvey {
+            await processSurveyTarget.apply(plan.processSurvey)
+        }
     }
 }

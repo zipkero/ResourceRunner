@@ -5,6 +5,7 @@
 //  Created by zipkero on 8/10/26.
 //
 
+import AppKit
 import Foundation
 import Testing
 @testable import ResourceRunner
@@ -73,7 +74,7 @@ struct CombinedSnapshotProducerTests {
     }
 
     @Test func revisionIncrementsOnlyWhenFieldActuallyChanges() {
-        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked)
+        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: false, sessionActive: true)
         let (producer, _) = makeProducer(initial: initial)
 
         producer.apply(.screenLock(.locked))
@@ -87,7 +88,7 @@ struct CombinedSnapshotProducerTests {
     @Test func fieldUpdateDoesNotRevertOtherFieldsLatestValue() {
         // 초기값을 두 필드 모두 default가 아닌 값으로 둬야, 한쪽 case가 다른 쪽 필드를
         // default로 덮어써도 우연히 값이 같아 통과하는 상황을 막을 수 있습니다.
-        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: true, screenLockState: .unknown)
+        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true)
         let (producer, _) = makeProducer(initial: initial)
 
         producer.apply(.screenLock(.locked))
@@ -100,8 +101,41 @@ struct CombinedSnapshotProducerTests {
         #expect(producer.currentSnapshot.revision == 2)
     }
 
+    /// task-003 검증 조건: 새로 더한 두 필드도 같은 병합 규칙을 따릅니다 —
+    /// 값이 실제로 바뀔 때만 revision이 오르고, 한 필드의 갱신이 다른 세 필드의 최신값을 되돌리지 않습니다.
+    @Test func displaySleepAndSessionChangesMergeWithoutRevertingOtherFields() {
+        let initial = SystemLifecycleSnapshot(
+            revision: 0,
+            lowPowerMode: true,
+            screenLockState: .locked,
+            displayAsleep: false,
+            sessionActive: true
+        )
+        let (producer, _) = makeProducer(initial: initial)
+
+        producer.apply(.displayAsleep(true))
+        #expect(producer.currentSnapshot.displayAsleep == true)
+        #expect(producer.currentSnapshot.sessionActive == true)
+        #expect(producer.currentSnapshot.lowPowerMode == true)
+        #expect(producer.currentSnapshot.screenLockState == .locked)
+        #expect(producer.currentSnapshot.revision == 1)
+
+        producer.apply(.sessionActive(false))
+        #expect(producer.currentSnapshot.displayAsleep == true) // 세션 갱신이 디스플레이 최신값을 되돌리지 않음
+        #expect(producer.currentSnapshot.sessionActive == false)
+        #expect(producer.currentSnapshot.revision == 2)
+
+        producer.apply(.lowPowerMode(false))
+        #expect(producer.currentSnapshot.displayAsleep == true)
+        #expect(producer.currentSnapshot.sessionActive == false)
+        #expect(producer.currentSnapshot.revision == 3)
+
+        producer.apply(.displayAsleep(true)) // 같은 값 -> 연속 snapshot 제거
+        #expect(producer.currentSnapshot.revision == 3)
+    }
+
     @Test func emitsChangesInArrivalOrderWithDuplicatesRemoved() async {
-        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked)
+        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: false, sessionActive: true)
         let (producer, stream) = makeProducer(initial: initial)
 
         var received: [SystemLifecycleSnapshot] = []
@@ -124,7 +158,7 @@ struct CombinedSnapshotProducerTests {
     }
 
     @Test func lagInConsumptionKeepsOnlyLatestCombinedSnapshot() async {
-        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked)
+        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: false, sessionActive: true)
         let (producer, stream) = makeProducer(initial: initial)
 
         // 소비를 시작하기 전에 연달아 갱신합니다. `.bufferingNewest(1)`이라 가장 최신 조합만 남아야 합니다.
@@ -135,7 +169,7 @@ struct CombinedSnapshotProducerTests {
         var iterator = stream.makeAsyncIterator()
         let first = await iterator.next()
 
-        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown))
+        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true))
     }
 }
 
@@ -149,6 +183,7 @@ struct SystemLifecycleObserverTests {
         var callOrder: [String] = []
         let observer = SystemLifecycleObserver(
             notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: NotificationCenter(),
             readInitialScreenLockState: {
                 callOrder.append("readInitial")
                 return .unlocked
@@ -172,6 +207,7 @@ struct SystemLifecycleObserverTests {
 
         let observer = SystemLifecycleObserver(
             notificationCenter: notificationCenter,
+            workspaceNotificationCenter: NotificationCenter(),
             readLowPowerMode: {
                 callOrder.append("readLowPowerMode")
                 return false
@@ -198,6 +234,7 @@ struct SystemLifecycleObserverTests {
 
         let observer = SystemLifecycleObserver(
             notificationCenter: notificationCenter,
+            workspaceNotificationCenter: NotificationCenter(),
             readLowPowerMode: { lowPowerValues.next() },
             readInitialScreenLockState: { .unlocked },
             registerScreenLockObserver: { onChange in
@@ -229,6 +266,7 @@ struct SystemLifecycleObserverTests {
     @Test func initialSnapshotRevisionIsAlwaysZero() {
         let observer = SystemLifecycleObserver(
             notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: NotificationCenter(),
             readInitialScreenLockState: { .locked },
             registerScreenLockObserver: { _ in }
         )
@@ -239,12 +277,68 @@ struct SystemLifecycleObserverTests {
         #expect(subscription.initial.screenLockState == .locked)
     }
 
+    /// task-003 검증 조건: 「디스플레이 슬립과 세션 활성의 초기값은 알림이 오지 않아도 앱이 수집을
+    /// 시작할 수 있는 값」입니다. 두 신호는 변경 알림만 공개돼 있어 초기 조회 경로가 없으므로,
+    /// 알림을 한 건도 보내지 않은 상태에서 화면이 켜져 있고 세션이 활성인 initial이 나와야 합니다.
+    @Test func initialSnapshotAssumesScreenAwakeAndSessionActiveWithoutAnyNotification() {
+        let observer = SystemLifecycleObserver(
+            notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: NotificationCenter(),
+            readInitialScreenLockState: { .unlocked },
+            registerScreenLockObserver: { _ in }
+        )
+
+        let subscription = observer.start()
+
+        #expect(subscription.initial.displayAsleep == false)
+        #expect(subscription.initial.sessionActive == true)
+    }
+
+    /// task-003 접근 조건: `NSWorkspace`의 네 알림이 각각 대응하는 필드 값으로 이어지고,
+    /// 초기값이 이후 알림으로 교정되는지 확인합니다.
+    @Test func workspaceNotificationsUpdateDisplaySleepAndSessionFields() async {
+        let workspaceNotificationCenter = NotificationCenter()
+        let observer = SystemLifecycleObserver(
+            notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: workspaceNotificationCenter,
+            readInitialScreenLockState: { .unlocked },
+            registerScreenLockObserver: { _ in }
+        )
+
+        let subscription = observer.start()
+
+        var received: [SystemLifecycleSnapshot] = []
+        let collector = Task { @MainActor in
+            for await snapshot in subscription.updates {
+                received.append(snapshot)
+            }
+        }
+
+        workspaceNotificationCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+        await waitUntil { received.count >= 1 }
+        workspaceNotificationCenter.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+        await waitUntil { received.count >= 2 }
+        workspaceNotificationCenter.post(name: NSWorkspace.sessionDidResignActiveNotification, object: nil)
+        await waitUntil { received.count >= 3 }
+        workspaceNotificationCenter.post(name: NSWorkspace.sessionDidBecomeActiveNotification, object: nil)
+        await waitUntil { received.count >= 4 }
+
+        collector.cancel()
+
+        #expect(received.map(\.displayAsleep) == [true, false, false, false])
+        #expect(received.map(\.sessionActive) == [true, true, false, true])
+        #expect(received.map(\.revision) == [1, 2, 3, 4])
+        // 잠금·저전력은 이 경로로 바뀌지 않습니다.
+        #expect(received.allSatisfy { $0.screenLockState == .unlocked })
+    }
+
     /// `registerScreenLockObserver`가 호출되는 시점(등록)은 항상 `readInitialScreenLockState`
     /// 호출(초기 조회)보다 앞서므로, 등록 클로저 안에서 곧바로 콜백을 흘려보내면 "등록 뒤 초기 조회가
     /// 끝나기 전에 도착한 callback"과 같은 상황을 만들 수 있습니다.
     @Test func callbackArrivingDuringRegistrationIsNotDroppedAndAppliesOnTopOfInitial() async {
         let observer = SystemLifecycleObserver(
             notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: NotificationCenter(),
             readInitialScreenLockState: { .unlocked },
             registerScreenLockObserver: { onChange in
                 onChange(.locked)
@@ -277,6 +371,7 @@ struct SystemLifecycleObserverTests {
     @Test func multipleCallbacksDuringRegistrationApplyInArrivalOrder() async {
         let observer = SystemLifecycleObserver(
             notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: NotificationCenter(),
             readInitialScreenLockState: { .unlocked },
             registerScreenLockObserver: { onChange in
                 onChange(.locked)
@@ -306,6 +401,7 @@ struct SystemLifecycleObserverTests {
     @Test func lagInConsumingUpdatesKeepsOnlyLatestCombinedSnapshot() async {
         let observer = SystemLifecycleObserver(
             notificationCenter: NotificationCenter(),
+            workspaceNotificationCenter: NotificationCenter(),
             readInitialScreenLockState: { .unlocked },
             registerScreenLockObserver: { onChange in
                 onChange(.locked)
@@ -340,7 +436,7 @@ struct MemorySystemLifecycleSourceTests {
 
         let subscription = source.start()
 
-        #expect(subscription.initial == SystemLifecycleSnapshot(revision: 0, lowPowerMode: true, screenLockState: .unknown))
+        #expect(subscription.initial == SystemLifecycleSnapshot(revision: 0, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true))
     }
 
     @Test func sendUpdatesPreserveOtherFieldAndIncrementRevisionInOrder() async {
@@ -362,8 +458,36 @@ struct MemorySystemLifecycleSourceTests {
         collector.cancel()
 
         #expect(received == [
-            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .locked),
-            SystemLifecycleSnapshot(revision: 2, lowPowerMode: true, screenLockState: .locked),
+            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .locked, displayAsleep: false, sessionActive: true),
+            SystemLifecycleSnapshot(revision: 2, lowPowerMode: true, screenLockState: .locked, displayAsleep: false, sessionActive: true),
+        ])
+    }
+
+    /// task-003 접근 조건: 새로 더한 두 신호도 메모리 source로 주입할 수 있어야
+    /// 생명주기 store 검증이 실제 OS 알림 없이 두 신호를 다룰 수 있습니다.
+    @Test func sendDisplayAsleepAndSessionActivePreserveOtherFields() async {
+        let source = MemorySystemLifecycleSource(initialLowPowerMode: false, initialScreenLockState: .unlocked)
+        let subscription = source.start()
+        #expect(subscription.initial.displayAsleep == false)
+        #expect(subscription.initial.sessionActive == true)
+
+        var received: [SystemLifecycleSnapshot] = []
+        let collector = Task { @MainActor in
+            for await snapshot in subscription.updates {
+                received.append(snapshot)
+            }
+        }
+
+        source.sendDisplayAsleep(true)
+        await waitUntil { received.count >= 1 }
+        source.sendSessionActive(false)
+        await waitUntil { received.count >= 2 }
+
+        collector.cancel()
+
+        #expect(received == [
+            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: true, sessionActive: true),
+            SystemLifecycleSnapshot(revision: 2, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: true, sessionActive: false),
         ])
     }
 
@@ -389,7 +513,7 @@ struct MemorySystemLifecycleSourceTests {
         var iterator = subscription.updates.makeAsyncIterator()
         let first = await iterator.next()
 
-        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown))
+        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true))
     }
 }
 

@@ -8,9 +8,32 @@
 import AppKit
 import OSLog
 
+/// production 시스템 지표 수집 축의 구체 타입.
+/// source·scheduler·생명주기 store가 모두 제네릭이라 저장 속성 표기가 길어지므로 여기서 한 번만 묶습니다.
+typealias ProductionSystemMetricsSource = SystemMetricsSampleSource<
+    CPUSystemMetricsCollector<HostCPUTickReader>,
+    MemorySystemMetricsCollector,
+    SystemMonotonicClock
+>
+
+typealias ProductionSystemMetricsScheduler = MonitoringScheduler<
+    SystemMonotonicClock,
+    ProductionSystemMetricsSource,
+    MonitoringSampleStore
+>
+
+/// production 프로세스 조사 축의 구체 타입.
+/// 조사 source와 이력 저장소는 task-004·task-005 범위이므로 지금은 자리표시를 끼워 두고,
+/// 이 축이 일정·중지·재개를 시스템 지표 축과 독립적으로 태우는 것만 성립시킵니다.
+typealias ProductionProcessSurveyScheduler = MonitoringScheduler<
+    SystemMonotonicClock,
+    PlaceholderScheduledSampleSource,
+    PlaceholderMonitoringSampleSink
+>
+
 /// 앱 수명 동안 필요한 객체를 한 번만 구성하고 소유하는 경계.
 /// 표시 흐름(`StatusBarController`, `CharacterStateSource`)과 생명주기·수집 흐름
-/// (`SystemLifecycleObserver`, `MonitoringLifecycleStore`, `MonitoringScheduler`, `MonitoringSampleStore`)을
+/// (`SystemLifecycleObserver`, `MonitoringLifecycleStore`, 두 축의 `MonitoringScheduler`, `MonitoringSampleStore`)을
 /// 각각 한 번만 만들어 앱 종료까지 강하게 보유합니다. 두 흐름은 이 타입에서만 만나며,
 /// 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다.
 @MainActor
@@ -18,9 +41,10 @@ final class ApplicationCoordinator {
     let statusBarController: StatusBarController
     let characterStateSource: CharacterStateSource
     let systemLifecycleObserver: SystemLifecycleObserver
-    let monitoringSampleStore: MonitoringSampleStore<PlaceholderMonitoringSample>
-    let monitoringScheduler: MonitoringScheduler<SystemMonotonicClock, PlaceholderScheduledSampleSource>
-    let monitoringLifecycleStore: MonitoringLifecycleStore<SystemMonotonicClock, PlaceholderScheduledSampleSource>
+    let monitoringSampleStore: MonitoringSampleStore
+    let systemMetricsScheduler: ProductionSystemMetricsScheduler
+    let processSurveyScheduler: ProductionProcessSurveyScheduler
+    let monitoringLifecycleStore: MonitoringLifecycleStore
 
     private var characterStateTask: Task<Void, Never>?
     private var monitoringTask: Task<Void, Never>?
@@ -35,19 +59,33 @@ final class ApplicationCoordinator {
         statusBarController = StatusBarController(popoverContent: DashboardView())
         characterStateSource = CharacterStateSource()
 
-        // 생명주기·수집 흐름: SystemLifecycleObserver → MonitoringLifecycleStore → MonitoringScheduler →
-        // MonitoringSampleStore. M1은 실제 Collector 대신 값 자체에 의미가 없는 placeholder 샘플 source를 씁니다.
-        let sampleStore = MonitoringSampleStore<PlaceholderMonitoringSample>(
-            samplingInterval: CollectionScheduleDefinition.m1.normalDismissed
+        // 생명주기·수집 흐름: SystemLifecycleObserver → MonitoringLifecycleStore → 두 MonitoringScheduler →
+        // 각 축의 저장 대상. 저장 대상은 구체 타입이 아니라 `MonitoringSampleSink` 계약으로,
+        // 수집 축은 `CollectionScheduleTarget` 계약으로 연결되므로 두 축이 서로의 타입에 묶이지 않습니다.
+        let clock = SystemMonotonicClock()
+        let sampleStore = MonitoringSampleStore()
+        let systemScheduler = MonitoringScheduler(
+            clock: clock,
+            source: SystemMetricsSampleSource(
+                cpuCollector: CPUSystemMetricsCollector(reader: HostCPUTickReader()),
+                memoryCollector: MemorySystemMetricsCollector(),
+                clock: clock
+            ),
+            sink: sampleStore
         )
-        let scheduler = MonitoringScheduler(
-            clock: SystemMonotonicClock(),
+        let processScheduler = MonitoringScheduler(
+            clock: clock,
             source: PlaceholderScheduledSampleSource(),
-            sampleStore: sampleStore
+            sink: PlaceholderMonitoringSampleSink()
         )
         monitoringSampleStore = sampleStore
-        monitoringScheduler = scheduler
-        monitoringLifecycleStore = MonitoringLifecycleStore(definition: .m1, scheduler: scheduler)
+        systemMetricsScheduler = systemScheduler
+        processSurveyScheduler = processScheduler
+        monitoringLifecycleStore = MonitoringLifecycleStore(
+            definition: .m2,
+            systemMetricsTarget: systemScheduler,
+            processSurveyTarget: processScheduler
+        )
         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
 
         // 모든 저장 속성이 준비된 뒤에야 `self`를 다른 객체에 넘길 수 있으므로,
@@ -88,9 +126,9 @@ final class ApplicationCoordinator {
     /// 이 순서를 지켜야 store가 낮은 revision을 거부하는 방어와 무관하게, Scheduler가 초기 적용 전에
     /// 먼저 시작되는 경우가 생기지 않습니다.
     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
-    static func startMonitoring<Clock: MonotonicClock, Source: ScheduledSampleSource>(
+    static func startMonitoring(
         _ source: SystemLifecycleSource,
-        into store: MonitoringLifecycleStore<Clock, Source>
+        into store: MonitoringLifecycleStore
     ) -> Task<Void, Never> {
         let subscription = source.start()
 
@@ -122,9 +160,9 @@ extension ApplicationCoordinator: StatusBarControllerOutput {
 
     /// `MonitoringLifecycleStore.update(_:)`는 actor 진입점이라 delegate 콜백에서 직접 await할 수 없으므로,
     /// 전달 로직을 별도로 노출해 `init`과 테스트가 같은 경로를 통과하게 합니다.
-    static func forwardPopoverPresented<Clock: MonotonicClock, Source: ScheduledSampleSource>(
+    static func forwardPopoverPresented(
         _ isPresented: Bool,
-        to store: MonitoringLifecycleStore<Clock, Source>
+        to store: MonitoringLifecycleStore
     ) async {
         await store.update(.popoverPresented(isPresented))
     }

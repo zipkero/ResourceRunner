@@ -8,7 +8,7 @@
 ## 상태
 
 - [x] SPEC
-- [ ] ANALYSIS
+- [x] ANALYSIS
 - [ ] IMPLEMENT
 
 ## 문서
@@ -20,3 +20,5 @@
 ## 작업 히스토리
 
 - 2026-08-12: SPEC 작성
+- 2026-08-12: ANALYSIS 작성
+- 2026-08-13: IMPLEMENT 체크리스트 작성

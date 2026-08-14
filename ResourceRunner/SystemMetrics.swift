@@ -70,6 +70,7 @@ nonisolated struct CollectorFailure: Error, Sendable, Equatable {
     nonisolated enum Metric: Sendable, Equatable {
         case cpu
         case memory
+        case process
     }
 
     nonisolated enum Cause: Sendable, Equatable {

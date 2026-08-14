@@ -48,11 +48,14 @@ final class ApplicationCoordinator {
 
     private var characterStateTask: Task<Void, Never>?
     private var monitoringTask: Task<Void, Never>?
+    private var cpuActivityTask: Task<Void, Never>?
 
 #if DEBUG
     // task-006에서 AppDelegate에 임시로 둔 관찰용 observer를 여기 단일 observer로 흡수합니다.
     // observer를 둘 만들면 실기기에서 DistributedNotificationCenter 등록이 두 번 일어나므로 하나만 둡니다.
     private static let debugLifecycleLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "SystemLifecycle")
+    // task-007 실기기 확인: 사용률과 판정 전이를 Console.app에서 관찰하기 위한 로그 경계입니다.
+    private static let debugCPUActivityLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CPUActivityState")
 #endif
 
     init() {
@@ -104,6 +107,7 @@ final class ApplicationCoordinator {
         characterStateTask = Self.consume(characterStateSource, into: sink)
 
         monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: monitoringLifecycleStore)
+        cpuActivityTask = Self.consumeSystemMetrics(sampleStore, into: characterStateSource)
     }
 
     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
@@ -117,6 +121,37 @@ final class ApplicationCoordinator {
         return Task { @MainActor in
             for await state in updates {
                 sink.render(.presenting(state))
+            }
+        }
+    }
+
+    /// 시스템 지표 소비 지점에서 전체 CPU 사용률로 메뉴바 표시 상태를 판정하고,
+    /// 상태가 바뀌었을 때만 `CharacterStateSource.send(_:)`를 호출합니다.
+    /// CPU 지표가 실패했거나(`.failure`) 값을 만들지 못한 tick(`.success(nil)`)에서는 판정 자체를 건너뛰어
+    /// 마지막 표시 상태를 그대로 유지합니다(ANALYSIS §2 「메뉴바 표시 상태 판정」).
+    /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
+    static func consumeSystemMetrics(
+        _ store: MonitoringSampleStore,
+        into characterStateSource: CharacterStateSource
+    ) -> Task<Void, Never> {
+        let displayValues = store.displayValues
+        return Task { @MainActor in
+            var state = CPUActivityStateEvaluator.State.initial
+            for await displayValue in displayValues {
+                guard let latest = displayValue.latest,
+                      case .success(let cpu?) = latest.value.cpu else { continue }
+
+                let next = CPUActivityStateEvaluator.evaluate(usage: cpu.overallUsage, timestamp: latest.timestamp, state: state)
+                if next.displayedState != state.displayedState {
+                    characterStateSource.send(next.displayedState)
+                }
+
+#if DEBUG
+                debugCPUActivityLogger.notice(
+                    "usage=\(cpu.overallUsage, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
+                )
+#endif
+                state = next
             }
         }
     }

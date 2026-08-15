@@ -31,3 +31,10 @@
   실기기 한 세션에서 두 카드 TOP 5 표시, 카드 선택과 복귀, 부하에 따른 메뉴바 이름 전환, 팝오버 개폐에 따른 주기 변경을 함께 관찰했습니다.
   잔여 항목 둘을 기록합니다 — Memory TOP 5에 앱 이름 대신 버전 문자열(`2.1.233`)이 나오는 경로가 있고(ANALYSIS §5 DP5 앱 키 유도),
   프로세스 조사 실패가 표시 계층에 도달할 통로가 설계에 없어 `topApplicationsFailed`가 production에서 항상 `false`입니다(수정 소유 단계 `analyze-init`).
+- 2026-08-15: task-004 결함 수정 후 재검증(approved). 실기기에서 CPU TOP 5가 전부 `0%`로 나오는 것을 사용자가 발견했습니다.
+  원인은 `proc_pidinfo(PROC_PIDTASKINFO)`의 `pti_total_user`·`pti_total_system`이 나노초가 아니라 mach absolute time tick인데
+  `HostProcessSurveyReader`가 나노초로 오인한 것이었습니다. Apple silicon의 timebase가 125/3이라 사용률이 실제의 1/41.67로 축소됐습니다.
+  변환을 어댑터 경계에서 한 번 적용하도록 고쳤고 상위 계층은 손대지 않았습니다.
+  이 결함이 새어 나간 이유는 테스트 경계가 `ProcessSurveying` 프로토콜에 있어 실제 어댑터가 한 번도 검증되지 않았기 때문이며,
+  실기기 회귀 테스트 `realSurveyReportsCPUTimeInNanoseconds()`로 그 구간을 덮었습니다.
+  이 수정으로 task-005의 "두 코어를 완전히 쓰는 프로세스가 200%" 조건이 실기기에서 처음 성립했습니다(실측 199.91%).

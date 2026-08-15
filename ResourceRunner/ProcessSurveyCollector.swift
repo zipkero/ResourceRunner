@@ -18,6 +18,7 @@ nonisolated struct ProcessListEntry: Sendable, Equatable {
 
 /// `proc_pidinfo(PROC_PIDTASKINFO)`가 돌려주는 값 중 이 feature가 쓰는 부분만 추린 값.
 nonisolated struct ProcessTaskInfo: Sendable, Equatable {
+    /// `pti_total_user + pti_total_system`(mach absolute time)을 나노초로 변환한 값.
     let cpuTimeNanoseconds: UInt64
     let residentBytes: UInt64
 }
@@ -38,6 +39,29 @@ nonisolated struct HostProcessSurveyReader: ProcessSurveying {
     /// `4 * MAXPATHLEN`은 `proc_pidpath`가 요구하는 버퍼 크기입니다.
     /// `PROC_PIDPATHINFO_MAXSIZE` 매크로는 현재 SDK에서 Swift로 그대로 옮겨지지 않아 값을 직접 계산합니다.
     private static let pathBufferSize = 4 * Int(MAXPATHLEN)
+
+    /// `mach_timebase_info`는 부팅 중 바뀌지 않으므로 한 번만 읽어 둡니다.
+    private static let timebase: mach_timebase_info_data_t = {
+        var info = mach_timebase_info_data_t()
+        // 실패하면 tick과 나노초가 1:1인 것으로 두어 변환 없이 원값을 쓰게 합니다.
+        guard mach_timebase_info(&info) == KERN_SUCCESS, info.numer != 0, info.denom != 0 else {
+            return mach_timebase_info_data_t(numer: 1, denom: 1)
+        }
+        return info
+    }()
+
+    /// `proc_taskinfo`의 CPU 시간은 나노초가 아니라 mach absolute time tick이므로 나노초로 변환합니다.
+    /// Apple silicon에서는 `numer/denom`이 1이 아니어서(예: 125/3) 변환을 빠뜨리면 사용률이 그 배율만큼 축소됩니다.
+    private static func nanoseconds(fromMachTicks ticks: UInt64) -> UInt64 {
+        let numer = UInt64(timebase.numer)
+        let denom = UInt64(timebase.denom)
+        // Intel처럼 tick이 곧 나노초인 기기에서는 변환이 필요 없습니다.
+        guard numer != denom else { return ticks }
+        // 누적 CPU 시간은 큰 값이 될 수 있어 그대로 곱하면 넘칠 수 있으므로
+        // 몫과 나머지로 나눠 곱한 뒤 다시 더합니다.
+        let (quotient, remainder) = ticks.quotientAndRemainder(dividingBy: denom)
+        return quotient &* numer &+ (remainder &* numer) / denom
+    }
 
     func listProcesses() throws(CollectorFailure) -> [ProcessListEntry] {
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_ALL]
@@ -86,7 +110,7 @@ nonisolated struct HostProcessSurveyReader: ProcessSurveying {
             throw CollectorFailure(metric: .process, cause: .systemCall(name: "proc_pidinfo(PROC_PIDTASKINFO)", code: errno))
         }
         return ProcessTaskInfo(
-            cpuTimeNanoseconds: info.pti_total_user &+ info.pti_total_system,
+            cpuTimeNanoseconds: Self.nanoseconds(fromMachTicks: info.pti_total_user &+ info.pti_total_system),
             residentBytes: info.pti_resident_size
         )
     }

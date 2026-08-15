@@ -22,7 +22,8 @@ nonisolated struct ProcessSample: Sendable, Equatable {
     let executablePath: String
     let uid: uid_t
     let parentPID: pid_t
-    /// `proc_pidinfo(PROC_PIDTASKINFO)`가 돌려준 누적 User+System CPU 시간(나노초).
+    /// 누적 User+System CPU 시간(나노초).
+    /// `proc_pidinfo(PROC_PIDTASKINFO)`의 원값은 mach absolute time이라 조사 경계에서 나노초로 변환된 값입니다.
     let cpuTimeNanoseconds: UInt64
     /// Physical Footprint를 쓸 수 없어 대신 쓰는 Resident Memory(바이트).
     let residentBytes: UInt64

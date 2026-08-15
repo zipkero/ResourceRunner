@@ -350,4 +350,47 @@ struct ProcessSurveyRealDevicePathTests {
         _ = try collector.survey()
         #expect(decorator.pathCallCount(for: selfPID) == 1)
     }
+
+    /// 이 테스트가 고정하는 것은 "`cpuTimeNanoseconds`가 실제 나노초 단위다"입니다 —
+    /// 자기 프로세스에서 한 스레드를 계속 태우면 두 조사 사이 누적 CPU 시간 증가가 벽시계 경과와 같은 자릿수여야 합니다.
+    /// `proc_pidinfo`의 mach absolute time을 변환 없이 그대로 쓰도록 되돌리면
+    /// Apple silicon에서 증가량이 벽시계 경과의 1/41 수준으로 줄어 이 테스트가 실패해야 합니다.
+    @Test func realSurveyReportsCPUTimeInNanoseconds() throws {
+        var collector = ProcessSurveyCollector(reader: HostProcessSurveyReader())
+        let selfPID = getpid()
+        let clock = ContinuousClock()
+
+        let before = try #require(try collector.survey().samples.first { $0.identity.pid == selfPID })
+        let start = clock.now
+        burnCPUOnCurrentThread(for: .milliseconds(500))
+        let elapsed = start.duration(to: clock.now)
+        let after = try #require(try collector.survey().samples.first { $0.identity.pid == selfPID })
+
+        let elapsedNanoseconds = Double(elapsed.components.seconds) * 1e9 + Double(elapsed.components.attoseconds) / 1e9
+        #expect(after.cpuTimeNanoseconds > before.cpuTimeNanoseconds)
+        let cpuDeltaNanoseconds = Double(after.cpuTimeNanoseconds - before.cpuTimeNanoseconds)
+
+        // 한 스레드를 온전히 태웠으므로 증가량은 벽시계 경과에 가깝습니다.
+        // 다른 스레드의 활동과 스케줄링 지연을 감안해 범위를 넉넉히 두되,
+        // 41배 어긋난 단위는 어느 쪽으로 틀리든 이 범위 밖으로 벗어납니다.
+        #expect(cpuDeltaNanoseconds >= elapsedNanoseconds * 0.5)
+        #expect(cpuDeltaNanoseconds <= elapsedNanoseconds * 8)
+    }
 }
+
+/// 현재 스레드를 주어진 시간 동안 쉬지 않고 돌려 CPU 시간을 소비합니다.
+/// 계산 결과를 밖으로 흘려보내 최적화로 반복이 통째로 사라지는 것을 막습니다.
+private func burnCPUOnCurrentThread(for duration: Duration) {
+    let clock = ContinuousClock()
+    let deadline = clock.now + duration
+    var accumulator: UInt64 = 1
+    while clock.now < deadline {
+        for _ in 0..<20_000 {
+            accumulator = accumulator &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+        }
+    }
+    cpuBurnSink = accumulator
+}
+
+/// `burnCPUOnCurrentThread(for:)`의 계산 결과를 받아 두는 자리. 값 자체는 쓰이지 않습니다.
+private nonisolated(unsafe) var cpuBurnSink: UInt64 = 0

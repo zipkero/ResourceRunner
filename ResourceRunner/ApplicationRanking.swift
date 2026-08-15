@@ -5,6 +5,7 @@
 //  Created by zipkero on 8/14/26.
 //
 
+import Darwin
 import Foundation
 
 /// 여러 프로세스로 구성된 앱을 하나로 묶는 집계 키.
@@ -178,5 +179,69 @@ nonisolated enum ApplicationRanking {
             ApplicationRankingEntry(key: key, displayName: displayNames[key] ?? key.value, value: value)
         }
         return Array(entries.sorted { $0.value > $1.value }.prefix(ApplicationRankingSampling.topCount))
+    }
+}
+
+/// 앱 키로 묶은 프로세스 하나. 상세 영역에서 앱 항목을 펼치면 나타나는 하위 프로세스 목록의 원소입니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
+/// CPU 상세는 `cpuUsagePercent`와 `isTranslated`를, Memory 상세는 `residentBytes`를 씁니다 —
+/// CPU와 Memory가 같은 앱 키 규칙을 공유하므로(DP5) 그룹 목록 자체는 카드마다 다시 계산하지 않고 하나를 공유합니다.
+nonisolated struct ApplicationProcessDetail: Sendable, Equatable {
+    let pid: pid_t
+    /// 기준점이 없거나 조사 간격이 허용 범위를 넘으면 `nil`입니다(`ProcessHistoryStore`와 같은 규칙).
+    let cpuUsagePercent: Double?
+    let residentBytes: UInt64
+    let isTranslated: Bool
+}
+
+extension ApplicationProcessDetail {
+    /// 프로세스 CPU 사용률의 단위 라벨. 논리 코어 합산 관례라 100%를 넘을 수 있어
+    /// 시스템 전체 사용률의 단위(`CPUCardPresentation.overallUsageUnitLabel`)와 다른 문자열을 씁니다.
+    static let cpuUsageUnitLabel = "% (코어 합산)"
+}
+
+/// 앱 하나로 묶인 프로세스 그룹. 표시 이름과 앱 키는 `ApplicationRankingEntry`와 같은 유도 규칙을 씁니다.
+nonisolated struct ApplicationProcessGroup: Sendable, Equatable {
+    let key: ApplicationKey
+    let displayName: String
+    let processes: [ApplicationProcessDetail]
+}
+
+extension ApplicationRanking {
+    /// `ProcessHistoryStore.snapshot()`이 돌려준 정체성별 이력을 앱 키로 묶어 하위 프로세스 그룹 목록을 만듭니다.
+    ///
+    /// `ApplicationRankingSample`은 앱 키별 합산값만 담고 그 키에 속한 개별 프로세스 목록은 담지 않으므로,
+    /// "앱 항목을 펼치면 하위 프로세스가 나타난다"(SPEC §5.2, SPEC §5.6)를 만족하려면 `snapshot()` 결과를
+    /// `compute(_:)`와 별도로 한 번 더 순회해야 합니다. 두 계산이 같은 `resolver`를 이어받아 앱 키 유도가
+    /// 두 번 다른 결과를 내지 않게 합니다.
+    /// - Returns: 관찰 순서를 보존한 그룹 목록(정렬하지 않음 — 정렬된 순위는 `compute(_:)`가 이미 담당)과 갱신된 resolver.
+    static func groupByApplication(
+        snapshots: [ProcessHistorySnapshot],
+        resolver: ApplicationIdentityResolver
+    ) -> (groups: [ApplicationProcessGroup], resolver: ApplicationIdentityResolver) {
+        var resolver = resolver
+        var order: [ApplicationKey] = []
+        var displayNames: [ApplicationKey: String] = [:]
+        var processesByKey: [ApplicationKey: [ApplicationProcessDetail]] = [:]
+
+        for snapshot in snapshots {
+            let identity = resolver.resolve(executablePath: snapshot.executablePath)
+            if processesByKey[identity.key] == nil {
+                order.append(identity.key)
+            }
+            displayNames[identity.key] = identity.displayName
+            processesByKey[identity.key, default: []].append(
+                ApplicationProcessDetail(
+                    pid: snapshot.identity.pid,
+                    cpuUsagePercent: snapshot.latestCPUUsagePercent,
+                    residentBytes: snapshot.recentValues.last?.residentBytes ?? 0,
+                    isTranslated: snapshot.isTranslated
+                )
+            )
+        }
+
+        let groups = order.map { key in
+            ApplicationProcessGroup(key: key, displayName: displayNames[key] ?? key.value, processes: processesByKey[key] ?? [])
+        }
+        return (groups, resolver)
     }
 }

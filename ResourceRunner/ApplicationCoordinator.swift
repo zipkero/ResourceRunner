@@ -45,10 +45,12 @@ final class ApplicationCoordinator {
     let systemMetricsScheduler: ProductionSystemMetricsScheduler
     let processSurveyScheduler: ProductionProcessSurveyScheduler
     let monitoringLifecycleStore: MonitoringLifecycleStore
+    let dashboardPresentationStore: DashboardPresentationStore
 
     private var characterStateTask: Task<Void, Never>?
     private var monitoringTask: Task<Void, Never>?
     private var cpuActivityTask: Task<Void, Never>?
+    private var collectionStoppedTask: Task<Void, Never>?
 
 #if DEBUG
     // task-006에서 AppDelegate에 임시로 둔 관찰용 observer를 여기 단일 observer로 흡수합니다.
@@ -59,7 +61,11 @@ final class ApplicationCoordinator {
 #endif
 
     init() {
-        statusBarController = StatusBarController(popoverContent: DashboardView())
+        // 팝오버 콘텐츠 뷰가 이 저장소를 관찰하므로, 뷰를 만들기 전에 먼저 만들어야 합니다.
+        let dashboard = DashboardPresentationStore()
+        dashboardPresentationStore = dashboard
+
+        statusBarController = StatusBarController(popoverContent: DashboardView(store: dashboard))
         characterStateSource = CharacterStateSource()
 
         // 생명주기·수집 흐름: SystemLifecycleObserver → MonitoringLifecycleStore → 두 MonitoringScheduler →
@@ -107,7 +113,8 @@ final class ApplicationCoordinator {
         characterStateTask = Self.consume(characterStateSource, into: sink)
 
         monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: monitoringLifecycleStore)
-        cpuActivityTask = Self.consumeSystemMetrics(sampleStore, into: characterStateSource)
+        cpuActivityTask = Self.consumeSystemMetrics(sampleStore, into: characterStateSource, dashboard: dashboard)
+        collectionStoppedTask = Self.consumeCollectionStoppedEvents(monitoringLifecycleStore, dashboard: dashboard)
     }
 
     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
@@ -129,15 +136,22 @@ final class ApplicationCoordinator {
     /// 상태가 바뀌었을 때만 `CharacterStateSource.send(_:)`를 호출합니다.
     /// CPU 지표가 실패했거나(`.failure`) 값을 만들지 못한 tick(`.success(nil)`)에서는 판정 자체를 건너뛰어
     /// 마지막 표시 상태를 그대로 유지합니다(ANALYSIS §2 「메뉴바 표시 상태 판정」).
+    /// 같은 소비 지점에서 `dashboard`의 CPU·Memory 카드도 매 tick 갱신합니다(ANALYSIS §5 DP10).
+    /// `topApplications`는 프로세스 조사 축이 아직 이 코디네이터에 연결되지 않아 항상 빈 배열입니다(task-014에서 연결).
     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
     static func consumeSystemMetrics(
         _ store: MonitoringSampleStore,
-        into characterStateSource: CharacterStateSource
+        into characterStateSource: CharacterStateSource,
+        dashboard: DashboardPresentationStore
     ) -> Task<Void, Never> {
         let displayValues = store.displayValues
         return Task { @MainActor in
             var state = CPUActivityStateEvaluator.State.initial
             for await displayValue in displayValues {
+                let now = ContinuousClock().now
+                dashboard.updateCPUCard(with: displayValue, topApplications: [], currentTimestamp: now)
+                dashboard.updateMemoryCard(with: displayValue, topApplications: [], currentTimestamp: now)
+
                 guard let latest = displayValue.latest,
                       case .success(let cpu?) = latest.value.cpu else { continue }
 
@@ -152,6 +166,22 @@ final class ApplicationCoordinator {
                 )
 #endif
                 state = next
+            }
+        }
+    }
+
+    /// 생명주기 store가 알리는 "시스템 지표 일정이 새로 멈췄다" 전이를 표시 저장소에 그대로 전달합니다.
+    /// 재개는 이 stream에 없으므로 별도 처리가 필요 없고, 값이 성립한 다음 tick의 조립 결과가
+    /// 표시 저장소 안에서 중지를 자연히 대체합니다(ANALYSIS §1 「생명주기 경계」, §5 DP16).
+    /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
+    static func consumeCollectionStoppedEvents(
+        _ store: MonitoringLifecycleStore,
+        dashboard: DashboardPresentationStore
+    ) -> Task<Void, Never> {
+        let events = store.collectionStoppedEvents
+        return Task { @MainActor in
+            for await _ in events {
+                dashboard.markCollectionStopped()
             }
         }
     }

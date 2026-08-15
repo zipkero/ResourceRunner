@@ -131,7 +131,7 @@ struct ApplicationCoordinatorTests {
     @Test func failedOrValuelessCPUTicksNeverTriggerCharacterStateSourceSend() async {
         let store = MonitoringSampleStore()
         let characterStateSource = CharacterStateSource()
-        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(store, into: characterStateSource)
+        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(store, into: characterStateSource, dashboard: DashboardPresentationStore())
 
         var received: [CharacterActivityState] = []
         let collectTask = Task { @MainActor in
@@ -161,7 +161,7 @@ struct ApplicationCoordinatorTests {
     @Test func consumeSystemMetricsSendsOnlyOnActualDisplayedStateChanges() async {
         let store = MonitoringSampleStore()
         let characterStateSource = CharacterStateSource()
-        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(store, into: characterStateSource)
+        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(store, into: characterStateSource, dashboard: DashboardPresentationStore())
 
         var received: [CharacterActivityState] = []
         let collectTask = Task { @MainActor in

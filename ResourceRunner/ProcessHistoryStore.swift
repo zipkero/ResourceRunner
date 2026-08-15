@@ -32,6 +32,9 @@ nonisolated struct ProcessMemoryBaselinePoint: Sendable, Equatable {
 /// `ProcessHistoryStore` 밖으로는 `ProcessHistorySnapshot`으로만 노출됩니다.
 private struct ProcessHistoryEntry {
     var executablePath: String
+    /// 매 조사마다 이번 조사 값으로 갱신됩니다. `executablePath`와 같은 이유로 정체성이 아니라
+    /// 관찰마다 새로 반영되는 값입니다 — 실행 파일 자체가 바뀌는 일은 없지만 갱신 방식을 통일해 둡니다.
+    var isTranslated: Bool
     var cpuBaseline: ProcessCPUBaseline?
     var recentValues: CircularBuffer<ProcessRankingSample>
     var memoryBaselines: CircularBuffer<ProcessMemoryBaselinePoint>
@@ -49,6 +52,11 @@ nonisolated struct ProcessHistorySnapshot: Sendable, Equatable {
     let recentValues: [ProcessRankingSample]
     /// 10분 증가량 계산용 메모리 기준점들. 오래된 것부터 시간순입니다.
     let memoryBaselines: [ProcessMemoryBaselinePoint]
+    /// `P_TRANSLATED` 플래그로 판정한 Rosetta 실행 여부. 상세 영역의 프로세스별 표시(task-010)가 씁니다.
+    /// 기본값 `false`로 두어 이 필드가 없던 시절 만들어진 테스트 리터럴이 계속 컴파일되도록 합니다 —
+    /// 기본값이 합성 memberwise 초기화 매개변수에 반영되려면 `var`여야 하므로 `var`로 선언합니다.
+    /// 실제 값은 `ProcessHistoryStore.append(_:)`가 매 조사마다 채웁니다.
+    var isTranslated: Bool = false
 }
 
 /// 프로세스 조사 tick 사이 간격 판정 기준과 메모리 기준점 링 정책.
@@ -99,11 +107,13 @@ actor ProcessHistoryStore: MonitoringSampleSink {
 
             var entry = entries[process.identity] ?? ProcessHistoryEntry(
                 executablePath: process.executablePath,
+                isTranslated: process.isTranslated,
                 cpuBaseline: nil,
                 recentValues: CircularBuffer(capacity: ProcessHistorySampling.recentValueCount),
                 memoryBaselines: CircularBuffer(capacity: ProcessHistorySampling.memoryBaselineRingCapacity)
             )
             entry.executablePath = process.executablePath
+            entry.isTranslated = process.isTranslated
 
             let cpuUsagePercent = Self.cpuUsagePercent(process: process, timestamp: timestamp, entry: &entry)
             entry.recentValues.append(ProcessRankingSample(cpuUsagePercent: cpuUsagePercent, residentBytes: process.residentBytes))
@@ -124,7 +134,8 @@ actor ProcessHistoryStore: MonitoringSampleSink {
                 executablePath: entry.executablePath,
                 latestCPUUsagePercent: entry.recentValues.elements.last?.cpuUsagePercent,
                 recentValues: entry.recentValues.elements,
-                memoryBaselines: entry.memoryBaselines.elements
+                memoryBaselines: entry.memoryBaselines.elements,
+                isTranslated: entry.isTranslated
             )
         }
     }

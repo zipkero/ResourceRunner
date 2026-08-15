@@ -145,6 +145,14 @@ actor MonitoringLifecycleStore {
     private var lastSystemRevision: Int?
     private var lastAppliedPlan: CollectionSchedulePlan?
 
+    /// 시스템 지표 일정이 새로 멈춘 순간만 알리는 stream. 일정이 멈춘 사실은 수집 결과가 아니라
+    /// 이 store의 일정 결정이 산물이라 여기서만 알 수 있고, 표시 계층은 이 store를 호출하지 않으므로
+    /// 이 stream이 생명주기 → coordinator → 표시로 가는 유일한 방향입니다(ANALYSIS §1 「생명주기 경계」, §5 DP16).
+    /// 재개는 표시 저장소가 다음 tick의 조립 결과로 스스로 대체하므로(`DashboardPresentationStore.markCollectionStopped()`)
+    /// 이 stream에 재개 전이를 따로 담지 않습니다. 최신 전이 하나만 보존해도 충분합니다.
+    nonisolated let collectionStoppedEvents: AsyncStream<Void>
+    private let collectionStoppedContinuation: AsyncStream<Void>.Continuation
+
     init(
         definition: CollectionScheduleDefinition,
         systemMetricsTarget: any CollectionScheduleTarget,
@@ -153,6 +161,10 @@ actor MonitoringLifecycleStore {
         self.definition = definition
         self.systemMetricsTarget = systemMetricsTarget
         self.processSurveyTarget = processSurveyTarget
+
+        var collectionStoppedContinuation: AsyncStream<Void>.Continuation!
+        self.collectionStoppedEvents = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { collectionStoppedContinuation = $0 }
+        self.collectionStoppedContinuation = collectionStoppedContinuation
     }
 
     /// 입력 이벤트 하나를 반영합니다. `systemSnapshot`은 최초 revision은 항상 적용하고
@@ -193,6 +205,12 @@ actor MonitoringLifecycleStore {
         }
         if plan.processSurvey != previousPlan?.processSurvey {
             await processSurveyTarget.apply(plan.processSurvey)
+        }
+
+        // 시스템 지표 일정이 이번에 새로 멈췄을 때만 알립니다 — 이미 멈춰 있던 채로 다른 필드가 바뀐 경우나
+        // 재개는 표시 계층에 별도로 알릴 필요가 없습니다(§5 DP16).
+        if plan.systemMetrics == .paused, previousPlan?.systemMetrics != .paused {
+            collectionStoppedContinuation.yield(())
         }
     }
 }

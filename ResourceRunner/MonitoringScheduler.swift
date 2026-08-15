@@ -99,6 +99,18 @@ actor MonitoringScheduler<
     /// `apply(_:)`가 다시 불리지 않는지를 테스트에서 직접 세기 위한 진단용 카운터입니다.
     private(set) var applyCallCount = 0
 
+#if DEBUG
+    /// 두 수집 축이 같은 category로 로그를 남기므로 어느 축의 전이·누적인지 구분하기 위한 이름.
+    /// 축마다 `Source` 타입이 다르다는 사실만 이용하므로 production 초기화 경로에 인자가 늘지 않습니다.
+    private nonisolated var debugAxisLabel: String {
+        String(String(describing: Source.self).prefix { $0 != "<" })
+    }
+
+    /// 실기기 중지·재개 관찰용 누적 저장 샘플 수.
+    /// 일정이 다시 적용돼도 되돌리지 않으므로 중지 구간에서 값이 늘지 않는지를 그대로 읽을 수 있습니다.
+    private var debugAppendedSampleCount = 0
+#endif
+
     init(clock: Clock, source: Source, sink: Sink) {
         self.clock = clock
         self.source = source
@@ -129,8 +141,10 @@ actor MonitoringScheduler<
         // `ManualMonotonicClock` 기반 타이밍 테스트의 협력 스케줄링 가정을 흔들 수 있습니다.
         let debugSchedule = schedule
         let debugGeneration = generation
+        let debugAxis = debugAxisLabel
+        let debugCount = debugAppendedSampleCount
         Task.detached(priority: .utility) {
-            MonitoringSchedulerDebugLog.logger.notice("apply schedule=\(String(describing: debugSchedule), privacy: .public) generation=\(debugGeneration, privacy: .public)")
+            MonitoringSchedulerDebugLog.logger.notice("apply axis=\(debugAxis, privacy: .public) schedule=\(String(describing: debugSchedule), privacy: .public) generation=\(debugGeneration, privacy: .public) appendedTotal=\(debugCount, privacy: .public)")
         }
 #endif
 
@@ -193,16 +207,20 @@ actor MonitoringScheduler<
         guard resultGeneration == generation else {
 #if DEBUG
             let debugCurrentGeneration = generation
+            let debugAxis = debugAxisLabel
             Task.detached(priority: .utility) {
-                MonitoringSchedulerDebugLog.logger.notice("discarded stale generation result=\(resultGeneration, privacy: .public) current=\(debugCurrentGeneration, privacy: .public)")
+                MonitoringSchedulerDebugLog.logger.notice("discarded stale axis=\(debugAxis, privacy: .public) generation result=\(resultGeneration, privacy: .public) current=\(debugCurrentGeneration, privacy: .public)")
             }
 #endif
             return
         }
         await sink.append(sample)
 #if DEBUG
+        debugAppendedSampleCount += 1
+        let debugAxis = debugAxisLabel
+        let debugCount = debugAppendedSampleCount
         Task.detached(priority: .utility) {
-            MonitoringSchedulerDebugLog.logger.notice("appended sample generation=\(resultGeneration, privacy: .public)")
+            MonitoringSchedulerDebugLog.logger.notice("appended sample axis=\(debugAxis, privacy: .public) generation=\(resultGeneration, privacy: .public) appendedTotal=\(debugCount, privacy: .public)")
         }
 #endif
     }

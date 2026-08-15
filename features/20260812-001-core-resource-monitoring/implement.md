@@ -408,7 +408,7 @@
       공식 문서로 규정된 관계가 아니고 두 도구의 샘플링 시점이 다르기 때문입니다.
   - 참조: SPEC §5.3, ANALYSIS §근거 「추정」, ANALYSIS §2 「프로세스 조사 tick」, ANALYSIS §5 DP13
 
-- [ ] task-014: production 구성과 Sandbox·산출물 유지
+- [x] task-014: production 구성과 Sandbox·산출물 유지
   - 목적: macOS 26.5 이상 Apple silicon에서 App Sandbox를 유지한 채 ResourceRunner 앱 하나만 실행하면
     두 카드와 메뉴바 표시, 두 축의 수집 일정이 한 세션 안에서 함께 동작하고,
     빌드 산출물에 Helper나 추가 상주 실행 파일이 포함되지 않습니다.

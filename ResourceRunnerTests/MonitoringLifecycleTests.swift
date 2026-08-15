@@ -417,8 +417,15 @@ struct MonitoringLifecycleStoreTests {
         #expect(await system.sink.samples.count == systemCountBeforePause + 1)
         #expect(await process.sink.samples.count == processCountBeforePause) // 프로세스 주기(5초)는 아직 도달 전
 
+        // 이 전진 하나로 시스템 축(4초 지점)과 프로세스 축(5초 지점)의 대기자가 함께 깨어납니다.
+        // 깨어난 뒤 각 축이 수집·저장을 마치는 순서는 정해져 있지 않으므로, 두 축의 도달을 함께 기다립니다.
+        // 한쪽만 기다리면 다른 축의 저장이 아직 끝나지 않은 순간에 아래 단언이 읽혀 간헐적으로 실패합니다.
         await clock.advance(by: .seconds(3))
-        await waitUntil { await process.sink.samples.count >= processCountBeforePause + 1 }
+        await waitUntil {
+            let processCount = await process.sink.samples.count
+            let systemCount = await system.sink.samples.count
+            return processCount >= processCountBeforePause + 1 && systemCount >= systemCountBeforePause + 2
+        }
         #expect(await process.sink.samples.count == processCountBeforePause + 1)
         #expect(await system.sink.samples.count == systemCountBeforePause + 2)
     }

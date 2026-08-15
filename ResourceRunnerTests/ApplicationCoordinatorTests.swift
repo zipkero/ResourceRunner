@@ -206,9 +206,97 @@ struct ApplicationCoordinatorTests {
         consumeTask.cancel()
         collectTask.cancel()
     }
+
+    // MARK: - 프로세스 조사 축 배선
+
+    /// task-014 검증 조건: 프로세스 이력 저장소가 코디네이터에 연결되면, 시스템 지표 tick 하나가
+    /// `ProcessHistoryStore.rankingInput()` -> `ApplicationRanking.compute`·`groupByApplication`을 지나
+    /// 두 카드의 TOP 5와 상세 하위 프로세스 목록까지 실제로 도달해야 합니다.
+    ///
+    /// 이 테스트가 고정하는 것은 「두 축이 이 소비 지점에서 만난다」입니다 —
+    /// `consumeSystemMetrics`가 순위 계산을 건너뛰고 빈 목록을 넘기도록 되돌리면 아래 단언이 모두 실패합니다.
+    @Test func consumeSystemMetricsDeliversProcessSurveyRankingToBothCards() async {
+        let store = MonitoringSampleStore()
+        let processHistory = ProcessHistoryStore()
+        let dashboard = DashboardPresentationStore()
+        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(
+            store,
+            into: CharacterStateSource(),
+            dashboard: dashboard,
+            processHistory: processHistory
+        )
+
+        // CPU 사용률은 기준점이 있어야 나오므로 조사 두 번을 1초 간격으로 넣습니다.
+        // 1초 동안 Alpha가 0.5초, Bravo가 0.1초를 써 각각 50%·10%가 됩니다.
+        let base = ContinuousClock().now
+        await processHistory.append(processSurveySample(
+            at: base,
+            processes: [
+                (path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 0, residentBytes: 300 * 1024 * 1024),
+                (path: "/Applications/Bravo.app/Contents/MacOS/Bravo", pid: 102, cpuTimeNanoseconds: 0, residentBytes: 100 * 1024 * 1024)
+            ]
+        ))
+        await processHistory.append(processSurveySample(
+            at: base.advanced(by: .seconds(1)),
+            processes: [
+                (path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 500_000_000, residentBytes: 300 * 1024 * 1024),
+                (path: "/Applications/Bravo.app/Contents/MacOS/Bravo", pid: 102, cpuTimeNanoseconds: 100_000_000, residentBytes: 100 * 1024 * 1024)
+            ]
+        ))
+
+        await store.append(cpuSuccessSample(at: base.advanced(by: .seconds(1)), overallUsage: 10))
+        await waitUntil {
+            if case .normal = dashboard.cpuCard, case .normal = dashboard.memoryCard { return true }
+            return false
+        }
+
+        guard case .normal(let cpu, _) = dashboard.cpuCard else {
+            Issue.record("CPU 카드가 정상 상태가 되지 않았습니다.")
+            consumeTask.cancel()
+            return
+        }
+        #expect(cpu.topApplications.map(\.displayName) == ["Alpha", "Bravo"])
+        #expect(cpu.topApplications.map(\.value) == [50, 10])
+        #expect(cpu.detail.applications.map(\.displayName).sorted() == ["Alpha", "Bravo"])
+
+        guard case .normal(let memory, _) = dashboard.memoryCard else {
+            Issue.record("Memory 카드가 정상 상태가 되지 않았습니다.")
+            consumeTask.cancel()
+            return
+        }
+        #expect(memory.topApplications.map(\.displayName) == ["Alpha", "Bravo"])
+        #expect(memory.detail.currentUsageRanking.map(\.displayName) == ["Alpha", "Bravo"])
+        #expect(memory.detail.applications.map(\.displayName).sorted() == ["Alpha", "Bravo"])
+
+        consumeTask.cancel()
+    }
 }
 
 // MARK: - consumeSystemMetrics 테스트용 샘플 조립
+
+/// 실행 경로·PID·누적 CPU 시간·Resident Memory만 의미 있게 두고 나머지 자리는 순위 계산과 무관한 값으로 채우는 조사 결과.
+private func processSurveySample(
+    at timestamp: ContinuousClock.Instant,
+    processes: [(path: String, pid: pid_t, cpuTimeNanoseconds: UInt64, residentBytes: UInt64)]
+) -> TimestampedSample<ProcessSurveySample> {
+    TimestampedSample(
+        timestamp: timestamp,
+        value: ProcessSurveySample(
+            samples: processes.map { process in
+                ProcessSample(
+                    identity: ProcessIdentity(pid: process.pid, startTime: 0),
+                    executablePath: process.path,
+                    uid: 501,
+                    parentPID: 1,
+                    cpuTimeNanoseconds: process.cpuTimeNanoseconds,
+                    residentBytes: process.residentBytes,
+                    isTranslated: false
+                )
+            },
+            unreadableCount: 0
+        )
+    )
+}
 
 /// 전체 사용률만 의미 있게 두고 나머지는 판정과 무관한 자리를 채우는 CPU 지표.
 private func cpuMetrics(overallUsage: Double) -> CPUSystemMetrics {

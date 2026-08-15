@@ -44,26 +44,6 @@ nonisolated protocol MonitoringSampleSink: Sendable {
     func append(_ sample: TimestampedSample<Value>) async
 }
 
-/// 실제 Collector가 없는 M1에서 값 자체에는 의미가 없는 최소 placeholder 샘플.
-/// M2에서 실제 CPU·메모리 수집으로 교체됩니다.
-nonisolated struct PlaceholderMonitoringSample: Sendable {}
-
-/// 실제 Collector 대신 항상 같은 placeholder 값을 반환하는 M1 production `ScheduledSampleSource`.
-/// `MonitoringScheduler`가 실행 앱에서 실제로 일정·취소·버퍼 배선을 태울 수 있게 하는 용도이며,
-/// 값 생성 실패나 실제 자원 측정은 다루지 않습니다.
-final class PlaceholderScheduledSampleSource: ScheduledSampleSource {
-    func sample() async throws -> PlaceholderMonitoringSample {
-        PlaceholderMonitoringSample()
-    }
-}
-
-/// 프로세스 조사 이력 저장소(task-005)가 없는 동안 프로세스 축의 저장 대상 자리를 채우는 sink.
-/// 받은 샘플을 보관하지 않으며, 이 축이 일정·중지·재개를 실제로 태울 수 있게 하는 용도입니다.
-/// 실제 조사 결과를 다루는 저장소로 대체되고 나머지 자리표시 심볼과 함께 task-014에서 제거됩니다.
-actor PlaceholderMonitoringSampleSink: MonitoringSampleSink {
-    func append(_ sample: TimestampedSample<PlaceholderMonitoringSample>) {}
-}
-
 #if DEBUG
 /// `MonitoringScheduler`가 제네릭 actor라 정적 저장 속성을 직접 가질 수 없으므로,
 /// task-011 관찰 수단(적용된 일정 전이·generation·누적 샘플 수·버퍼 용량)을 여기 분리해 둡니다.

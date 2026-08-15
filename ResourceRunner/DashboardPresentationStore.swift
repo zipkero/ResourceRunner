@@ -37,9 +37,8 @@ final class DashboardPresentationStore: ObservableObject {
     /// 값이 0이나 빈 값으로 바뀌지 않습니다.
     ///
     /// - Parameters:
-    ///   - topApplications: 앱 단위 CPU 사용량 TOP 5. 프로세스 조사 축이 아직 production 코디네이터에
-    ///     연결되지 않은 동안은 빈 배열이 그대로 전달되며, 그 자체가 "5개 미만이면 있는 만큼만 표시"의
-    ///     한 경우입니다.
+    ///   - topApplications: 앱 단위 CPU 사용량 TOP 5. 아직 조사 이력이 없어 순위를 만들지 못한 동안은
+    ///     빈 배열이 그대로 전달되며, 그 자체가 "5개 미만이면 있는 만큼만 표시"의 한 경우입니다.
     ///   - topApplicationsFailed: 이 tick의 프로세스 조사가 실패했는지. 실패해도 시스템 지표 수치는 그대로
     ///     표시되고 TOP 5만 실패를 나타냅니다.
     ///   - currentTimestamp: 그래프를 그리는 시점의 시각(ANALYSIS §5 DP3).
@@ -81,8 +80,8 @@ final class DashboardPresentationStore: ObservableObject {
     /// `CollectorFailure` 경로로 합류하므로 임의 단계가 카드에 나타나는 경로가 없습니다.
     ///
     /// - Parameters:
-    ///   - topApplications: 앱 단위 메모리 사용량 TOP 5. 프로세스 조사 축이 아직 production 코디네이터에
-    ///     연결되지 않은 동안은 빈 배열이 그대로 전달됩니다.
+    ///   - topApplications: 앱 단위 메모리 사용량 TOP 5. 아직 조사 이력이 없어 순위를 만들지 못한 동안은
+    ///     빈 배열이 그대로 전달됩니다.
     ///   - topApplicationsFailed: CPU 카드의 같은 매개변수와 같은 뜻입니다.
     ///   - currentTimestamp: Swap 최근 변화량의 10분 창 오른쪽 끝으로 쓰는 시각(ANALYSIS §5 DP3).
     func updateMemoryCard(

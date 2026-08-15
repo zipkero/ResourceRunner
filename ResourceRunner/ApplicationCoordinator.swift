@@ -23,17 +23,18 @@ typealias ProductionSystemMetricsScheduler = MonitoringScheduler<
 >
 
 /// production 프로세스 조사 축의 구체 타입.
-/// 조사 source와 이력 저장소는 task-004·task-005 범위이므로 지금은 자리표시를 끼워 두고,
-/// 이 축이 일정·중지·재개를 시스템 지표 축과 독립적으로 태우는 것만 성립시킵니다.
+typealias ProductionProcessSurveySource = ProcessSurveySampleSource<ProcessSurveyCollector<HostProcessSurveyReader>>
+
 typealias ProductionProcessSurveyScheduler = MonitoringScheduler<
     SystemMonotonicClock,
-    PlaceholderScheduledSampleSource,
-    PlaceholderMonitoringSampleSink
+    ProductionProcessSurveySource,
+    ProcessHistoryStore
 >
 
 /// 앱 수명 동안 필요한 객체를 한 번만 구성하고 소유하는 경계.
 /// 표시 흐름(`StatusBarController`, `CharacterStateSource`)과 생명주기·수집 흐름
-/// (`SystemLifecycleObserver`, `MonitoringLifecycleStore`, 두 축의 `MonitoringScheduler`, `MonitoringSampleStore`)을
+/// (`SystemLifecycleObserver`, `MonitoringLifecycleStore`, 두 축의 `MonitoringScheduler`,
+/// `MonitoringSampleStore`, `ProcessHistoryStore`)을
 /// 각각 한 번만 만들어 앱 종료까지 강하게 보유합니다. 두 흐름은 이 타입에서만 만나며,
 /// 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다.
 @MainActor
@@ -42,6 +43,7 @@ final class ApplicationCoordinator {
     let characterStateSource: CharacterStateSource
     let systemLifecycleObserver: SystemLifecycleObserver
     let monitoringSampleStore: MonitoringSampleStore
+    let processHistoryStore: ProcessHistoryStore
     let systemMetricsScheduler: ProductionSystemMetricsScheduler
     let processSurveyScheduler: ProductionProcessSurveyScheduler
     let monitoringLifecycleStore: MonitoringLifecycleStore
@@ -82,12 +84,16 @@ final class ApplicationCoordinator {
             ),
             sink: sampleStore
         )
+        let processStore = ProcessHistoryStore()
         let processScheduler = MonitoringScheduler(
             clock: clock,
-            source: PlaceholderScheduledSampleSource(),
-            sink: PlaceholderMonitoringSampleSink()
+            source: ProcessSurveySampleSource(
+                collector: ProcessSurveyCollector(reader: HostProcessSurveyReader())
+            ),
+            sink: processStore
         )
         monitoringSampleStore = sampleStore
+        processHistoryStore = processStore
         systemMetricsScheduler = systemScheduler
         processSurveyScheduler = processScheduler
         monitoringLifecycleStore = MonitoringLifecycleStore(
@@ -113,7 +119,12 @@ final class ApplicationCoordinator {
         characterStateTask = Self.consume(characterStateSource, into: sink)
 
         monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: monitoringLifecycleStore)
-        cpuActivityTask = Self.consumeSystemMetrics(sampleStore, into: characterStateSource, dashboard: dashboard)
+        cpuActivityTask = Self.consumeSystemMetrics(
+            sampleStore,
+            into: characterStateSource,
+            dashboard: dashboard,
+            processHistory: processStore
+        )
         collectionStoppedTask = Self.consumeCollectionStoppedEvents(monitoringLifecycleStore, dashboard: dashboard)
     }
 
@@ -137,20 +148,58 @@ final class ApplicationCoordinator {
     /// CPU 지표가 실패했거나(`.failure`) 값을 만들지 못한 tick(`.success(nil)`)에서는 판정 자체를 건너뛰어
     /// 마지막 표시 상태를 그대로 유지합니다(ANALYSIS §2 「메뉴바 표시 상태 판정」).
     /// 같은 소비 지점에서 `dashboard`의 CPU·Memory 카드도 매 tick 갱신합니다(ANALYSIS §5 DP10).
-    /// `topApplications`는 프로세스 조사 축이 아직 이 코디네이터에 연결되지 않아 항상 빈 배열입니다(task-014에서 연결).
+    /// 앱 단위 순위는 이 지점에서 `processHistory`의 마지막 조사 이력을 읽어 계산합니다 —
+    /// 카드 조립에는 시스템 지표 tick의 값과 순위가 함께 필요하고, 두 축의 주기가 서로 달라
+    /// 조립 시점을 하나로 정해야 하기 때문입니다. 앱 키 유도 캐시는 계산이 순수 함수라
+    /// 이 소비 Task가 이어서 들고 다음 tick에 넘깁니다(ANALYSIS §1 「계산 경계」).
+    /// `processHistory`가 없으면 순위는 빈 목록이 되고, 그 자체가 "5개 미만이면 있는 만큼만 표시"의 한 경우입니다.
     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
     static func consumeSystemMetrics(
         _ store: MonitoringSampleStore,
         into characterStateSource: CharacterStateSource,
-        dashboard: DashboardPresentationStore
+        dashboard: DashboardPresentationStore,
+        processHistory: ProcessHistoryStore? = nil
     ) -> Task<Void, Never> {
         let displayValues = store.displayValues
         return Task { @MainActor in
             var state = CPUActivityStateEvaluator.State.initial
+            var resolver = ApplicationIdentityResolver()
             for await displayValue in displayValues {
                 let now = ContinuousClock().now
-                dashboard.updateCPUCard(with: displayValue, topApplications: [], currentTimestamp: now)
-                dashboard.updateMemoryCard(with: displayValue, topApplications: [], currentTimestamp: now)
+
+                var ranking: ApplicationRankingSample?
+                var processGroups: [ApplicationProcessGroup] = []
+                if let processHistory {
+                    let input = await processHistory.rankingInput()
+                    let computed = ApplicationRanking.compute(
+                        snapshots: input.snapshots,
+                        currentTimestamp: now,
+                        unreadableCount: input.unreadableCount,
+                        resolver: resolver
+                    )
+                    // 두 계산이 같은 resolver를 이어받아야 앱 키 유도가 서로 다른 결과를 내지 않습니다.
+                    let grouped = ApplicationRanking.groupByApplication(
+                        snapshots: input.snapshots,
+                        resolver: computed.resolver
+                    )
+                    resolver = grouped.resolver
+                    ranking = computed.sample
+                    processGroups = grouped.groups
+                }
+
+                dashboard.updateCPUCard(
+                    with: displayValue,
+                    topApplications: ranking?.cpuUsage ?? [],
+                    processGroups: processGroups,
+                    currentTimestamp: now
+                )
+                dashboard.updateMemoryCard(
+                    with: displayValue,
+                    topApplications: ranking?.memoryUsage ?? [],
+                    memoryIncrease: ranking?.memoryIncrease ?? [],
+                    processGroups: processGroups,
+                    currentTimestamp: now
+                )
 
                 guard let latest = displayValue.latest,
                       case .success(let cpu?) = latest.value.cpu else { continue }

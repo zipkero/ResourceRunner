@@ -264,6 +264,76 @@ struct MemoryPressureLevelTests {
     }
 }
 
+// MARK: - Memory 유도식
+
+/// task-001 검증 조건 중 "사용 중 메모리가 전체 물리 메모리를 넘지 않습니다"를 포함해,
+/// `vm_statistics64` 원본 주입으로 Memory 각 항목의 유도식을 고정합니다.
+struct MemorySystemMetricsDerivationTests {
+
+    private static let pageSize: UInt64 = 16384
+
+    /// 항목마다 다른 페이지 수를 줘서 어느 두 유도식도 우연히 같은 값이 되지 않게 합니다.
+    private static func statistics() -> vm_statistics64_data_t {
+        var statistics = vm_statistics64_data_t()
+        statistics.free_count = 1_000
+        statistics.speculative_count = 300
+        statistics.wire_count = 500
+        statistics.compressor_page_count = 200
+        statistics.purgeable_count = 50
+        statistics.internal_page_count = 900
+        statistics.external_page_count = 400
+        return statistics
+    }
+
+    private static func metrics(totalPages: UInt64 = 4_000) -> MemorySystemMetrics {
+        MemorySystemMetricsCollector.metrics(
+            from: statistics(),
+            pageSize: pageSize,
+            totalPhysicalBytes: totalPages * pageSize,
+            swapUsedBytes: 7 * pageSize,
+            pressureLevel: .normal
+        )
+    }
+
+    /// `사용 중`은 구성 항목의 합이 아니라 전체에서 회수 가능한 free·cached를 뺀 나머지입니다.
+    /// `appBytes + wiredBytes + compressedBytes`로 되돌리면 이 단언이 실패해야 합니다.
+    @Test func usedBytesIsTotalMinusReclaimablePages() {
+        let metrics = Self.metrics()
+
+        // 4_000 - (1_000 - 300) - 400 = 2_900 페이지.
+        #expect(metrics.usedBytes == 2_900 * Self.pageSize)
+    }
+
+    /// 구성 항목의 합과 어긋나는 성질 자체를 고정합니다.
+    /// 이 차이를 "버그"로 보고 합으로 맞추는 변경을 막는 것이 목적입니다.
+    @Test func usedBytesIsNotTheSumOfAppWiredAndCompressed() {
+        let metrics = Self.metrics()
+
+        // 850 + 500 + 200 = 1_550 페이지.
+        #expect(metrics.appBytes + metrics.wiredBytes + metrics.compressedBytes == 1_550 * Self.pageSize)
+        #expect(metrics.usedBytes > metrics.appBytes + metrics.wiredBytes + metrics.compressedBytes)
+    }
+
+    @Test func componentBytesComeFromTheirOwnCounters() {
+        let metrics = Self.metrics()
+
+        #expect(metrics.appBytes == 850 * Self.pageSize)
+        #expect(metrics.wiredBytes == 500 * Self.pageSize)
+        #expect(metrics.compressedBytes == 200 * Self.pageSize)
+        #expect(metrics.cachedBytes == 450 * Self.pageSize)
+        #expect(metrics.swapUsedBytes == 7 * Self.pageSize)
+        #expect(metrics.pressureLevel == .normal)
+    }
+
+    /// 회수 가능한 페이지가 전체보다 많게 읽혀도 `사용 중`이 전체 물리 메모리를 넘거나 되감기지 않습니다.
+    @Test func usedBytesNeverExceedsTotalPhysicalBytes() {
+        for totalPages in [UInt64(4_000), 1_100, 1_000, 500] {
+            let metrics = Self.metrics(totalPages: totalPages)
+            #expect(metrics.usedBytes <= metrics.totalPhysicalBytes)
+        }
+    }
+}
+
 // MARK: - 실제 시스템 호출 경로
 
 /// task-001 검증 조건 중 실기기 확인: macOS 26.5 Apple silicon에서 연속 두 tick을 수집해
@@ -296,7 +366,9 @@ struct SystemMetricsRealDevicePathTests {
         #expect(metrics.totalPhysicalBytes > 0)
         #expect(metrics.usedBytes > 0)
         #expect(metrics.usedBytes <= metrics.totalPhysicalBytes)
-        #expect(metrics.usedBytes == metrics.appBytes + metrics.wiredBytes + metrics.compressedBytes)
+        // 실기기에서도 `사용 중`이 구성 항목의 합보다 크다는 성질이 유지되는지 봅니다.
+        // 유도식 자체는 `MemorySystemMetricsDerivationTests`가 원본 주입으로 고정합니다.
+        #expect(metrics.usedBytes > metrics.appBytes + metrics.wiredBytes + metrics.compressedBytes)
         #expect(metrics.wiredBytes > 0)
     }
 }

@@ -33,7 +33,8 @@ nonisolated struct LoadAverage: Sendable, Equatable {
 /// Apple이 공식 문서로 규정한 관계가 아니므로 Activity Monitor와 절대값이 정확히 같다고 보장하지 않습니다.
 nonisolated struct MemorySystemMetrics: Sendable, Equatable {
     let totalPhysicalBytes: UInt64
-    /// 현재 사용 중 메모리. App·Wired·Compressed의 합입니다.
+    /// 현재 사용 중 메모리. 전체 물리 메모리에서 당장 회수 가능한 free·cached 페이지를 뺀 나머지이며,
+    /// `appBytes`·`wiredBytes`·`compressedBytes`의 합과는 일치하지 않습니다(유도식은 Collector 주석 참조).
     let usedBytes: UInt64
     let appBytes: UInt64
     let wiredBytes: UInt64

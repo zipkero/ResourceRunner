@@ -24,20 +24,55 @@ nonisolated struct MemorySystemMetricsCollector: MemorySystemMetricsCollecting {
         let swapUsedBytes = try readSwapUsedBytes()
         let pressureLevel = try readPressureLevel()
 
+        return Self.metrics(
+            from: statistics,
+            pageSize: pageSize,
+            totalPhysicalBytes: ProcessInfo.processInfo.physicalMemory,
+            swapUsedBytes: swapUsedBytes,
+            pressureLevel: pressureLevel
+        )
+    }
+
+    /// 시스템 호출로 읽은 원본에서 Memory 지표를 만드는 순수 계산.
+    /// 시스템 호출과 분리해 두어야 유도식을 원본 주입으로 검증할 수 있습니다.
+    static func metrics(
+        from statistics: vm_statistics64_data_t,
+        pageSize: UInt64,
+        totalPhysicalBytes: UInt64,
+        swapUsedBytes: UInt64,
+        pressureLevel: MemoryPressureLevel
+    ) -> MemorySystemMetrics {
         let wiredBytes = UInt64(statistics.wire_count) * pageSize
         let compressedBytes = UInt64(statistics.compressor_page_count) * pageSize
         let purgeableBytes = UInt64(statistics.purgeable_count) * pageSize
         let internalBytes = UInt64(statistics.internal_page_count) * pageSize
         let externalBytes = UInt64(statistics.external_page_count) * pageSize
+        let freeBytes = UInt64(statistics.free_count) * pageSize
+        let speculativeBytes = UInt64(statistics.speculative_count) * pageSize
 
         // 익명 페이지에서 언제든 회수 가능한 purgeable을 빼면 App 메모리가 되고,
         // 그 purgeable은 파일 기반 페이지와 함께 Cached Files 쪽에 들어갑니다.
         let appBytes = internalBytes >= purgeableBytes ? internalBytes - purgeableBytes : 0
         let cachedBytes = externalBytes + purgeableBytes
 
+        // `사용 중`은 구성 항목의 합이 아니라 "전체에서 당장 내줄 수 있는 메모리를 뺀 나머지"입니다.
+        // 당장 내줄 수 있는 쪽은 순수 free(free에는 speculative가 포함되어 있어 먼저 빼냅니다)와
+        // 파일 기반 external 페이지이고, 그 밖은 전부 사용 중으로 셉니다.
+        //
+        // 그래서 이 값은 `appBytes + wiredBytes + compressedBytes`와 일치하지 않으며 그보다 큽니다.
+        // 차이는 어느 항목에도 잡히지 않는 커널 영역과 speculative·purgeable을 사용 중으로 세는 반면
+        // compressor가 물고 있는 페이지는 이미 internal 쪽에 계상되어 중복되지 않기 때문에 생깁니다.
+        // Activity Monitor의 `사용된 메모리`도 같은 식이라 구성 항목의 합과 어긋나는 성질을 그대로 가집니다.
+        // 합이 맞지 않는다는 이유로 세 항목의 합으로 되돌리면 표시값이 Activity Monitor보다 작아집니다.
+        //
+        // `totalPhysicalBytes`만 페이지 카운터가 아닌 `ProcessInfo.physicalMemory`에서 오지만,
+        // 물리 메모리 크기가 페이지 크기의 배수라 페이지 단위로 환산해도 같은 값입니다.
+        let reclaimableBytes = (freeBytes >= speculativeBytes ? freeBytes - speculativeBytes : 0) + externalBytes
+        let usedBytes = totalPhysicalBytes >= reclaimableBytes ? totalPhysicalBytes - reclaimableBytes : 0
+
         return MemorySystemMetrics(
-            totalPhysicalBytes: ProcessInfo.processInfo.physicalMemory,
-            usedBytes: appBytes + wiredBytes + compressedBytes,
+            totalPhysicalBytes: totalPhysicalBytes,
+            usedBytes: usedBytes,
             appBytes: appBytes,
             wiredBytes: wiredBytes,
             compressedBytes: compressedBytes,

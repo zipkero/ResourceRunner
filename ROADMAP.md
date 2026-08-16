@@ -54,7 +54,7 @@
 | 마일스톤 | 상태 | 현재 근거 |
 | --- | --- | --- |
 | M1. 메뉴바 기반 | 완료 | Dock 없는 메뉴바 항목과 transient 팝오버, 주입 상태의 접근성 이름 전환, 수집 일정·최근 데이터 순환 버퍼·생명주기 제어가 동작하고, 실제 화면 잠금·해제와 저전력 전환을 실행 환경에서 관찰 |
-| M2. 핵심 리소스 모니터링 | 예정 | CPU·Memory Collector, 대시보드와 캐릭터 애니메이션 미구현. App Sandbox에서 시스템 전체 지표와 프로세스 단위 CPU·메모리 접근이 가능함은 확인됐고, Physical Footprint는 사용할 수 없음 |
+| M2. 핵심 리소스 모니터링 | 진행 중 | core-resource-monitoring feature 완료 — CPU·Memory Collector, 두 카드 대시보드와 최근 10분 그래프, 앱 단위 TOP 5, 실제 CPU 부하를 따르는 메뉴바 표시 상태가 동작하고, 실기기에서 Activity Monitor·`top`과 비교해 유휴 전체 CPU 차이 0.41~0.89%p, Memory 일곱 항목 편차 0~0.03 GB를 확인. App Sandbox에서 시스템 전체 지표와 프로세스 단위 CPU·메모리 접근이 가능하고 Physical Footprint는 사용할 수 없음. 캐릭터 자산과 메뉴바 애니메이션은 후속 feature로 남음 |
 | M3. 확장 리소스 모니터링 | 예정 | Network·Disk Collector 미구현 |
 | M4. 앱 설정 | 예정 | 제품 설정과 로그인 항목 관리 미구현 |
 | M5. 출시 준비 | 예정 | 정확성·성능·장기 안정성 검증과 배포 산출물 없음 |

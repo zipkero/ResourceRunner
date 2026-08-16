@@ -400,12 +400,20 @@ Scheduler는 source가 던져도 0 샘플로 바꾸지 않고 다음 실행으�
 - `ProcessIdentity`: PID와 프로세스 시작 시각을 묶는 값. 이력과 캐시의 유일한 키입니다.
 - `ProcessSample`: 정체성, 실행 경로, uid, 부모 PID, 누적 CPU 시간, Resident Memory,
   Rosetta 실행 여부를 담는 한 프로세스의 조사 결과
-- `ProcessSurveySample`: 이번 조사에서 값을 얻은 프로세스 목록과 읽지 못한 프로세스 수를 담는 값
+- `ProcessSurveyReport`: 이번 조사에서 값을 얻은 프로세스 목록과 읽지 못한 프로세스 수를 담는 값
+- `ProcessSurveySample`: 위 결과 또는 조사 실패를 담는 `Result`.
+  열거 자체가 실패해 이번 tick의 결과가 아예 없는 경우를 던지지 않고 값으로 전달합니다 —
+  던지면 `MonitoringScheduler`가 tick을 건너뛰어 §2 「실패 경로」가 정한
+  "프로세스 조사 실패는 두 카드의 TOP 5만 실패로 바꾼다"가 표시 계층에 도달할 통로가 없습니다.
+  시스템 지표 축의 `SystemMetricsSample`과 같은 규칙입니다.
 - `ProcessSurveySampleSource`: 위 값을 반환하는 `ScheduledSampleSource` 구현 actor
 - `ApplicationKey`: 가장 바깥 `.app` 번들 경로 또는 실행 파일 경로를 담는 앱 집계 키
 - `ApplicationIdentityResolver`: 실행 경로에서 앱 키와 표시 이름을 유도하고 결과를 캐시하는 계약
 - `ProcessHistoryStore`: 조사 결과를 받아 정체성별 이력을 갱신하고, 사라진 정체성을 제거하며,
-  앱 단위 현재값 순위와 10분 증가량 순위 계산에 필요한 값을 제공하는 actor
+  앱 단위 현재값 순위와 10분 증가량 순위 계산에 필요한 값을 제공하는 actor.
+  실패한 조사는 이력을 전혀 건드리지 않고 실패 사실만 기록해 순위 계산 입력과 함께 내보냅니다 —
+  관찰된 정체성이 없는 것으로 처리하면 제거 규칙이 이력 전체를 지웁니다.
+  실패 표시는 다음 성공 조사까지 유지되므로, 더 빠른 시스템 지표 tick이 순위를 다시 읽어도 흔들리지 않습니다
 
 ### 일정 계약
 

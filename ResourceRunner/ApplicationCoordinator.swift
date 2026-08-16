@@ -169,8 +169,10 @@ final class ApplicationCoordinator {
 
                 var ranking: ApplicationRankingSample?
                 var processGroups: [ApplicationProcessGroup] = []
+                var surveyFailed = false
                 if let processHistory {
                     let input = await processHistory.rankingInput()
+                    surveyFailed = input.surveyFailed
                     let computed = ApplicationRanking.compute(
                         snapshots: input.snapshots,
                         currentTimestamp: now,
@@ -190,12 +192,14 @@ final class ApplicationCoordinator {
                 dashboard.updateCPUCard(
                     with: displayValue,
                     topApplications: ranking?.cpuUsage ?? [],
+                    topApplicationsFailed: surveyFailed,
                     processGroups: processGroups,
                     currentTimestamp: now
                 )
                 dashboard.updateMemoryCard(
                     with: displayValue,
                     topApplications: ranking?.memoryUsage ?? [],
+                    topApplicationsFailed: surveyFailed,
                     memoryIncrease: ranking?.memoryIncrease ?? [],
                     processGroups: processGroups,
                     currentTimestamp: now

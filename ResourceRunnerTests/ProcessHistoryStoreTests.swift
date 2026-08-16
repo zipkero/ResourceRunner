@@ -34,7 +34,13 @@ private func processSample(
 }
 
 private func survey(_ samples: [ProcessSample], unreadableCount: Int = 0) -> ProcessSurveySample {
-    ProcessSurveySample(samples: samples, unreadableCount: unreadableCount)
+    ProcessSurveySample(result: .success(ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount)))
+}
+
+private func failedSurvey(
+    _ cause: CollectorFailure.Cause = .systemCall(name: "sysctl(KERN_PROC_ALL).size", code: EPERM)
+) -> ProcessSurveySample {
+    ProcessSurveySample(result: .failure(CollectorFailure(metric: .process, cause: cause)))
 }
 
 private let baseInstant = ContinuousClock().now
@@ -107,6 +113,39 @@ struct ProcessHistoryIdentityBoundaryTests {
 
         let snapshot = try #require(await store.snapshot().first)
         #expect(snapshot.latestCPUUsagePercent == nil)
+    }
+
+    /// 실패한 조사는 이력을 전혀 건드리지 않고 실패 사실만 기록합니다.
+    ///
+    /// 바로 위 테스트가 고정하듯 프로세스가 빠진 **성공** 조사는 이력을 지우는 것이 옳은 동작입니다.
+    /// 실패한 조사를 같은 경로로 흘려보내면 관찰된 정체성이 하나도 없는 것으로 읽혀
+    /// 조사 한 번 실패에 CPU 기준점과 메모리 기준점이 모두 사라지고, 복구된 뒤에도
+    /// 사용률이 다시 나오기까지 조사 두 번을 기다려야 합니다.
+    /// `append`의 실패 분기를 빼면 `identityCount`와 복구 직후 사용률 단언이 함께 실패합니다.
+    @Test func failedSurveyKeepsHistoryIntactAndOnlyRecordsTheFailure() async throws {
+        let store = ProcessHistoryStore()
+
+        await store.append(TimestampedSample(
+            timestamp: baseInstant,
+            value: survey([processSample(cpuTimeNanoseconds: 0)])
+        ))
+        await store.append(TimestampedSample(timestamp: baseInstant.advanced(by: .seconds(1)), value: failedSurvey()))
+
+        // 이력이 그대로 남고 실패만 기록됩니다.
+        #expect(await store.identityCount == 1)
+        #expect(await store.rankingInput().surveyFailed)
+
+        // 기준점이 살아 있으므로 복구된 첫 조사에서 곧바로 사용률이 나옵니다.
+        // 실패 시각이 아니라 마지막 성공 조사 시각과의 차이로 계산되어 2초 동안 1초를 쓴 50%입니다.
+        await store.append(TimestampedSample(
+            timestamp: baseInstant.advanced(by: .seconds(2)),
+            value: survey([processSample(cpuTimeNanoseconds: 1_000_000_000)])
+        ))
+
+        let input = await store.rankingInput()
+        #expect(!input.surveyFailed)
+        let snapshot = try #require(input.snapshots.first)
+        #expect(snapshot.latestCPUUsagePercent == 50)
     }
 }
 

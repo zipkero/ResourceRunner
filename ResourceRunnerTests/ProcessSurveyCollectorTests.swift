@@ -266,6 +266,36 @@ struct ProcessSurveyPathCacheTests {
     }
 }
 
+// MARK: - 조사 실패의 값 전달
+
+/// 열거 자체가 실패한 tick을 던지지 않고 샘플 값으로 전달합니다.
+///
+/// 이 경계가 중요한 이유는 `MonitoringScheduler`가 source 예외에서 tick을 통째로 건너뛰기 때문입니다.
+/// 던지면 sink에 아무것도 도착하지 않아 실패가 저장소와 표시 계층에 닿을 통로가 없습니다.
+struct ProcessSurveySampleSourceTests {
+
+    @Test func enumerationFailureIsReturnedAsAFailedSampleInsteadOfThrowing() async {
+        let currentUID = getuid()
+        let reader = StubProcessSurveyReader(
+            listOutcomes: [.failure(StubProcessSurveyReader.exhaustedListFailure), .success([entry(pid: 100, uid: currentUID)])],
+            taskInfoOutcomes: [100: .success(ProcessTaskInfo(cpuTimeNanoseconds: 1, residentBytes: 2))],
+            pathOutcomes: [100: .success("/bin/a")]
+        )
+        let source = ProcessSurveySampleSource(collector: ProcessSurveyCollector(reader: reader))
+
+        let failed = await source.sample()
+        #expect(failed.result == .failure(StubProcessSurveyReader.exhaustedListFailure))
+
+        // 실패한 조사가 source의 상태를 망가뜨리지 않고 다음 조사가 정상 결과를 돌려줍니다.
+        let recovered = await source.sample()
+        guard case .success(let report) = recovered.result else {
+            Issue.record("복구된 조사가 성공 샘플을 돌려주지 않았습니다.")
+            return
+        }
+        #expect(report.samples.map(\.identity.pid) == [100])
+    }
+}
+
 // MARK: - 실제 시스템 호출 경로
 
 /// 실제 `ProcessSurveying` 구현을 감싸 pid별 호출 횟수를 세는 decorator.

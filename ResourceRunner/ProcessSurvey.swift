@@ -32,9 +32,18 @@ nonisolated struct ProcessSample: Sendable, Equatable {
     let isTranslated: Bool
 }
 
-/// 한 번의 조사 결과 전체.
+/// 성공한 한 번의 조사 결과 전체.
 /// 읽지 못한 프로세스는 목록에 담기지 않고 개수로만 남아, 사용량이 추정값으로 채워지는 일이 없습니다.
-nonisolated struct ProcessSurveySample: Sendable, Equatable {
+nonisolated struct ProcessSurveyReport: Sendable, Equatable {
     let samples: [ProcessSample]
     let unreadableCount: Int
+}
+
+/// 한 tick의 프로세스 조사 결과.
+/// 열거 자체가 실패해 이번 tick의 결과가 아예 없는 경우를 던지지 않고 값으로 전달합니다.
+/// 던지면 `MonitoringScheduler`가 tick을 건너뛰어 실패가 표시 계층에 도달할 통로가 없고,
+/// 두 카드가 낡은 TOP 5를 정상인 것처럼 계속 보여주게 됩니다.
+/// 시스템 지표 축이 `SystemMetricsSample`에서 쓰는 규칙과 같습니다.
+nonisolated struct ProcessSurveySample: Sendable, Equatable {
+    let result: Result<ProcessSurveyReport, CollectorFailure>
 }

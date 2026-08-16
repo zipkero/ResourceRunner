@@ -90,23 +90,38 @@ nonisolated enum ProcessHistorySampling {
 
 /// 정체성별 CPU 누적 시간·순위 안정화 이력·메모리 기준점을 보관하는 actor.
 /// 매 조사에서 관찰되지 않은 정체성은 그 자리에서 제거하므로, 종료되거나 접근에 실패해
-/// `ProcessSurveySample.samples`에서 빠진 프로세스는 다음 조사에서 이력이 사라집니다.
+/// `ProcessSurveyReport.samples`에서 빠진 프로세스는 다음 조사에서 이력이 사라집니다.
 /// 정체성 키가 PID와 시작 시각의 쌍이라 PID가 재사용돼도 새 정체성이 되어 이전 이력을 이어받지 않습니다. SPEC §5.7을 담당합니다.
 actor ProcessHistoryStore: MonitoringSampleSink {
     private var entries: [ProcessIdentity: ProcessHistoryEntry] = [:]
     /// 마지막 조사에서 읽지 못한 프로세스 수.
     /// 순위 계산 입력의 일부이므로 정체성별 이력과 같은 시점의 값으로 함께 나가야 합니다.
     private var latestUnreadableCount = 0
+    /// 마지막 조사가 실패했는지. 다음 성공 조사까지 유지됩니다.
+    /// 시스템 지표 축이 더 빠르게 tick하며 순위를 다시 읽어 가므로, 이 값을 조사 축에서만 바꿔야
+    /// 실패 표시가 tick마다 켜졌다 꺼지지 않습니다.
+    private var latestSurveyFailed = false
 
     /// 한 번의 조사 결과를 반영합니다.
     /// 이번 조사에서 관찰된 정체성만 남기고 나머지는 이 호출에서 바로 제거됩니다.
+    ///
+    /// 실패한 조사는 이력을 전혀 건드리지 않고 실패 사실만 기록합니다.
+    /// 관찰된 정체성이 없는 것으로 처리하면 아래 제거 단계가 이력 전체를 지워
+    /// 조사 한 번 실패에 그동안 쌓은 CPU 기준점과 메모리 기준점이 모두 사라집니다.
     func append(_ sample: TimestampedSample<ProcessSurveySample>) {
         let timestamp = sample.timestamp
-        latestUnreadableCount = sample.value.unreadableCount
-        var observed: Set<ProcessIdentity> = []
-        observed.reserveCapacity(sample.value.samples.count)
 
-        for process in sample.value.samples {
+        guard case .success(let report) = sample.value.result else {
+            latestSurveyFailed = true
+            return
+        }
+
+        latestSurveyFailed = false
+        latestUnreadableCount = report.unreadableCount
+        var observed: Set<ProcessIdentity> = []
+        observed.reserveCapacity(report.samples.count)
+
+        for process in report.samples {
             observed.insert(process.identity)
 
             var entry = entries[process.identity] ?? ProcessHistoryEntry(
@@ -147,8 +162,9 @@ actor ProcessHistoryStore: MonitoringSampleSink {
     /// 앱 단위 순위 계산(`ApplicationRanking`)이 한 번에 필요로 하는 입력 묶음.
     /// 정체성별 이력과 읽지 못한 프로세스 수를 따로 읽으면 두 번의 actor 진입 사이에 조사가 끼어들어
     /// 서로 다른 조사의 값이 섞일 수 있으므로 한 번의 호출로 함께 내보냅니다.
-    func rankingInput() -> (snapshots: [ProcessHistorySnapshot], unreadableCount: Int) {
-        (snapshot(), latestUnreadableCount)
+    /// 마지막 조사의 실패 여부도 같은 이유로 함께 나갑니다.
+    func rankingInput() -> (snapshots: [ProcessHistorySnapshot], unreadableCount: Int, surveyFailed: Bool) {
+        (snapshot(), latestUnreadableCount, latestSurveyFailed)
     }
 
     /// 관찰 중인 정체성 수. 종료된 프로세스 제거를 사전 크기로 단언하는 테스트가 씁니다.

@@ -127,7 +127,7 @@ nonisolated struct HostProcessSurveyReader: ProcessSurveying {
 
 /// 한 번의 조사로 사용자 소유 프로세스 조사 결과를 만드는 계약.
 nonisolated protocol ProcessSurveyCollecting: Sendable {
-    mutating func survey() throws(CollectorFailure) -> ProcessSurveySample
+    mutating func survey() throws(CollectorFailure) -> ProcessSurveyReport
 }
 
 /// `ProcessSurveying` 경계를 소유하고 uid 사전 판별과 경로 캐시 규칙을 적용하는 Collector.
@@ -141,7 +141,7 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
         self.reader = reader
     }
 
-    mutating func survey() throws(CollectorFailure) -> ProcessSurveySample {
+    mutating func survey() throws(CollectorFailure) -> ProcessSurveyReport {
         let entries = try reader.listProcesses()
         let currentUID = getuid()
 
@@ -191,6 +191,6 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
         // 이번 조사에서 관찰되지 않은 정체성은 이미 사라진 프로세스이므로 경로 캐시에서도 지웁니다.
         pathCache = pathCache.filter { observedIdentities.contains($0.key) }
 
-        return ProcessSurveySample(samples: samples, unreadableCount: unreadableCount)
+        return ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount)
     }
 }

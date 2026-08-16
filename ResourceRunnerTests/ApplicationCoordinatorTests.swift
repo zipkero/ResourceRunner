@@ -270,6 +270,75 @@ struct ApplicationCoordinatorTests {
 
         consumeTask.cancel()
     }
+
+    /// SPEC §5.10: 프로세스 조사 실패는 두 카드의 TOP 5만 실패로 바꾸고 시스템 지표 수치는 그대로 둡니다.
+    ///
+    /// 이 테스트가 고정하는 것은 「조사 실패가 표시 계층까지 실제로 도달한다」입니다.
+    /// 조사 실패를 값이 아니라 예외로 되돌리면 `MonitoringScheduler`가 그 tick을 건너뛰어
+    /// 저장소에 실패가 도착하지 않고, `topApplicationsFailed`가 production에서 영원히 `false`가 되어
+    /// 낡은 TOP 5가 정상인 것처럼 계속 표시됩니다.
+    /// 실패가 다음 성공 조사에서 풀리는 것까지 함께 단언해, 한 번 실패하면 영구히 실패로 남지 않음을 고정합니다.
+    @Test func processSurveyFailureReachesBothCardsAndClearsOnTheNextSuccess() async {
+        let store = MonitoringSampleStore()
+        let processHistory = ProcessHistoryStore()
+        let dashboard = DashboardPresentationStore()
+        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(
+            store,
+            into: CharacterStateSource(),
+            dashboard: dashboard,
+            processHistory: processHistory
+        )
+        let base = ContinuousClock().now
+
+        await processHistory.append(processSurveySample(
+            at: base,
+            processes: [(path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 0, residentBytes: 300 * 1024 * 1024)]
+        ))
+        await processHistory.append(TimestampedSample(
+            timestamp: base.advanced(by: .seconds(1)),
+            value: ProcessSurveySample(
+                result: .failure(CollectorFailure(metric: .process, cause: .systemCall(name: "sysctl(KERN_PROC_ALL).size", code: EPERM)))
+            )
+        ))
+
+        await store.append(cpuSuccessSample(at: base.advanced(by: .seconds(1)), overallUsage: 42))
+        await waitUntil {
+            if case .normal(let cpu, _) = dashboard.cpuCard { return cpu.topApplicationsFailed }
+            return false
+        }
+
+        guard case .normal(let failedCPU, _) = dashboard.cpuCard,
+              case .normal(let failedMemory, _) = dashboard.memoryCard else {
+            Issue.record("조사 실패 tick에서 카드가 정상 상태로 유지되지 않았습니다.")
+            consumeTask.cancel()
+            return
+        }
+        #expect(failedCPU.topApplicationsFailed)
+        #expect(failedMemory.topApplicationsFailed)
+        // 시스템 지표 수치는 조사 실패와 무관하게 그대로입니다.
+        #expect(failedCPU.overallUsage == 42)
+
+        // 다음 성공 조사가 실패 표시를 풀고, 실패 tick이 지우지 않은 기준점 덕분에 사용률이 곧바로 나옵니다.
+        await processHistory.append(processSurveySample(
+            at: base.advanced(by: .seconds(2)),
+            processes: [(path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 1_000_000_000, residentBytes: 300 * 1024 * 1024)]
+        ))
+        await store.append(cpuSuccessSample(at: base.advanced(by: .seconds(2)), overallUsage: 42))
+        await waitUntil {
+            if case .normal(let cpu, _) = dashboard.cpuCard { return !cpu.topApplicationsFailed }
+            return false
+        }
+
+        guard case .normal(let recoveredCPU, _) = dashboard.cpuCard else {
+            Issue.record("성공 조사 후 CPU 카드가 정상 상태가 되지 않았습니다.")
+            consumeTask.cancel()
+            return
+        }
+        #expect(!recoveredCPU.topApplicationsFailed)
+        #expect(recoveredCPU.topApplications.map(\.displayName) == ["Alpha"])
+
+        consumeTask.cancel()
+    }
 }
 
 // MARK: - consumeSystemMetrics 테스트용 샘플 조립
@@ -282,18 +351,22 @@ private func processSurveySample(
     TimestampedSample(
         timestamp: timestamp,
         value: ProcessSurveySample(
-            samples: processes.map { process in
-                ProcessSample(
-                    identity: ProcessIdentity(pid: process.pid, startTime: 0),
-                    executablePath: process.path,
-                    uid: 501,
-                    parentPID: 1,
-                    cpuTimeNanoseconds: process.cpuTimeNanoseconds,
-                    residentBytes: process.residentBytes,
-                    isTranslated: false
+            result: .success(
+                ProcessSurveyReport(
+                    samples: processes.map { process in
+                        ProcessSample(
+                            identity: ProcessIdentity(pid: process.pid, startTime: 0),
+                            executablePath: process.path,
+                            uid: 501,
+                            parentPID: 1,
+                            cpuTimeNanoseconds: process.cpuTimeNanoseconds,
+                            residentBytes: process.residentBytes,
+                            isTranslated: false
+                        )
+                    },
+                    unreadableCount: 0
                 )
-            },
-            unreadableCount: 0
+            )
         )
     )
 }

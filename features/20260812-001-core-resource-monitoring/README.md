@@ -64,3 +64,18 @@
   앱 단위 묶음이 실기기에서 확인됐습니다 — `lldb-rpc-server` 3.51 GB와 `python3` 4.01 GB가 모두 Xcode 앱 키로 접혔고
   (`python3`의 실체가 `/Applications/Xcode.app/Contents/Developer/usr/bin/python3`), `yes` 14개가 한 항목으로 합산됐습니다.
   미충족 항목은 부하 시나리오의 상위 3개 집합 2·3위 하나뿐이며 사유와 함께 위 항목에 기록했습니다.
+- 2026-08-16: 경미 지적 네 건 정리. 이력 링이 10분 창을 1초 못 미치던 off-by-one,
+  `mach_host_self()` 참조 미해제 세 곳, task-001 문서-코드 불일치("허용 배수" → "허용 간격"),
+  M1 시절 Task 번호를 가리키던 주석 네 곳입니다.
+- 2026-08-16: task-014가 잔여 항목으로 남긴 `topApplicationsFailed` 결함 수정.
+  프로세스 조사 실패가 표시 계층에 도달할 통로가 없어 production에서 항상 `false`였고,
+  조사가 실패해도 낡은 TOP 5가 정상인 것처럼 계속 표시됐습니다.
+  `수정 소유 단계`를 `analyze-init`으로 적어 뒀으나, 필요한 동작은 `SPEC §5.10`과
+  analysis.md §2 「실패 경로」가 이미 요구하고 있어 새 요구사항이 아니라 결함으로 다뤘습니다.
+  세 선택지 중 「조사 실패를 값으로 바꾸기」를 택했습니다 — 시스템 지표 축이 이미 쓰는 규칙이고,
+  두 축이 공유하는 `MonitoringScheduler`와 M1 계약을 건드리지 않으며,
+  새 임계값 없이 실패와 중지가 섞이지 않습니다.
+  `ProcessSurveySample`이 `Result<ProcessSurveyReport, CollectorFailure>`를 담고 source가 던지지 않습니다.
+  실패한 조사는 `ProcessHistoryStore`의 이력을 건드리지 않습니다 —
+  관찰된 정체성이 없는 것으로 처리하면 제거 규칙이 이력 전체를 지워 기준점이 모두 사라집니다.
+  analysis.md §3 계약 서술을 실제 구조에 맞췄습니다.

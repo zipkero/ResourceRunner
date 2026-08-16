@@ -46,8 +46,8 @@ nonisolated protocol MonitoringSampleSink: Sendable {
 
 #if DEBUG
 /// `MonitoringScheduler`가 제네릭 actor라 정적 저장 속성을 직접 가질 수 없으므로,
-/// task-011 관찰 수단(적용된 일정 전이·generation·누적 샘플 수·버퍼 용량)을 여기 분리해 둡니다.
-/// task-010의 실제 잠금·해제 관찰에서도 그대로 재사용합니다.
+/// 관찰 수단(적용된 일정 전이·generation·누적 샘플 수·버퍼 용량)을 여기 분리해 둡니다.
+/// 실기기에서 실제 잠금·해제에 따른 수집 중지와 재개를 확인할 때도 그대로 씁니다.
 /// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
 /// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
 enum MonitoringSchedulerDebugLog {

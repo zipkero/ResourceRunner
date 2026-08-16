@@ -131,11 +131,14 @@ actor MonitoringSampleStore: MonitoringSampleSink {
 
     init(timeRange: Duration = HistoryCapacity.defaultTimeRange) {
         self.timeRange = timeRange
+        // `HistoryCapacity.capacity`가 돌려주는 개수(1초 주기에서 600)만 쓰면 항목이 정확히 그 주기로 채워질 때
+        // 가장 오래된 값과 가장 최근 값 사이 구간이 `(개수 - 1) * 주기` = 599초에 그쳐 10분 창을 1초 못 미칩니다.
+        // +1을 더하면 그 구간이 정확히 시간 범위와 같아져 창의 가장 오래된 끝까지 실제로 덮습니다.
         self.history = CircularBuffer(
             capacity: HistoryCapacity.capacity(
                 timeRange: timeRange,
                 samplingInterval: HistoryCapacity.shortestSamplingInterval
-            )
+            ) + 1
         )
 
         var continuation: AsyncStream<SystemMetricsDisplayValue>.Continuation!

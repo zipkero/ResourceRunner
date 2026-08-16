@@ -55,8 +55,8 @@ final class ApplicationCoordinator {
     private var collectionStoppedTask: Task<Void, Never>?
 
 #if DEBUG
-    // task-006에서 AppDelegate에 임시로 둔 관찰용 observer를 여기 단일 observer로 흡수합니다.
-    // observer를 둘 만들면 실기기에서 DistributedNotificationCenter 등록이 두 번 일어나므로 하나만 둡니다.
+    // 생명주기 관찰용 observer는 여기 하나만 둡니다.
+    // 둘 만들면 실기기에서 DistributedNotificationCenter 등록이 두 번 일어납니다.
     private static let debugLifecycleLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "SystemLifecycle")
     // task-007 실기기 확인: 사용률과 판정 전이를 Console.app에서 관찰하기 위한 로그 경계입니다.
     private static let debugCPUActivityLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CPUActivityState")
@@ -247,7 +247,7 @@ final class ApplicationCoordinator {
         let subscription = source.start()
 
 #if DEBUG
-        // task-006 검증 조건: 실제 잠금·해제 반영을 사람이 콘솔 로그로 확인할 수 있어야 합니다.
+        // 실제 잠금·해제 반영을 사람이 콘솔 로그로 확인할 수 있어야 합니다.
         // `Logger`의 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
         // Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
         debugLifecycleLogger.notice("initial snapshot: \(String(describing: subscription.initial), privacy: .public)")

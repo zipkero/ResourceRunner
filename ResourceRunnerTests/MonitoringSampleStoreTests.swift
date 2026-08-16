@@ -194,7 +194,7 @@ struct MonitoringSampleStoreTests {
         )
         let base = ContinuousClock().now
 
-        // 1초 주기로 400개를 채웁니다. 용량 600(10분 / 1초)이라 아직 축출은 일어나지 않습니다.
+        // 1초 주기로 400개를 채웁니다. 용량 601(10분 / 1초 + 1)이라 아직 축출은 일어나지 않습니다.
         for index in 0..<400 {
             await store.append(sample(at: base.advanced(by: .seconds(index)), cpuUsage: Double(index % 100)))
         }
@@ -267,7 +267,7 @@ struct MonitoringSampleStoreTests {
     @Test func displayValueSelectsOnlyTheTenMinuteWindowFromLatestSampleTime() async {
         let store = MonitoringSampleStore()
         let latestInstant = ContinuousClock().now
-        // 링 용량은 600이므로 아래 네 항목은 개수로는 축출되지 않습니다. 창 선별만 관찰합니다.
+        // 링 용량은 601이므로 아래 네 항목은 개수로는 축출되지 않습니다. 창 선별만 관찰합니다.
         let outsideWindow = latestInstant.advanced(by: .seconds(-601))
         let onWindowBoundary = latestInstant.advanced(by: .seconds(-600))
         let insideWindow = latestInstant.advanced(by: .seconds(-599))
@@ -282,13 +282,13 @@ struct MonitoringSampleStoreTests {
         #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [2, 3, 4])
     }
 
-    /// 링 용량(10분 / 1초 = 600)을 넘으면 가장 오래된 항목 하나만 교체됩니다.
-    /// 개수 축출만 관찰하려면 601개가 모두 10분 창 안에 있어야 하므로 0.5초 간격으로 채웁니다.
+    /// 링 용량(10분 / 1초 + 1 = 601)을 넘으면 가장 오래된 항목 하나만 교체됩니다.
+    /// 개수 축출만 관찰하려면 602개가 모두 10분 창 안에 있어야 하므로 0.5초 간격으로 채웁니다.
     @Test func exceedingCapacityReplacesOnlyTheOldestEntry() async {
         let store = MonitoringSampleStore()
         let base = ContinuousClock().now
 
-        for index in 0...600 {
+        for index in 0...601 {
             await store.append(
                 sample(at: base.advanced(by: .milliseconds(500 * index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
             )
@@ -296,10 +296,31 @@ struct MonitoringSampleStoreTests {
 
         let history = await store.snapshot().recentHistory
 
-        #expect(history.count == 600)
+        #expect(history.count == 601)
         // 첫 항목(swap 0)만 밀려나고 두 번째 항목부터 순서대로 남습니다.
         #expect(history.first?.swapUsedBytes == 1)
-        #expect(history.last?.swapUsedBytes == 600)
+        #expect(history.last?.swapUsedBytes == 601)
+    }
+
+    /// 가장 짧은 주기(1초)로 쉬지 않고 채웠을 때 링이 10분 창을 끝까지 덮는지 고정합니다.
+    /// 601개가 정확히 600초를 걸치므로 가장 오래된 항목의 시각이 창의 왼쪽 끝과 같아야 합니다.
+    /// 용량을 `capacity(...)` 결과(600)로 되돌리면 그 항목이 개수로 축출되어 창이 599초로 줄고 이 테스트가 실패합니다.
+    @Test func ringCoversTheWholeTenMinuteWindowAtTheShortestInterval() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+        let sampleCount = 601
+
+        for index in 0..<sampleCount {
+            await store.append(
+                sample(at: base.advanced(by: .seconds(index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
+            )
+        }
+
+        let history = await store.snapshot().recentHistory
+
+        #expect(history.count == sampleCount)
+        #expect(history.first?.timestamp == base)
+        #expect(history.last?.timestamp == base.advanced(by: HistoryCapacity.defaultTimeRange))
     }
 
     /// 1시간 중지를 시각으로 재현합니다.

@@ -36,7 +36,12 @@ nonisolated struct HostCPUTickReader: CPUTickReading {
         var info: processor_info_array_t?
         var infoCount: mach_msg_type_number_t = 0
 
-        let result = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &processorCount, &info, &infoCount)
+        // `mach_host_self()`는 호출할 때마다 host 포트의 send right 참조를 하나 늘리므로 호출자가 놓아야 합니다.
+        // 매 tick 호출되는 경로라 놓지 않으면 참조가 앱 수명 내내 쌓입니다.
+        let host = mach_host_self()
+        defer { mach_port_deallocate(mach_task_self_, host) }
+
+        let result = host_processor_info(host, PROCESSOR_CPU_LOAD_INFO, &processorCount, &info, &infoCount)
         guard result == KERN_SUCCESS, let info else {
             throw CollectorFailure(metric: .cpu, cause: .systemCall(name: "host_processor_info", code: result))
         }

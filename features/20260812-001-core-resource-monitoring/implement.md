@@ -385,7 +385,7 @@
   - 참조: SPEC §5.11, SPEC §5.12, ANALYSIS §2 「수집 중지와 재개」, ANALYSIS §4 「테스트 대상」,
     ANALYSIS §5 DP11, ANALYSIS §5 DP12
 
-- [ ] task-013: 시스템 도구와의 정확성 비교
+- [x] task-013: 시스템 도구와의 정확성 비교
   - 목적: CPU와 Memory의 값과 변화 방향이 정해진 비교 절차에서 macOS 시스템 도구와 일관되고,
     프로세스 CPU 사용률이 코어를 합산한 값으로 표시되어 여러 코어를 쓰는 프로세스가 100%를 넘습니다.
   - 접근: 시스템 전체 CPU, Memory 구성 항목과 Swap은 Activity Monitor와 비교하고,

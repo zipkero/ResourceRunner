@@ -4,121 +4,117 @@
 
 ### 확인 사실
 
-- [spec.md](./spec.md) 전문을 읽었습니다. 승인 전 확인 섹션은 없고 완료 조건 14개가 설계 기준입니다.
+- [spec.md](./spec.md) 전문을 읽었습니다. 승인 전 확인 섹션은 없고 완료 조건 15개가 설계 기준입니다.
   범위는 CPU·Memory 두 카드로 한정되고, 캐릭터 자산·애니메이션, Network·Disk, 그래프 범위 선택,
-  사용자 갱신 설정, 설정 영구 저장, 시스템 슬립 복귀 기준점 재설정은 제외 범위입니다.
+  사용자 갱신 설정, 설정 영구 저장, 시스템 슬립 복귀 기준점 재설정,
+  상세 팝업을 카드와 독립적으로 고정해 두는 기능은 제외 범위입니다.
   다섯 표시 상태의 판정 규칙만은 이 feature가 정합니다.
 - spec.md의 `확정한 판단`은 App Sandbox 유지, 논리 코어 합산 CPU 관례, Memory Pressure 3단계,
   실제 시각 기준 그래프, 디스플레이 슬립·빠른 사용자 전환에서의 수집 중지를 이 feature의 전제로 고정합니다.
   또한 `docs/product.md`가 Physical Footprint를 주 지표로 적은 것을 뒤집어 Resident Memory를 주 지표로 삼습니다.
-- [docs/design.md](../../docs/design.md)의 `권한과 배포`는 App Sandbox에서 `proc_listallpids`가 차단되고
-  `sysctl(KERN_PROC_ALL)`로 대체 가능하며, 아는 PID의 실행 경로·CPU 시간·Resident Memory·uid·시작 시각·부모 PID는
-  읽히고 Physical Footprint는 차단됨을 실측 결과로 기록합니다.
-  root 소유 프로세스의 CPU 시간과 메모리는 Sandbox와 무관하게 읽을 수 없고 전체 프로세스의 약 40%가 여기 해당합니다.
-- 같은 문서의 `수집 일정 > 기본 정책`은 전체 지표를 열림 1초·닫힘 2초, TOP 5를 열림 2초·닫힘 5초로 두고,
-  `사용자 갱신 프로필`의 절전은 전체 2초·TOP 5 4초·닫힘 전체 5초입니다.
-  `생명주기 반영`은 화면을 볼 수 없는 상태 셋(화면 잠금·디스플레이 슬립·빠른 사용자 전환)과 그 신호를 표로 고정합니다.
-- 같은 문서의 `최근 데이터 순환 버퍼`는 버퍼가 개수로만 축출하므로 중지 구간이 있으면 시간 범위를 벗어난 샘플이
-  남는다는 M1 관찰(1시간 잠금에서 146개 잔존)을 기록하고, 시간 기준 선별이 별도로 필요하며 그 방식은 이 feature에서
-  확정하라고 남깁니다.
-- 같은 문서의 `Collector 설계 기준`은 수집 대상 목록과 함께 "상태 경계의 반복 전환을 줄이는 평활화 또는 히스테리시스",
-  "최근 2~3개 샘플 평균에 의한 순위 안정화", "프로세스 조사 주기는 시스템 전체 CPU 수집과 분리"를 요구합니다.
-  Memory Pressure는 `DispatchSource.makeMemoryPressureSource`와 `kern.memorystatus_vm_pressure_level` 두 경로가
-  2026-08-12 macOS 26.5.2 Apple silicon에서 모두 동작함이 확인됐습니다.
-- 같은 문서의 `프로세스 식별과 앱 집계`는 식별 후보(PID·시작 시각·실행 경로·번들 식별자·부모 프로세스)를 나열하고
-  구체적인 식별 키는 접근 가능성과 비용을 검증한 뒤 확정하라고 남깁니다.
-  `미확정 기술 결정`은 앱 단위 식별 키와 집계 예외, 정확성 검증의 비교 도구·허용 오차·반복 횟수를 미확정으로 둡니다.
-- [docs/product.md](../../docs/product.md)의 `대시보드 > 공통 정보 구조`는 기본 상태·선택·복귀·실패 격리·데이터 부족·
-  레이아웃 안정성을 카드 공통 원칙으로 두고, 중요한 분석 정보를 Hover에만 의존하지 말라고 요구합니다.
-  `CPU`·`Memory`는 기본 카드와 상세 정보의 지표 목록, TOP 5 정책, 현재 사용량과 최근 증가량의 구분을 정의합니다.
-  `미확정 제품 결정`은 CPU·Memory 상태 임계치와 지속 시간, 시스템 전체 CPU와 프로세스 CPU의 표시 단위를 미확정으로 둡니다.
-- [features/20260802-001-menu-bar-foundation/analysis.md](../20260802-001-menu-bar-foundation/analysis.md)의
-  DP4·DP5·DP6·DP8·DP9·DP12와 spec.md `확인한 실행 환경 사실`을 읽었습니다.
-  M1은 화면 잠금 어댑터 격리, 알림 이름 우선, `unknown`에서의 pause, 접근성 이름 단일 자리, arm64 전용 산출물을 확정했습니다.
+- spec.md의 `SPEC 재작성으로 바뀐 것`은 이 재작성의 직접 입력입니다.
+  상세 표시 방식이 「고정된 영역」에서 「카드 옆에 붙는 팝업」으로 바뀌었고,
+  레이아웃 안정성 원칙이 값 변화뿐 아니라 상태 전이까지 덮도록 확장됐습니다.
+  카드 옆 팝업이 이 앱에서 성립하는지는 SPEC 수정 전에 실행 환경에서 확인됐고,
+  팝오버 본체 폭을 넓히는 분할 배치는 그 자리에서 접혔습니다.
+- [docs/product.md](../../docs/product.md)의 `대시보드 > 공통 정보 구조`를 직접 읽었습니다.
+  선택은 「상세 지표와 추가 원인 정보를 그 카드 옆에 붙는 팝업으로 표시」이고,
+  「상세 팝업은 카드 옆에 열리므로 대시보드 본체가 상세를 위한 자리를 미리 비워 두지 않습니다」로 이어집니다.
+  레이아웃 안정성은 「값이 바뀌어도, 수집 중·정상·실패·중지 사이를 오가도 카드 크기와 정렬이 흔들리지 않음」이며,
+  「아직 값이 없는 그래프와 순위 자리는 비워 두지 않고 같은 높이의 자리표시 영역으로 채웁니다」와
+  「자리표시는 값을 지어내는 것이 아니라 아직 값이 없음을 나타내는 표시이며, 데이터 부족 원칙과 충돌하지 않습니다」가 함께 있습니다.
+  중요한 분석 정보를 Hover에만 의존하지 말라는 요구도 그대로입니다.
+  같은 문서의 `대시보드 > 접근성`은 키보드 탐색, 의미 있는 VoiceOver 레이블, 색상 외 수단,
+  동작 줄이기에서의 동등한 정보를 요구합니다.
+- [docs/design.md](../../docs/design.md)의 `최근 데이터 순환 버퍼 > 버퍼 규칙`을 직접 읽었습니다.
+  버퍼가 개수로만 축출하므로 중지 구간이 있으면 시간 범위를 벗어난 샘플이 남는다는
+  M1 관찰(1시간 잠금에서 146개 잔존)이 기록돼 있고,
+  「용량 계산과 별개로 시간 기준 선별이 필요하다」와 그 방식을 이 feature에서 확정하라는 위임이 명시돼 있습니다.
+  샘플이 `ContinuousClock` 시각을 함께 보관하므로 잠든 구간을 포함한 실제 경과 시간으로 공백을 판별할 수 있다는 점도 같은 절에 있습니다.
+- 같은 문서의 `실패와 데이터 상태`는 Collector가 정상·데이터 부족·일시적 접근 실패·미지원·중지·오래된 캐시를 구분해 표현하도록 요구하고,
+  「UI는 일시적 실패를 0으로 표시하지 않는다」와
+  「Collector 하나의 실패가 다른 Collector 일정과 팝오버 상호작용을 중단시키지 않는다」를 정합니다.
+- 이 feature의 이전 ANALYSIS가 기록한 SDK·Sandbox 확인 사실은 그대로 유효합니다.
+  현재 코드가 그 심볼들을 실제로 호출하고 있어 접근 가능성이 구현으로 확인됐습니다 —
+  `host_processor_info(PROCESSOR_CPU_LOAD_INFO)`·`getloadavg`
+  ([CPUSystemMetricsCollector.swift](../../ResourceRunner/CPUSystemMetricsCollector.swift)),
+  `host_statistics64(HOST_VM_INFO64)`·`sysctl(VM_SWAPUSAGE)`·`kern.memorystatus_vm_pressure_level`
+  ([MemorySystemMetricsCollector.swift](../../ResourceRunner/MemorySystemMetricsCollector.swift)),
+  `sysctl(KERN_PROC_ALL)`·`proc_pidinfo(PROC_PIDTASKINFO)`·`proc_pidpath`·`P_TRANSLATED`
+  ([ProcessSurveyCollector.swift](../../ResourceRunner/ProcessSurveyCollector.swift)),
+  `NSWorkspace.screensDidSleepNotification`·`sessionDidResignActiveNotification`
+  ([SystemLifecycleObserver.swift](../../ResourceRunner/SystemLifecycleObserver.swift)).
 
-M1 산출물 코드를 직접 읽고 확인한 현재 경계입니다.
+이 feature의 구현·검증에서 확인돼 [README.md](./README.md) 작업 히스토리에 남은 사실입니다.
+설계 판단이 실측에 근거하고 있음을 보이는 자리입니다.
 
-- [ApplicationCoordinator.swift](../../ResourceRunner/ApplicationCoordinator.swift)가
-  `StatusBarController`, `CharacterStateSource`, `SystemLifecycleObserver`,
-  `MonitoringSampleStore<PlaceholderMonitoringSample>`, `MonitoringScheduler`, `MonitoringLifecycleStore`를
-  각각 한 번씩 만들어 종료까지 보유하고, 표시 흐름과 수집 흐름을 이 타입에서만 만나게 합니다.
-  `consume(_:into:)`와 `startMonitoring(_:into:)`가 소비 경로를 별도 정적 메서드로 노출합니다.
-- [MonitoringScheduler.swift](../../ResourceRunner/MonitoringScheduler.swift)의
-  `MonitoringScheduler<Clock, Source>`는 단일 `Task`와 `generation`만 소유하고,
-  `apply(_:)`가 취소 → generation 전진 → `sampleStore.resize(samplingInterval:)` → 새 Task 시작 순서로 동작합니다.
-  저장 대상이 `MonitoringSampleStore<Source.Value>` 구체 타입으로 고정돼 있습니다.
-  `source.sample()`이 던지면 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
-  현재 production source는 빈 값을 반환하는 `PlaceholderScheduledSampleSource`입니다.
-- [MonitoringLifecycle.swift](../../ResourceRunner/MonitoringLifecycle.swift)의
-  `CollectionSchedulePolicy.schedule(for:definition:)`는 단일 `CollectionSchedule` 하나만 반환하고,
-  `MonitoringLifecycleStore`는 scheduler 하나를 보유하며 결과가 바뀔 때만 `apply(_:)`를 호출합니다.
-  `CollectionScheduleDefinition.m1`은 normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5초입니다.
-- [MonitoringSampleStore.swift](../../ResourceRunner/MonitoringSampleStore.swift)의
-  `HistoryCapacity.capacity(timeRange:samplingInterval:)`는 `ceil(범위 / 유효 주기)`를 돌려주고,
-  `MonitoringSampleStore.resize(samplingInterval:timeRange:)`가 그 용량으로 `CircularBuffer`를 재구성하며
-  최신 항목만 보존합니다. 스토어는 `snapshot()` 외에 값을 밖으로 내보내는 경로가 없습니다.
-- [SystemLifecycleObserver.swift](../../ResourceRunner/SystemLifecycleObserver.swift)의
-  `SystemLifecycleSnapshot`은 `revision`·`lowPowerMode`·`screenLockState` 세 필드이고,
-  `SystemLifecycleFieldChange`와 `CombinedSnapshotProducer`가 필드별 병합을 담당해 값이 바뀔 때만 revision을 올립니다.
-  잠금 신호 문자열은 `ScreenLockObservationAdapter`와 `ScreenLockStateReader`에만 있습니다.
-- [CharacterStateSource.swift](../../ResourceRunner/CharacterStateSource.swift)의
-  `CharacterStateSource`는 `initialState`와 이후 변경만 담는 `updates` stream을 제공하고 `send(_:)`로 상태를 받습니다.
-  `CharacterPresentation.presenting(_:)`이 다섯 상태를 접근성 이름 하나로 바꾸는 순수 매핑입니다.
-  [StatusBarController.swift](../../ResourceRunner/StatusBarController.swift)는 `render(_:)`에서
-  접근성 이름만 갱신하고 이미지·길이·팝오버 상태를 건드리지 않습니다.
-  팝오버 콘텐츠는 `init`에서 `NSHostingController`로 한 번 만들어져 앱 수명 동안 살아 있습니다.
-- [DashboardView.swift](../../ResourceRunner/DashboardView.swift)는 고정 크기 셸 하나이며 카드가 없습니다.
+- 정확성 비교에서 유휴 시 전체 CPU 차이 0.41~0.89%p, Memory 일곱 항목 편차 0~0.02 GB,
+  전체 물리 메모리 정확 일치를 관측했습니다.
+- 논리 코어 14개 부하에서 프로세스 표시값이 1337~1359%로 100%를 넘고,
+  같은 시점 시스템 전체는 99.60~99.80%로 100%를 넘지 않았습니다. 두 단위가 실제로 갈립니다.
+- 앱 단위 묶음이 실기기에서 성립했습니다.
+  `lldb-rpc-server`와 `python3`가 모두 Xcode 앱 키로 접혔고 `yes` 14개가 한 항목으로 합산됐습니다.
+- Memory 「사용 중」의 정의를 Activity Monitor 공식에 맞춘 뒤 동시 관측에서 일곱 항목 전부 편차 0으로 일치했습니다.
+- 화면 잠금과 디스플레이 슬립 각각에서 두 축의 일정 중지·재개, 중지 구간의 누적 샘플 불변,
+  재개 첫 tick의 기준점 전용 갱신, 그래프 빈 구간을 확인했습니다.
+  빠른 사용자 전환은 둘째 사용자 계정이 없어 확인하지 못한 채로 남아 있습니다.
 
-macOS 26.5 SDK 헤더에서 직접 확인한 사실입니다. 이 feature의 Collector가 의존하는 지점입니다.
+현재 코드를 직접 읽고 확인한 표시 계층의 상태입니다. 이번 재작성이 실제로 바꿀 자리입니다.
 
-- `mach/processor_info.h`의 `PROCESSOR_CPU_LOAD_INFO`와 `processor_cpu_load_info`가 코어별 tick을 제공하고,
-  `mach/machine.h`가 `CPU_STATE_USER`·`SYSTEM`·`IDLE`·`NICE` 인덱스를 정의합니다.
-- `mach/host_info.h`의 `HOST_VM_INFO64`와 `mach/mach_host.h`의 `host_statistics64`가 있으며,
-  `vm_statistics64`에 `wire_count`·`compressor_page_count`·`external_page_count`·`internal_page_count`·
-  `purgeable_count`가 있습니다. 페이지 크기는 `mach/mach_init.h`의 `host_page_size`로 얻습니다.
-- `sys/sysctl.h`의 `VM_SWAPUSAGE`와 `struct xsw_usage`가 Swap 사용량을 제공하고,
-  `_stdlib.h`의 `getloadavg`가 Load Average를 제공합니다.
-- `sys/sysctl.h`의 `KERN_PROC_ALL`·`KERN_PROC_PID`와 `struct kinfo_proc`이 있고,
-  `kinfo_proc`은 `kp_eproc.e_ppid`·`e_ucred.cr_uid`를, `kp_proc`은 `sys/proc.h`의 `extern_proc`으로
-  `p_starttime`(`struct timeval`)·`p_flag`·`p_pid`·`p_comm`을 담습니다.
-- `sys/proc.h`에 `#define P_TRANSLATED 0x00020000`이 있습니다. Rosetta 실행 여부를 프로세스 열거 결과에서
-  추가 호출 없이 읽을 수 있다는 뜻입니다.
-- `sys/proc_info.h`의 `proc_taskinfo`가 `pti_resident_size`·`pti_total_user`·`pti_total_system`을,
-  `libproc.h`가 `proc_pidpath`를 제공합니다.
-- `dispatch/source.h`가 `DISPATCH_MEMORYPRESSURE_NORMAL 0x01`·`WARN 0x02`·`CRITICAL 0x04`를 정의합니다.
-  이 저장소의 macOS 26.5.2 Apple silicon에서 `sysctl kern.memorystatus_vm_pressure_level`이 `1`을 반환하는 것을
-  직접 확인했으며, 값 집합이 위 dispatch 상수와 같습니다.
-- `AppKit/NSWorkspace.h`에 `NSWorkspaceScreensDidSleepNotification`·`ScreensDidWakeNotification`과
-  `NSWorkspaceSessionDidResignActiveNotification`·`SessionDidBecomeActiveNotification`이 공개 심볼로 있습니다.
-  둘 다 가용 버전 제한이 macOS 26.5보다 낮습니다.
+- [DashboardView.swift](../../ResourceRunner/DashboardView.swift)는 팝오버 본체를 `frame(width: 280, height: 520)`으로 고정하고,
+  제목 · CPU 카드 버튼 · Memory 카드 버튼 · `DashboardDetailView` 순서로 세로 배치합니다.
+  `DashboardDetailView`는 선택 여부와 무관하게 남은 높이를 모두 차지하고 선택 전에는 안내 문구를 보여줍니다.
+  두 카드 버튼에는 `⌘1`·`⌘2` 단축키, `accessibilityLabel`, `CPUCard`·`MemoryCard` 식별자가 붙어 있습니다.
+- 같은 파일의 카드 뷰는 상태마다 그리는 슬롯 수가 다릅니다.
+  CPU 카드의 `.collecting`은 제목 · "수집 중" · 단축키 안내 세 줄뿐이고,
+  `.normal`은 거기에 60pt 그래프와 TOP 5 목록(항목 줄 + 안내 문구)이 더 붙습니다.
+  `.failure`·`.stopped`는 마지막 값이 있으면 그래프와 TOP 5를 그리고, 없으면 세 줄로 줄어듭니다.
+  Memory 카드도 같은 형태입니다 — `.normal`은 Pressure 줄과 Swap 줄을 함께 그리지만 다른 상태에서는 그 두 줄이 사라집니다.
+  프로세스 조사가 실패한 tick에서는 TOP 5 목록 전체가 "TOP 5 조사 실패" 한 줄로 바뀝니다.
+  상태가 바뀌는 순간 카드 높이가 크게 변하는 원인이 이 슬롯 구성 차이입니다.
+- [DashboardPresentation.swift](../../ResourceRunner/DashboardPresentation.swift)의
+  `ResourceCardState`는 `collecting`·`normal`·`failure(lastKnown:)`·`stopped(lastKnown:)` 네 경우이고,
+  `collecting`과 `lastKnown`이 없는 두 경우에는 표시 값(presentation) 자체가 없습니다.
+  `CPUCardPresentation`·`MemoryCardPresentation`은 요약과 상세(`detail`)를 한 값에 함께 담고 있습니다.
+- [DashboardPresentationStore.swift](../../ResourceRunner/DashboardPresentationStore.swift)의 `selection`은
+  `selectCard(_:)`를 거쳐서만 바뀌고 수집 tick은 건드리지 않습니다.
+  `markCollectionStopped()`가 수집 tick과 별개의 진입점으로 두 카드를 함께 중지로 바꿉니다.
+- [StatusBarController.swift](../../ResourceRunner/StatusBarController.swift)의 팝오버는 `.transient`이고,
+  여는 경로가 `NSApp.activate()` 뒤 `popover.show(...)`와 `window?.makeKey()`를 호출합니다.
+  주석이 그 이유를 기록하고 있습니다 —
+  `LSUIElement` 앱은 활성화하지 않으면 외부 클릭이 이 앱에 오지 않아 `.transient`가 닫을 계기를 얻지 못하고,
+  비활성 앱의 창은 key가 될 수 없어 키 이벤트도 받지 못합니다.
+  즉 이 팝오버의 닫힘 계기는 팝오버 창 밖 mouse-down과 앱 비활성화 둘입니다.
+- [DashboardCardSelectionUITests.swift](../../ResourceRunnerUITests/DashboardCardSelectionUITests.swift)는
+  하단 상세 영역의 안내 문구와 상세 문구 등장·소멸로 선택·복귀를 판정하고, 선택 전후 팝오버 프레임이 같은지를 비교합니다.
+  팝오버가 `app.windows`가 아니라 `app.popovers`로 잡힌다는 사실과,
+  SwiftUI `Text`가 접근성 계층에서 `AXValue`로만 문자열을 내보낸다는 사실이 주석에 기록돼 있습니다.
+- [ProcessSurvey.swift](../../ResourceRunner/ProcessSurvey.swift)의 `ProcessSurveySample`은
+  `Result<ProcessSurveyReport, CollectorFailure>`를 담습니다.
+  조사 실패를 던지지 않고 값으로 전달해야 실패가 표시 계층에 도달한다는 이유가 같은 자리에 기록돼 있습니다.
 
-이 저장소의 Debug 빌드를 실행해 직접 확인한 사실입니다.
+실행 환경에서 카드 옆 팝업을 직접 시험해 확인한 사실입니다. §5 DP14의 근거입니다.
 
-- macOS의 키보드 탐색(Full Keyboard Access)은 기본이 꺼짐이고,
-  이 머신에서 `defaults read NSGlobalDomain AppleKeyboardUIMode`가 `0`을 반환합니다.
-  꺼진 상태의 Tab은 텍스트 필드와 목록만 순회하고 일반 버튼에는 닿지 않습니다.
-- 그 상태에서 팝오버를 열고 Tab을 눌러 카드에 포커스가 가지 않는 것을 실행 중인 앱에서 확인했습니다.
-
-이 feature의 구현(task-001~010)이 코드로 확인한 사실입니다.
-
-- 일정이 `.paused`가 되면 `MonitoringScheduler`는 실행 중인 Task만 취소하고 새 Task를 만들지 않으므로
-  그 구간에는 `source.sample()` 호출이 한 번도 없습니다.
-  따라서 `MonitoringSampleStore`의 append도 불리지 않고 표시용 stream에 tick이 하나도 나오지 않으며,
-  이를 소비하는 `ApplicationCoordinator`의 `for await` 루프가 그 자리에서 멈춰 있습니다.
-  정지 구간 동안 카드 표시 상태 조립이 한 번도 실행되지 않는다는 뜻입니다.
+- 카드에 자식 팝오버를 붙여 실행한 결과 부모 팝오버가 닫히지 않고 두 팝오버가 공존했습니다(`app.popovers`가 1에서 2로).
+  카드 클릭은 부모 팝오버 창 안에서 일어나므로 위에 적은 두 닫힘 계기 어느 쪽에도 해당하지 않습니다.
+- 자식 팝오버가 접근성 계층에서 부모 팝오버의 하위 노드로 들어갔고 그 안의 텍스트에 도달됐습니다.
+  별도 창으로 떨어져 나가지 않는다는 뜻입니다.
 
 ### 추정
 
-- `vm_statistics64`의 카운터를 Activity Monitor의 App·Wired·Compressed·Cached Files 항목에 대응시키는 식은
-  Apple이 공식 문서로 규정한 것이 아닙니다. 필드가 존재한다는 것까지가 확인 사실이고,
-  대응 관계는 널리 쓰이는 유도식이며 절대값이 Activity Monitor와 정확히 같다고 보장할 수 없습니다.
+- `vm_statistics64`의 카운터를 Activity Monitor 항목에 대응시키는 식은 Apple이 공식 문서로 규정한 것이 아닙니다.
+  이 앱은 역어셈블로 확인한 Activity Monitor 공식에 「사용 중」을 맞췄고 동시 관측에서 편차 0이었지만,
+  그 공식이 향후 macOS에서 유지된다는 보장은 없습니다.
   그래서 SPEC §5.3의 판정을 절대값 일치가 아니라 변화 방향과 허용 오차로 정의합니다(§5 DP13).
+- 자식 팝오버가 열린 뒤 키 이벤트가 어느 창으로 가는지는 확인하지 않았습니다.
+  자식 팝오버가 자기 창을 key로 가져가면 부모 뷰 계층에만 등록된 단축키가 닿지 않을 수 있습니다.
+  확인한 것은 두 팝오버의 공존과 접근성 도달까지입니다(§5 DP15가 이 불확실성을 전제로 수단을 정합니다).
+- 부모 팝오버가 닫힐 때 자식 팝오버가 함께 닫히는지도 확인하지 않았습니다.
+  §2가 선택 상태를 단일 진실로 두는 이유가 이것이며, 어느 쪽이든 표시와 상태가 어긋나지 않게 합니다.
 - 디스플레이 슬립 여부와 세션 활성 여부를 시작 시점에 직접 읽는 공개 API는 26.5 SDK에서 확인되지 않았습니다.
   두 신호는 변경 알림만 공개돼 있으므로 초기값은 가정해야 합니다(§5 DP12).
-- root 소유가 아닌 프로세스라도 `proc_pidinfo`가 실패할 수 있습니다. 실측한 것은 root 소유 프로세스의 차단이며,
-  그 밖의 실패는 호출 결과로만 판별할 수 있다고 봅니다.
-- 앱 번들 경로에서 가장 바깥 `.app`를 앱 키로 삼는 규칙이 Chrome·Electron·IDE의 하위 프로세스를 실제로 묶는지는
-  대표 앱으로 확인해야 합니다. 번들 배치 관례에 근거한 판단이며 실측으로 검증한 사실이 아닙니다.
+- root 소유가 아닌 프로세스라도 `proc_pidinfo`가 실패할 수 있습니다.
+  실측한 것은 root 소유 프로세스의 차단이며, 그 밖의 실패는 호출 결과로만 판별할 수 있다고 봅니다.
 
 ## 1. 구조
 
@@ -136,16 +132,16 @@ macOS 26.5 SDK 헤더에서 직접 확인한 사실입니다. 이 feature의 Col
 - 프로세스 Collector: `sysctl(KERN_PROC_ALL)`로 `kinfo_proc` 배열을 얻고,
   현재 유효 uid와 같은 프로세스에 대해서만 `proc_pidinfo(PROC_PIDTASKINFO)`를 호출합니다.
   실행 경로는 `proc_pidpath`로 읽되 새로 관찰된 정체성에 대해서만 한 번 호출합니다.
+  `proc_pidinfo`가 돌려주는 CPU 시간은 mach absolute time이므로 이 경계에서 나노초로 변환합니다.
 
 두 수집 축은 각각 하나의 `ScheduledSampleSource` 구현이 대표합니다.
 `SystemMetricsSampleSource`는 CPU·Memory Collector를 소유하고 한 tick의 결과를 지표별 성공·실패로 묶은 값 하나로 반환합니다.
-`ProcessSurveySampleSource`는 프로세스 Collector를 소유하고 한 번의 조사 결과를 반환합니다.
+`ProcessSurveySampleSource`는 프로세스 Collector를 소유하고 한 번의 조사 결과를 성공·실패로 묶어 반환합니다.
 둘 다 직전 상태를 가지므로 actor로 두고, `MonitoringScheduler`가 `await`로 호출합니다.
 
 ### 이력 경계
 
-시스템 지표 이력은 `MonitoringSampleStore`가 계속 소유합니다.
-다만 M1이 하나의 `CircularBuffer`에 샘플 전체를 담던 구조를 둘로 나눕니다.
+시스템 지표 이력은 `MonitoringSampleStore`가 소유하되 두 부분으로 나눕니다.
 
 - 최신 스냅샷: 코어별 사용률, Load Average, Memory 세부 구성처럼 현재값만 필요한 지표를 담는 마지막 샘플 하나
 - 이력 링: 시각, 전체 CPU 사용률, Swap 사용 바이트만 담는 고정 크기 `CircularBuffer`
@@ -180,9 +176,21 @@ Application 계산은 상태를 갖지 않는 순수 함수로 두고, 필요한
 팝오버 콘텐츠 뷰는 M1과 마찬가지로 앱 시작 때 한 번 만들어져 계속 살아 있으므로,
 저장소가 항상 최신 표시 상태를 들고 있으면 여는 순간 빈 화면이 나올 경로가 없습니다. 이 구조가 SPEC §5.9를 담당합니다.
 
-`DashboardView`는 고정 크기 팝오버 안에 CPU 카드, Memory 카드와 하단 상세 영역을 둡니다.
-상세 영역은 선택 여부와 관계없이 항상 자리를 차지하고 선택 전에는 안내를 표시합니다.
-카드 선택으로 팝오버 크기가 변하지 않으므로 레이아웃이 흔들리지 않습니다. 이 구조가 SPEC §5.2를 담당합니다.
+대시보드 본체는 제목과 두 카드만 담습니다. 상세를 위한 자리를 예약하지 않습니다.
+카드 상세는 그 카드에 앵커한 별도 팝업으로 열리고,
+본체 레이아웃에 참여하지 않으므로 열고 닫아도 카드가 움직이지 않습니다(§5 DP14).
+본체 프레임은 폭을 유지한 채 두 카드가 필요한 높이로 줄인 고정값으로 둡니다.
+폭을 고정하는 이유는 `NSPopover`가 앵커 기준 중앙 정렬이라 콘텐츠 폭이 바뀌면 카드 열이 좌우로 밀리기 때문이고,
+높이를 고정값으로 두는 이유는 팝오버 프레임이 상태와 무관한 상수임을 구조로 보장하기 위해서입니다.
+이 배치가 SPEC §5.2와 SPEC §5.15를 담당합니다.
+
+카드는 수집 상태와 무관하게 같은 슬롯 집합을 그립니다.
+CPU 카드는 제목 줄 · 요약 줄 · 그래프 자리 · 순위 자리 · 단축키 줄을,
+Memory 카드는 제목 줄 · Pressure 줄 · Swap 줄 · 순위 자리 · 단축키 줄을 항상 가집니다.
+값이 없는 슬롯은 접지 않고 같은 높이의 자리표시로 채웁니다(§5 DP17).
+자리표시는 값을 만들어 넣는 것이 아니라 그 자리에 아직 값이 없음을 나타내는 표시이므로,
+그래프 자리에는 점이나 선을 그리지 않고 순위 자리에는 앱 이름이나 수치를 만들어 넣지 않습니다.
+SPEC §5.11과 충돌하지 않습니다.
 
 메뉴바 표시 경로는 M1 구조를 그대로 씁니다.
 판정 결과를 `CharacterStateSource.send(_:)`로 넣으면 기존 매핑과 `StatusBarController.render(_:)`를 그대로 통과합니다.
@@ -190,19 +198,18 @@ Application 계산은 상태를 갖지 않는 순수 함수로 두고, 필요한
 
 ### 생명주기 경계
 
-`SystemLifecycleSnapshot`에 디스플레이 슬립과 세션 활성 두 필드를 더하고,
-`SystemLifecycleFieldChange`에 대응하는 케이스를 더합니다.
-`CombinedSnapshotProducer`는 필드별 병합과 revision 증가를 이미 담당하므로 구조가 그대로 유지됩니다.
+`SystemLifecycleSnapshot`에 디스플레이 슬립과 세션 활성 두 필드를 두고,
+`SystemLifecycleFieldChange`에 대응하는 케이스를 둡니다.
+`CombinedSnapshotProducer`가 필드별 병합과 revision 증가를 담당합니다.
 두 신호는 `NSWorkspace.shared.notificationCenter`의 공개 알림이라 M1의 잠금 어댑터와 달리 별도 격리 어댑터가 필요 없습니다.
 
-일정 결정은 `CollectionSchedulePolicy`가 시스템 지표와 프로세스 조사 두 일정을 함께 계산하는 형태로 확장하고,
+일정 결정은 `CollectionSchedulePolicy`가 시스템 지표와 프로세스 조사 두 일정을 함께 계산하고,
 `MonitoringLifecycleStore`가 두 Scheduler를 각각 결과가 바뀔 때만 호출합니다. 이 구조가 SPEC §5.12를 담당합니다.
 
 일정이 멈췄다는 사실은 수집 결과가 아니라 일정 결정의 산물이므로 이 경계에서만 알 수 있습니다.
-`MonitoringLifecycleStore`가 화면을 볼 수 없어 두 일정을 중지했는지와 다시 시작했는지의 전이를 밖으로 알리고,
+`MonitoringLifecycleStore`가 화면을 볼 수 없어 두 일정을 중지했는지의 전이를 밖으로 알리고,
 `ApplicationCoordinator`가 그 신호를 받아 `DashboardPresentationStore`에 넣습니다.
-방향은 생명주기 → coordinator → 표시 한 방향이고, 표시 계층은 생명주기 store를 호출하지 않습니다.
-coordinator가 두 store를 이미 함께 보유하므로 새 소유 관계가 생기지 않고 경로 하나만 늘어납니다(§5 DP16).
+방향은 생명주기 → coordinator → 표시 한 방향이고, 표시 계층은 생명주기 store를 호출하지 않습니다(§5 DP16).
 
 ## 2. 데이터 흐름
 
@@ -216,14 +223,14 @@ MonitoringScheduler (일정·취소·generation)
 MonitoringSampleStore (최신 스냅샷 + 이력 링) / ProcessHistoryStore (정체성별 이력)
    ↓ 최신 조합 하나만 보존하는 AsyncStream
 ApplicationCoordinator (MainActor 소비)
-   ├→ 카드 표시 상태 조립 → DashboardPresentationStore → DashboardView
+   ├→ 카드 표시 상태 조립 → DashboardPresentationStore → DashboardView (카드 → 상세 팝업)
    └→ CPU 표시 상태 판정 → CharacterStateSource → StatusBarController
 
 SystemLifecycleObserver
    ↓ 최종 snapshot
 MonitoringLifecycleStore (일정 결정: 중지·재개)
    ├→ 두 축의 MonitoringScheduler (일정 적용)
-   └→ 중지·재개 전이 → ApplicationCoordinator (MainActor) → DashboardPresentationStore
+   └→ 중지 전이 → ApplicationCoordinator (MainActor) → DashboardPresentationStore
 ~~~
 
 ### 시스템 지표 tick
@@ -233,7 +240,7 @@ MonitoringLifecycleStore (일정 결정: 중지·재개)
    한쪽이 실패해도 던지지 않고 해당 지표만 실패로 표시한 샘플 하나를 만듭니다.
    두 지표가 같은 시각에 묶이므로 카드 사이의 시점 차이가 생기지 않습니다.
 3. CPU Collector는 직전 tick 원본이 없으면 기준점만 잡고 사용률을 만들지 않습니다.
-   직전 tick과의 경과 시간이 허용 범위를 넘으면 값을 만들지 않고 새 기준점으로만 삼습니다(§5 DP11).
+   직전 tick과의 경과 시간이 허용 간격을 넘으면 값을 만들지 않고 새 기준점으로만 삼습니다(§5 DP11).
    Memory Collector는 순간값 조회라 첫 tick부터 값을 만듭니다.
 4. Scheduler가 generation을 확인한 뒤 샘플을 sink에 전달합니다.
 5. `MonitoringSampleStore`가 최신 스냅샷을 교체하고, CPU 사용률과 Swap 값이 모두 있는 tick만 이력 링에 추가합니다.
@@ -245,8 +252,8 @@ MonitoringLifecycleStore (일정 결정: 중지·재개)
    `CharacterStateSource.send(_:)`를 호출합니다.
 
 이력 링에서 그래프로 넘길 구간은 최신 샘플 시각에서 10분을 뺀 시점 이후로 한정합니다.
-용량으로만 축출하면 중지 구간이 있을 때 범위를 벗어난 샘플이 남기 때문이며, 이 선별이 `docs/design.md`가
-이 feature에 남긴 시간 기준 선별입니다.
+용량으로만 축출하면 중지 구간이 있을 때 범위를 벗어난 샘플이 남기 때문이며,
+이 선별이 `docs/design.md`가 이 feature에 남긴 시간 기준 선별입니다.
 가로축의 오른쪽 끝은 표시 계층이 그리는 시점의 시각으로 잡습니다.
 그래야 잠금이 막 풀린 직후처럼 마지막 샘플이 오래된 상황에서도 빈 구간이 제자리에 보입니다.
 
@@ -255,15 +262,17 @@ MonitoringLifecycleStore (일정 결정: 중지·재개)
 1. Scheduler가 `ProcessSurveySampleSource.sample()`을 호출합니다.
 2. source가 `sysctl(KERN_PROC_ALL)`로 전체 프로세스를 열거합니다.
    각 항목에서 PID, 시작 시각, uid, 부모 PID, `P_TRANSLATED` 플래그를 함께 얻습니다.
+   열거 자체가 실패하면 던지지 않고 실패를 담은 샘플을 만듭니다(§5 DP19).
 3. 현재 유효 uid와 같은 프로세스만 조사 대상으로 삼고, 나머지는 「읽을 수 없음」으로 세어 두고 값을 만들지 않습니다.
 4. 대상마다 `proc_pidinfo(PROC_PIDTASKINFO)`로 누적 CPU 시간과 Resident Memory를 읽습니다.
    호출이 실패한 프로세스는 그 tick의 결과에서 빠지고 추정값으로 채우지 않습니다. SPEC §5.6을 담당합니다.
 5. 새로 관찰된 정체성만 `proc_pidpath`로 경로를 읽고, 경로에서 앱 키와 표시 이름을 유도해 캐시에 넣습니다.
 6. Scheduler가 조사 결과를 `ProcessHistoryStore`에 전달합니다.
 7. 스토어가 정체성별 직전 누적 CPU 시간과 비교해 프로세스 CPU 사용률을 계산합니다.
-   경과 시간이 허용 범위를 넘으면 값을 만들지 않고 기준점만 갱신합니다.
+   경과 시간이 허용 간격을 넘으면 값을 만들지 않고 기준점만 갱신합니다.
 8. 스토어가 이번 조사에 없는 정체성을 제거하고, 최근 세 개 링과 메모리 기준점 링을 갱신합니다.
-9. 스토어가 앱 집계와 순위 계산에 필요한 값을 stream으로 내보내고 coordinator가 표시 상태에 반영합니다.
+   실패한 조사에서는 이력을 전혀 건드리지 않고 실패 사실만 기록합니다.
+9. 스토어가 앱 집계와 순위 계산에 필요한 값을 실패 여부와 함께 stream으로 내보내고 coordinator가 표시 상태에 반영합니다.
 
 프로세스 CPU 사용률은 논리 코어 합산 관례를 따르므로 여러 코어를 쓰는 프로세스에서 100%를 넘습니다.
 시스템 전체 CPU는 코어별 tick 합에서 계산해 항상 0~100% 범위입니다.
@@ -306,7 +315,7 @@ PID가 재사용되면 시작 시각이 달라지므로 새 정체성이 되고 
 
 지속 시간은 샘플 개수가 아니라 샘플 시각으로 셉니다.
 수집 주기가 1초에서 5초까지 달라져도 같은 시간 기준이 유지되어야 하기 때문입니다.
-인접한 두 샘플의 간격이 허용 범위를 넘으면 지속 누적을 끊고 다시 셉니다.
+인접한 두 샘플의 간격이 허용 간격을 넘으면 지속 누적을 끊고 다시 셉니다.
 그래야 화면 잠금으로 중지된 구간이 장시간 고부하로 판정되지 않습니다.
 
 `sustainedHigh`에서는 사용률이 `veryHigh` 진입 경계의 데드밴드 아래로 3초 이상 내려가야 벗어납니다.
@@ -320,16 +329,26 @@ Memory Pressure는 이 feature에서 메뉴바 상태의 입력이 아닙니다(
 1. 사용자가 메뉴바 항목을 클릭하면 M1 경로가 팝오버를 열고 delegate가 `popoverPresented(true)`를 냅니다.
 2. 팝오버 콘텐츠는 이미 살아 있고 `DashboardPresentationStore`가 마지막 표시 상태를 들고 있으므로
    첫 프레임부터 마지막 수집값이 보입니다. 로딩 상태를 거치지 않습니다. SPEC §5.9를 담당합니다.
+   값이 아직 하나도 없는 슬롯은 자리표시로 보이며, 이는 로딩 표시가 아니라 값 없음 표시입니다(§5 DP17).
 3. `popoverPresented(true)`가 생명주기 store에 도달해 두 일정이 열림 주기로 바뀌고, 다음 tick부터 최신값이 반영됩니다.
-4. 카드를 활성화하면 선택 상태가 그 카드로 바뀌고 하단 영역이 상세로 채워집니다.
-   같은 카드를 다시 활성화하면 선택이 해제되고 요약 안내로 돌아갑니다.
-5. 상세 안에서 앱 항목을 펼치면 그 앱의 하위 프로세스가 나타납니다. SPEC §5.2와 SPEC §5.6을 담당합니다.
+4. 카드를 활성화하면 선택이 그 카드로 바뀌고 그 카드에 앵커된 상세 팝업이 열립니다.
+   같은 카드를 다시 활성화하면 선택이 해제되어 팝업이 닫히고 요약 상태로 돌아갑니다.
+   다른 카드를 활성화하면 선택이 옮겨가 이전 팝업이 닫히고 새 카드 옆에 열립니다. SPEC §5.2를 담당합니다.
+5. 상세 팝업 안에서 앱 항목을 펼치면 그 앱의 하위 프로세스가 나타납니다. SPEC §5.2와 SPEC §5.6을 담당합니다.
 
 도달 가능한 선택 상태는 선택 없음, CPU 선택, Memory 선택 셋입니다.
-전이는 카드 활성화 하나로만 일어나고 수집 결과나 실패는 선택 상태를 바꾸지 않습니다.
+선택을 바꾸는 계기는 카드 활성화와 상세 팝업 자신의 닫힘 둘뿐이고, 수집 결과나 수집 실패는 선택 상태를 바꾸지 않습니다.
+상세 팝업의 표시 여부는 선택 상태에서 유도하고, 팝업이 스스로 닫히면 그 사실이 선택 상태로 되돌아옵니다.
+선택 상태를 단일 진실로 두면 부모 팝오버가 닫힐 때 자식이 어떻게 되든(§근거 추정) 표시와 상태가 어긋나지 않습니다.
+
+상세 팝업은 부모 팝오버 창 안의 카드에 앵커되므로 부모의 닫힘 계기를 만들지 않고 두 팝오버가 공존합니다(§근거 확인 사실).
+팝업 내용은 접근성 계층에서 부모 팝오버의 하위 노드로 들어가 그대로 도달됩니다. SPEC §5.13을 담당합니다.
+
 카드는 표준 `Button`으로 두고, 선택과 복귀를 수행하는 키보드 단축키를 함께 제공합니다.
 단축키는 macOS 키보드 탐색 설정과 무관하게 동작하므로 기본 설정 환경에서도 선택과 복귀가 키보드만으로 끝납니다.
-단축키의 존재는 카드에 항상 보이는 표시와 카드 접근성 이름에서 확인됩니다(§5 DP15).
+같은 단축키를 대시보드 본체와 상세 팝업 콘텐츠 양쪽에 등록해,
+팝업이 열린 뒤 어느 창이 key가 되든 복귀가 성립하게 합니다(§5 DP15).
+단축키의 존재는 카드에 항상 보이는 표시와 카드 접근성 이름에서 확인됩니다.
 M1이 팝오버를 열 때 앱을 활성화하고 팝오버 창을 key로 만들어 두었으므로 키 이벤트가 도달합니다. SPEC §5.13을 담당합니다.
 
 Memory Pressure 단계는 텍스트 라벨과 형태가 구분되는 기호를 함께 써서 색상 없이도 읽히게 하고,
@@ -350,7 +369,7 @@ Memory Pressure 단계는 텍스트 라벨과 형태가 구분되는 기호를 �
 | lowPower | 닫힘 | 5초 | 10초 |
 
 중지 구간에서는 새 샘플이 만들어지지 않고 이력도 변하지 않습니다. SPEC §5.12를 담당합니다.
-재개하면 Collector의 직전 원본은 남아 있지만 경과 시간이 허용 범위를 넘으므로 첫 tick은 기준점만 갱신합니다.
+재개하면 Collector의 직전 원본은 남아 있지만 경과 시간이 허용 간격을 넘으므로 첫 tick은 기준점만 갱신합니다.
 그래서 중지 전 값과 재개 후 값이 하나의 변화량으로 이어 붙지 않고 그래프에 빈 구간이 그대로 남습니다. SPEC §5.11을 담당합니다.
 
 ### 실패 경로
@@ -362,8 +381,13 @@ Memory Pressure 단계는 텍스트 라벨과 형태가 구분되는 기호를 �
 - 실패: 마지막 성공 값과 그 시각을 함께 보여주면서 최근 수집이 실패했음을 표시
 - 중지: 화면을 볼 수 없어 일정이 멈춘 상태
 
+네 상태 모두 카드의 슬롯 집합이 같습니다.
+마지막 성공 값이 없는 실패·중지에서도 그래프 자리와 순위 자리를 자리표시로 채우므로 상태를 오가며 카드 높이가 변하지 않습니다.
+프로세스 조사만 실패해 순위를 보여줄 수 없을 때도 순위 자리 전체를 한 줄로 접지 않고 같은 높이 안에서 실패를 나타냅니다.
+이 규칙이 SPEC §5.15를 담당합니다(§5 DP17).
+
 중지는 수집 결과에서 유도할 수 없습니다.
-일정이 멈춘 구간에는 tick이 하나도 없어 조립이 실행되지 않기 때문입니다(§근거 확인 사실).
+일정이 멈춘 구간에는 tick이 하나도 없어 조립이 실행되지 않기 때문입니다.
 그래서 §1 「생명주기 경계」가 둔 경로로 중지 사실이 표시 저장소에 직접 도착하고, 그때 두 카드가 함께 중지로 바뀝니다.
 중지도 실패와 마찬가지로 마지막 성공 값과 그 시각을 함께 들고 있어 복귀 직후 팝오버를 열어도 빈 화면이 되지 않습니다.
 중지에서 벗어나는 것은 재개 신호가 아니라 그 카드의 값이 성립한 첫 tick입니다.
@@ -377,8 +401,9 @@ CPU 지표 실패는 CPU 카드만 실패로 바꾸고 Memory 카드와 메뉴�
 일시적 실패를 0으로 표시하지 않습니다. SPEC §5.10을 담당합니다.
 
 Scheduler는 source가 던져도 0 샘플로 바꾸지 않고 다음 실행으로 넘어가는 M1 동작을 유지합니다.
-다만 지표별 실패는 던지지 않고 샘플 안의 실패 값으로 전달하므로,
-한 지표의 실패가 다른 지표의 그 tick 값을 함께 없애지 않습니다.
+다만 지표별 실패와 조사 실패는 던지지 않고 샘플 안의 값으로 전달하므로,
+한 지표의 실패가 다른 지표의 그 tick 값을 함께 없애지 않고,
+조사 실패가 표시 계층에 도달할 통로를 잃지 않습니다(§5 DP19).
 
 ## 3. 인터페이스
 
@@ -386,7 +411,8 @@ Scheduler는 source가 던져도 0 샘플로 바꾸지 않고 다음 실행으�
 
 - `CPUSystemMetrics`: 전체 사용률, User·System·Idle 비율, 논리 코어별 사용률, Load Average를 담는 값
 - `MemorySystemMetrics`: 전체 물리 메모리, 현재 사용 중 메모리, App·Wired·Compressed·Cached,
-  Swap 사용량, Memory Pressure 단계를 담는 값
+  Swap 사용량, Memory Pressure 단계를 담는 값.
+  「사용 중」은 구성 항목의 합이 아니라 Activity Monitor와 같은 정의를 씁니다(§5 DP13).
 - `MemoryPressureLevel`: `normal`·`warning`·`critical`의 닫힌 집합.
   `kern.memorystatus_vm_pressure_level`의 `0x01`·`0x02`·`0x04`에 대응하고 그 밖의 값은 실패로 다룹니다.
 - `CollectorFailure`: 조회 실패를 값으로 표현하는 오류 타입. 지표 종류와 실패 원인을 구분합니다.
@@ -398,13 +424,13 @@ Scheduler는 source가 던져도 0 샘플로 바꾸지 않고 다음 실행으�
 ### 프로세스와 앱 계약
 
 - `ProcessIdentity`: PID와 프로세스 시작 시각을 묶는 값. 이력과 캐시의 유일한 키입니다.
-- `ProcessSample`: 정체성, 실행 경로, uid, 부모 PID, 누적 CPU 시간, Resident Memory,
+- `ProcessSample`: 정체성, 실행 경로, uid, 부모 PID, 누적 CPU 시간(나노초), Resident Memory,
   Rosetta 실행 여부를 담는 한 프로세스의 조사 결과
 - `ProcessSurveyReport`: 이번 조사에서 값을 얻은 프로세스 목록과 읽지 못한 프로세스 수를 담는 값
 - `ProcessSurveySample`: 위 결과 또는 조사 실패를 담는 `Result`.
   열거 자체가 실패해 이번 tick의 결과가 아예 없는 경우를 던지지 않고 값으로 전달합니다 —
   던지면 `MonitoringScheduler`가 tick을 건너뛰어 §2 「실패 경로」가 정한
-  "프로세스 조사 실패는 두 카드의 TOP 5만 실패로 바꾼다"가 표시 계층에 도달할 통로가 없습니다.
+  "프로세스 조사 실패는 두 카드의 TOP 5만 실패로 바꾼다"가 표시 계층에 도달할 통로가 없습니다(§5 DP19).
   시스템 지표 축의 `SystemMetricsSample`과 같은 규칙입니다.
 - `ProcessSurveySampleSource`: 위 값을 반환하는 `ScheduledSampleSource` 구현 actor
 - `ApplicationKey`: 가장 바깥 `.app` 번들 경로 또는 실행 파일 경로를 담는 앱 집계 키
@@ -413,37 +439,40 @@ Scheduler는 source가 던져도 0 샘플로 바꾸지 않고 다음 실행으�
   앱 단위 현재값 순위와 10분 증가량 순위 계산에 필요한 값을 제공하는 actor.
   실패한 조사는 이력을 전혀 건드리지 않고 실패 사실만 기록해 순위 계산 입력과 함께 내보냅니다 —
   관찰된 정체성이 없는 것으로 처리하면 제거 규칙이 이력 전체를 지웁니다.
-  실패 표시는 다음 성공 조사까지 유지되므로, 더 빠른 시스템 지표 tick이 순위를 다시 읽어도 흔들리지 않습니다
+  실패 표시는 다음 성공 조사까지 유지되므로, 더 빠른 시스템 지표 tick이 순위를 다시 읽어도 흔들리지 않습니다.
 
 ### 일정 계약
 
 - `CollectionSchedulePlan`: 시스템 지표와 프로세스 조사 각각의 `CollectionSchedule`을 묶는 값
-- `CollectionScheduleDefinition`: 위 표의 여덟 값을 담도록 확장한 일정 정의
+- `CollectionScheduleDefinition`: 위 표의 여덟 값을 담는 일정 정의
 - `CollectionSchedulePolicy.plan(for:definition:)`: 최종 snapshot과 정의에서 `CollectionSchedulePlan`을 계산하는 순수 함수
 - `CollectionScheduleTarget`: `apply(_ schedule: CollectionSchedule) async`만 제공하는 actor 계약.
   `MonitoringLifecycleStore`가 두 Scheduler를 이 계약으로 보유합니다.
 - `MonitoringSampleSink`: `append(_ sample: TimestampedSample<Value>) async`만 제공하는 actor 계약.
   `MonitoringScheduler`가 저장 대상을 구체 타입 대신 이 계약으로 받습니다.
 - `SystemLifecycleSnapshot`: `revision`·`lowPowerMode`·`screenLockState`에 디스플레이 슬립과 세션 활성을 더한 값
-- `SystemLifecycleFieldChange`: 위 두 필드의 변경 케이스를 더한 열거
+- `SystemLifecycleFieldChange`: 위 두 필드의 변경 케이스를 포함하는 열거
 
 `MonitoringScheduler`의 단일 Task·generation·기준 deadline 전진 규칙과
 `MonitoringLifecycleStore`의 revision 거부·중복 일정 억제 규칙은 M1 계약을 그대로 유지합니다.
 
 ### 표시 계약
 
-- `ResourceCardState`: 수집 중·정상·실패·중지 네 경우를 담는 카드 표시 상태
+- `ResourceCardState`: 수집 중·정상·실패·중지 네 경우를 담는 카드 표시 상태.
+  실패·중지는 마지막 성공 값을 함께 들고 있으며, 없을 수도 있습니다.
 - `CPUCardPresentation`: 전체 사용률, User·System 비율, 그래프 점 목록, 앱 단위 CPU TOP 5,
-  상세용 코어별 사용률·Load Average·프로세스 목록을 담는 값
+  프로세스 조사 실패 여부, 상세용 코어별 사용률·Load Average·프로세스 목록을 담는 값
 - `MemoryCardPresentation`: 전체 물리 메모리, 사용 중 메모리, Memory Pressure 단계,
-  Swap 사용량과 10분 변화량, 앱 단위 메모리 TOP 5,
+  Swap 사용량과 10분 변화량, 앱 단위 메모리 TOP 5, 프로세스 조사 실패 여부,
   상세용 App·Wired·Compressed·Cached와 현재 사용량 순위·최근 증가량 순위를 담는 값
 - `HistoryPoint`: 시각과 값을 묶는 그래프 점. 인접 점의 시각 간격으로 빈 구간을 판별합니다.
-- `DashboardSelection`: 선택 없음·CPU·Memory의 닫힌 집합
-- `DashboardPresentationStore`: 위 값들과 선택 상태를 소유하는 `@MainActor` 관찰 가능 객체
-  수집 tick을 받는 진입점과 별개로, 일정 중지·재개 전이를 받는 진입점을 함께 가집니다.
+- `DashboardSelection`: 선택 없음·CPU·Memory의 닫힌 집합.
+  어느 카드의 상세 팝업이 열려 있는지를 나타내며, 팝업 표시 여부가 이 값에서 유도됩니다.
+- `DashboardPresentationStore`: 위 값들과 선택 상태를 소유하는 `@MainActor` 관찰 가능 객체.
+  수집 tick을 받는 진입점과 별개로, 일정 중지 전이를 받는 진입점과 선택을 바꾸는 진입점을 함께 가집니다.
   중지를 받으면 두 카드를 마지막 성공 값을 유지한 채 중지로 바꾸고,
   재개는 그 자체로 카드 상태를 바꾸지 않으며 다음에 값이 성립한 tick의 조립 결과가 중지를 대체합니다.
+  선택 해제는 카드 활성화와 팝업 자신의 닫힘 양쪽에서 들어올 수 있어야 합니다.
 - `CPUActivityStateEvaluator`: 사용률·샘플 시각·직전 판정 상태를 받아 다음 판정 상태를 돌려주는 순수 계산
 
 메뉴바 쪽 계약은 M1의 `CharacterActivityState`, `CharacterPresentation`, `CharacterPresentationSink`를 그대로 씁니다.
@@ -451,66 +480,75 @@ Scheduler는 source가 던져도 0 샘플로 바꾸지 않고 다음 실행으�
 
 ## 4. 영향 범위
 
-### 기존 코드
+이 feature의 수집·계산·생명주기 경계는 이미 구현돼 실기기 검증을 마쳤습니다.
+SPEC 재작성이 실제로 바꾸는 것은 표시 계층과 그 검증뿐이며, 아래는 현재 코드를 읽어 확인한 결과입니다.
 
-- [MonitoringScheduler.swift](../../ResourceRunner/MonitoringScheduler.swift):
-  저장 대상이 `MonitoringSampleStore<Source.Value>` 구체 타입에서 `MonitoringSampleSink` 계약으로 바뀝니다.
-  `apply(_:)`에서 `sampleStore.resize(samplingInterval:)` 호출이 사라집니다.
-  `PlaceholderMonitoringSample`과 `PlaceholderScheduledSampleSource`는 실제 source로 대체돼 제거됩니다.
-- [MonitoringSampleStore.swift](../../ResourceRunner/MonitoringSampleStore.swift):
-  최신 스냅샷과 이력 링을 분리하고 `MonitoringSampleSink`를 구현합니다.
-  용량 기준이 유효 주기에서 최소 주기로 바뀌므로 `resize(samplingInterval:timeRange:)`는 호출자가 없어집니다.
-  시간 범위 선택이 들어오는 M4까지 쓰이지 않는 API를 남기지 않고 제거하며,
-  `HistoryCapacity`와 `CircularBuffer`는 그대로 씁니다.
-- [MonitoringLifecycle.swift](../../ResourceRunner/MonitoringLifecycle.swift):
-  `CollectionScheduleDefinition`이 여덟 값으로 확장되고 정책이 `CollectionSchedulePlan`을 돌려줍니다.
-  `MonitoringLifecycleStore`가 두 target을 보유하며 `<Clock, Source>` 제네릭 파라미터가 사라집니다.
-  화면을 볼 수 없는 상태 판정에 디스플레이 슬립과 세션 비활성이 더해집니다.
-- [SystemLifecycleObserver.swift](../../ResourceRunner/SystemLifecycleObserver.swift):
-  snapshot과 field change에 두 필드가 추가되고 `NSWorkspace` 알림 등록이 더해집니다.
-  `CombinedSnapshotProducer`의 병합 규칙과 `ScreenLockObservationAdapter`는 그대로입니다.
-- [ApplicationCoordinator.swift](../../ResourceRunner/ApplicationCoordinator.swift):
-  두 source·두 Scheduler·두 스토어와 표시 저장소를 구성하고, 수집 결과 stream을 소비해
-  카드 표시 상태와 CPU 판정 결과를 나누는 배선이 추가됩니다.
-  제네릭이 정리되면서 저장 속성의 타입 표기가 짧아집니다.
+### SPEC 재작성이 바꾸는 코드
+
 - [DashboardView.swift](../../ResourceRunner/DashboardView.swift):
-  셸이 두 카드와 상세 영역을 가진 대시보드로 교체됩니다.
-- [StatusBarController.swift](../../ResourceRunner/StatusBarController.swift)와
-  [CharacterStateSource.swift](../../ResourceRunner/CharacterStateSource.swift):
+  변경이 집중되는 자리입니다.
+  `DashboardDetailView`가 본체에서 빠지고 두 카드 각각에 앵커된 상세 팝업으로 옮겨갑니다.
+  `CPUDetailView`·`MemoryDetailView`·`ApplicationProcessGroupListView`는 팝업 콘텐츠로 그대로 재사용되고,
+  선택 전 안내 문구("카드를 선택하면 상세 정보가 여기에 표시됩니다.")는 열리지 않은 팝업에 자리가 없으므로 사라집니다.
+  본체 프레임의 높이 상수가 두 카드에 맞게 줄고 폭은 그대로입니다.
+  `CPUCardView`·`MemoryCardView`의 상태별 분기가 슬롯 고정 구조로 바뀌어,
+  값이 없는 그래프·순위·요약 슬롯을 자리표시로 채웁니다.
+  `⌘1`·`⌘2` 단축키는 본체에 더해 팝업 콘텐츠에도 등록됩니다.
+  `DashboardDetail` 접근성 식별자는 팝업 콘텐츠로 옮겨 UI 테스트가 팝업을 특정할 수 있게 합니다.
+- [DashboardPresentationStore.swift](../../ResourceRunner/DashboardPresentationStore.swift):
+  `selection`이 상세 팝업의 표시 바인딩 원본이 되므로, 팝업이 스스로 닫힐 때 선택을 해제하는 진입점이 필요합니다.
+  `selectCard(_:)`의 토글 규칙과 수집 tick이 선택을 건드리지 않는 성질은 그대로입니다.
+- [DashboardPresentation.swift](../../ResourceRunner/DashboardPresentation.swift):
+  값 모델은 바뀌지 않습니다.
+  `DashboardSelection`과 `ResourceCardState`의 주석이 「하단 상세 영역」을 전제하고 있어 새 배치에 맞게 고칩니다.
+  카드 접근성 이름 조립(`cpuAccessibilityLabel`·`memoryAccessibilityLabel`)은 그대로 쓰며,
+  자리표시는 접근성 이름의 「수집 중」·「수집 실패」·「수집 중지」 문구와 뜻이 겹치므로 새 문자열을 만들지 않습니다.
+
+### 변경하지 않는 코드
+
+- 수집·계산·이력·생명주기 경계는 그대로입니다 —
+  `CPUSystemMetricsCollector`, `MemorySystemMetricsCollector`, `ProcessSurveyCollector`,
+  `SystemMetricsSampleSource`, `ProcessSurveySampleSource`, `MonitoringScheduler`, `MonitoringSampleStore`,
+  `ProcessHistoryStore`, `ApplicationRanking`, `CPUActivityStateEvaluator`, `MonitoringLifecycle`, `SystemLifecycleObserver`.
+- [ApplicationCoordinator.swift](../../ResourceRunner/ApplicationCoordinator.swift):
+  배선이 그대로입니다. 표시 계층 안에서 끝나는 변경이라 coordinator가 아는 진입점 집합이 바뀌지 않습니다.
+- [StatusBarController.swift](../../ResourceRunner/StatusBarController.swift):
   변경하지 않습니다.
-  Debug 우클릭 주입 메뉴는 남지만 다음 수집 tick의 실제 판정이 주입한 상태를 덮으므로 관찰 수단으로서의 의미가 줄어듭니다.
-  제거는 이 feature의 완료 조건과 무관하므로 하지 않습니다.
+  상세 팝업은 부모 팝오버 콘텐츠 안에서 열리므로 `.transient` 설정과 활성화·key 처리를 건드릴 이유가 없습니다.
+  Debug 우클릭 주입 메뉴도 그대로 둡니다.
 
 ### 테스트 대상
 
-- [MonitoringSampleStoreTests.swift](../../ResourceRunnerTests/MonitoringSampleStoreTests.swift)에서
-  `resize` 동작을 검증하는 단언이 용량 고정 검증으로 바뀝니다.
-- [MonitoringLifecycleTests.swift](../../ResourceRunnerTests/MonitoringLifecycleTests.swift)의
-  일정 계산 검증이 단일 일정에서 두 일정 조합으로 바뀌고, 화면을 볼 수 없는 상태 세 가지가 대상에 더해집니다.
-- [ApplicationCoordinatorTests.swift](../../ResourceRunnerTests/ApplicationCoordinatorTests.swift)와
-  [SystemLifecycleObserverTests.swift](../../ResourceRunnerTests/SystemLifecycleObserverTests.swift)는
-  snapshot 필드 추가와 배선 변경만큼 갱신됩니다.
-- [CharacterStateSourceTests.swift](../../ResourceRunnerTests/CharacterStateSourceTests.swift)와
-  [StatusBarControllerTests.swift](../../ResourceRunnerTests/StatusBarControllerTests.swift),
-  [ResourceRunnerUITests](../../ResourceRunnerUITests)는 표시 경로가 그대로라 영향을 받지 않습니다.
-
-### M1 결정 중 이 feature가 대체하는 것
-
-- M1 analysis.md DP5는 실행 주기 변경과 resume에서 버퍼를 새 주기로 resize하도록 정했습니다.
-  이 feature가 §5 DP3으로 대체합니다. 실제 수집값이 들어오면 그 규칙이 최근 10분 그래프를 성립시키지 못하기 때문입니다.
-- M1 analysis.md DP4가 정한 store·scheduler·sample store의 3분할 경계는 유지하고, 축을 둘로 늘리기만 합니다.
+- [DashboardCardSelectionUITests.swift](../../ResourceRunnerUITests/DashboardCardSelectionUITests.swift):
+  선택 전 안내 문구가 사라지므로 판정 기준을 「팝업의 등장·소멸」로 바꿉니다.
+  프레임 비교는 팝오버가 둘이 되므로 부모 팝오버를 특정해 비교해야 하고,
+  비교 대상에 카드 프레임을 더해 상세 개폐가 카드를 움직이지 않음을 직접 확인합니다(SPEC §5.15).
+  `app.popovers`로 팝오버를 찾는다는 기존 관례와 `value` 기준 부분 일치 조회 관례는 그대로 씁니다.
+- [DashboardCPUCardUITests.swift](../../ResourceRunnerUITests/DashboardCPUCardUITests.swift)와
+  [DashboardMemoryCardUITests.swift](../../ResourceRunnerUITests/DashboardMemoryCardUITests.swift):
+  접근성 이름으로 판정하므로 배치 변경의 영향을 받지 않습니다.
+  다만 첫 수집 전후로 카드 프레임이 같은지 확인하는 단언이 SPEC §5.15의 관찰 가능한 판정 수단이므로 이 자리에 더합니다.
+- [DashboardPresentationTests.swift](../../ResourceRunnerTests/DashboardPresentationTests.swift):
+  값 모델이 바뀌지 않으므로 대부분 그대로이고, 선택 상태 전이에 「팝업 자신의 닫힘」 경우가 더해집니다.
+- 나머지 단위 테스트는 수집·계산·생명주기 경계를 대상으로 하므로 영향을 받지 않습니다.
 
 ### 프로젝트 설정과 외부 경계
 
 App Sandbox, deployment target 26.5, arm64 전용 산출물과 단일 애플리케이션 대상 구성을 그대로 유지합니다.
 새 Helper, 로그인 항목, 실행 대상과 외부 package 의존성을 만들지 않습니다. SPEC §5.14를 담당합니다.
+상세 팝업은 같은 프로세스 안의 `NSPopover`이므로 새 창 유형이나 entitlement가 필요하지 않습니다.
 수집한 값과 프로세스 정보는 앱 메모리에만 존재하고 파일·`UserDefaults`·네트워크로 나가지 않습니다.
-필요한 시스템 API는 모두 Sandbox에서 접근 가능한 것으로 확인된 범위 안에 있으므로 entitlement 변경이 없습니다.
 
 `docs/product.md`의 `대시보드 > 공통 정보 구조`가 언급하는 앱 아이콘 표시와 Hover 설명,
 `Memory` 상세의 최근 1분 증가량 순위는 spec.md 완료 조건에 없어 이 feature 범위 밖으로 둡니다.
 product.md의 상태 우선순위 규칙 중 Memory Pressure가 메뉴바 상태를 앞지르는 부분도
 spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(§5 DP8).
+
+### M1 결정 중 이 feature가 대체하는 것
+
+- M1 analyze.md DP5는 실행 주기 변경과 resume에서 버퍼를 새 주기로 resize하도록 정했습니다.
+  이 feature가 §5 DP3으로 대체합니다. 실제 수집값이 들어오면 그 규칙이 최근 10분 그래프를 성립시키지 못하기 때문입니다.
+- M1 analyze.md DP4가 정한 store·scheduler·sample store의 3분할 경계는 유지하고, 축을 둘로 늘리기만 했습니다.
 
 ## 5. Decision Points
 
@@ -566,7 +604,8 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
 - 옵션 C: PID와 실행 경로를 씁니다. 의미는 명확하지만 프로세스마다 `proc_pidpath` 호출이 필요하고,
   같은 실행 파일을 여러 번 실행하면 구분되지 않습니다.
 - 채택안: 옵션 B.
-  PID 재사용은 같은 PID를 같은 시각에 다시 받는 경우에만 충돌하는데 시작 시각이 마이크로초 단위라 실질적으로 발생하지 않습니다.
+  PID 재사용은 같은 PID를 같은 시각에 다시 받는 경우에만 충돌하는데
+  시작 시각이 마이크로초 단위라 실질적으로 발생하지 않습니다.
   열거 결과에서 함께 오므로 조사 비용이 늘지 않는다는 점이 결정적입니다. 이 키가 SPEC §5.7을 성립시킵니다.
 
 ### DP5. 앱 집계 키
@@ -582,8 +621,8 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
 - 채택안: 옵션 B.
   `docs/design.md`의 집계 원칙이 "앱 번들에 속한 프로세스는 가능한 경우 같은 앱으로 집계"이고,
   Chrome·Electron·IDE의 helper가 모두 상위 앱 번들 안에 중첩 배치되는 관례를 따르므로 이 규칙이 그 관계를 그대로 표현합니다.
+  실기기 관측에서 `lldb-rpc-server`와 `python3`가 모두 Xcode 앱 키로 접히는 것을 확인했습니다(§근거 확인 사실).
   `.app`를 찾지 못하는 명령행 프로세스는 실행 파일 경로를 키로 삼아 확인 가능한 실행 정보로 표시합니다.
-  이 규칙이 대표 앱에서 실제로 성립하는지는 실측으로 확인해야 하며(§근거 추정),
   묶이지 않는 예외가 나오면 그 앱의 하위 프로세스가 별도 항목으로 보이는 것이 대가입니다.
   CPU와 Memory가 같은 키를 쓰므로 두 카드의 집계 기준이 일치합니다. 이 키가 SPEC §5.6을 성립시킵니다.
 
@@ -647,7 +686,7 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
 최소 유지 시간 3초는 가장 빠른 주기 1초에서 세 샘플, 닫힘 2초에서 두 샘플에 해당해 한 tick 스파이크를 항상 거릅니다.
 장시간 고부하 60초는 빌드 시작이나 앱 실행 같은 수 초~수십 초 스파이크와 지속 부하를 가르는 자리입니다.
 이 수치들은 사용자가 보는 결과를 직접 정하므로 2026-08-12에 사용자 확인을 받아 확정했습니다.
-실제 값을 눈으로 본 뒤 조정할 여지가 있으며, 조정은 순수 판정 함수의 파라미터만 바꾸는 범위에서 끝납니다.
+조정은 순수 판정 함수의 파라미터만 바꾸는 범위에서 끝납니다.
 
 **입력 범위**
 
@@ -696,7 +735,7 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
 - 옵션 A: Scheduler가 재개할 때 Collector에 기준점 재설정을 통지합니다.
   의도가 명시적이지만 `ScheduledSampleSource` 계약에 생명주기 개념이 들어가고 Scheduler가 상태를 하나 더 갖습니다.
 - 옵션 B: Collector가 직전 원본의 시각과 새 샘플 시각의 간격을 보고,
-  예상 주기의 배수를 넘으면 값을 만들지 않고 기준점만 갱신합니다.
+  허용 간격을 넘으면 값을 만들지 않고 기준점만 갱신합니다.
   계약 변경 없이 Collector 안에서 닫히고, 중지·재개뿐 아니라 시스템 슬립 복귀와 긴 지연에도 같은 규칙이 적용됩니다.
 - 옵션 C: 아무 처리도 하지 않습니다. 재개 첫 tick의 값이 중지 구간 전체의 평균이 되어
   "중지 전후 값이 이어 붙지 않는다"는 SPEC §5.11을 어깁니다.
@@ -745,19 +784,48 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
   절대값 오차를 허용하는 이유는 §근거 추정에 적은 대로 `vm_statistics64` 카운터와 Activity Monitor 항목의 대응이
   공식 문서로 규정된 관계가 아니고, 두 도구의 샘플링 시점도 다르기 때문입니다.
 
-### DP14. 상세 영역의 배치
+비교를 실제로 수행한 결과 「사용 중」만 정의가 갈렸습니다.
+구성 항목의 합(`app + wired + compressed`)과 Activity Monitor의 정의(`total − (free − speculative) − external`)가
+10.8% 어긋났고, 사용자 결정으로 Activity Monitor 정의를 따랐습니다.
+사용자가 두 화면을 나란히 놓고 비교하는 지표라 정의가 갈리면 앱이 틀린 것으로 읽히기 때문입니다.
+부수 효과로 「사용 중」이 전체 물리 메모리를 넘지 않는 것이 구조적으로 보장됩니다 — 합산식에는 상한이 없었습니다.
+프로세스 순위의 상위 3개 집합 일치는 부하 시나리오의 2·3위에서 성립하지 않았고,
+그 사유는 세 도구의 표본 창이 서로 다르기 때문이며 README.md에 편차로 기록돼 있습니다.
 
-- 옵션 A: 카드를 선택하면 팝오버가 커지며 상세가 나타납니다.
-  요약 상태의 팝오버가 작지만 선택할 때마다 창 크기가 변해
-  `docs/product.md`의 레이아웃 안정성 원칙과 어긋납니다.
-- 옵션 B: 팝오버 크기를 고정하고 하단에 상세 영역을 항상 두며, 선택 전에는 안내를 표시합니다.
-  요약 상태에서 공간을 쓰지만 선택·복귀에서 크기가 변하지 않고 상세가 항상 같은 자리에 나타납니다.
-- 옵션 C: 상세를 별도 창으로 띄웁니다.
-  공간 제약이 없어지지만 spec.md가 "고정된 영역"을 요구하고 별도 상세 창은 1.0 이후 후보입니다.
-- 채택안: 옵션 B.
-  SPEC §5.2가 "고정된 영역"과 "다시 선택하면 요약 상태로 복귀"를 함께 요구하므로,
-  영역이 항상 존재하고 내용만 바뀌는 형태가 두 요구를 동시에 만족하는 가장 단순한 배치입니다.
-  상세 내용이 영역보다 길면 그 영역만 스크롤해 팝오버 크기를 유지합니다.
+### DP14. 상세 표시의 배치
+
+- 옵션 A: 카드를 선택하면 팝오버 본체가 커지며 상세가 나타납니다.
+  요약 상태의 팝오버가 작지만 선택할 때마다 본체 크기가 변합니다.
+  `NSPopover`는 앵커 기준 중앙 정렬이라 폭이 바뀌면 카드 열이 좌우로 밀리고,
+  높이가 바뀌면 카드가 위아래로 밀려 SPEC §5.15와 어긋납니다.
+- 옵션 B: 본체 크기를 고정하고 하단에 상세 영역을 항상 두며, 선택 전에는 안내를 표시합니다.
+  선택·복귀에서 크기가 변하지 않지만 대시보드 본체가 상세를 위한 자리를 늘 예약하게 되어,
+  「상세는 카드 옆 팝업」과 「본체는 상세 자리를 예약하지 않는다」를 함께 요구하는
+  SPEC §5.2와 spec.md §3 제약을 어깁니다.
+  이전 SPEC에서 채택했던 배치이며, 그 근거였던 「고정된 영역」 요구가 사라져 더는 성립하지 않습니다.
+- 옵션 C: 상세를 앱의 별도 창으로 띄웁니다.
+  공간 제약이 없어지지만 spec.md §4가 상세를 카드와 독립적으로 고정해 두는 기능을 제외 범위로 두고
+  별도 상세 창을 1.0 이후 후보로 미룹니다.
+  별도 창은 부모 팝오버의 닫힘 계기(앱 비활성화, 팝오버 창 밖 mouse-down)에 걸릴 수 있고,
+  접근성 계층에서도 부모 팝오버와 분리됩니다.
+- 옵션 D: 팝오버 본체 폭을 넓혀 오른쪽 절반에 상세를 붙이는 분할 배치.
+  spec.md §1이 이미 접은 대안입니다. 중앙 정렬 때문에 콘텐츠 폭이 바뀌면 카드 열이 좌우로 밀립니다.
+- 옵션 E: 카드에 앵커한 자식 팝오버로 상세를 띄웁니다.
+  본체 레이아웃에 참여하지 않으므로 개폐가 카드를 전혀 움직이지 않고, 상세 크기가 본체 폭에 갇히지 않습니다.
+  대신 팝오버 두 개의 표시 상태를 표시 계층이 함께 다뤄야 합니다.
+- 채택안: 옵션 E.
+  SPEC §5.2가 상세를 「그 카드 옆에 열리는 팝업」으로 직접 규정하므로,
+  배치의 자유도는 그 팝업을 무엇으로 만드느냐로 좁혀집니다.
+  옵션 C와 E 중 E를 고르는 근거는 실행 환경에서 확인한 세 가지입니다(§근거 확인 사실) —
+  카드 클릭이 부모 팝오버 창 안에서 일어나 닫힘 계기가 되지 않아 두 팝오버가 공존했고,
+  자식 팝오버가 접근성 계층에서 부모의 하위 노드로 들어가 그 내용에 도달됐으며(SPEC §5.13),
+  자식이 부모의 레이아웃 흐름 밖에 있어 개폐가 카드를 움직이지 않습니다(SPEC §5.15).
+  이 배치를 고르면 본체가 상세 자리를 예약할 이유가 없어지므로 본체 높이를 두 카드에 맞게 줄입니다.
+  본체가 작아지는 것은 사용자에게 보이는 변화라 확인을 받았고, 줄이는 것으로 확정했습니다.
+  이 feature에서는 두 카드 높이가 되고, Network·Disk 카드가 더해지는 후속 마일스톤에서 다시 커집니다.
+  폭은 그대로 둡니다 — 폭이 바뀌면 옵션 A·D가 걸린 중앙 정렬 문제에 똑같이 걸립니다.
+  대가는 표시 상태가 팝오버 두 개로 나뉘는 것이며, 자식의 표시 여부를 선택 상태에서 유도하고
+  자식이 스스로 닫히면 그 사실이 선택 상태로 되돌아오게 해 단일 진실을 유지합니다(§2 「팝오버 열림과 카드 선택」).
 
 ### DP15. 카드 선택과 복귀의 키보드 수단
 
@@ -765,16 +833,23 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
   키보드 탐색 설정과 무관하게 항상 동작하므로 기본 설정 사용자도 SPEC §5.13을 만족하고,
   사용자가 키보드 탐색을 켜 둔 환경에서는 표준 `Button`이므로 Tab 이동도 자연히 동작합니다.
 - 옵션 B: 카드 영역을 선택 가능한 목록으로 바꿔 키보드 탐색이 꺼져 있어도 Tab이 닿게 합니다.
-  macOS다운 패턴이지만 DP14가 고정한 카드 배치를 목록 구조로 재설계해야 해서 비용이 큽니다.
+  macOS다운 패턴이지만 두 카드를 목록 행으로 재설계해야 하고,
+  행 높이가 선택 스타일에 따라 달라져 DP17이 고정하려는 카드 높이와 자리표시 규칙을 목록 쪽에서 다시 세워야 합니다.
 - 옵션 C: 키보드 탐색이 켜진 환경을 전제합니다.
   비용은 없지만 기본 설정 사용자에게 SPEC §5.13이 성립하지 않아 `docs/product.md`의 접근성 요구에 어긋납니다.
 - 채택안: 옵션 A.
-  키보드 탐색이 기본 꺼짐이고 그 상태에서 Tab이 버튼에 닿지 않는다는 것을 실행 중인 앱에서 확인했으므로(§근거 확인 사실),
+  키보드 탐색이 기본 꺼짐이고 그 상태에서 Tab이 버튼에 닿지 않는다는 것을 실행 중인 앱에서 확인했으므로,
   Tab에 기대는 방식은 기본 설정 환경에서 SPEC §5.13을 성립시키지 못합니다.
   SPEC §5.13이 요구하는 것은 선택과 복귀를 키보드로 수행할 수 있다는 것이고 Tab이라는 수단을 지정하지 않으므로,
   단축키로 그 요구를 그대로 충족할 수 있습니다.
-  DP14가 정한 카드 배치를 유지한 채 표준 컨트롤만 쓰므로 §1 구조에 미치는 영향이 없습니다.
-  어떤 키 조합을 쓸지는 구현이 정하며, 단축키의 존재는 화면 표시와 카드 접근성 이름에서 확인할 수 있어야 합니다.
+  DP14가 바뀌어도 이 선택은 유지됩니다 —
+  상세가 팝업으로 옮겨가도 카드 자체는 세로로 놓인 두 개의 표준 `Button`이고,
+  옵션 B가 요구하는 재설계 비용도 그대로이기 때문입니다.
+  다만 새 배치에서 조건이 하나 늘어납니다.
+  상세 팝업이 열린 뒤 키 이벤트가 어느 창으로 가는지는 확인되지 않았으므로(§근거 추정),
+  같은 단축키를 대시보드 본체와 팝업 콘텐츠 양쪽에 등록해 어느 쪽이 key window여도 복귀가 성립하게 합니다.
+  대가는 같은 단축키 정의가 두 자리에 생기는 것이며, 표시 문자열 상수를 공유해 두 자리가 어긋나지 않게 합니다.
+  단축키의 존재는 카드에 항상 보이는 표시와 카드 접근성 이름에서 확인할 수 있어야 합니다.
   Hover에만 두지 않는 이유는 `docs/product.md`가 중요한 정보를 Hover에만 의존하지 말라고 요구하기 때문입니다.
 
 ### DP16. 중지 상태가 표시 계층에 도달하는 경로
@@ -789,10 +864,81 @@ spec.md가 메뉴바 판정을 CPU로 한정해 이 feature 범위 밖입니다(
   이 feature의 변경량이 줄지만 도달할 수 없는 상태가 남고,
   중지 상태의 조합을 검증하려 해도 그 상태를 만들 수단이 없어 무엇을 확인하는 검증인지 정해지지 않습니다.
 - 채택안: 옵션 A.
-  정지 구간에는 tick이 하나도 없어 카드 표시 상태 조립이 실행되지 않으므로(§근거 확인 사실),
+  정지 구간에는 tick이 하나도 없어 카드 표시 상태 조립이 실행되지 않으므로,
   샘플 안의 값만으로는 중지를 만들 수 없습니다. 중지를 만들 수 있는 자리는 일정 결정 쪽뿐입니다.
   SPEC §5.10이 실패한 카드가 그 사실을 나타내라고 요구하고 SPEC §5.12가 화면을 볼 수 없는 세 상태에서
   새 샘플이 쌓이지 않는다고 정하므로, 둘이 함께 성립하려면 사용자가 보는 카드에서 중지와 실패가 갈라져야 합니다.
   §2 「실패 경로」가 정의한 중지의 뜻대로 동작하는 것은 옵션 A뿐입니다.
   대가는 생명주기에서 표시로 가는 경로가 하나 느는 것이며,
   방향이 한쪽뿐이고 표시 계층이 생명주기 store를 호출하지 않으므로 §1이 세운 경계 구분은 그대로입니다.
+
+### DP17. 카드 높이를 상태와 무관하게 고정하는 자리
+
+현재 카드는 상태마다 그리는 슬롯 수가 달라,
+첫 수집이 도착하는 순간 그래프와 순위가 없던 자리에 생기며 카드가 부풀어 아래를 밀어냅니다(§근거 확인 사실).
+높이를 어디에서 고정하느냐에 따라 자리표시의 의미가 달라집니다.
+
+- 옵션 A: 카드 뷰에 최소 높이 상수를 줍니다.
+  변경이 한 줄로 끝나지만, 값이 다 찬 상태가 그 상수를 넘으면 다시 흔들리므로 상수를 최대 콘텐츠 높이 이상으로 잡아야 하고,
+  그 값을 카드 내용이 바뀔 때마다 손으로 맞춰야 합니다.
+  더 근본적으로는 값이 없는 동안 남는 공간이 그냥 빈 여백이 되어,
+  「아직 값이 없음을 나타내는 표시로 채운다」는 SPEC §5.15의 요구를 만족하지 않습니다.
+- 옵션 B: 카드가 상태와 무관하게 같은 슬롯 집합을 그리게 하고, 값이 없는 슬롯을 같은 높이의 자리표시 뷰로 채웁니다.
+  높이가 슬롯 구성으로 결정되므로 별도 상수를 유지할 필요가 없고, 자리표시가 「값 없음」을 직접 표현합니다.
+  대가는 네 상태 각각에서 슬롯을 채우는 분기가 늘어나는 것이고,
+  순위 자리처럼 항목 수에 따라 높이가 달라지는 슬롯은 슬롯 수 자체를 TOP 5 정원으로 고정해야 합니다.
+- 옵션 C: 표시 값 조립 단계에서 자리를 채웁니다.
+  값이 없는 상태에도 표시 값을 만들어 넣어 카드 뷰가 항상 같은 형태를 그리게 합니다.
+  뷰 분기는 가장 적지만 `ResourceCardState`의 수집 중과 마지막 값 없는 실패·중지에는 표시 값 자체가 없으므로
+  (§근거 확인 사실) 그 경우들에 값을 만들어 넣어야 하고,
+  그러면 네 상태를 가르는 구분(§2 「실패 경로」, DP16)이 흐려집니다.
+  값이 없는데 값 모양을 만드는 경로가 열려 SPEC §5.9·SPEC §5.11이 지키는 경계도 함께 약해집니다.
+- 채택안: 옵션 B.
+  높이가 흔들리는 원인이 상태별 슬롯 구성 차이이므로 원인 자리에서 고치는 것이 옵션 B입니다.
+  옵션 A는 증상만 덮고 SPEC §5.15가 요구하는 자리표시를 만들지 못하며,
+  옵션 C는 없는 값을 조립하는 경로를 열어 대가가 큽니다.
+  구체적으로는 그래프 자리에 값이 없으면 같은 높이의 자리표시를 두되 점이나 선을 그리지 않고,
+  순위 자리는 항목 수와 무관하게 TOP 5 정원만큼의 줄과 안내 문구 한 줄을 항상 차지하며,
+  프로세스 조사 실패도 그 정원 안에서 나타냅니다.
+  Memory 카드의 Pressure 줄과 Swap 줄처럼 값이 있을 때만 그리던 요약 줄도 고정 슬롯으로 바꿉니다.
+  이 처리가 SPEC §5.9와 어긋나지 않는 이유는 자리표시가 로딩 표시가 아니라 값 없음 표시이기 때문입니다 —
+  캐시된 값이 있으면 그 값이 그대로 첫 프레임에 보이고, 자리표시는 값이 하나도 없는 슬롯에만 들어갑니다.
+  SPEC §5.11과 어긋나지 않는 이유는 자리표시가 그래프에 점을 만들지 않고 순위에 앱을 만들어 넣지 않기 때문입니다.
+
+### DP18. 상세 팝업의 크기 정책
+
+- 옵션 A: 팝업 크기를 내용에 맡깁니다.
+  콘텐츠가 잘리지 않지만 CPU 상세와 Memory 상세의 길이가 서로 다르고 코어 수·프로세스 수에 따라 매 갱신마다 달라져,
+  카드를 오갈 때와 값이 바뀔 때마다 팝업이 커졌다 작아집니다.
+- 옵션 B: 카드마다 서로 다른 고정 크기를 둡니다.
+  각 상세에 맞는 크기를 줄 수 있지만 두 팝업의 크기가 달라 카드를 오갈 때 여전히 튀고, 유지할 상수가 둘로 늡니다.
+- 옵션 C: 두 상세가 같은 고정 크기를 쓰고 내용이 길면 팝업 안에서 스크롤합니다.
+  카드를 오가도 값이 바뀌어도 팝업 크기가 같지만, 내용이 적은 쪽에 빈 공간이 남습니다.
+- 채택안: 옵션 C.
+  spec.md §2의 목표가 "값이 도착하거나 상태가 바뀌는 순간에 화면이 흔들리지 않게 해,
+  사용자가 읽던 자리를 다시 찾지 않아도 되게" 하는 것이고, 그 목표는 카드뿐 아니라 상세를 읽는 동안에도 같습니다.
+  코어별 사용률과 프로세스 목록은 개수가 환경마다 다르므로 내용에 맡기면 크기가 예측되지 않습니다.
+  현재 하단 상세 영역도 같은 이유로 `ScrollView`를 두고 있어, 그 규칙을 배치만 바꿔 옮기는 셈입니다.
+  대가인 빈 공간은 CPU 상세 쪽에 생기며, 팝업이 본체 레이아웃 밖에 있어 카드에는 영향을 주지 않습니다(SPEC §5.15).
+  이 대가는 사용자에게 보이는 결과라 확인을 받았고, 카드를 오갈 때 팝업이 튀지 않는 쪽을 택하기로 확정했습니다.
+  앵커는 카드 사각형과 그 trailing 방향으로 두어 상세가 「그 카드 옆」에 열리게 합니다(SPEC §5.2).
+  화면 가장자리에서 AppKit이 방향을 뒤집는 것은 팝업이 화면 밖으로 나가지 않게 하는 동작이라 그대로 둡니다.
+
+### DP19. 프로세스 조사 실패가 표시 계층에 도달하는 경로
+
+- 옵션 A: 조사 실패를 던지고 `MonitoringScheduler`가 실패를 sink에 알리도록 계약을 바꿉니다.
+  실패 경로가 명시적이지만 두 축이 공유하는 Scheduler와
+  M1이 검증한 "던지면 그 tick을 건너뛴다" 규칙을 함께 바꿔야 하고,
+  시스템 지표 축이 쓰지 않는 경로가 계약에 남습니다.
+- 옵션 B: 조사 실패를 값으로 담아 샘플로 전달합니다.
+  시스템 지표 축의 `SystemMetricsSample`이 이미 쓰는 규칙과 같고 Scheduler와 M1 계약을 건드리지 않습니다.
+  대신 `ProcessHistoryStore`가 실패 샘플을 「관찰된 정체성 없음」으로 오해하지 않도록 처리를 나눠야 합니다.
+- 옵션 C: 표시 계층이 마지막 성공 조사 시각과 현재 시각의 간격으로 실패를 추정합니다.
+  수집 쪽 변경이 없지만 새 임계값이 생기고, 그 임계값이 중지 구간과 겹쳐 실패와 중지가 섞입니다.
+- 채택안: 옵션 B.
+  던지는 경로를 그대로 두면 실패한 tick이 통째로 버려져 두 카드가 낡은 TOP 5를 정상인 것처럼 계속 보여주고,
+  SPEC §5.10이 요구하는 "실패한 카드가 그 사실을 나타낸다"가 성립할 통로가 없습니다.
+  두 수집 축이 같은 규칙을 쓰면 실패 표현이 카드에서 일관되고 새 임계값도 필요 없습니다.
+  실패한 조사가 이력을 건드리지 않게 하는 것이 이 선택의 필수 조건입니다 —
+  관찰된 정체성이 없는 것으로 처리하면 DP6의 제거 규칙이 이력 전체를 지워 증가량 기준점이 모두 사라집니다.
+  실패 표시는 다음 성공 조사까지 유지하므로, 더 빠른 시스템 지표 tick이 순위를 다시 읽어도 표시가 흔들리지 않습니다.

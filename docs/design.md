@@ -684,4 +684,4 @@ menu-bar-foundation에서 확정한 항목은 다음과 같습니다.
 
 ## 후속 feature 문서
 
-마일스톤 내부 구현 순서, Task와 세부 검증 기준은 관련 feature의 analysis.md와 implement.md에서 확정합니다.
+마일스톤 내부 구현 순서, Task와 세부 검증 기준은 관련 feature의 analyze.md와 implement.md에서 확정합니다.

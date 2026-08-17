@@ -15,7 +15,7 @@ Dock 아이콘 없이 실행되는 메뉴바 앱과 팝오버를 제공하고, �
 ## 문서
 
 - [spec.md](./spec.md)
-- [analysis.md](./analysis.md)
+- [analyze.md](./analyze.md)
 - [implement.md](./implement.md)
 
 ## 이력

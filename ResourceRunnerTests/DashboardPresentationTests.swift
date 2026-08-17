@@ -1202,4 +1202,45 @@ struct DashboardSelectionTests {
         store.updateMemoryCard(with: successValue, topApplications: [], currentTimestamp: baseInstant)
         #expect(store.selection == .cpu, "다른 카드의 수집 갱신도 선택 상태를 바꾸면 안 됩니다.")
     }
+
+    /// task-010 재작업이 고정하는 것: "팝업 자신의 닫힘"이 선택 해제로 이어집니다(ANALYSIS §2 「팝오버 열림과 카드 선택」, §5 DP14).
+    /// `dismissDetail(for:)`를 무력화하면(예: 본문을 비우면) 이 단언이 실패해야 합니다.
+    @Test func dismissDetailForSelectedCardClearsSelection() {
+        let store = DashboardPresentationStore()
+        store.selectCard(.cpu)
+        #expect(store.selection == .cpu)
+
+        store.dismissDetail(for: .cpu)
+        #expect(store.selection == .none)
+    }
+
+    @Test func dismissDetailForSelectedMemoryCardClearsSelection() {
+        let store = DashboardPresentationStore()
+        store.selectCard(.memory)
+        #expect(store.selection == .memory)
+
+        store.dismissDetail(for: .memory)
+        #expect(store.selection == .none)
+    }
+
+    /// 선택이 이미 다른 카드로 옮겨간 뒤(예: CPU 팝업이 열린 채 ⌘2로 Memory를 선택해 CPU 자식 팝오버가 닫히는 경우)라면,
+    /// CPU 쪽의 뒤늦은 자기 닫힘 신호가 방금 옮겨간 Memory 선택을 지우면 안 됩니다 —
+    /// 이 가드를 없애면(무조건 `.none`으로 지우면) 이 단언이 실패해야 합니다.
+    @Test func dismissDetailForCardThatIsNoLongerSelectedDoesNotClearNewSelection() {
+        let store = DashboardPresentationStore()
+        store.selectCard(.cpu)
+        store.selectCard(.memory)
+        #expect(store.selection == .memory)
+
+        store.dismissDetail(for: .cpu)
+        #expect(store.selection == .memory, "이미 다른 카드로 옮겨간 선택을 지우면 안 됩니다.")
+    }
+
+    /// 선택 없음 상태에서의 자기 닫힘 신호도 안전하게 무시되어야 합니다.
+    @Test func dismissDetailWhileNoSelectionStaysNone() {
+        let store = DashboardPresentationStore()
+
+        store.dismissDetail(for: .cpu)
+        #expect(store.selection == .none)
+    }
 }

@@ -7,11 +7,14 @@
 
 import SwiftUI
 
-/// 대시보드 팝오버 셸. CPU·Memory 카드(task-008, task-009)와 카드 선택·고정 상세 영역(task-010)을 담습니다.
+/// 대시보드 팝오버 셸. CPU·Memory 카드(task-008, task-009)와 카드 옆 상세 팝업(task-010)을 담습니다.
 ///
+/// 본체는 제목과 두 카드만 가지며 상세를 위한 자리를 예약하지 않습니다.
 /// 팝오버 프레임 크기는 `selection`과 무관한 상수(`frame(width:height:)`)이므로 카드를 선택하거나 해제해도
-/// 창 크기가 흔들리지 않습니다 — 상세 영역은 선택 여부와 관계없이 항상 같은 자리를 차지하고 내용만 바뀝니다.
-/// 내용이 영역보다 길면 `DashboardDetailView`의 `ScrollView`가 그 영역 안에서만 스크롤합니다(ANALYSIS §5 DP14).
+/// 본체 창 크기가 흔들리지 않습니다 — 상세는 그 카드에 앵커한 별도 자식 팝업으로 열려 본체 레이아웃에 참여하지
+/// 않습니다(ANALYSIS §1 「표시 경계」, §5 DP14). 자식 팝오버를 카드에 붙여도 부모 팝오버가 닫히지 않고
+/// 두 팝오버가 공존한다는 것과, 자식 콘텐츠가 접근성 계층에서 부모의 하위 노드로 도달된다는 것은 실행 환경에서
+/// 확인된 사실입니다(ANALYSIS §근거 확인 사실).
 struct DashboardView: View {
     @ObservedObject var store: DashboardPresentationStore
 
@@ -36,6 +39,9 @@ struct DashboardView: View {
             // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
             .accessibilityIdentifier("CPUCard")
+            .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
+                CPUDetailPopoverContent(state: store.cpuCard)
+            }
 
             Button(action: { store.selectCard(.memory) }) {
                 MemoryCardView(state: store.memoryCard)
@@ -47,12 +53,39 @@ struct DashboardView: View {
             .accessibilityAddTraits(.isButton)
             // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
             .accessibilityIdentifier("MemoryCard")
-
-            DashboardDetailView(selection: store.selection, cpuCard: store.cpuCard, memoryCard: store.memoryCard)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
+                MemoryDetailPopoverContent(state: store.memoryCard)
+            }
         }
         .padding()
-        .frame(width: 280, height: 520, alignment: .topLeading)
+        .frame(width: 280, height: 460, alignment: .topLeading)
+    }
+
+    /// CPU 상세 팝업의 표시 여부. `get`은 `store.selection`을 그대로 반영하고,
+    /// `set`은 팝업이 스스로 닫힐 때만(예: 팝업 밖 클릭) 호출되며 `store.dismissDetail(for:)`에 그 사실을 넘깁니다.
+    /// 선택 해제 여부 자체는 그 진입점이 판단하므로(선택이 이미 다른 카드로 옮겨간 뒤라면 무시), 이 바인딩은
+    /// 판단 없이 신호만 전달합니다.
+    private var cpuDetailIsPresented: Binding<Bool> {
+        Binding(
+            get: { store.selection == .cpu },
+            set: { isPresented in
+                if !isPresented {
+                    store.dismissDetail(for: .cpu)
+                }
+            }
+        )
+    }
+
+    /// Memory 상세 팝업의 표시 여부. CPU 쪽과 같은 이유로 같은 형태의 바인딩을 씁니다.
+    private var memoryDetailIsPresented: Binding<Bool> {
+        Binding(
+            get: { store.selection == .memory },
+            set: { isPresented in
+                if !isPresented {
+                    store.dismissDetail(for: .memory)
+                }
+            }
+        )
     }
 }
 
@@ -313,41 +346,34 @@ private struct TopApplicationsView: View {
     }
 }
 
-/// 하단 고정 상세 영역. 선택 여부와 관계없이 항상 이 자리를 차지하고, 선택 전에는 안내 문구를 보여줍니다(ANALYSIS §5 DP14).
-/// 내용이 영역보다 길어질 수 있으므로(코어별 사용률, 프로세스 목록 등) `ScrollView`로 감싸 이 영역 안에서만 스크롤합니다.
-private struct DashboardDetailView: View {
-    let selection: DashboardSelection
-    let cpuCard: ResourceCardState<CPUCardPresentation>
-    let memoryCard: ResourceCardState<MemoryCardPresentation>
+/// CPU 카드 옆에 앵커되는 상세 팝업 콘텐츠. 아직 정상 값이 없으면(수집 중·실패·중지) 안내 문구만 보여줍니다.
+/// 팝업 고정 크기와 내부 스크롤은 task-016이 더하므로, 지금은 내용 그대로 팝업 크기가 정해집니다.
+private struct CPUDetailPopoverContent: View {
+    let state: ResourceCardState<CPUCardPresentation>
 
     var body: some View {
-        ScrollView {
-            content
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .accessibilityIdentifier("DashboardDetail")
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        switch selection {
-        case .none:
-            Text("카드를 선택하면 상세 정보가 여기에 표시됩니다.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-        case .cpu:
-            if case .normal(let presentation, _) = cpuCard {
+        Group {
+            if case .normal(let presentation, _) = state {
                 CPUDetailView(presentation: presentation)
             } else {
                 Text("아직 CPU 값이 수집되지 않았습니다.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+        .padding()
+        .frame(minWidth: 220, alignment: .leading)
+        .accessibilityIdentifier("DashboardDetail")
+    }
+}
 
-        case .memory:
-            if case .normal(let presentation, _) = memoryCard {
+/// Memory 카드 옆에 앵커되는 상세 팝업 콘텐츠. CPU 쪽과 같은 이유로 같은 형태를 씁니다.
+private struct MemoryDetailPopoverContent: View {
+    let state: ResourceCardState<MemoryCardPresentation>
+
+    var body: some View {
+        Group {
+            if case .normal(let presentation, _) = state {
                 MemoryDetailView(presentation: presentation)
             } else {
                 Text("아직 Memory 값이 수집되지 않았습니다.")
@@ -355,6 +381,9 @@ private struct DashboardDetailView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .padding()
+        .frame(minWidth: 220, alignment: .leading)
+        .accessibilityIdentifier("DashboardDetail")
     }
 }
 

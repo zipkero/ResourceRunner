@@ -77,8 +77,8 @@ extension ResourceCardState {
     }
 }
 
-/// 팝오버 하단 상세 영역이 보여줄 카드. 도달 가능한 값은 선택 없음·CPU·Memory 셋뿐입니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
-/// 전이는 `DashboardPresentationStore.selectCard(_:)`(카드 활성화) 하나로만 일어나고,
+/// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지. 도달 가능한 값은 선택 없음·CPU·Memory 셋뿐입니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
+/// 전이는 `DashboardPresentationStore.selectCard(_:)`(카드 활성화)와 `dismissDetail(for:)`(팝업 자신의 닫힘) 둘로만 일어나고,
 /// 수집 갱신이나 수집 실패는 이 값을 바꾸지 않습니다(SPEC §5.2).
 nonisolated enum DashboardSelection: Sendable, Equatable {
     case none

@@ -15,8 +15,10 @@ import Foundation
 final class DashboardPresentationStore: ObservableObject {
     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
-    /// 하단 상세 영역이 보여줄 카드. `selectCard(_:)`를 거쳐서만 바뀌므로 `updateCPUCard`·`updateMemoryCard`가
+    /// 어느 카드 옆에 상세 팝업이 열려 있는지. `selectCard(_:)`를 거쳐서만 바뀌므로 `updateCPUCard`·`updateMemoryCard`가
     /// 매 tick 호출되어도 선택 상태는 그대로 유지됩니다(task-010 검증 조건, ANALYSIS §2 「팝오버 열림과 카드 선택」).
+    /// 이 값이 바로 카드 옆 상세 팝업의 표시 여부를 유도하는 바인딩 원본입니다 —
+    /// 팝업이 스스로 닫히면 `dismissDetail(for:)`가 그 사실을 이 값으로 되돌립니다(ANALYSIS §5 DP14).
     @Published private(set) var selection: DashboardSelection = .none
 
     /// 카드 활성화 하나로만 선택 상태를 전이시킵니다.
@@ -24,6 +26,15 @@ final class DashboardPresentationStore: ObservableObject {
     /// 다른 카드를 활성화하면 선택이 그 카드로 바뀝니다(SPEC §5.2).
     func selectCard(_ card: DashboardSelection) {
         selection = (selection == card) ? .none : card
+    }
+
+    /// 카드 옆 상세 팝업이 스스로 닫힐 때(예: 팝업 밖 클릭) 선택을 해제하는 진입점입니다.
+    /// `card`가 그 시점에도 여전히 선택 상태일 때만 선택을 지웁니다 — 이미 다른 카드로 선택이 옮겨간 뒤라면
+    /// (예: CPU 팝업이 열린 채 ⌘2로 Memory를 선택해 CPU 팝업이 닫히는 경우) 그 자기 닫힘 신호는 무시합니다
+    /// (task-010, ANALYSIS §2 「팝오버 열림과 카드 선택」, §5 DP14).
+    func dismissDetail(for card: DashboardSelection) {
+        guard selection == card else { return }
+        selection = .none
     }
 
     /// 시스템 지표 tick 하나를 CPU 카드 표시 상태로 반영합니다.

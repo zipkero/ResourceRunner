@@ -8,10 +8,6 @@
 import XCTest
 
 /// task-009 검증 조건: 팝오버를 열면 Memory 카드 접근성 이름에 현재 Memory Pressure 단계 문자열이 있는지 확인합니다.
-///
-/// 이 환경(자동화된 실행)에서는 test runner bootstrap이 "Timed out while enabling automation mode."로
-/// 멈춰 XCUITest 자체를 실행할 수 없었습니다(task-008과 같은 한계). 실제 macOS 세션에서 Xcode로 실행해 확인해야 합니다.
-/// 실행이 안 되었다는 사실과 이유는 구현 보고 §비고·한계에 남깁니다.
 final class DashboardMemoryCardUITests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -45,6 +41,34 @@ final class DashboardMemoryCardUITests: XCTestCase {
             "Memory Pressure 단계 문자열이 접근성 이름에 없습니다. 실제 값: \(label)"
         )
         XCTAssertTrue(label.contains("사용 중 메모리"), "사용 중 메모리 값이 접근성 이름에 없습니다. 실제 값: \(label)")
+    }
+
+    /// task-015 검증 조건: 앱 시작 직후 수집 중 상태의 Memory 카드 프레임과 첫 수집이 도착한 뒤의 프레임이
+    /// 같은지 확인합니다. CPU 카드 쪽과 같은 이유로 같은 판정 방식을 씁니다(ANALYSIS §5 DP17).
+    @MainActor
+    func testMemoryCardFrameStaysSameBeforeAndAfterFirstCollection() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let statusItem = app.statusItems.firstMatch
+        XCTAssertTrue(statusItem.waitForExistence(timeout: 5), "메뉴바 항목이 나타나지 않았습니다.")
+
+        statusItem.click()
+
+        let memoryCard = app.descendants(matching: .any).matching(identifier: "MemoryCard").firstMatch
+        XCTAssertTrue(memoryCard.waitForExistence(timeout: 5), "팝오버를 연 뒤 Memory 카드가 나타나지 않았습니다.")
+
+        let frameBeforeFirstCollection = memoryCard.frame
+
+        XCTAssertTrue(
+            waitUntilLabelNoLongerContainsCollecting(memoryCard, timeout: 5),
+            "Memory 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(memoryCard.label)"
+        )
+
+        XCTAssertEqual(
+            memoryCard.frame, frameBeforeFirstCollection,
+            "첫 수집이 도착한 뒤 Memory 카드 프레임이 바뀌었습니다. 이전: \(frameBeforeFirstCollection), 이후: \(memoryCard.frame)"
+        )
     }
 
     private func waitUntilLabelNoLongerContainsCollecting(_ element: XCUIElement, timeout: TimeInterval) -> Bool {

@@ -60,7 +60,7 @@ struct ProcessHistoryIdentityBoundaryTests {
         await store.append(TimestampedSample(timestamp: baseInstant, value: survey([sample])))
         let snapshot = try #require(await store.snapshot().first)
 
-        #expect(snapshot.latestCPUUsagePercent == nil)
+        #expect(snapshot.recentValues.last?.cpuUsagePercent == nil)
         #expect(snapshot.memoryBaselines.count == 1)
         #expect(snapshot.memoryBaselines.first?.residentBytes == 10_000)
     }
@@ -76,7 +76,7 @@ struct ProcessHistoryIdentityBoundaryTests {
         let snapshot = try #require(await store.snapshot().first)
         // 같은 PID이지만 새 정체성이라 직전(원래 프로세스) 누적 CPU 시간과 차분되지 않고 첫 조사로 취급됩니다.
         #expect(snapshot.identity.startTime == 2_000)
-        #expect(snapshot.latestCPUUsagePercent == nil)
+        #expect(snapshot.recentValues.last?.cpuUsagePercent == nil)
         #expect(snapshot.memoryBaselines.count == 1)
         #expect(await store.identityCount == 1)
     }
@@ -112,7 +112,7 @@ struct ProcessHistoryIdentityBoundaryTests {
         await store.append(TimestampedSample(timestamp: baseInstant.advanced(by: .seconds(2)), value: survey([reappeared])))
 
         let snapshot = try #require(await store.snapshot().first)
-        #expect(snapshot.latestCPUUsagePercent == nil)
+        #expect(snapshot.recentValues.last?.cpuUsagePercent == nil)
     }
 
     /// 실패한 조사는 이력을 전혀 건드리지 않고 실패 사실만 기록합니다.
@@ -145,7 +145,7 @@ struct ProcessHistoryIdentityBoundaryTests {
         let input = await store.rankingInput()
         #expect(!input.surveyFailed)
         let snapshot = try #require(input.snapshots.first)
-        #expect(snapshot.latestCPUUsagePercent == 50)
+        #expect(snapshot.recentValues.last?.cpuUsagePercent == 50)
     }
 }
 
@@ -165,7 +165,7 @@ struct ProcessHistoryCPUUsageTests {
         await store.append(TimestampedSample(timestamp: baseInstant.advanced(by: .seconds(1)), value: survey([second])))
 
         let snapshot = try #require(await store.snapshot().first)
-        #expect(snapshot.latestCPUUsagePercent == 200)
+        #expect(snapshot.recentValues.last?.cpuUsagePercent == 200)
     }
 
     /// 직전 조사와의 간격이 허용 범위(`ProcessHistorySampling.maximumTickGap`)를 넘으면
@@ -180,7 +180,7 @@ struct ProcessHistoryCPUUsageTests {
         await store.append(TimestampedSample(timestamp: baseInstant.advanced(by: gap), value: survey([afterGap])))
 
         let afterGapSnapshot = try #require(await store.snapshot().first)
-        #expect(afterGapSnapshot.latestCPUUsagePercent == nil)
+        #expect(afterGapSnapshot.recentValues.last?.cpuUsagePercent == nil)
 
         // 기준점은 그래도 이번 조사 값으로 갱신되었으므로, 그다음 정상 간격 조사에서는 값이 다시 나옵니다.
         let next = processSample(cpuTimeNanoseconds: 100_000_000_000 + 500_000_000)
@@ -188,7 +188,7 @@ struct ProcessHistoryCPUUsageTests {
             TimestampedSample(timestamp: baseInstant.advanced(by: gap + .seconds(1)), value: survey([next]))
         )
         let finalSnapshot = try #require(await store.snapshot().first)
-        #expect(finalSnapshot.latestCPUUsagePercent == 50)
+        #expect(finalSnapshot.recentValues.last?.cpuUsagePercent == 50)
     }
 }
 
@@ -244,5 +244,29 @@ struct ProcessHistoryMemoryBaselineRingTests {
         // 두 주기 모두 링이 가득 차 있고, 크기가 조사 주기와 무관하게 같은 고정 용량입니다.
         #expect(fastSnapshot.memoryBaselines.count == ProcessHistorySampling.memoryBaselineRingCapacity)
         #expect(slowSnapshot.memoryBaselines.count == ProcessHistorySampling.memoryBaselineRingCapacity)
+    }
+}
+
+// MARK: - 최근 값 링 크기
+
+/// `ProcessHistorySampling.recentValueCount`(순위 안정화용 최근 값 링의 고정 크기)를 고정합니다.
+/// 최근 평활화 통일로 이 값이 상세 표시 값까지 지배하게 되었는데도, 이 값이나 링 크기 자체를 직접
+/// 단언하는 테스트가 없어 3 -> 2 mutation이 전체 스위트를 통과시켰습니다. 용량보다 많이 채워
+/// 가장 오래된 항목이 실제로 밀려나는지까지 `residentBytes` 값 순서로 확인해, 3(정답) 외의
+/// 값(2·5 등)으로 바뀌면 남는 항목 수나 순서가 달라져 실패해야 합니다.
+struct ProcessHistoryRecentValueRingTests {
+
+    @Test func recentValuesRetainsOnlyTheLastThreeSamplesInOrder() async throws {
+        let store = ProcessHistoryStore()
+
+        for residentBytes: UInt64 in [1_000, 2_000, 3_000, 4_000, 5_000] {
+            await store.append(TimestampedSample(
+                timestamp: baseInstant.advanced(by: .seconds(Double(residentBytes))),
+                value: survey([processSample(cpuTimeNanoseconds: 0, residentBytes: residentBytes)])
+            ))
+        }
+
+        let snapshot = try #require(await store.snapshot().first)
+        #expect(snapshot.recentValues.map(\.residentBytes) == [3_000, 4_000, 5_000])
     }
 }

@@ -8,10 +8,6 @@
 import XCTest
 
 /// task-008 검증 조건: 팝오버를 열면 CPU 값 텍스트와 TOP 5 안내 문구가 존재하고 로딩 문구가 나타나지 않는지 확인합니다.
-///
-/// 이 환경(자동화된 실행)에서는 test runner bootstrap이 "Timed out while enabling automation mode."로
-/// 멈춰 XCUITest 자체를 실행할 수 없었습니다. 실제 macOS 세션에서 Xcode로 실행해 확인해야 합니다.
-/// 실행이 안 되었다는 사실과 이유는 구현 보고 §비고·한계에 남깁니다.
 final class DashboardCPUCardUITests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -44,6 +40,36 @@ final class DashboardCPUCardUITests: XCTestCase {
         XCTAssertTrue(
             label.contains("시스템 프로세스는 TOP 5에 포함되지 않습니다"),
             "TOP 5 안내 문구가 접근성 이름에 없습니다. 실제 값: \(label)"
+        )
+    }
+
+    /// task-015 검증 조건: 앱 시작 직후 수집 중 상태의 CPU 카드 프레임과 첫 수집이 도착한 뒤의 프레임이 같은지 확인합니다.
+    /// 이 단언이 고정하는 것은 "첫 수집이 카드를 부풀리지 않는다"입니다 — 상태별로 슬롯을 접는 분기를
+    /// 되살리면(그래프·순위 자리가 값이 생긴 뒤에야 나타나면) 이 단언이 실패해야 합니다(ANALYSIS §5 DP17).
+    @MainActor
+    func testCPUCardFrameStaysSameBeforeAndAfterFirstCollection() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let statusItem = app.statusItems.firstMatch
+        XCTAssertTrue(statusItem.waitForExistence(timeout: 5), "메뉴바 항목이 나타나지 않았습니다.")
+
+        statusItem.click()
+
+        let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
+        XCTAssertTrue(cpuCard.waitForExistence(timeout: 5), "팝오버를 연 뒤 CPU 카드가 나타나지 않았습니다.")
+
+        // 첫 수집이 도착하기 전(수집 중일 수 있는 시점)의 프레임을 먼저 잡습니다.
+        let frameBeforeFirstCollection = cpuCard.frame
+
+        XCTAssertTrue(
+            waitUntilLabelNoLongerContainsCollecting(cpuCard, timeout: 5),
+            "CPU 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(cpuCard.label)"
+        )
+
+        XCTAssertEqual(
+            cpuCard.frame, frameBeforeFirstCollection,
+            "첫 수집이 도착한 뒤 CPU 카드 프레임이 바뀌었습니다. 이전: \(frameBeforeFirstCollection), 이후: \(cpuCard.frame)"
         )
     }
 

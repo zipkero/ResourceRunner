@@ -123,11 +123,16 @@ extension CPUCardPresentation {
     /// 화면에서 구분되어야 합니다(SPEC §5.2, SPEC §5.3).
     static let overallUsageUnitLabel = "%"
 
-    /// CPU 카드를 선택·복귀하는 키보드 단축키의 사람이 읽는 표시.
+    /// CPU 카드를 선택·복귀하는 키보드 단축키의 실제 키.
     /// macOS 키보드 탐색(Full Keyboard Access)이 기본값(꺼짐)인 환경에서는 Tab이 표준 `Button`에 닿지 않으므로
     /// 이 단축키가 SPEC §5.13이 요구하는 키보드 수단입니다(ANALYSIS §5 DP15).
+    /// `DashboardView`의 `KeyEquivalent` 등록이 이 값에서 유도되어 키 정의가 한 자리로 유지됩니다.
+    static let selectionShortcutKey: Character = "1"
+
+    /// CPU 카드를 선택·복귀하는 키보드 단축키의 사람이 읽는 표시. `selectionShortcutKey`에서 유도되어
+    /// 키를 바꾸면 표시도 함께 바뀝니다.
     /// 카드에 항상 보이는 표시와 카드 접근성 이름이 이 문자열을 함께 써서 단축키의 존재를 알립니다.
-    static let selectionShortcutDisplayText = "⌘1"
+    static var selectionShortcutDisplayText: String { "⌘\(selectionShortcutKey)" }
 
     /// 최신 시스템 지표, 이력 링, 앱 순위에서 CPU 카드 표시 값을 만듭니다.
     /// - Parameters:
@@ -162,7 +167,7 @@ extension CPUCardPresentation {
                 idleRatio: cpu.idleRatio,
                 coreUsages: cpu.coreUsages,
                 loadAverage: cpu.loadAverage,
-                applications: processGroups
+                applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .cpuUsage)
             )
         )
     }
@@ -174,6 +179,73 @@ nonisolated private extension Duration {
     var secondsAsDouble: Double {
         let (seconds, attoseconds) = components
         return Double(seconds) + Double(attoseconds) / 1e18
+    }
+}
+
+extension HistoryPoint {
+    /// 다운샘플링 버킷 사이 최소 픽셀 간격.
+    /// `HistoryGraphView`의 선 두께(1.0pt)보다 확실히 커야, 인접 버킷이 그리는 선분이 두께에 묻혀
+    /// 뭉개지지 않습니다(10분 창을 601개 점까지 담는 이력 링을 폭 248pt 팝오버에 그릴 때의 실측 결함 수정).
+    /// 버킷마다 min·max 최대 2점이 남으므로 평균 간격은 이 값의 절반(예: 248pt·62버킷이면 2pt)입니다.
+    static let minimumDownsampledBucketSpacing: Double = 4
+
+    /// 렌더 폭에서 다운샘플링 버킷 수를 계산합니다.
+    /// 버킷 하나의 폭이 `minimumDownsampledBucketSpacing` 이상이 되도록 폭을 그 값으로 나누며, 버킷은 항상 1개 이상입니다.
+    ///
+    /// `width`가 유한하지 않거나(`NaN`·`infinite`) 0 이하면 `Int(width / ...)`가 트랩하거나 의미 없는 값을
+    /// 만들 수 있으므로, 그런 입력은 버킷 1개로 안전하게 처리합니다.
+    static func downsampledBucketCount(forRenderWidth width: Double) -> Int {
+        guard width.isFinite, width > 0 else { return 1 }
+        return max(1, Int(width / minimumDownsampledBucketSpacing))
+    }
+
+    /// 하나의 연속 구간 안에서 점을 `bucketCount`개의 버킷으로 나눠 각 버킷의 최솟값·최댓값을 실제 시각 순서로
+    /// 남깁니다(같으면 하나만). 평균이 아니라 min·max를 남기는 이유는 순간 피크가 CPU 모니터에서 핵심 정보이기 때문입니다.
+    ///
+    /// 이웃 버킷과의 간격을 이유로 후보를 건너뛰지 않습니다 — 건너뛰면 그 표본이 결과에서 통째로 사라져
+    /// 스파이크·dip 같은 순간 극값이 흔적 없이 지워지기 때문입니다(그리디 최소 간격 필터로 인한 결함 수정).
+    /// 같은 버킷의 min·max나 인접 버킷 경계에 걸친 두 점이 원본 표본 간격까지 붙어 세로 스트로크처럼 보이는 것은
+    /// 급변 구간을 정확히 표현하는 것이라 허용합니다.
+    /// 빈 버킷은 결과에서 그냥 빠집니다. 점 수가 `bucketCount` 이하면 잃는 것 없이 그대로 돌려줍니다.
+    static func downsampled(segment: [HistoryPoint], bucketCount: Int) -> [HistoryPoint] {
+        guard bucketCount > 0, segment.count > bucketCount else { return segment }
+
+        let bucketSize = Double(segment.count) / Double(bucketCount)
+
+        var result: [HistoryPoint] = []
+        var start = 0
+        for bucketIndex in 1...bucketCount {
+            let end = bucketIndex == bucketCount
+                ? segment.count
+                : Int((Double(bucketIndex) * bucketSize).rounded())
+            defer { start = end }
+            guard start < end else { continue }
+
+            let bucket = segment[start..<end]
+            guard let minIndex = bucket.indices.min(by: { segment[$0].value < segment[$1].value }),
+                  let maxIndex = bucket.indices.max(by: { segment[$0].value < segment[$1].value }) else { continue }
+
+            if segment[minIndex].value == segment[maxIndex].value {
+                result.append(segment[minIndex])
+            } else if minIndex < maxIndex {
+                result.append(segment[minIndex])
+                result.append(segment[maxIndex])
+            } else {
+                result.append(segment[maxIndex])
+                result.append(segment[minIndex])
+            }
+        }
+        return result
+    }
+
+    /// 그래프로 그릴 연속 구간을 만들고, 각 구간 안에서만 다운샘플링합니다.
+    ///
+    /// 반드시 `connectedSegments`로 먼저 나눈 뒤 구간별로 다운샘플링해야 합니다. 순서를 반대로 해서
+    /// 전체 점을 하나로 보고 먼저 버킷을 묶으면, 중지·재개로 갈라진 두 구간의 점이 한 버킷에 섞여 들어가
+    /// 값 범위가 좁은 쪽 구간이 통째로 버킷 결과에서 밀려날 수 있습니다(min·max가 모두 다른 구간에서 뽑히는 경우) —
+    /// 그러면 중지 구간이 사라지거나(구간 하나로 합쳐짐) 없던 구간이 생기는 것과 같은 잘못된 결과가 됩니다.
+    static func downsampledConnectedSegments(from points: [HistoryPoint], bucketCount: Int) -> [[HistoryPoint]] {
+        connectedSegments(from: points).map { downsampled(segment: $0, bucketCount: bucketCount) }
     }
 }
 
@@ -287,8 +359,11 @@ extension MemoryCardPresentation {
     /// TOP 5 목록에 시스템 프로세스가 포함되지 않는다는 상시 안내. CPU 카드와 같은 문구를 공유합니다.
     static let topApplicationsCaption = CPUCardPresentation.topApplicationsCaption
 
-    /// Memory 카드를 선택·복귀하는 키보드 단축키의 사람이 읽는 표시. CPU 카드와 다른 단축키를 씁니다(ANALYSIS §5 DP15).
-    static let selectionShortcutDisplayText = "⌘2"
+    /// Memory 카드를 선택·복귀하는 키보드 단축키의 실제 키. CPU 카드와 다른 단축키를 씁니다(ANALYSIS §5 DP15).
+    static let selectionShortcutKey: Character = "2"
+
+    /// Memory 카드를 선택·복귀하는 키보드 단축키의 사람이 읽는 표시. `selectionShortcutKey`에서 유도됩니다.
+    static var selectionShortcutDisplayText: String { "⌘\(selectionShortcutKey)" }
 
     /// 최신 Memory 지표, 이력 링, 앱 순위에서 Memory 카드 표시 값을 만듭니다.
     /// - Parameters:
@@ -327,7 +402,7 @@ extension MemoryCardPresentation {
                 cachedBytes: memory.cachedBytes,
                 currentUsageRanking: trimmedTopApplications,
                 recentIncreaseRanking: Array(memoryIncrease.prefix(ApplicationRankingSampling.topCount)),
-                applications: processGroups
+                applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .residentMemory)
             )
         )
     }

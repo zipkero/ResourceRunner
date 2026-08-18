@@ -45,7 +45,6 @@ private func processHistorySnapshot(
     ProcessHistorySnapshot(
         identity: ProcessIdentity(pid: pid, startTime: 0),
         executablePath: executablePath,
-        latestCPUUsagePercent: cpuUsagePercent,
         recentValues: [ProcessRankingSample(cpuUsagePercent: cpuUsagePercent, residentBytes: residentBytes)],
         memoryBaselines: [],
         isTranslated: isTranslated
@@ -107,6 +106,225 @@ struct HistoryPointConnectedSegmentsTests {
         let segments = HistoryPoint.connectedSegments(from: points)
 
         #expect(segments.count == 1)
+    }
+}
+
+// MARK: - 그래프 다운샘플링(결함 수정 회귀 고정)
+
+/// 이력 링 최대 601점을 실제 팝오버 렌더 폭(약 248pt)에 그대로 찍으면 점 간격이 원본 표본 간격까지 좁아져
+/// 사용률 흐름이 뭉개지던 결함을 고정합니다. 아래 단언들은 각각
+/// - 평균 대신 min·max로 순간 피크를 남기는지,
+/// - 그리디 최소 간격 필터로 후보를 건너뛰지 않아 순간 스파이크·dip이 위치와 상관없이 전부 남는지,
+/// - 세그먼트 분리를 버킷 묶음보다 먼저 해서 빈 구간이 보존되는지,
+/// - 다운샘플링이 실제로 점 수를 줄이면서도 버킷당 최대 2점(min·max)이라는 상한을 넘지 않는지,
+/// - 버킷 폭 상수가 4pt로 고정돼 있는지
+/// 를 지우거나 반대로 바꾸면 실패하도록 고른 것입니다.
+struct HistoryPointDownsamplingTests {
+
+    @Test func bucketWidthIsFourPixelsPerBucket() {
+        #expect(HistoryPoint.minimumDownsampledBucketSpacing == 4)
+        #expect(HistoryPoint.downsampledBucketCount(forRenderWidth: 248) == 62)
+    }
+
+    @Test func bucketCountIsAtLeastOneForNarrowWidths() {
+        #expect(HistoryPoint.downsampledBucketCount(forRenderWidth: 1) == 1)
+    }
+
+    /// `Canvas`/`GeometryReader`가 이론상 유한하지 않거나 0 이하인 폭을 넘길 때 `Int(width / ...)`가
+    /// trap하지 않고 버킷 1개로 안전하게 처리되는지 확인합니다. 이 방어를 지우면 `Double.nan`·`.infinity`
+    /// 입력에서 크래시가 재현됩니다.
+    @Test(arguments: [Double.nan, .infinity, -.infinity, 0, -1])
+    func bucketCountIsSafeForNonFiniteOrNonPositiveWidths(width: Double) {
+        #expect(HistoryPoint.downsampledBucketCount(forRenderWidth: width) == 1)
+    }
+
+    /// 첫 버킷(인덱스 0..<3)은 평균(약 48.3)이 아니라 최솟값 0과 최댓값 100이 그대로 남아야 합니다.
+    /// 평균으로 바꾸면 이 두 값 중 하나도 결과에 남지 않아 실패합니다.
+    /// 둘째 버킷(인덱스 3..<5)도 그리디 필터로 건너뛰지 않고 min(60)·max(70)이 그대로 남습니다.
+    @Test func bucketKeepsMinAndMaxInsteadOfAveraging() {
+        let points = [
+            HistoryPoint(timestamp: baseInstant, value: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(1)), value: 45),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(2)), value: 100),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(3)), value: 60),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(4)), value: 70),
+        ]
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 2)
+
+        #expect(result.map(\.value) == [0, 100, 60, 70])
+    }
+
+    /// min과 max가 같은 점(버킷 안 값이 전부 같음)이면 하나만 남아야 합니다.
+    @Test func bucketWithAllEqualValuesKeepsOnlyOnePoint() {
+        let points = (0..<4).map { HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: 10) }
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 1)
+
+        #expect(result.count == 1)
+    }
+
+    /// 첫 버킷(인덱스 0..<3)의 min·max는 값 크기 순이 아니라 실제 시각 순서(먼저 나온 시각이 앞)로
+    /// 배치돼야 합니다 — 최댓값(인덱스 0)이 최솟값(인덱스 2)보다 먼저 나옵니다.
+    /// 둘째 버킷(인덱스 3·4)은 값이 같아(10, 10) 한 후보만 남습니다.
+    @Test func bucketOrdersMinAndMaxByActualTimestampNotByValue() {
+        let points = [
+            HistoryPoint(timestamp: baseInstant, value: 100),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(1)), value: 50),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(2)), value: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(3)), value: 10),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(4)), value: 10),
+        ]
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 2)
+
+        #expect(result.map(\.value) == [100, 0, 10])
+    }
+
+    @Test func fewerPointsThanBucketCountPassThroughLosslessly() {
+        let points = (0..<5).map { HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: Double($0)) }
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 124)
+
+        #expect(result == points)
+    }
+
+    @Test func downsamplingActuallyReducesPointCountAndIsNotANoOp() {
+        let points = (0..<601).map { HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: Double($0 % 100)) }
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 124)
+
+        #expect(result.count < points.count)
+        #expect(result.count <= 124 * 2)
+    }
+
+    @Test func emptySegmentDownsamplesToEmpty() {
+        #expect(HistoryPoint.downsampled(segment: [], bucketCount: 124).isEmpty)
+    }
+
+    @Test func singlePointSegmentDownsamplesToThatPoint() {
+        let point = HistoryPoint(timestamp: baseInstant, value: 10)
+
+        #expect(HistoryPoint.downsampled(segment: [point], bucketCount: 124) == [point])
+    }
+
+    @Test func resultPointsAreInAscendingTimestampOrder() {
+        let points = (0..<601).map { HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: sin(Double($0) / 10) * 50 + 50) }
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 124)
+
+        let timestamps = result.map(\.timestamp)
+        #expect(timestamps == timestamps.sorted())
+    }
+
+    /// 빈 버킷은 값을 지어내지 않고 결과에서 빠집니다(ANALYSIS §5 DP17과 같은 원칙) — 점이 하나뿐인 버킷 구간이면
+    /// 다른 버킷들이 비어도 전체 결과 점 수가 입력 점 수를 넘지 않습니다.
+    @Test func emptyBucketsProduceNoFabricatedPoints() {
+        let points = [
+            HistoryPoint(timestamp: baseInstant, value: 10),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(1)), value: 20),
+        ]
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: 10)
+
+        // 점 수(2)가 버킷 수(10)보다 적어 가드에서 원본을 그대로 돌려주는 경로이므로, 개수만 비교하면
+        // 값을 지어내 결과를 바꿔치기해도(개수를 그대로 둔 채) 잡지 못합니다. 원본과의 완전한 값 일치로 고정합니다.
+        #expect(result == points)
+    }
+
+    /// 세그먼트 분리를 버킷 묶음보다 먼저 해야 합니다. 값 범위가 좁은 구간과 넓은 구간을 큰 간격으로 이은 뒤
+    /// 버킷 수 1로 전체를 다운샘플링하면: 순서가 올바르면 두 구간이 각자 다운샘플링되어 2개 구간이 남고,
+    /// 순서를 반대로 해 두 구간을 먼저 하나로 합쳐 버킷을 묶으면 값 범위가 넓은 구간(A)의 최솟값·최댓값이
+    /// 전역 min·max를 모두 차지해, 값 범위가 좁은 구간(B)이 결과에서 통째로 사라집니다.
+    @Test func segmentsAreSplitBeforeBucketingSoGapsAndNarrowRangeSegmentsSurvive() throws {
+        let segmentA = [
+            HistoryPoint(timestamp: baseInstant, value: 50),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(1)), value: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(2)), value: 100),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(3)), value: 50),
+        ]
+        let gapStart = segmentA.last!.timestamp + HistoryPoint.maximumConnectedGap + .seconds(1)
+        let segmentB = (0..<4).map {
+            HistoryPoint(timestamp: gapStart.advanced(by: .seconds(Double($0))), value: 44 + Double($0))
+        }
+
+        let result = HistoryPoint.downsampledConnectedSegments(from: segmentA + segmentB, bucketCount: 1)
+
+        // 배열 인덱싱으로 이어지는 아래 단언들이 개수가 다를 때 그대로 crash하지 않도록 개수부터 먼저 확정합니다.
+        try #require(result.count == 2)
+        #expect(result[0].allSatisfy { $0.timestamp <= segmentA.last!.timestamp })
+        #expect(result[1].allSatisfy { $0.timestamp >= segmentB.first!.timestamp })
+        #expect(!result[1].isEmpty)
+    }
+
+    /// 결과 점 수는 버킷마다 최대 2점(min·max)이라는 상한을 넘지 않아야 합니다.
+    /// 이 상한이 실제 렌더 폭에서 평균 점 간격이 `lineWidth`보다 커지는 것을 보장하는 근거입니다
+    /// (버킷마다 항상 두 점이 남는 대신, 값이 균일한 버킷은 한 점만 남아 상한 아래로 줄어들 수 있습니다).
+    @Test func resultPointCountNeverExceedsTwiceTheBucketCount() {
+        let renderWidth = 248.0
+        let bucketCount = HistoryPoint.downsampledBucketCount(forRenderWidth: renderWidth)
+        let points = (0..<601).map {
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: sin(Double($0) / 30) * 50 + 50)
+        }
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: bucketCount)
+
+        #expect(result.count <= bucketCount * 2)
+    }
+
+    /// 5% 평탄 구간 한가운데 표본 하나만 100%인 입력에서, 그 스파이크가 버킷 안 어느 오프셋에 있어도
+    /// 결과에서 사라지면 안 됩니다. 그리디 최소 간격 필터를 되살리면(이웃 버킷 경계 근처 오프셋에서)
+    /// 이 단언이 실패합니다 — verify가 601개 위치 중 372곳에서 이 방식으로 소실을 발견했습니다.
+    @Test func singleSpikeSurvivesAtEveryPositionInTheHistory() {
+        let bucketCount = HistoryPoint.downsampledBucketCount(forRenderWidth: 248)
+
+        for spikeIndex in 0..<601 {
+            var values = Array(repeating: 5.0, count: 601)
+            values[spikeIndex] = 100
+            let points = (0..<601).map {
+                HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: values[$0])
+            }
+
+            let result = HistoryPoint.downsampled(segment: points, bucketCount: bucketCount)
+
+            #expect(result.contains { $0.value == 100 }, "스파이크 인덱스 \(spikeIndex)에서 소실됨")
+        }
+    }
+
+    /// 50% 평탄 구간 한가운데 표본 하나만 0%인 입력에서, 그 dip이 버킷 안 어느 오프셋에 있어도
+    /// 결과에서 사라지면 안 됩니다.
+    @Test func singleDipSurvivesAtEveryPositionInTheHistory() {
+        let bucketCount = HistoryPoint.downsampledBucketCount(forRenderWidth: 248)
+
+        for dipIndex in 0..<601 {
+            var values = Array(repeating: 50.0, count: 601)
+            values[dipIndex] = 0
+            let points = (0..<601).map {
+                HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double($0))), value: values[$0])
+            }
+
+            let result = HistoryPoint.downsampled(segment: points, bucketCount: bucketCount)
+
+            #expect(result.contains { $0.value == 0 }, "dip 인덱스 \(dipIndex)에서 소실됨")
+        }
+    }
+
+    /// 임의의(비균일) 입력에서도 전역 최댓값·최솟값은 각자 속한 버킷의 극값이므로 결과에 반드시 남습니다.
+    @Test func globalMinimumAndMaximumAreAlwaysPreserved() {
+        let points = (0..<601).map { index -> HistoryPoint in
+            var value = sin(Double(index) / 17) * 40 + 50
+            if index == 300 { value = 99 }
+            if index == 88 { value = -1 }
+            return HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double(index))), value: value)
+        }
+        let bucketCount = HistoryPoint.downsampledBucketCount(forRenderWidth: 248)
+        let globalMax = points.map(\.value).max()!
+        let globalMin = points.map(\.value).min()!
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: bucketCount)
+
+        #expect(result.contains { $0.value == globalMax })
+        #expect(result.contains { $0.value == globalMin })
     }
 }
 
@@ -994,6 +1212,18 @@ struct CPUUnitLabelTests {
     @Test func overallAndProcessUsageUnitLabelsDiffer() {
         #expect(CPUCardPresentation.overallUsageUnitLabel != ApplicationProcessDetail.cpuUsageUnitLabel)
     }
+
+    /// 위 부등 단언은 두 상수를 어떤 값으로 바꿔도 서로 다르기만 하면 통과해 각 리터럴 자체를 검증하지
+    /// 못합니다(`ApplicationRankingTests`의 `cpuGroupValueText`·`cpuProcessValueText` 단언도 같은 상수를
+    /// 그대로 보간해 기대값을 만들므로 자기 참조라 이 값이 바뀌는 mutation을 잡지 못합니다).
+    /// 그래서 각 리터럴 값을 여기서 직접 고정합니다.
+    @Test func overallUsageUnitLabelIsPercentSign() {
+        #expect(CPUCardPresentation.overallUsageUnitLabel == "%")
+    }
+
+    @Test func processUsageUnitLabelIndicatesCoreSummation() {
+        #expect(ApplicationProcessDetail.cpuUsageUnitLabel == "% (코어 합산)")
+    }
 }
 
 // MARK: - task-010(재작업, DP15): 카드 선택·복귀 단축키
@@ -1001,8 +1231,20 @@ struct CPUUnitLabelTests {
 /// 두 카드가 서로 다른 단축키를 써야 동시에 활성화되는 충돌이 없습니다.
 struct DashboardSelectionShortcutTests {
 
-    @Test func cpuAndMemoryShortcutsDiffer() {
-        #expect(CPUCardPresentation.selectionShortcutDisplayText != MemoryCardPresentation.selectionShortcutDisplayText)
+    // cpuAndMemoryShortcutsDiffer(두 상수가 다르다는 단언)는 지웠습니다 — 두 상수가 각각 리터럴
+    // "⌘1"·"⌘2"로 고정되는 아래 두 테스트가 성립하면 서로 다르다는 것도 함께 성립하고, 두 상수를 같은
+    // 값으로 바꾸는 mutation은 아래 두 테스트가 이미 잡습니다. 반대로 이 테스트 하나만으로는 두 상수를
+    // (둘 다 여전히 다르기만 하면) 어떤 값으로 바꿔도 통과해 키 상수 자체를 검증하지 못했습니다.
+
+    /// 카드에 보이는 표시 문자열이 단축키 정의(`selectionShortcutKey`)와 같은 상수에서 유도되는지 고정합니다
+    /// (task-016, ANALYSIS §5 DP15). `selectionShortcutKey`를 다른 문자로 바꾸면 이 단언이 함께 실패해야
+    /// 표시가 키 정의와 어긋나지 않았다는 것이 확인됩니다.
+    @Test func cpuShortcutDisplayTextMatchesDefinedKey() {
+        #expect(CPUCardPresentation.selectionShortcutDisplayText == "⌘1")
+    }
+
+    @Test func memoryShortcutDisplayTextMatchesDefinedKey() {
+        #expect(MemoryCardPresentation.selectionShortcutDisplayText == "⌘2")
     }
 }
 
@@ -1037,7 +1279,32 @@ struct CPUCardDetailAssembleTests {
             cpu: cpuMetrics(), history: [], topApplications: [], processGroups: groups, currentTimestamp: baseInstant
         )
 
-        #expect(presentation.detail.applications == groups)
+        // `assemble`은 그룹을 그대로가 아니라 `sortedForDisplay(groups:by:)`를 거쳐 담으므로
+        // (상세 화면이 정렬 키를 그대로 표시하도록, 정렬 값이 채워진 그룹과 비교합니다).
+        #expect(presentation.detail.applications == ApplicationRanking.sortedForDisplay(groups: groups, by: .cpuUsage))
+    }
+
+    /// CPU 상세는 그룹 안 프로세스의 CPU 사용량 합 기준으로 내림차순 정렬되어야 합니다(SPEC §5.2, SPEC §5.6).
+    /// CPU와 Memory 기준을 서로 바꾸면, Memory가 더 큰 `LowCPUHighMemory`가 앞에 오게 되어 이 단언이 실패합니다.
+    @Test func detailApplicationsAreSortedByCPUUsageDescending() {
+        let highCPU = processHistorySnapshot(
+            pid: 1, executablePath: "/Applications/HighCPU.app/Contents/MacOS/HighCPU",
+            cpuUsagePercent: 50, residentBytes: 10
+        )
+        let lowCPUHighMemory = processHistorySnapshot(
+            pid: 2, executablePath: "/Applications/LowCPUHighMemory.app/Contents/MacOS/LowCPUHighMemory",
+            cpuUsagePercent: 5, residentBytes: 1_000_000
+        )
+        let (groups, _) = ApplicationRanking.groupByApplication(
+            snapshots: [lowCPUHighMemory, highCPU],
+            resolver: ApplicationIdentityResolver()
+        )
+
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(), history: [], topApplications: [], processGroups: groups, currentTimestamp: baseInstant
+        )
+
+        #expect(presentation.detail.applications.map(\.displayName) == ["HighCPU", "LowCPUHighMemory"])
     }
 }
 
@@ -1123,6 +1390,29 @@ struct MemoryCardDetailAssembleTests {
         )
 
         #expect(presentation.detail.recentIncreaseRanking.first?.value == -500)
+    }
+
+    /// Memory 상세는 그룹 안 프로세스의 Resident Memory 합 기준으로 내림차순 정렬되어야 합니다(SPEC §5.2, SPEC §5.6).
+    /// CPU와 Memory 기준을 서로 바꾸면, CPU가 더 큰 `HighCPULowMemory`가 앞에 오게 되어 이 단언이 실패합니다.
+    @Test func detailApplicationsAreSortedByResidentMemoryDescending() {
+        let highCPULowMemory = processHistorySnapshot(
+            pid: 1, executablePath: "/Applications/HighCPULowMemory.app/Contents/MacOS/HighCPULowMemory",
+            cpuUsagePercent: 90, residentBytes: 10
+        )
+        let highMemory = processHistorySnapshot(
+            pid: 2, executablePath: "/Applications/HighMemory.app/Contents/MacOS/HighMemory",
+            cpuUsagePercent: 1, residentBytes: 1_000_000
+        )
+        let (groups, _) = ApplicationRanking.groupByApplication(
+            snapshots: [highCPULowMemory, highMemory],
+            resolver: ApplicationIdentityResolver()
+        )
+
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(), history: [], topApplications: [], processGroups: groups, currentTimestamp: baseInstant
+        )
+
+        #expect(presentation.detail.applications.map(\.displayName) == ["HighMemory", "HighCPULowMemory"])
     }
 }
 

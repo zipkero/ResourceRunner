@@ -69,50 +69,72 @@ final class DashboardCardSelectionUITests: XCTestCase {
         return cpuCard
     }
 
-    /// 카드를 선택하면 `app.popovers` 수가 1에서 2로 늘고, 같은 단축키를 다시 누르면 2로 줄지 않고 1로
-    /// 돌아오는지 확인합니다(ANALYSIS §5 DP14 「두 팝오버가 공존」).
+    /// 원래 다섯 개 테스트(선택·해제로 팝오버 수가 늘고 주는지, 그 과정에서 두 카드·본체 팝오버 프레임이
+    /// 흔들리지 않는지(SPEC §5.15, ANALYSIS §5 DP14), CPU·Memory 각각의 팝업 자기 해제 회귀(task-010이 두 번
+    /// 반려된 끝에 확보한 그물), CPU에서 Memory로 전환 시 팝오버 수가 2에 머무는지)를 하나로 모았습니다.
+    /// 앱 실행 → 팝오버 열기 → 카드 대기라는 같은 준비를 다섯 번 반복해서 지불하던 고정비를 한 번으로
+    /// 줄이는 것이 목적이며, 원래 있던 단언은 하나도 지우지 않고 각 단언의 실패 메시지도 그대로 남깁니다.
+    /// 첫째·둘째 단계가 문자 그대로 같은 조작(⌘1 선택→해제)이라 팝오버 수 단언과 프레임 불변 단언을
+    /// 자연스럽게 같은 지점에서 함께 확인할 수 있고, 이어지는 자기 해제·전환 단계도 앞 단계가 남긴 선택
+    /// 상태 위에서 그대로 이어집니다(각 원본 테스트의 조작 순서·전제와 동일).
     @MainActor
-    func testSelectingCardOpensChildPopoverAndDeselectingClosesIt() throws {
+    func testCardSelectionLifecycleKeepsFramesFixedAndSurvivesSelfDismissal() throws {
         let app = XCUIApplication()
-        _ = openDashboard(app)
+        let cpuCard = openDashboard(app)
+        let memoryCard = app.descendants(matching: .any).matching(identifier: "MemoryCard").firstMatch
+        XCTAssertTrue(memoryCard.waitForExistence(timeout: 5), "Memory 카드가 나타나지 않았습니다.")
+
+        let parent = parentPopover(app)
+        XCTAssertTrue(parent.waitForExistence(timeout: 2), "본체 팝오버를 찾지 못했습니다.")
 
         XCTAssertEqual(app.popovers.count, 1, "선택 전에는 본체 팝오버 하나만 있어야 합니다.")
 
+        // 카드 슬롯이 상태와 무관하게 고정되어 높이는 이제 흔들리지 않지만, 이 테스트가 확인하려는 것은
+        // "선택이 카드를 흔들지 않는다"뿐입니다. 기준 프레임이 안정된 뒤에 잡히도록 두어
+        // 슬롯 고정이 회귀해도 이 테스트가 선택과 무관한 이유로 실패하지 않게 합니다.
+        let cpuCardFrameBefore = waitUntilFrameStable(cpuCard, timeout: 10)
+        let memoryCardFrameBefore = waitUntilFrameStable(memoryCard, timeout: 10)
+        let parentFrameBefore = parent.frame
+
+        // 1) CPU 선택 → 팝오버 수 1에서 2로, 두 카드·본체 프레임은 그대로
+        //    (원 testSelectingCardOpensChildPopoverAndDeselectingClosesIt·testCardAndParentPopoverFramesStayFixedAcrossSelection)
         let loadAverageText = detailValue(app, containing: "Load Average")
         app.typeKey("1", modifierFlags: .command)
         XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세(Load Average)가 나타나지 않았습니다.")
         XCTAssertEqual(app.popovers.count, 2, "CPU 카드를 선택하면 자식 팝오버가 열려 팝오버 수가 2가 되어야 합니다.")
+        XCTAssertEqual(parent.frame, parentFrameBefore, "카드를 선택한 뒤 본체 팝오버 프레임이 바뀌었습니다.")
+        XCTAssertEqual(cpuCard.frame, cpuCardFrameBefore, "카드를 선택한 뒤 CPU 카드 프레임이 바뀌었습니다.")
+        XCTAssertEqual(memoryCard.frame, memoryCardFrameBefore, "카드를 선택한 뒤 Memory 카드 프레임이 바뀌었습니다.")
 
+        // 2) 같은 단축키로 해제 → 팝오버 수 1로 복귀, 프레임은 여전히 그대로
         app.typeKey("1", modifierFlags: .command)
         XCTAssertTrue(waitUntilGone(loadAverageText, timeout: 2), "같은 ⌘1을 다시 눌렀는데도 CPU 상세가 사라지지 않았습니다.")
         XCTAssertTrue(
             waitUntil({ app.popovers.count == 1 }, timeout: 2),
             "선택을 해제했는데도 팝오버 수가 1로 돌아오지 않았습니다. 현재: \(app.popovers.count)"
         )
-    }
+        XCTAssertEqual(parent.frame, parentFrameBefore, "선택 해제 후 본체 팝오버 프레임이 최초 크기와 달라졌습니다.")
+        XCTAssertEqual(cpuCard.frame, cpuCardFrameBefore, "선택 해제 후 CPU 카드 프레임이 최초 크기와 달라졌습니다.")
+        XCTAssertEqual(memoryCard.frame, memoryCardFrameBefore, "선택 해제 후 Memory 카드 프레임이 최초 크기와 달라졌습니다.")
 
-    /// 팝업 자신이 닫혀도(팝업 밖·부모 팝오버 안 클릭) 선택이 실제로 해제되는지 확인합니다.
-    ///
-    /// `DashboardView`의 `cpuDetailIsPresented` 바인딩 `set`이 `store.dismissDetail(for:)`를 부르지 않고
-    /// 비어 있어도(예: `set: { _ in }`) SwiftUI 팝오버 자신은 그대로 닫히므로, 팝오버 수가 2 -> 1로 줄어드는
-    /// 것까지는 이 mutation을 잡아내지 못합니다. 그 mutation이 만드는 실제 결함은 store의 `selection`이
-    /// CPU로 남아 있어 다음 SwiftUI 갱신에서 팝업이 곧바로 되살아나는 것이므로, 이 테스트는
-    /// (1) 1로 줄어든 뒤 그 값이 잠시 유지되는지와 (2) 그 상태에서 같은 단축키를 한 번 더 누르면
-    /// 선택이 없음 -> CPU로 다시 전이해 팝오버 수가 2로 늘어나는지를 함께 단언한다.
-    /// `set`이 비어 있으면 store의 `selection`이 이미 CPU라 재선택이 해제로 처리돼 팝오버가 오히려 닫히므로
-    /// 이 두 번째 단언에서 실패한다.
-    @MainActor
-    func testSelfDismissingChildPopoverStaysClosedAndReselectionReopensIt() throws {
-        let app = XCUIApplication()
-        _ = openDashboard(app)
-
-        let loadAverageText = detailValue(app, containing: "Load Average")
+        // 3) CPU 팝업 자기 해제 회귀(원 testSelfDismissingChildPopoverStaysClosedAndReselectionReopensIt).
+        //    `DashboardView`의 `cpuDetailIsPresented` 바인딩 `set`이 `store.dismissDetail(for:)`를 부르지
+        //    않고 비어 있어도(예: `set: { _ in }`) SwiftUI 팝오버 자신은 그대로 닫히므로, 팝오버 수가
+        //    2 -> 1로 줄어드는 것까지는 이 mutation을 잡아내지 못합니다. 그 mutation이 만드는 실제 결함은
+        //    store의 `selection`이 CPU로 남아 있어 다음 SwiftUI 갱신에서 팝업이 곧바로 되살아나는
+        //    것이므로, (1) 1로 줄어든 뒤 그 값이 잠시 유지되는지와 (2) 그 상태에서 같은 단축키를 한 번 더
+        //    누르면 선택이 없음 -> CPU로 다시 전이해 팝오버 수가 2로 늘어나는지를 함께 단언합니다.
+        //    `set`이 비어 있으면 store의 `selection`이 이미 CPU라 재선택이 해제로 처리돼 팝오버가 오히려
+        //    닫히므로 이 두 번째 단언에서 실패합니다.
         app.typeKey("1", modifierFlags: .command)
         XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세가 나타나지 않았습니다.")
         XCTAssertEqual(app.popovers.count, 2, "CPU 카드를 선택하면 팝오버 수가 2가 되어야 합니다.")
 
         // 부모 팝오버 안이면서 자식 팝업 밖인 자리(제목 텍스트)를 클릭해 자식 팝업을 스스로 닫습니다.
-        let title = app.staticTexts["ResourceRunner"]
+        // 라벨("ResourceRunner")이 아니라 식별자로 찾습니다 — 상세 목록에 앱 자신(ResourceRunner)의 프로세스
+        // 행이 같은 라벨로 나타나 라벨 조회가 둘 이상과 일치할 수 있기 때문입니다(`DashboardView.swift`
+        // `accessibilityIdentifier("DashboardTitle")` 주석 참고).
+        let title = app.staticTexts["DashboardTitle"]
         XCTAssertTrue(title.waitForExistence(timeout: 2), "본체 제목을 찾지 못했습니다.")
         title.click()
 
@@ -123,8 +145,8 @@ final class DashboardCardSelectionUITests: XCTestCase {
 
         // 곧바로 되살아나지 않는지 잠깐 동안 반복 표본해 확인합니다. 한 번만 보고 끝내면 되살아나는 빌드를
         // 놓칠 수 있어(위 주석 참고), 짧은 구간에 걸쳐 값이 계속 1인지를 확인합니다.
-        let stayedClosed = waitUntil({ app.popovers.count != 1 }, timeout: 1) == false
-        XCTAssertTrue(stayedClosed, "팝업 밖을 클릭해 닫힌 뒤 팝오버가 스스로 되살아났습니다. 현재: \(app.popovers.count)")
+        let cpuStayedClosed = waitUntil({ app.popovers.count != 1 }, timeout: 1) == false
+        XCTAssertTrue(cpuStayedClosed, "팝업 밖을 클릭해 닫힌 뒤 팝오버가 스스로 되살아났습니다. 현재: \(app.popovers.count)")
         XCTAssertEqual(app.popovers.count, 1, "잠깐 뒤에도 팝오버 수는 1이어야 합니다.")
 
         // 선택이 실제로 해제됐다면 같은 단축키를 다시 눌렀을 때 없음 -> CPU 전이가 일어나 팝오버가 다시 열립니다.
@@ -133,61 +155,37 @@ final class DashboardCardSelectionUITests: XCTestCase {
             waitUntil({ app.popovers.count == 2 }, timeout: 2),
             "자기 닫힘 뒤 같은 단축키를 눌렀는데도 팝오버가 다시 열리지 않았습니다 - 선택이 실제로 해제되지 않았을 수 있습니다. 현재: \(app.popovers.count)"
         )
-    }
 
-    /// CPU를 선택한 상태에서 Memory를 선택하면 이전 팝업이 닫히고 Memory 카드 옆에 새 팝업이 열립니다.
-    /// 이 과정에서 팝오버 수는 계속 2에 머뭅니다(부모 하나 + 자식 하나).
-    @MainActor
-    func testSwitchingFromCPUToMemoryKeepsOneChildPopoverOpen() throws {
-        let app = XCUIApplication()
-        _ = openDashboard(app)
-
-        let loadAverageText = detailValue(app, containing: "Load Average")
-        let currentUsageHeading = app.staticTexts["현재 사용량 순위"]
-
-        app.typeKey("1", modifierFlags: .command)
-        XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세가 나타나지 않았습니다.")
-        XCTAssertEqual(app.popovers.count, 2)
-
+        // 4) CPU에서 Memory로 전환 → 이전 팝업이 닫히고 Memory 옆에 새 팝업이 열리며 팝오버 수는 계속 2
+        //    (원 testSwitchingFromCPUToMemoryKeepsOneChildPopoverOpen). 위 3단계가 CPU 상세를 다시 열어
+        //    둔 상태라 이 전환이 자연스럽게 이어집니다.
+        let currentUsageHeading = detailValue(app, containing: "현재 사용량 순위")
         app.typeKey("2", modifierFlags: .command)
         XCTAssertTrue(currentUsageHeading.waitForExistence(timeout: 2), "⌘2로 Memory 상세(현재 사용량 순위)가 나타나지 않았습니다.")
         XCTAssertTrue(waitUntilGone(loadAverageText, timeout: 2), "Memory로 전환한 뒤에도 CPU 상세가 남아 있습니다.")
         XCTAssertEqual(app.popovers.count, 2, "카드를 오가는 동안 팝오버 수가 2에 머물러야 합니다.")
-    }
 
-    /// 상세를 열기 전과 연 뒤, 다시 닫은 뒤의 두 카드 프레임과 본체 팝오버 프레임이 모두 같은지 확인합니다
-    /// (SPEC §5.15, ANALYSIS §5 DP14).
-    @MainActor
-    func testCardAndParentPopoverFramesStayFixedAcrossSelection() throws {
-        let app = XCUIApplication()
-        let cpuCard = openDashboard(app)
-        let memoryCard = app.descendants(matching: .any).matching(identifier: "MemoryCard").firstMatch
-        XCTAssertTrue(memoryCard.waitForExistence(timeout: 5), "Memory 카드가 나타나지 않았습니다.")
+        // 5) Memory 팝업 자기 해제 회귀(원 testSelfDismissingMemoryChildPopoverStaysClosedAndReselectionReopensIt).
+        //    `DashboardView`의 `memoryDetailIsPresented` 바인딩 `set`은 `cpuDetailIsPresented`와 별도
+        //    클로저이므로, CPU 쪽만 확인하면 Memory 쪽에서 `store.dismissDetail(for: .memory)` 호출이
+        //    빠지는 회귀를 잡지 못합니다. 근거·판정 방식은 위 3단계 CPU 쪽과 같습니다.
+        XCTAssertTrue(title.waitForExistence(timeout: 2), "본체 제목을 찾지 못했습니다.")
+        title.click()
 
-        let parent = parentPopover(app)
-        XCTAssertTrue(parent.waitForExistence(timeout: 2), "본체 팝오버를 찾지 못했습니다.")
+        XCTAssertTrue(
+            waitUntil({ app.popovers.count == 1 }, timeout: 2),
+            "팝업 밖을 클릭했는데도 팝오버 수가 1로 줄지 않았습니다. 현재: \(app.popovers.count)"
+        )
 
-        // 두 카드는 아직 상태별 슬롯이 고정되지 않아(task-015가 다룰 몫) 프로세스 조사가 뒤늦게 끝나
-        // TOP 5 목록이 채워지는 동안 카드 높이가 자연히 바뀔 수 있습니다. 이 흔들림은 선택과 무관하므로,
-        // "선택이 카드를 흔들지 않는다"만 순수하게 확인하려면 그 자연 변화가 가라앉은 뒤에 기준 프레임을 잡아야 합니다.
-        let cpuCardFrameBefore = waitUntilFrameStable(cpuCard, timeout: 10)
-        let memoryCardFrameBefore = waitUntilFrameStable(memoryCard, timeout: 10)
-        let parentFrameBefore = parent.frame
+        let memoryStayedClosed = waitUntil({ app.popovers.count != 1 }, timeout: 1) == false
+        XCTAssertTrue(memoryStayedClosed, "팝업 밖을 클릭해 닫힌 뒤 팝오버가 스스로 되살아났습니다. 현재: \(app.popovers.count)")
+        XCTAssertEqual(app.popovers.count, 1, "잠깐 뒤에도 팝오버 수는 1이어야 합니다.")
 
-        let loadAverageText = detailValue(app, containing: "Load Average")
-        app.typeKey("1", modifierFlags: .command)
-        XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세가 나타나지 않아 선택 뒤 프레임을 비교할 수 없습니다.")
-
-        XCTAssertEqual(parent.frame, parentFrameBefore, "카드를 선택한 뒤 본체 팝오버 프레임이 바뀌었습니다.")
-        XCTAssertEqual(cpuCard.frame, cpuCardFrameBefore, "카드를 선택한 뒤 CPU 카드 프레임이 바뀌었습니다.")
-        XCTAssertEqual(memoryCard.frame, memoryCardFrameBefore, "카드를 선택한 뒤 Memory 카드 프레임이 바뀌었습니다.")
-
-        app.typeKey("1", modifierFlags: .command)
-        XCTAssertTrue(waitUntilGone(loadAverageText, timeout: 2), "선택 해제 후에도 CPU 상세가 남아 있습니다.")
-
-        XCTAssertEqual(parent.frame, parentFrameBefore, "선택 해제 후 본체 팝오버 프레임이 최초 크기와 달라졌습니다.")
-        XCTAssertEqual(cpuCard.frame, cpuCardFrameBefore, "선택 해제 후 CPU 카드 프레임이 최초 크기와 달라졌습니다.")
-        XCTAssertEqual(memoryCard.frame, memoryCardFrameBefore, "선택 해제 후 Memory 카드 프레임이 최초 크기와 달라졌습니다.")
+        app.typeKey("2", modifierFlags: .command)
+        XCTAssertTrue(
+            waitUntil({ app.popovers.count == 2 }, timeout: 2),
+            "자기 닫힘 뒤 같은 단축키를 눌렀는데도 팝오버가 다시 열리지 않았습니다 - 선택이 실제로 해제되지 않았을 수 있습니다. 현재: \(app.popovers.count)"
+        )
     }
 
     /// CPU Collector는 두 번째 tick부터 값을 만들므로, 앱 시작 직후 첫 조회에서는 카드가 "수집 중"일 수

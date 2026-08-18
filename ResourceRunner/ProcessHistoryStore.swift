@@ -46,8 +46,6 @@ nonisolated struct ProcessHistorySnapshot: Sendable, Equatable {
     let identity: ProcessIdentity
     /// 앱 키·표시 이름 유도(task-006 `ApplicationIdentityResolver`)에 쓰는 실행 경로.
     let executablePath: String
-    /// 이번 조사에서 계산한 CPU 사용률. 기준점이 없거나 간격이 허용 범위를 넘으면 `nil`입니다.
-    let latestCPUUsagePercent: Double?
     /// 순위 안정화용 최근 값들. 오래된 것부터 시간순이며 최대 3개입니다.
     let recentValues: [ProcessRankingSample]
     /// 10분 증가량 계산용 메모리 기준점들. 오래된 것부터 시간순입니다.
@@ -151,7 +149,6 @@ actor ProcessHistoryStore: MonitoringSampleSink {
             ProcessHistorySnapshot(
                 identity: identity,
                 executablePath: entry.executablePath,
-                latestCPUUsagePercent: entry.recentValues.elements.last?.cpuUsagePercent,
                 recentValues: entry.recentValues.elements,
                 memoryBaselines: entry.memoryBaselines.elements,
                 isTranslated: entry.isTranslated

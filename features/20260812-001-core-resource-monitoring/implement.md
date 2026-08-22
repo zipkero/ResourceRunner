@@ -244,7 +244,7 @@
   - 참조: SPEC §5.4, ANALYSIS §1 「계산 경계」, ANALYSIS §1 「표시 경계」,
     ANALYSIS §2 「메뉴바 표시 상태 판정」, ANALYSIS §3 「표시 계약」, ANALYSIS §5 DP8
 
-- [ ] task-008: CPU 카드와 최근 10분 그래프
+- [x] task-008: CPU 카드와 최근 10분 그래프
   - 목적: 팝오버를 열면 빈 화면이나 로딩 상태를 거치지 않고 마지막으로 수집된 값이 첫 프레임부터 보이며,
     CPU 카드에 전체 CPU 사용률, User와 System 비율, 최근 10분 그래프와 CPU 사용량 TOP 5가 표시되고,
     수집하지 않은 구간은 그래프에서 시각에 맞는 자리에 빈 채로 남습니다.
@@ -280,7 +280,7 @@
     ANALYSIS §1 「표시 경계」, ANALYSIS §2 「시스템 지표 tick」, ANALYSIS §3 「표시 계약」,
     ANALYSIS §5 DP3, ANALYSIS §5 DP10
 
-- [ ] task-009: Memory 카드와 색상에 기대지 않는 Memory Pressure 표시
+- [x] task-009: Memory 카드와 색상에 기대지 않는 Memory Pressure 표시
   - 목적: Memory 카드에 전체 물리 메모리, 현재 사용 중 메모리, Memory Pressure 단계,
     Swap 사용량과 최근 변화량, 메모리 사용량 TOP 5가 표시되고,
     Pressure가 경고나 위험으로 바뀌면 색상 외의 수단으로도 그 단계가 드러나며 정상으로 돌아오면 원래 표시로 복귀합니다.

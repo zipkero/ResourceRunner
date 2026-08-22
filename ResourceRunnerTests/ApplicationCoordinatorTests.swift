@@ -213,8 +213,10 @@ struct ApplicationCoordinatorTests {
     /// `ProcessHistoryStore.rankingInput()` -> `ApplicationRanking.compute`·`groupByApplication`을 지나
     /// 두 카드의 TOP 5와 상세 하위 프로세스 목록까지 실제로 도달해야 합니다.
     ///
-    /// 이 테스트가 고정하는 것은 「두 축이 이 소비 지점에서 만난다」입니다 —
-    /// `consumeSystemMetrics`가 순위 계산을 건너뛰고 빈 목록을 넘기도록 되돌리면 아래 단언이 모두 실패합니다.
+    /// 이 테스트가 고정하는 것은 「두 축이 이 소비 지점에서 만난다」와
+    /// 「각 카드가 자기 축의 순위를 받는다」입니다 —
+    /// `consumeSystemMetrics`가 순위 계산을 건너뛰고 빈 목록을 넘기도록 되돌리면 아래 단언이 모두 실패하고,
+    /// Memory 카드에 `memoryUsage` 대신 `cpuUsage`를 넘기면 메모리 순위 단언이 실패합니다.
     @Test func consumeSystemMetricsDeliversProcessSurveyRankingToBothCards() async {
         let store = MonitoringSampleStore()
         let processHistory = ProcessHistoryStore()
@@ -228,19 +230,22 @@ struct ApplicationCoordinatorTests {
 
         // CPU 사용률은 기준점이 있어야 나오므로 조사 두 번을 1초 간격으로 넣습니다.
         // 1초 동안 Alpha가 0.5초, Bravo가 0.1초를 써 각각 50%·10%가 됩니다.
+        //
+        // 메모리는 CPU와 순위가 뒤집히도록 Bravo를 더 크게 잡습니다 — 두 축이 같은 순서면
+        // Memory 카드가 실수로 CPU 순위를 받아도 단언이 통과해 배선 오류를 놓칩니다.
         let base = ContinuousClock().now
         await processHistory.append(processSurveySample(
             at: base,
             processes: [
-                (path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 0, residentBytes: 300 * 1024 * 1024),
-                (path: "/Applications/Bravo.app/Contents/MacOS/Bravo", pid: 102, cpuTimeNanoseconds: 0, residentBytes: 100 * 1024 * 1024)
+                (path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 0, residentBytes: 100 * 1024 * 1024),
+                (path: "/Applications/Bravo.app/Contents/MacOS/Bravo", pid: 102, cpuTimeNanoseconds: 0, residentBytes: 300 * 1024 * 1024)
             ]
         ))
         await processHistory.append(processSurveySample(
             at: base.advanced(by: .seconds(1)),
             processes: [
-                (path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 500_000_000, residentBytes: 300 * 1024 * 1024),
-                (path: "/Applications/Bravo.app/Contents/MacOS/Bravo", pid: 102, cpuTimeNanoseconds: 100_000_000, residentBytes: 100 * 1024 * 1024)
+                (path: "/Applications/Alpha.app/Contents/MacOS/Alpha", pid: 101, cpuTimeNanoseconds: 500_000_000, residentBytes: 100 * 1024 * 1024),
+                (path: "/Applications/Bravo.app/Contents/MacOS/Bravo", pid: 102, cpuTimeNanoseconds: 100_000_000, residentBytes: 300 * 1024 * 1024)
             ]
         ))
 
@@ -264,8 +269,10 @@ struct ApplicationCoordinatorTests {
             consumeTask.cancel()
             return
         }
-        #expect(memory.topApplications.map(\.displayName) == ["Alpha", "Bravo"])
-        #expect(memory.detail.currentUsageRanking.map(\.displayName) == ["Alpha", "Bravo"])
+        #expect(memory.topApplications.map(\.displayName) == ["Bravo", "Alpha"])
+        let expectedMemoryValues: [Double] = [300 * 1024 * 1024, 100 * 1024 * 1024]
+        #expect(memory.topApplications.map(\.value) == expectedMemoryValues)
+        #expect(memory.detail.applications.map(\.displayName) == ["Bravo", "Alpha"])
         #expect(memory.detail.applications.map(\.displayName).sorted() == ["Alpha", "Bravo"])
 
         consumeTask.cancel()

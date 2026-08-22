@@ -289,6 +289,84 @@ struct ApplicationRankingUnreadableCountTests {
     }
 }
 
+// MARK: - task-001: 순위 계산 정원과 카드 표시 정원 분리
+
+/// task-001 검증 조건: 앱이 상세 표시 정원(20)보다 많은 입력에서 `compute`가 20개까지 돌려줍니다.
+/// 계산 정원을 카드 정원(5)으로 되돌리면 이 테스트가 실패해야 합니다.
+struct ApplicationRankingComputationGantryTests {
+
+    @Test func computeReturnsUpToDetailCountFromLargerInput() {
+        var snapshots: [ProcessHistorySnapshot] = []
+        for index in 0..<25 {
+            let value: Double = Double(25 - index)
+            let path = "/Applications/App\(index).app/Contents/MacOS/App\(index)"
+            snapshots.append(snapshot(pid: pid_t(100 + index), executablePath: path, recentValues: [rankingSample(cpuUsagePercent: value, residentBytes: UInt64(value))]))
+        }
+
+        let (sample, _) = ApplicationRanking.compute(
+            snapshots: snapshots,
+            currentTimestamp: baseInstant,
+            unreadableCount: 0,
+            resolver: ApplicationIdentityResolver()
+        )
+
+        #expect(sample.cpuUsage.count == ApplicationRankingSampling.detailCount)
+        #expect(sample.memoryUsage.count == ApplicationRankingSampling.detailCount)
+    }
+}
+
+/// task-001 재작업(design/scope) 검증 조건: `topApplicationsCaption(count:)`가 인자를 실제로 반영하는지
+/// 직접 문자열 비교로 고정합니다. `label.contains(...)` 같은 자기참조 단언은 인자를 무시하고
+/// 고정 문자열을 돌려주는 mutation을 잡지 못하므로 쓰지 않습니다.
+struct ApplicationRankingCaptionTests {
+
+    @Test func captionEmbedsTheGivenCountExactly() {
+        #expect(ApplicationRankingSampling.topApplicationsCaption(count: 5) == "시스템 프로세스는 TOP 5에 포함되지 않습니다")
+        #expect(ApplicationRankingSampling.topApplicationsCaption(count: 20) == "시스템 프로세스는 TOP 20에 포함되지 않습니다")
+    }
+
+    /// 두 정원 상수에서 만든 문구가 서로 다름을 확인합니다 — 인자를 무시하면 이 단언이 실패합니다.
+    @Test func captionDiffersBetweenCardAndDetailGantries() {
+        let cardCaption = ApplicationRankingSampling.topApplicationsCaption(count: ApplicationRankingSampling.cardDisplayCount)
+        let detailCaption = ApplicationRankingSampling.topApplicationsCaption(count: ApplicationRankingSampling.detailCount)
+
+        #expect(cardCaption == "시스템 프로세스는 TOP 5에 포함되지 않습니다")
+        #expect(detailCaption == "시스템 프로세스는 TOP 20에 포함되지 않습니다")
+        #expect(cardCaption != detailCaption)
+    }
+}
+
+/// task-002 검증 조건: 상세 앱 목록 머리글(`applicationListHeading(metricLabel:count:)`)이 지표 문구와
+/// 정원을 실제로 반영하는지 직접 문자열 비교로 고정합니다. 지표 문구를 지우거나 두 목록에 같은 문구를
+/// 넣는 mutation은 이 단언에서 잡힙니다.
+struct ApplicationListHeadingTests {
+
+    @Test func headingEmbedsTheGivenMetricLabelAndCountExactly() {
+        #expect(
+            ApplicationRankingSampling.applicationListHeading(metricLabel: "CPU 사용량 순위, 합계 내림차순", count: 20)
+                == "CPU 사용량 순위, 합계 내림차순 (상위 20개)"
+        )
+        #expect(
+            ApplicationRankingSampling.applicationListHeading(metricLabel: "현재 사용량 순위, Memory 사용량 합계 내림차순", count: 20)
+                == "현재 사용량 순위, Memory 사용량 합계 내림차순 (상위 20개)"
+        )
+    }
+
+    /// CPU 상세와 Memory 상세의 지표 문구가 서로 달라야 합니다 — 지표 문구를 지우거나 한쪽 문구를
+    /// 그대로 복사하면 이 단언이 실패합니다.
+    @Test func headingDiffersBetweenCPUAndMemoryMetricLabels() {
+        let cpuHeading = ApplicationRankingSampling.applicationListHeading(
+            metricLabel: "CPU 사용량 순위, 합계 내림차순", count: ApplicationRankingSampling.detailCount
+        )
+        let memoryHeading = ApplicationRankingSampling.applicationListHeading(
+            metricLabel: "현재 사용량 순위, Memory 사용량 합계 내림차순", count: ApplicationRankingSampling.detailCount
+        )
+
+        #expect(cpuHeading != memoryHeading)
+        #expect(memoryHeading.contains("현재 사용량"))
+    }
+}
+
 // MARK: - 실기기 관찰: 실제 실행 중인 프로세스의 앱 단위 묶임
 //
 // task-006 검증 조건 중 실기기 확인(가장 바깥 `.app` 규칙이 실제 앱에서 성립하는지)은
@@ -311,7 +389,11 @@ struct ApplicationRankingCardDetailConsistencyTests {
     /// 순간값(최근 tick, 90 대 40)으로 정렬하면 spiked가 앞서지만, 평활화 평균(30.67 대 40)으로는 steady가 앞섭니다.
     /// 표시·정렬을 다시 순간값(`recentValues.last`)으로 되돌리면
     /// 상세 상위 순서가 카드와 달라져 이 테스트가 실패해야 합니다.
-    @Test func detailTopOrderMatchesCardTopOrderUnderInstantVersusSmoothedDivergence() {
+    ///
+    /// task-003 검증 조건: 정원(`detailCount`, 20)보다 많은 앱을 넣어 상위 5개뿐 아니라
+    /// 정원 경계 앞뒤 항목의 순서까지 두 계산에서 일치하는지 확인합니다.
+    /// filler 20개는 spiked·steady보다 낮고 서로 겹치지 않는 값을 내림차순으로 가져 순위가 유일하게 정해집니다.
+    @Test func detailTopOrderMatchesCardTopOrderUnderInstantVersusSmoothedDivergence() throws {
         let spiked = snapshot(
             pid: 100,
             executablePath: "/Applications/Spiked.app/Contents/MacOS/Spiked",
@@ -330,21 +412,50 @@ struct ApplicationRankingCardDetailConsistencyTests {
                 rankingSample(cpuUsagePercent: 40, residentBytes: 1_000),
             ]
         )
+        // 정원(20)보다 많은 앱을 만들기 위한 filler. 값은 25부터 6까지 1씩 내려가 spiked(30.67)보다
+        // 항상 낮고 서로 동률이 없어, steady·spiked 뒤 순위가 인덱스 순서 그대로 유일하게 정해집니다.
+        let fillers: [ProcessHistorySnapshot] = (0..<20).map { index in
+            let value = Double(25 - index)
+            return snapshot(
+                pid: pid_t(300 + index),
+                executablePath: "/Applications/Filler\(index).app/Contents/MacOS/Filler\(index)",
+                recentValues: [rankingSample(cpuUsagePercent: value, residentBytes: 1_000)]
+            )
+        }
+        let snapshots = [spiked, steady] + fillers
 
         let (cardSample, resolverAfterCompute) = ApplicationRanking.compute(
-            snapshots: [spiked, steady],
+            snapshots: snapshots,
             currentTimestamp: baseInstant,
             unreadableCount: 0,
             resolver: ApplicationIdentityResolver()
         )
         let (groups, _) = ApplicationRanking.groupByApplication(
-            snapshots: [spiked, steady],
+            snapshots: snapshots,
             resolver: resolverAfterCompute
         )
         let detailOrder = ApplicationRanking.sortedForDisplay(groups: groups, by: .cpuUsage)
+        let cardNames = cardSample.cpuUsage.map(\.displayName)
+        let detailNames = detailOrder.map(\.displayName)
+        let cap = ApplicationRankingSampling.detailCount
 
         #expect(cardSample.cpuUsage.first?.displayName == "Steady")
-        #expect(detailOrder.map(\.displayName) == cardSample.cpuUsage.map(\.displayName))
+        // 카드 정원(5): 상위 5개 순서가 두 계산에서 같습니다.
+        #expect(
+            Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+                == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+        )
+        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
+        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함하므로,
+        // 한쪽만 다른 개수로 자르면(정원 앞뒤로 어긋나면) 배열 길이나 값이 달라져 실패합니다.
+        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
+        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
+        try #require(cardNames.count == cap)
+        #expect(cardNames == Array(detailNames.prefix(cap)))
+        // 경계 직후(21번째) 항목은 상세 전체 목록에는 있지만 카드 목록에는 없어야 합니다 —
+        // 위 전체 비교와 달리 상세 목록의 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
+        try #require(detailNames.count > cap)
+        #expect(!cardNames.contains(detailNames[cap]))
     }
 
     /// `groupByApplication(_:)`이 `compute(_:)`와 같은 평활화 값을 만듭니다.
@@ -431,8 +542,21 @@ struct ApplicationRankingCardTopEntriesTieBreakTests {
 
     /// 동률 입력에서도 카드 TOP 5와 상세 상위 순서가 일치해야 합니다(SPEC §5.6) —
     /// 카드만 tie-break가 없으면 상세(앱 키 사전순)와 순서가 갈릴 수 있어 이 테스트가 실패해야 합니다.
-    @Test func cardTopOrderMatchesDetailTopOrderUnderTiedValues() {
-        let apps = Self.tiedApps()
+    ///
+    /// task-003 검증 조건: 정원(`detailCount`, 20)보다 많은 앱을 넣어 상위 5개 동률 구간뿐 아니라
+    /// 정원 경계 앞뒤 항목의 순서까지 두 계산에서 일치하는지 확인합니다.
+    /// filler 20개는 동률 다섯 개(값 30)보다 낮고 서로 겹치지 않는 값을 내림차순으로 가져
+    /// 동률 다섯 개 뒤 순위가 유일하게 정해집니다. `tiedApps()`(다른 테스트가 공유하는 helper)는 그대로 둡니다.
+    @Test func cardTopOrderMatchesDetailTopOrderUnderTiedValues() throws {
+        let fillers: [ProcessHistorySnapshot] = (0..<20).map { index in
+            let value = Double(25 - index)
+            return snapshot(
+                pid: pid_t(300 + index),
+                executablePath: "/Applications/Filler\(index).app/Contents/MacOS/Filler\(index)",
+                recentValues: [rankingSample(cpuUsagePercent: value, residentBytes: 1_000)]
+            )
+        }
+        let apps = Self.tiedApps() + fillers
 
         let (cardSample, resolverAfterCompute) = ApplicationRanking.compute(
             snapshots: apps,
@@ -442,8 +566,25 @@ struct ApplicationRankingCardTopEntriesTieBreakTests {
         )
         let (groups, _) = ApplicationRanking.groupByApplication(snapshots: apps, resolver: resolverAfterCompute)
         let detailOrder = ApplicationRanking.sortedForDisplay(groups: groups, by: .cpuUsage)
+        let cardNames = cardSample.cpuUsage.map(\.displayName)
+        let detailNames = detailOrder.map(\.displayName)
+        let cap = ApplicationRankingSampling.detailCount
 
-        #expect(detailOrder.map(\.displayName) == cardSample.cpuUsage.map(\.displayName))
+        // 동률 다섯 개(카드 정원)의 순서가 두 계산에서 같습니다.
+        #expect(
+            Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+                == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+        )
+        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
+        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함합니다.
+        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
+        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
+        try #require(cardNames.count == cap)
+        #expect(cardNames == Array(detailNames.prefix(cap)))
+        // 경계 직후(21번째) 항목은 카드 목록에 없어야 합니다 — 위 전체 비교와 달리 상세 목록의
+        // 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
+        try #require(detailNames.count > cap)
+        #expect(!cardNames.contains(detailNames[cap]))
     }
 }
 
@@ -856,5 +997,43 @@ struct ApplicationProcessGroupOrderingTests {
         )
 
         #expect(result.map(\.key.value) == ["/A", "/NEW"], "고정된 순서에 없던 새 앱은 순위가 더 높아도 끼어들지 않고 뒤에 붙어야 합니다.")
+    }
+
+    // MARK: - task-001: 정원 자르기
+
+    /// task-001 검증 조건: 펼친 행이 없어도 정원보다 많은 그룹을 받으면 정원만큼만 돌려주고,
+    /// 그 순서는 자르기 전 정렬 결과의 앞부분과 같습니다. 정원 인자를 무시하고 전체를 돌려주도록
+    /// 바꾸면 개수 단언이 실패해야 합니다.
+    @Test func capLimitsResultToLeadingEntriesWhenNoRowIsExpanded() {
+        let groups = (0..<5).map { group("/App\($0)", sortValue: Double(5 - $0)) }
+
+        let result = ApplicationProcessGroupOrdering.displayedGroups(
+            groups: groups, stableOrder: [], hasExpandedRow: false, cap: 3
+        )
+
+        #expect(result.count == 3)
+        #expect(result.map(\.key.value) == ["/App0", "/App1", "/App2"])
+    }
+
+    /// task-001 검증 조건의 핵심 단언 — 정원 자르기는 순서 고정 **뒤에** 적용되어야 합니다.
+    /// 자르기를 순서 고정보다 먼저 적용하면, 새로 1위로 치고 올라온 `/New`가 고정된 순서의
+    /// 뒷자리(`/C`)를 밀어내 펼친 행이 있는 동안의 순서·구성이 그대로 유지되지 않습니다.
+    @Test func capIsAppliedAfterStableOrderIsFixedNotBeforeIt() {
+        let stableOrder = [ApplicationKey(value: "/A"), ApplicationKey(value: "/B"), ApplicationKey(value: "/C")]
+        let latestSort = [
+            group("/New", sortValue: 100),
+            group("/A", sortValue: 3),
+            group("/B", sortValue: 2),
+            group("/C", sortValue: 1),
+        ]
+
+        let result = ApplicationProcessGroupOrdering.displayedGroups(
+            groups: latestSort, stableOrder: stableOrder, hasExpandedRow: true, cap: 3
+        )
+
+        #expect(
+            result.map(\.key.value) == ["/A", "/B", "/C"],
+            "펼친 행이 있는 동안은 고정된 순서·구성이 그대로 유지되어야 합니다 — 새 앱이 아무리 순위가 높아도 정원 자르기가 고정된 순서를 밀어내면 안 됩니다."
+        )
     }
 }

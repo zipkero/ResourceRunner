@@ -87,7 +87,7 @@ final class DashboardProcessListDisplayUITests: XCTestCase {
         let triangle = openCPUDetailAndFindRunnerRow(app)
 
         XCTAssertTrue(
-            detailValue(app, containing: "전체 프로세스").exists,
+            detailValue(app, containing: "CPU 사용량 순위").exists,
             "정렬 기준을 알리는 머리글이 CPU 상세에 나타나지 않았습니다."
         )
 
@@ -136,7 +136,7 @@ final class DashboardProcessListDisplayUITests: XCTestCase {
         XCTAssertTrue(currentUsageHeading.waitForExistence(timeout: 2), "⌘2로 Memory 상세가 나타나지 않았습니다.")
 
         XCTAssertTrue(
-            waitUntil({ self.detailValue(app, containing: "전체 프로세스").exists }, timeout: 5),
+            waitUntil({ self.detailValue(app, containing: "합계 내림차순").exists }, timeout: 5),
             "정렬 기준을 알리는 머리글이 Memory 상세에 나타나지 않았습니다."
         )
 

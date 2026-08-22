@@ -253,3 +253,44 @@
   성능 기록 — `testMemoryProcessListAppRowValuesUseByteUnitsNotRawNumbers`가 처음엔 283초였습니다.
   `allElementsBoundByIndex`로 수백 개 앱 행을 전부 순회한 탓입니다.
   값 서식은 모든 행이 같은 클로저 하나를 지나므로 표본을 앞 3개로 줄여 15.5초가 됐습니다(18배).
+- 2026-08-21: SPEC 재작성으로 초기화됐던 Task 재검증. task-008·009가 approved로 `[x]`가 됐고 task-014는 rejected입니다.
+  셋 다 **코드 변경 0**이었습니다 — 초기화의 원인이 구현 부재가 아니라 상위 문서 재작성이었음이 실사로 확인됐습니다.
+  판정 근거는 전부 mutation입니다. task-008은 여섯 결과 항목(간격 판정, 창 끝 시각, 10분 창 필터, `prefix(topCount)`,
+  `.success(nil)` → `.collecting`, 접근성 안내 문구)을, task-009는 네 항목(기호 통일, swap 기준점, swap 창 필터,
+  접근성 단계 문구)을 각각 흔들어 대응 테스트가 정확히 실패하는 것을 확인했습니다.
+  `SPEC §5.5`·`§5.13`이 이 시점에 닫혔습니다. §5.13은 세 절(카드 접근성 이름, 키보드 선택·복귀, 상세 팝업 접근성 도달)이
+  한 앱 세션에서 함께 관찰되는지로 판정했고 UI 스위트 22개 210.8초 전부 통과했습니다.
+  **task-014 reject 사유** — 「결과」 마지막 항목의 통합 관찰 네 가지 중 둘에 근거가 없습니다.
+  「실제 CPU 부하에 따른 메뉴바 접근성 이름 전환」은 실행 앱 근거가 `testStatusItemAccessibilityLabelFollowsInjectedState`뿐인데
+  이것이 `debugStateInjector` 경로라 실제 판정 경로를 증명하지 못하고,
+  「팝오버 개폐에 따른 수집 주기 변경」은 주입 입력을 쓰는 단위 테스트까지만 있습니다.
+  또 `SPEC §5.14`의 앞절 「App Sandbox를 유지한 채 **위 동작이 성립**」은 §5.1~§5.13 전체를 가리키므로
+  task-006·007·012·013이 `[ ]`인 동안 판정 자체가 불가능합니다 — **task-014는 그 Task들이 끝난 뒤에 잡아야 합니다.**
+  자동 항목은 전부 성립했습니다 — Release 번들 파일 5개에 `Contents/Library` 부재, `app-sandbox = true`에 임시 예외 없음,
+  `lipo -archs` arm64 단일, 세 대상 deployment target 26.5, `project.pbxproj`가 M1 baseline(`0dfba14`)과 바이트 동일,
+  자리표시 심볼·외부 전송 경로 0건.
+  새로 확인된 사실 — 저장소에 `.entitlements` 파일이 없고 pbxproj의 `ENABLE_APP_SANDBOX = YES`만으로
+  Xcode 26이 entitlement를 합성합니다. Release 서명 entitlement는 셋입니다(`app-sandbox`,
+  `files.user-selected.read-only`, ad-hoc 서명 산물인 `get-task-allow`).
+- 2026-08-21: Memory 카드 TOP 5 배선의 그물 공백 해소.
+  `ApplicationCoordinator.swift`의 `ranking?.memoryUsage`를 `cpuUsage`로 바꿔도 316개 테스트가 전부 통과했습니다.
+  `consumeSystemMetricsDeliversProcessSurveyRankingToBothCards`의 fixture에서 Alpha가 CPU·메모리 양쪽 1위라
+  어느 축을 받아도 순서가 같았고, Memory 쪽은 `displayName`만 단언하고 값을 단언하지 않았기 때문입니다(CPU 쪽은 값까지 단언).
+  fixture를 두 축의 순위가 어긋나게 바꾸고(Alpha가 CPU 1위·메모리 2위, Bravo가 그 반대) 값 단언을 더해,
+  같은 mutation에서 이 테스트 하나만 깨끗하게 실패하는 것을 확인했습니다.
+  **잔여 위험 — `MemorySystemMetricsCollector.readPressureLevel()`의 throw를 `?? .normal`로 바꿔도 실패가 0건입니다.**
+  앞뒤 링크는 덮여 있고(무효 원시값 → `nil`은 `otherRawValuesAreNotInterpreted`,
+  `unsupportedValue` 실패가 임의 단계를 만들지 않음은 `memoryFailureTickBecomesFailureStateKeepingLastKnownValue`)
+  비어 있는 것은 사이 3줄뿐인데, 그 자리가 `private` + 실제 `sysctl`이라 주입 지점이 없습니다.
+  production에 테스트 전용 seam을 내는 비용이 얻는 것보다 크다고 판단해 사용자 결정으로 열어 둡니다.
+- 2026-08-21: 앞선 기록 보완 두 건.
+  (1) `96e1ddb`의 「무효 테스트 2건 제거·교체」는 **제거가 아니라 본문 교체**입니다 —
+  그 커밋에서 사라진 테스트 함수 이름을 전부 HEAD와 대조한 결과 이름 기준으로 삭제된 것은 하나도 없습니다.
+  같은 커밋에서 `recentValueCount` 그물(`ProcessHistoryRecentValueRingTests`)이 추가돼,
+  위 `2026-08-17` 항목이 미해소 공백으로 적어 둔 「3 → 2 mutation이 301개 테스트를 전부 통과」는 그 시점 기록이며 지금은 닫혀 있습니다.
+  (2) UI 스위트 대량 실패의 원인은 **실행 중 화면 잠금**이었습니다. 코드 결함이 아닙니다 —
+  이후 대량 실패를 만나면 이 가능성을 먼저 확인해야 합니다.
+- 2026-08-21: 테스트 실행 정책. 기본은 단위 전체(316개 약 4초)와 변경에 걸리는 UI 테스트만 `-only-testing:`으로 돌리고,
+  UI 스위트 전체(22개 약 200초)는 Task를 닫을 때나 `SPEC §5.N`이 닫힐 때만 돌립니다.
+  전체 338개 중 UI 22개가 시간의 98%를 쓰는데, 원인이 단언 개수가 아니라 테스트마다 붙는 `app.launch()`와 수집 대기 고정비라
+  개수를 줄여도 체감이 바뀌지 않기 때문입니다.

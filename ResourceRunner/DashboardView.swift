@@ -17,6 +17,10 @@ import SwiftUI
 /// 확인된 사실입니다(ANALYSIS §근거 확인 사실).
 struct DashboardView: View {
     @ObservedObject var store: DashboardPresentationStore
+    /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
+    /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
+    /// 같은 앱의 아이콘을 다시 얻게 됩니다(ANALYSIS §1 「아이콘 경계」, §5 DP11).
+    let iconProvider: any ApplicationIconProviding
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -33,7 +37,7 @@ struct DashboardView: View {
             // 그래서 `keyboardShortcut(_:modifiers:)`로 키보드 탐색 설정과 무관하게 항상 동작하는 단축키를
             // 함께 둡니다(ANALYSIS §5 DP15) — 이 단축키가 기본 설정 환경에서 SPEC §5.13을 성립시키는 수단입니다.
             Button(action: { store.selectCard(.cpu) }) {
-                CPUCardView(state: store.cpuCard)
+                CPUCardView(state: store.cpuCard, iconProvider: iconProvider)
             }
             .buttonStyle(.plain)
             .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
@@ -44,11 +48,11 @@ struct DashboardView: View {
             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
             .accessibilityIdentifier("CPUCard")
             .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
-                CPUDetailPopoverContent(state: store.cpuCard)
+                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider)
             }
 
             Button(action: { store.selectCard(.memory) }) {
-                MemoryCardView(state: store.memoryCard)
+                MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
             }
             .buttonStyle(.plain)
             .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
@@ -58,7 +62,7 @@ struct DashboardView: View {
             // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
             .accessibilityIdentifier("MemoryCard")
             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
-                MemoryDetailPopoverContent(state: store.memoryCard)
+                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider)
             }
         }
         .padding()
@@ -133,6 +137,8 @@ struct DashboardView: View {
 // 렌더링해 높이를 비교해야 하므로(`@testable import`) 파일 밖(같은 모듈의 테스트 타깃)에서 접근할 수 있어야 합니다.
 struct CPUCardView: View {
     let state: ResourceCardState<CPUCardPresentation>
+    /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
+    let iconProvider: any ApplicationIconProviding
 
     /// 이 카드가 보여줄 수 있는 값. `normal`은 이번 tick 값, `failure`·`stopped`는 마지막 성공 값을 담고,
     /// 성공 이력이 없는 `collecting`과 실패·중지는 `nil`입니다(`ResourceCardState.lastKnownValue`).
@@ -149,9 +155,7 @@ struct CPUCardView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(primaryLineText)
                     .font(.caption)
-                Text(secondaryLineText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                secondaryLine
             }
 
             if let presentation = cached {
@@ -165,7 +169,8 @@ struct CPUCardView: View {
                 entries: cached?.topApplications ?? [],
                 failed: cached?.topApplicationsFailed ?? false,
                 caption: CPUCardPresentation.topApplicationsCaption,
-                valueText: { "\(Int($0.value.rounded()))%" }
+                valueText: { "\(Int($0.value.rounded()))%" },
+                iconProvider: iconProvider
             )
 
             // 선택·복귀 단축키는 수집 상태와 무관하게 카드에 항상 보이는 표시입니다(ANALYSIS §5 DP15) —
@@ -195,22 +200,68 @@ struct CPUCardView: View {
         }
     }
 
-    /// 요약 줄의 두 번째 줄. 캐시된 값이 있을 때만 User·System 비율을 보여주고, 없으면 자리표시로 채웁니다 —
-    /// 값을 지어내지 않으므로 구체적인 비율 대신 중립 기호를 씁니다(§5 DP17, SPEC §5.11).
-    private var secondaryLineText: String {
-        guard let presentation = cached else { return "–" }
-        return "User \(Int(presentation.userRatio.rounded()))% · System \(Int(presentation.systemRatio.rounded()))%"
+    /// 요약 줄의 두 번째 줄. 캐시된 값이 있을 때만 User·System 비율을 그래프 밴드와 같은 모양의 스와치와 함께
+    /// 보여주고, 없으면 자리표시로 채웁니다 — 값을 지어내지 않으므로 구체적인 비율 대신 중립 기호를 씁니다
+    /// (§5 DP17, SPEC §5.11). 스와치는 색이 아니라 밴드의 채움 밀도·경계선 모양을 그대로 옮겨,
+    /// 색을 지운 화면에서도 어느 스와치가 어느 계열인지 그래프와 같은 방식으로 구분됩니다(SPEC §5.5, ANALYSIS §5 DP9).
+    @ViewBuilder
+    private var secondaryLine: some View {
+        Group {
+            if let presentation = cached {
+                HStack(spacing: 4) {
+                    CPUSeriesSwatchView(band: .lower)
+                    Text("User \(Int(presentation.userRatio.rounded()))%")
+                    Text("·")
+                    CPUSeriesSwatchView(band: .upper)
+                    Text("System \(Int(presentation.systemRatio.rounded()))%")
+                }
+            } else {
+                Text("–")
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+    }
+}
+
+/// CPU 요약 줄의 계열 스와치. 그래프 밴드와 같은 채움 밀도·경계선 모양을 옮겨 색을 지운 화면에서도
+/// User·System을 구분할 수 있게 합니다(SPEC §5.5, ANALYSIS §5 DP9).
+/// 크기는 그 줄의 텍스트 높이를 넘지 않도록 `.caption` 줄 높이보다 작은 고정 값으로 둡니다.
+private struct CPUSeriesSwatchView: View {
+    let band: HistoryGraphView.BandRole
+
+    private static let size: CGFloat = 8
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(color.opacity(HistoryGraphView.fillOpacity(for: band)))
+            .overlay(
+                RoundedRectangle(cornerRadius: 2)
+                    .strokeBorder(color, style: HistoryGraphView.boundaryStyle(for: band))
+            )
+            .frame(width: Self.size, height: Self.size)
+    }
+
+    private var color: Color {
+        switch band {
+        case .lower: return DashboardColorPalette.cpuUser
+        case .upper: return DashboardColorPalette.cpuSystem
+        }
     }
 }
 
 /// Memory 카드: 전체 물리 메모리, 사용 중 메모리, Memory Pressure 단계, Swap 사용량과 최근 변화량,
-/// 앱 단위 Memory TOP 5. Pressure 단계는 라벨과 기호를 함께 표시해 색상이 아닌 수단으로도 구분됩니다(SPEC §5.5).
+/// 앱 단위 Memory TOP 5. Pressure 단계는 기호와 라벨을 함께 표시해 색상이 아닌 수단으로도 구분됩니다(SPEC §5.5).
 ///
-/// CPU 카드와 같은 이유로 네 상태 모두 제목 줄 · Pressure 줄 · Swap 줄 · 순위 자리 · 단축키 줄을 항상 그리며,
+/// CPU 카드와 같은 이유로 네 상태 모두 제목 줄(구성 누적 바 포함) · Pressure·Swap 병합 줄 · 구성 범례 줄 ·
+/// 순위 자리 · 단축키 줄을 항상 그립니다.
+/// Pressure 줄과 Swap 줄은 한 줄로 합쳐 비운 자리를 구성 범례 줄이 씁니다 — 슬롯 수와 카드 높이는 그대로입니다(ANALYSIS §5 DP4).
 /// 값이 있을 때만 그리던 Pressure 줄·Swap 줄도 고정 슬롯으로 바꿨습니다(task-015, §5 DP17).
 // CPU 카드와 같은 이유로 기본 접근 수준입니다(task-015 테스트).
 struct MemoryCardView: View {
     let state: ResourceCardState<MemoryCardPresentation>
+    /// CPU 카드와 같은 이유로 전달만 받습니다.
+    let iconProvider: any ApplicationIconProviding
 
     private static let byteCountFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -229,18 +280,18 @@ struct MemoryCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(titleLineText)
-                .font(.subheadline.bold())
+            titleLine
 
-            pressureLine
+            pressureSwapLine
 
-            swapLine
+            compositionLegendLine
 
             CardRankingSlotView(
                 entries: cached?.topApplications ?? [],
                 failed: cached?.topApplicationsFailed ?? false,
                 caption: MemoryCardPresentation.topApplicationsCaption,
-                valueText: { format(UInt64($0.value.rounded())) }
+                valueText: { format(UInt64($0.value.rounded())) },
+                iconProvider: iconProvider
             )
 
             // CPU 카드와 같은 이유로 단축키 표시를 수집 상태와 무관하게 항상 둡니다(ANALYSIS §5 DP15).
@@ -253,7 +304,20 @@ struct MemoryCardView: View {
         .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
     }
 
-    /// 제목 줄. 캐시된 값이 있으면 사용 중/전체 메모리를, 없으면 상태 문구를 보여줍니다(§5 DP17).
+    /// 제목 줄. 「사용 중 / 전체」 수치가 왼쪽에 남고, 그 줄의 남는 폭을 구성 누적 바가 씁니다(SPEC §5.3).
+    /// 바 높이는 제목 텍스트 높이 이하이고 제목은 한 줄로 묶여 있어, 이 바 때문에 카드가 커지지 않습니다(SPEC §5.8).
+    private var titleLine: some View {
+        HStack(spacing: 6) {
+            Text(titleLineText)
+                .font(.subheadline.bold())
+                .lineLimit(MemoryCompositionLegendFormatting.maximumLineCount)
+                .layoutPriority(1)
+
+            MemoryCompositionBarView(segments: cached?.compositionLayout.segments ?? [])
+        }
+    }
+
+    /// 제목 줄에 보이는 문자열. 캐시된 값이 있으면 사용 중/전체 메모리를, 없으면 상태 문구를 보여줍니다(§5 DP17).
     private var titleLineText: String {
         switch state {
         case .collecting:
@@ -269,39 +333,94 @@ struct MemoryCardView: View {
         }
     }
 
-    /// Pressure 줄(고정 슬롯). 캐시된 값이 없으면 세 실제 단계 기호(원·삼각형·팔각형) 중 어느 것도 아닌
-    /// `circle.dashed`로 자리표시를 채워 값을 지어내지 않습니다(§5 DP17, SPEC §5.11).
-    @ViewBuilder
-    private var pressureLine: some View {
-        if let presentation = cached {
-            Label(presentation.pressureDisplay.label, systemImage: presentation.pressureDisplay.symbolName)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        } else {
-            Label("–", systemImage: "circle.dashed")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    /// Pressure·Swap·구성 합계 줄(고정 슬롯). `MemoryPressureSwapLineFormatting.assemble`이 고정한 순서를
+    /// 그대로 이어붙여 그리고 `MemoryPressureSwapLineFormatting.maximumLineCount`로 묶어
+    /// 폭이 부족할 때 줄바꿈 대신 끝에서 잘리게 합니다 — 뷰는 순서도 줄 수 상한도 정하지 않고 조립 결과를 그리기만 합니다(ANALYSIS §5 DP4).
+    /// 줄 끝의 구성 합계는 제목 줄의 「사용 중」과 다른 지표라 「구성」 라벨을 달아 그립니다(SPEC §5.3).
+    private var pressureSwapLine: some View {
+        let segments = cached.map {
+            MemoryPressureSwapLineFormatting.assemble(
+                pressureDisplay: $0.pressureDisplay,
+                swapUsedBytes: $0.swapUsedBytes,
+                swapRecentChangeBytes: $0.swapRecentChangeBytes,
+                compositionTotalBytes: $0.compositionTotalBytes,
+                format: format
+            )
+        } ?? MemoryPressureSwapLineFormatting.placeholder
+
+        return segments.reduce(Text("")) { line, segment in
+            switch segment {
+            case .symbol(let name):
+                return line + Text(Image(systemName: name))
+            case .label(let text):
+                return line + Text(" \(text)")
+            case .separator:
+                return line + Text(" · ")
+            case .swapUsage(let text):
+                return line + Text("Swap \(text)")
+            case .swapChange(let text):
+                return line + Text(" (\(text))")
+            case .compositionTotal(let text):
+                return line + Text("구성 \(text)")
+            }
         }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .lineLimit(MemoryPressureSwapLineFormatting.maximumLineCount)
     }
 
-    /// Swap 줄(고정 슬롯). 캐시된 값이 없으면 자리표시로 채웁니다(§5 DP17).
-    @ViewBuilder
-    private var swapLine: some View {
-        if let presentation = cached {
-            if let change = presentation.swapRecentChangeBytes {
-                Text("Swap \(format(presentation.swapUsedBytes)) (\(change >= 0 ? "+" : "")\(format(UInt64(abs(change)))))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Swap \(format(presentation.swapUsedBytes))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    /// 구성 범례 줄(고정 슬롯). task-006의 병합이 비워 둔 자리를 씁니다.
+    /// `MemoryCompositionLegendFormatting.segments`가 고정한 순서 — 바 구간과 같은 App → Wired → Compressed → Cached —
+    /// 를 그대로 이어붙여 그리므로 뷰는 순서도 문구도 고르지 않습니다(ANALYSIS §5 DP15).
+    /// 각 색 스와치 바로 뒤에 이름이 붙어, 색을 지운 화면에서도 어느 구간인지 읽힙니다(SPEC §5.3).
+    ///
+    /// 수집 상태와 무관하게 같은 네 이름을 그립니다 — 범례에 수치가 없어 값 없음을 나타낼 것이 없고,
+    /// 그래서 이 줄은 어느 상태에서도 같은 자리를 같은 크기로 차지합니다(SPEC §5.8, ANALYSIS §5 DP14).
+    private var compositionLegendLine: some View {
+        MemoryCompositionLegendFormatting.segments.reduce(Text("")) { line, segment in
+            switch segment {
+            case .swatch(let category):
+                return line + Text(Image(systemName: "square.fill"))
+                    .foregroundStyle(DashboardColorPalette.memoryComposition(category))
+            case .label(let text):
+                return line + Text(" \(text)")
+            case .separator:
+                return line + Text("  ")
             }
-        } else {
-            Text("Swap –")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .lineLimit(MemoryCompositionLegendFormatting.maximumLineCount)
+    }
+}
+
+/// Memory 구성 누적 바. 제목 줄의 남는 폭을 채우고, 트랙 전체가 전체 물리 메모리이며
+/// 각 구간 길이는 실제 바이트에 비례합니다(SPEC §5.3). 구간 순서·비율·누적 시작 위치는
+/// `MemoryCompositionLayout`이 정하고, 이 뷰는 그 결과를 좌표로 옮겨 칠하는 일만 합니다(ANALYSIS §5 DP15).
+///
+/// 값이 없으면 구간 배열이 비어 트랙만 남습니다 — 없는 값을 길이 0 구간으로도 그리지 않습니다(ANALYSIS §5 DP14).
+/// 트랙의 남는 부분에는 이름을 붙이지 않습니다. 여유 메모리와 같은 값이 아니기 때문입니다(ANALYSIS §5 DP5).
+private struct MemoryCompositionBarView: View {
+    let segments: [MemoryCompositionSegment]
+
+    /// 바 높이. 제목 줄 글꼴(`.subheadline`)의 텍스트 높이보다 작아야 카드 높이가 이 바 때문에 늘지 않습니다.
+    private static let height: CGFloat = 8
+    private static let cornerRadius: CGFloat = 2
+
+    var body: some View {
+        Canvas { context, size in
+            let track = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: Self.cornerRadius)
+            context.fill(track, with: .color(DashboardColorPalette.memoryCompositionTrack))
+            context.clip(to: track)
+
+            for segment in segments {
+                let width = size.width * CGFloat(segment.ratio)
+                guard width > 0 else { continue }
+                let rect = CGRect(x: size.width * CGFloat(segment.startRatio), y: 0, width: width, height: size.height)
+                context.fill(Path(rect), with: .color(DashboardColorPalette.memoryComposition(segment.category)))
+            }
+        }
+        .frame(height: Self.height)
     }
 }
 
@@ -318,33 +437,144 @@ struct MemoryCardView: View {
 /// 그대로 찍으면 점 간격이 원본 표본 간격까지 좁아져 사용률 흐름이 뭉개집니다. 그리기 직전
 /// `HistoryPoint.downsampledConnectedSegments(from:bucketCount:)`로 렌더 폭 기준 버킷 수만큼 다운샘플링해
 /// 평균 점 간격이 `lineWidth`보다 확실히 커지게 합니다(결함 수정, SPEC §5.1).
-private struct HistoryGraphView: View {
+// CPU 카드와 같은 이유로 기본 접근 수준입니다 — task-005 테스트가 `drawOrder`·`fillOpacity`·`boundaryStyle`을
+// `@testable import`로 직접 단언해야 격자·밴드 그리기 순서와 불투명도의 회귀를 단위 테스트로 잡을 수 있습니다.
+struct HistoryGraphView: View {
     let points: [HistoryPoint]
+
+    /// 두 밴드 중 어느 쪽인지. 아래(User)와 위(System)가 색이 아니라 채움 밀도·경계선 모양으로도
+    /// 구분되도록 이 값에서 스타일을 유도합니다(SPEC §5.5, ANALYSIS §5 DP9).
+    /// 요약 줄 스와치(`CPUSeriesSwatchView`)가 같은 유도 함수를 써서 그래프와 스와치의 모양이 어긋나지 않습니다.
+    enum BandRole {
+        case lower
+        case upper
+    }
+
+    /// `Canvas`가 그리는 것과 순서. 격자가 항상 맨 먼저(가장 뒤)이고, 그 뒤로 두 밴드 채움, 마지막에 두 밴드
+    /// 경계선이 옵니다(SPEC §5.6, ANALYSIS §5 DP10) — 밴드 채움이 격자보다 먼저 오면 부하가 높은 구간에서
+    /// 밴드가 격자를 덮어 SPEC §5.6이 그 구간에서 성립하지 않습니다.
+    /// `body`가 이 배열을 그대로 순회해 그리므로, 이 배열 자체가 실제 그리기 순서입니다 —
+    /// 순서를 검증하는 단위 테스트는 `Canvas` 내부가 아니라 이 배열을 단언합니다.
+    enum DrawLayer: Equatable {
+        case gridlines
+        case bandFill(BandRole)
+        case bandBoundary(BandRole)
+    }
+
+    static let drawOrder: [DrawLayer] = [
+        .gridlines,
+        .bandFill(.lower),
+        .bandFill(.upper),
+        .bandBoundary(.lower),
+        .bandBoundary(.upper)
+    ]
 
     /// `context.stroke`의 선 두께. 다운샘플링 버킷 최소 간격(`HistoryPoint.minimumDownsampledBucketSpacing`)의
     /// 절반(버킷당 평균 점 수 2개 기준 평균 간격)보다 확실히 작아야 인접 버킷의 선분이 두께에 묻혀 뭉개지지 않습니다.
     private static let lineWidth: CGFloat = 1.0
+
+    /// 아래 밴드(User) 경계선의 점선 패턴. 위 밴드(System) 경계선(전체 사용률 선)과 모양이 달라야
+    /// 색을 지운 화면에서도 두 경계가 구분됩니다.
+    private static let lowerBandDashPattern: [CGFloat] = [3, 2]
+
+    static func boundaryStyle(for band: BandRole) -> StrokeStyle {
+        switch band {
+        case .lower: return StrokeStyle(lineWidth: lineWidth, dash: lowerBandDashPattern)
+        case .upper: return StrokeStyle(lineWidth: lineWidth)
+        }
+    }
+
+    /// 밴드 채움 불투명도. 두 밴드가 서로 다른 밀도로 채워지고, 격자(task-005)가 부하가 높은 구간에서도
+    /// 비치도록 둘 다 반투명입니다(ANALYSIS §5 DP9, DP10).
+    static func fillOpacity(for band: BandRole) -> Double {
+        switch band {
+        case .lower: return 0.5
+        case .upper: return 0.28
+        }
+    }
+
+    private static func color(for band: BandRole) -> Color {
+        switch band {
+        case .lower: return DashboardColorPalette.cpuUser
+        case .upper: return DashboardColorPalette.cpuSystem
+        }
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             GeometryReader { proxy in
                 let currentTimestamp = ContinuousClock().now
                 Canvas { context, size in
-                    let bucketCount = HistoryPoint.downsampledBucketCount(forRenderWidth: size.width)
-                    for segment in HistoryPoint.downsampledConnectedSegments(from: points, bucketCount: bucketCount) {
+                    func xPosition(_ point: HistoryPoint) -> CGFloat {
+                        size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp, currentTimestamp: currentTimestamp))
+                    }
+                    func yPosition(_ value: Double) -> CGFloat {
+                        CGFloat(HistoryGraphGridline.yPosition(forValue: value, height: Double(size.height)))
+                    }
+
+                    let segments = HistoryPoint.downsampledConnectedSegments(from: points, bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
+
+                    func lowerFillPath(for segment: [HistoryPoint]) -> Path? {
+                        guard let first = segment.first, let last = segment.last else { return nil }
+                        // 아래 밴드(User) 채움: 0~User.
+                        var path = Path()
+                        path.move(to: CGPoint(x: xPosition(first), y: yPosition(0)))
+                        for point in segment {
+                            path.addLine(to: CGPoint(x: xPosition(point), y: yPosition(point.lowerBandValue)))
+                        }
+                        path.addLine(to: CGPoint(x: xPosition(last), y: yPosition(0)))
+                        path.closeSubpath()
+                        return path
+                    }
+
+                    func upperFillPath(for segment: [HistoryPoint]) -> Path? {
+                        guard let first = segment.first else { return nil }
+                        // 위 밴드(System) 채움: User~전체.
+                        var path = Path()
+                        path.move(to: CGPoint(x: xPosition(first), y: yPosition(first.lowerBandValue)))
+                        for point in segment {
+                            path.addLine(to: CGPoint(x: xPosition(point), y: yPosition(point.lowerBandValue + point.upperBandValue)))
+                        }
+                        for point in segment.reversed() {
+                            path.addLine(to: CGPoint(x: xPosition(point), y: yPosition(point.lowerBandValue)))
+                        }
+                        path.closeSubpath()
+                        return path
+                    }
+
+                    // 두 밴드 경계선. 아래 경계(User)는 점선, 위 경계(전체 사용률)는 실선으로 그려
+                    // 색을 지운 화면에서도 어느 쪽 경계인지 구분됩니다.
+                    func boundaryPath(for segment: [HistoryPoint], band: BandRole) -> Path? {
+                        guard !segment.isEmpty else { return nil }
                         var path = Path()
                         for (index, point) in segment.enumerated() {
-                            let position = CGPoint(
-                                x: size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp, currentTimestamp: currentTimestamp)),
-                                y: size.height * (1 - CGFloat(point.value / 100))
-                            )
+                            let value = band == .lower ? point.lowerBandValue : point.lowerBandValue + point.upperBandValue
+                            let position = CGPoint(x: xPosition(point), y: yPosition(value))
                             if index == 0 {
                                 path.move(to: position)
                             } else {
                                 path.addLine(to: position)
                             }
                         }
-                        context.stroke(path, with: .color(.accentColor), lineWidth: Self.lineWidth)
+                        return path
+                    }
+
+                    for layer in Self.drawOrder {
+                        switch layer {
+                        case .gridlines:
+                            drawCPUGraphGridlines(in: &context, size: size)
+                        case .bandFill(let band):
+                            for segment in segments {
+                                let path = band == .lower ? lowerFillPath(for: segment) : upperFillPath(for: segment)
+                                guard let path else { continue }
+                                context.fill(path, with: .color(Self.color(for: band).opacity(Self.fillOpacity(for: band))))
+                            }
+                        case .bandBoundary(let band):
+                            for segment in segments {
+                                guard let path = boundaryPath(for: segment, band: band) else { continue }
+                                context.stroke(path, with: .color(Self.color(for: band)), style: Self.boundaryStyle(for: band))
+                            }
+                        }
                     }
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
@@ -353,12 +583,69 @@ private struct HistoryGraphView: View {
     }
 }
 
-/// 그래프 자리의 자리표시(task-015). `HistoryGraphView`와 같은 높이만 차지하고 점이나 선은 그리지 않습니다 —
-/// 값이 하나도 없는 슬롯에 값을 지어내지 않기 위해서입니다(ANALYSIS §5 DP17, SPEC §5.11).
+/// `HistoryGraphView`와 값 없음 자리표시(`GraphPlaceholderView`)가 같은 격자를 그리도록 공유하는 그리기 함수입니다
+/// (SPEC §5.8, ANALYSIS §5 DP14). 기준선 값과 좌표 변환은 `HistoryGraphGridline`(뷰 밖 순수 함수)에서 가져오고,
+/// 여기서는 그 결과를 좌표로 옮겨 선을 긋는 일만 합니다.
+private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSize) {
+    for value in HistoryGraphGridline.baselineValues {
+        let y = CGFloat(HistoryGraphGridline.yPosition(forValue: value, height: Double(size.height)))
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: y))
+        path.addLine(to: CGPoint(x: size.width, y: y))
+        context.stroke(path, with: .color(DashboardColorPalette.cpuGridline))
+    }
+}
+
+/// 그래프 자리의 자리표시(task-015). `HistoryGraphView`와 같은 높이만 차지하고, 값이 없는 상태에도
+/// 같은 격자를 같은 높이로 그립니다 — 격자는 값이 아니라 눈금이라 그려도 되지만, 점이나 선은 값을 지어내는
+/// 것이라 그리지 않습니다(ANALYSIS §5 DP14, SPEC §5.6, §5.8).
 private struct GraphPlaceholderView: View {
     var body: some View {
-        Color.clear
-            .frame(height: 60)
+        Canvas { context, size in
+            for layer in HistoryGraphGridline.placeholderDrawOrder {
+                switch layer {
+                case .gridlines:
+                    drawCPUGraphGridlines(in: &context, size: size)
+                }
+            }
+        }
+        .frame(height: 60)
+    }
+}
+
+/// 순위·목록 행 앞의 아이콘 자리. 아이콘이 있는 줄이든 없는 줄이든 같은 크기를 차지해
+/// 행 높이와 텍스트 시작 위치가 흔들리지 않습니다(SPEC §5.7, ANALYSIS §5 DP12).
+///
+/// 무엇을 그릴지는 `ApplicationRowIconLayout`이 정하고 이 뷰는 그 결정을 그리기만 합니다 —
+/// 크기·중립 기호·접근성 감춤이 모두 뷰 밖 상수라 단위 테스트가 직접 잡습니다(ANALYSIS §5 DP15).
+///
+/// 아이콘은 같은 행의 앱 이름과 정보가 겹쳐 접근성 계층에서 감춥니다(ANALYSIS §5 DP13).
+// `private`가 아닌 것은 task-010 테스트가 세 내용(`icon`·`missing`·`reserved`)의 자리 크기가 같은지
+// 이 뷰를 직접 재서 확인하기 때문입니다.
+struct ApplicationRowIconView: View {
+    let content: ApplicationRowIconContent
+    let pointSize: CGFloat
+
+    var body: some View {
+        iconImage
+            .frame(width: pointSize, height: pointSize)
+            .accessibilityHidden(ApplicationRowIconLayout.isHiddenFromAccessibility)
+    }
+
+    @ViewBuilder
+    private var iconImage: some View {
+        switch content {
+        case .icon(let image):
+            Image(nsImage: image)
+                .resizable()
+        case .missing:
+            Image(systemName: ApplicationRowIconLayout.missingSymbolName)
+                .resizable()
+                .foregroundStyle(.secondary)
+        case .reserved:
+            // 앱이 없는 줄입니다. 자리만 차지하고 기호를 드러내지 않습니다.
+            Color.clear
+        }
     }
 }
 
@@ -373,13 +660,19 @@ private struct CardRankingSlotView: View {
     let failed: Bool
     let caption: String
     let valueText: (ApplicationRankingEntry) -> String
+    let iconProvider: any ApplicationIconProviding
 
-    private static let capacity = ApplicationRankingSampling.topCount
+    private static let capacity = ApplicationRankingSampling.cardDisplayCount
+    /// 아이콘 자리와 이름 사이 간격.
+    private static let iconSpacing: CGFloat = 4
 
     var body: some View {
+        // 그릴 줄 수와 줄별 아이콘 대상이 같은 목록에서 나옵니다 — 아이콘이 있는 줄에만 자리를 두면
+        // 줄마다 텍스트 시작 위치가 달라지므로, 값이 없는 줄과 조사 실패 줄도 이 목록에 자리를 갖습니다(SPEC §5.7).
+        let iconKeys = ApplicationRowIconLayout.cardRowIconKeys(entries: entries, failed: failed, capacity: Self.capacity)
         VStack(alignment: .leading, spacing: 2) {
-            ForEach(0..<Self.capacity, id: \.self) { index in
-                row(at: index)
+            ForEach(Array(iconKeys.enumerated()), id: \.offset) { index, iconKey in
+                row(at: index, iconKey: iconKey)
                     .font(.caption)
             }
 
@@ -389,22 +682,32 @@ private struct CardRankingSlotView: View {
         }
     }
 
+    private func row(at index: Int, iconKey: ApplicationKey?) -> some View {
+        HStack(spacing: Self.iconSpacing) {
+            ApplicationRowIconView(
+                content: ApplicationRowIconLayout.content(for: iconKey, from: iconProvider),
+                pointSize: ApplicationRowIconLayout.cardPointSize
+            )
+            rowContent(at: index)
+        }
+    }
+
     @ViewBuilder
-    private func row(at index: Int) -> some View {
+    private func rowContent(at index: Int) -> some View {
         if failed {
             if index == 0 {
-                Text("TOP 5 조사 실패")
+                // 카드 정원(`Self.capacity`)에 맞춘 문구입니다 — 정원 숫자를 문자열에 직접 박아 두면
+                // 카드 정원이 바뀌어도 이 문구가 따라오지 못합니다.
+                Text("TOP \(Self.capacity) 조사 실패")
                     .foregroundStyle(.secondary)
             } else {
                 placeholderRow
             }
         } else if index < entries.count {
             let entry = entries[index]
-            HStack {
-                Text(entry.displayName)
-                Spacer()
-                Text(valueText(entry))
-            }
+            Text(entry.displayName)
+            Spacer()
+            Text(valueText(entry))
         } else {
             placeholderRow
         }
@@ -417,19 +720,28 @@ private struct CardRankingSlotView: View {
     }
 }
 
-/// 앱 단위 TOP 5. 상세 팝업(`CPUDetailView`·`MemoryDetailView`)이 쓰며, 5개 미만이면 있는 만큼만 나열하고
-/// 시스템 프로세스 제외 안내를 항상 함께 둡니다. 카드 쪽 순위 자리는 높이가 고정되어야 하므로
-/// 이 뷰 대신 `CardRankingSlotView`를 씁니다(task-015).
+/// 앱 단위 순위 목록. 상세 팝업(`MemoryDetailView`)의 최근 증가량 순위 한 자리에서만 쓰이며, 정원보다 적으면
+/// 있는 만큼만 나열하고 시스템 프로세스 제외 안내(호출부가 넘기는 정원에 맞춘 문구)를 항상 함께 둡니다.
+/// 현재 사용량 순위는 `ApplicationProcessGroupListView`(펼침이 있는 앱 목록)가 겸하므로 이 뷰를 쓰지 않습니다(ANALYSIS §5 DP1).
+/// 카드 쪽 순위 자리는 높이가 고정되어야 하므로 이 뷰 대신 `CardRankingSlotView`를 씁니다(task-015).
 /// 값 단위가 카드마다 다르므로(CPU는 `%`, Memory는 바이트) 값 표시 문자열은 호출부가 `valueText`로 넘깁니다.
 private struct TopApplicationsView: View {
     let entries: [ApplicationRankingEntry]
     let caption: String
     let valueText: (ApplicationRankingEntry) -> String
+    let iconProvider: any ApplicationIconProviding
+
+    /// 아이콘 자리와 이름 사이 간격.
+    private static let iconSpacing: CGFloat = 6
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             ForEach(entries, id: \.key) { entry in
-                HStack {
+                HStack(spacing: Self.iconSpacing) {
+                    ApplicationRowIconView(
+                        content: ApplicationRowIconLayout.content(for: entry.key, from: iconProvider),
+                        pointSize: ApplicationRowIconLayout.detailPointSize
+                    )
                     Text(entry.displayName)
                     Spacer()
                     Text(valueText(entry))
@@ -451,12 +763,13 @@ private struct TopApplicationsView: View {
 /// 않는 것이 실행 환경에서 확인되어 본체 등록만으로 팝업이 열린 뒤에도 계속 닿습니다(ANALYSIS §5 DP15).
 private struct CPUDetailPopoverContent: View {
     let state: ResourceCardState<CPUCardPresentation>
+    let iconProvider: any ApplicationIconProviding
 
     var body: some View {
         ScrollView {
             Group {
                 if case .normal(let presentation, _) = state {
-                    CPUDetailView(presentation: presentation)
+                    CPUDetailView(presentation: presentation, iconProvider: iconProvider)
                 } else {
                     Text("아직 CPU 값이 수집되지 않았습니다.")
                         .font(.caption)
@@ -474,12 +787,13 @@ private struct CPUDetailPopoverContent: View {
 /// Memory 카드 옆에 앵커되는 상세 팝업 콘텐츠. CPU 쪽과 같은 이유로 같은 형태를 씁니다.
 private struct MemoryDetailPopoverContent: View {
     let state: ResourceCardState<MemoryCardPresentation>
+    let iconProvider: any ApplicationIconProviding
 
     var body: some View {
         ScrollView {
             Group {
                 if case .normal(let presentation, _) = state {
-                    MemoryDetailView(presentation: presentation)
+                    MemoryDetailView(presentation: presentation, iconProvider: iconProvider)
                 } else {
                     Text("아직 Memory 값이 수집되지 않았습니다.")
                         .font(.caption)
@@ -497,6 +811,7 @@ private struct MemoryDetailPopoverContent: View {
 /// CPU 상세: User·System·Idle, 논리 코어별 사용률, Load Average, 앱별 하위 프로세스(SPEC §5.2).
 private struct CPUDetailView: View {
     let presentation: CPUCardPresentation
+    let iconProvider: any ApplicationIconProviding
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -514,9 +829,10 @@ private struct CPUDetailView: View {
 
             ApplicationProcessGroupListView(
                 groups: presentation.detail.applications,
-                sortDescription: "전체 프로세스 (CPU 사용량 합계 내림차순)",
+                sortDescription: presentation.detail.applicationsHeading,
                 // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
                 groupValueText: ApplicationProcessValueFormatting.cpuGroupValueText,
+                iconProvider: iconProvider,
                 valueText: ApplicationProcessValueFormatting.cpuProcessValueText
             )
         }
@@ -526,10 +842,11 @@ private struct CPUDetailView: View {
     private func fmt(_ value: Double) -> String { String(format: "%.2f", value) }
 }
 
-/// Memory 상세: App·Wired·Compressed·Cached, Swap 사용량과 증가량, 현재 사용량 순위와 최근 증가량 순위,
-/// 앱별 하위 프로세스(SPEC §5.2, SPEC §5.8).
+/// Memory 상세: App·Wired·Compressed·Cached, Swap 사용량과 증가량, 앱 목록(현재 사용량 순위와
+/// 하위 프로세스를 겸함), 최근 증가량 순위(SPEC §5.2, SPEC §5.8, ANALYSIS §5 DP1).
 private struct MemoryDetailView: View {
     let presentation: MemoryCardPresentation
+    let iconProvider: any ApplicationIconProviding
 
     private static let byteCountFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -560,32 +877,29 @@ private struct MemoryDetailView: View {
                     .font(.caption)
             }
 
-            Text("현재 사용량 순위").font(.caption.bold())
-            TopApplicationsView(
-                entries: detail.currentUsageRanking,
-                caption: MemoryCardPresentation.topApplicationsCaption,
-                valueText: { format(UInt64($0.value.rounded())) }
-            )
-
             Text("최근 10분 증가량 순위").font(.caption.bold())
             // 증가량은 음수일 수 있으므로 `TopApplicationsView`가 기본 카드에 쓰는 `UInt64` 변환 경로를
             // 그대로 재사용하지 않고, 부호를 보존하는 별도 포맷을 씁니다.
+            // 이 목록만 상세 정원(20)까지 받으므로 카드 정원 문구와 다른 문구가 필요합니다 — 정원을
+            // 뷰가 고르지 않도록, 조립 시점에 이미 만들어진 문구(`detail.recentIncreaseRankingCaption`)를 그대로 씁니다.
             TopApplicationsView(
                 entries: detail.recentIncreaseRanking,
-                caption: MemoryCardPresentation.topApplicationsCaption,
+                caption: detail.recentIncreaseRankingCaption,
                 valueText: { entry in
                     let signedBytes = Int64(entry.value.rounded())
                     let magnitude = format(UInt64(abs(signedBytes)))
                     return signedBytes >= 0 ? "+\(magnitude)" : "-\(magnitude)"
-                }
+                },
+                iconProvider: iconProvider
             )
 
             ApplicationProcessGroupListView(
                 groups: detail.applications,
-                sortDescription: "전체 프로세스 (Memory 사용량 합계 내림차순)",
+                sortDescription: detail.applicationsHeading,
                 // Memory는 항상 값이 있지만(SPEC §5.6과 달리 기준점이 필요 없음), nil 안전 경로는
                 // `ApplicationProcessValueFormatting`(단위 테스트 대상)을 CPU와 공유합니다.
-                groupValueText: { value in ApplicationProcessValueFormatting.memoryGroupValueText(value, format: format) }
+                groupValueText: { value in ApplicationProcessValueFormatting.memoryGroupValueText(value, format: format) },
+                iconProvider: iconProvider
             ) { process in
                 format(process.residentBytes)
             }
@@ -616,6 +930,7 @@ private struct ApplicationProcessGroupListView: View {
     let sortDescription: String
     /// 앱 행에 표시할 그룹 합계 값의 서식. `nil`(값을 만들지 못한 그룹)을 0으로 지어내지 않습니다(SPEC §5.6).
     let groupValueText: (Double?) -> String
+    let iconProvider: any ApplicationIconProviding
     let valueText: (ApplicationProcessDetail) -> String
 
     @State private var expandedKeys: Set<ApplicationKey> = []
@@ -641,6 +956,7 @@ private struct ApplicationProcessGroupListView: View {
                     group: group,
                     groupValueText: groupValueText,
                     valueText: valueText,
+                    iconProvider: iconProvider,
                     isExpanded: Binding(
                         get: { expandedKeys.contains(group.key) },
                         set: { isExpanded in
@@ -672,7 +988,11 @@ private struct ApplicationProcessGroupRow: View {
     let group: ApplicationProcessGroup
     let groupValueText: (Double?) -> String
     let valueText: (ApplicationProcessDetail) -> String
+    let iconProvider: any ApplicationIconProviding
     @Binding var isExpanded: Bool
+
+    /// 아이콘 자리와 앱 이름 사이 간격.
+    private static let iconSpacing: CGFloat = 6
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -685,7 +1005,11 @@ private struct ApplicationProcessGroupRow: View {
                 .font(.caption2)
             }
         } label: {
-            HStack {
+            HStack(spacing: Self.iconSpacing) {
+                ApplicationRowIconView(
+                    content: ApplicationRowIconLayout.content(for: group.key, from: iconProvider),
+                    pointSize: ApplicationRowIconLayout.detailPointSize
+                )
                 Text(group.displayName)
                 Spacer()
                 Text(groupValueText(group.sortValue))
@@ -703,5 +1027,5 @@ private struct ApplicationProcessGroupRow: View {
 }
 
 #Preview {
-    DashboardView(store: DashboardPresentationStore())
+    DashboardView(store: DashboardPresentationStore(), iconProvider: ApplicationIconCache())
 }

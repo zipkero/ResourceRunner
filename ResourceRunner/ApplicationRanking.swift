@@ -94,9 +94,28 @@ nonisolated struct ApplicationIdentityResolver: ApplicationIdentityResolving {
     }
 }
 
-/// TOP 5 순위 계산의 고정 상한.
+/// 순위·목록 표시 정원. 카드는 5줄 고정 슬롯만 보여주고, 순위 계산 자체와 상세 목록·증가량 순위는
+/// 더 넓은 정원까지 받아 상세 화면에서 더 많은 항목을 확인할 수 있게 합니다(SPEC §5.1, ANALYSIS §2).
 nonisolated enum ApplicationRankingSampling {
-    static let topCount = 5
+    /// 카드에 5줄 고정 슬롯으로 보여줄 상위 개수.
+    static let cardDisplayCount = 5
+    /// 순위 계산(`ApplicationRanking.compute`), 상세 앱 목록(`ApplicationProcessGroupOrdering.displayedGroups`),
+    /// 증가량 순위가 공유하는 정원.
+    static let detailCount = 20
+
+    /// 정원 숫자에 맞춘 "시스템 프로세스는 TOP N에 포함되지 않습니다" 안내 문구를 만드는 순수 함수.
+    /// 카드·상세 현재 사용량 순위(카드 정원)와 증가량 순위(상세 정원)가 서로 다른 목록 길이를 보여주므로,
+    /// 정원 숫자를 문구 문자열에 직접 박아 넣으면 정원이 바뀌어도 문구가 그 자리를 따라오지 못합니다.
+    static func topApplicationsCaption(count: Int) -> String {
+        "시스템 프로세스는 TOP \(count)에 포함되지 않습니다"
+    }
+
+    /// 상세 앱 목록 머리글을 만드는 순수 함수. 어떤 지표의 순위이고 정원이 얼마인지 한 문구에 담아,
+    /// 목록이 전체가 아님을 알립니다(SPEC §5.1, ANALYSIS §5 DP1, DP2) — 정원을 뷰가 고르지 않도록
+    /// 조립 시점에 이미 완성된 문구를 만들어 둡니다.
+    static func applicationListHeading(metricLabel: String, count: Int) -> String {
+        "\(metricLabel) (상위 \(count)개)"
+    }
 }
 
 /// 앱 단위 순위 항목 하나.
@@ -106,14 +125,15 @@ nonisolated struct ApplicationRankingEntry: Sendable, Equatable {
     let value: Double
 }
 
-/// 앱 집계와 TOP 5 순위 계산 결과.
+/// 앱 집계와 순위 계산 결과. 정원은 `ApplicationRankingSampling.detailCount`이며,
+/// 그중 앞 `cardDisplayCount`개만 카드에 표시됩니다.
 /// 현재 사용량과 최근 증가량이 서로 다른 목록으로 담기고, 읽지 못한 프로세스 수가 함께 전달됩니다.
 nonisolated struct ApplicationRankingSample: Sendable, Equatable {
-    /// CPU 사용량 TOP 5. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
+    /// CPU 사용량 순위. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
     let cpuUsage: [ApplicationRankingEntry]
-    /// 메모리 사용량 TOP 5. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
+    /// 메모리 사용량 순위. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
     let memoryUsage: [ApplicationRankingEntry]
-    /// 메모리 최근 10분 증가량 TOP 5.
+    /// 메모리 최근 10분 증가량 순위.
     /// 정체성별 메모리 기준점 링에서 10분 창 안의 가장 오래된 기준점과 현재값의 차이를 앱 키로 합산합니다.
     let memoryIncrease: [ApplicationRankingEntry]
     /// 이번 조사에서 읽지 못한 프로세스 수.
@@ -188,10 +208,10 @@ nonisolated enum ApplicationRanking {
         let sorted = entries.sorted { lhs, rhs in
             lhs.value != rhs.value ? lhs.value > rhs.value : lhs.key.value < rhs.key.value
         }
-        return Array(sorted.prefix(ApplicationRankingSampling.topCount))
+        return Array(sorted.prefix(ApplicationRankingSampling.detailCount))
     }
 
-    /// 정체성 하나의 순간값을 평활화한 값. `compute(_:)`의 TOP 5 집계와 `groupByApplication(_:)`의 상세 표시가
+    /// 정체성 하나의 순간값을 평활화한 값. `compute(_:)`의 순위 집계와 `groupByApplication(_:)`의 상세 표시가
     /// 같은 평활화 규칙을 공유하도록 이 자리에 둡니다 — 카드와 상세가 다른 규칙을 쓰면 같은 앱이
     /// 서로 다른 순서로 보이게 됩니다.
     /// CPU는 기준점이 없어 값을 만들지 못한 조사가 섞일 수 있으므로 값이 있는 것만 평균하고,
@@ -219,7 +239,7 @@ nonisolated struct ApplicationProcessDetail: Sendable, Equatable {
     /// 실행 파일 이름. `ApplicationIdentityResolver.executableName(from:)`이 유도하며, 번들 밖 실행 파일의
     /// 표시 이름과 같은 규칙을 공유합니다 — PID만으로는 상세 목록에서 어떤 프로세스인지 알 수 없습니다.
     let executableName: String
-    /// `ApplicationRanking.smoothedRecentValues(for:)`가 계산한 최근 값 평균 — TOP 5 집계와 같은 평활화 규칙입니다.
+    /// `ApplicationRanking.smoothedRecentValues(for:)`가 계산한 최근 값 평균 — 순위 집계와 같은 평활화 규칙입니다.
     /// 최근 값 중 CPU 사용률이 하나도 없으면(기준점이 없거나 조사 간격이 허용 범위를 넘은 조사만 섞인 경우) `nil`입니다.
     let cpuUsagePercent: Double?
     /// `ApplicationRanking.smoothedRecentValues(for:)`가 계산한 최근 값 평균입니다.
@@ -265,20 +285,24 @@ nonisolated enum ApplicationProcessGroupOrdering {
     ///   - groups: 이번 tick의 최신 정렬 결과.
     ///   - stableOrder: 펼친 행이 없었던 마지막 순간에 담아 둔 앱 키 순서.
     ///   - hasExpandedRow: 펼친 행이 하나라도 있으면 `true`.
-    /// - Returns: `hasExpandedRow`가 `false`면 `groups`를 그대로, `true`면 `stableOrder` 순서를 따르되
-    ///   그 사이 사라진 앱은 빠지고 새로 나타난 앱은 뒤에 붙은 목록.
+    ///   - cap: 순서를 고정한 뒤 자를 정원. 상세 목록 정원(`ApplicationRankingSampling.detailCount`)이 기본값입니다.
+    /// - Returns: `hasExpandedRow`가 `false`면 `groups`를, `true`면 `stableOrder` 순서를 따르되
+    ///   그 사이 사라진 앱은 빠지고 새로 나타난 앱은 뒤에 붙은 목록을 만든 뒤, 두 경우 모두 `cap`개로 자른 결과.
+    ///   순서 고정보다 자르기를 먼저 적용하면 고정된 순서 뒤쪽에 있던 앱이 최신 정렬에서 앞으로 와도
+    ///   자르기에서 먼저 잘려나가 고정된 순서와 어긋나므로, 반드시 순서를 고정한 뒤에 자릅니다.
     static func displayedGroups(
         groups: [ApplicationProcessGroup],
         stableOrder: [ApplicationKey],
-        hasExpandedRow: Bool
+        hasExpandedRow: Bool,
+        cap: Int = ApplicationRankingSampling.detailCount
     ) -> [ApplicationProcessGroup] {
-        guard hasExpandedRow else { return groups }
+        guard hasExpandedRow else { return Array(groups.prefix(cap)) }
 
         let groupsByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0) })
         var ordered = stableOrder.compactMap { groupsByKey[$0] }
         let orderedKeys = Set(stableOrder)
         ordered.append(contentsOf: groups.filter { !orderedKeys.contains($0.key) })
-        return ordered
+        return Array(ordered.prefix(cap))
     }
 }
 
@@ -309,7 +333,7 @@ extension ApplicationRanking {
     /// `compute(_:)`와 별도로 한 번 더 순회해야 합니다. 두 계산이 같은 `resolver`를 이어받아 앱 키 유도가
     /// 두 번 다른 결과를 내지 않게 합니다.
     /// 프로세스별 값도 `smoothedRecentValues(for:)`로 `compute(_:)`와 같은 평활화 규칙을 공유합니다 —
-    /// 카드 TOP 5와 상세 목록이 순간값·평활화 값을 섞어 쓰면 같은 앱이 서로 다른 순서로 보입니다.
+    /// 카드 순위와 상세 목록이 순간값·평활화 값을 섞어 쓰면 같은 앱이 서로 다른 순서로 보입니다.
     /// - Returns: 관찰 순서를 보존한 그룹 목록(정렬하지 않음 — 정렬된 순위는 `compute(_:)`가 이미 담당)과 갱신된 resolver.
     static func groupByApplication(
         snapshots: [ProcessHistorySnapshot],

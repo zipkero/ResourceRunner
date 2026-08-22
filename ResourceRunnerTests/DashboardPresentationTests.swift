@@ -23,10 +23,11 @@ private func cpuMetrics(overallUsage: Double = 42, userRatio: Double = 30, syste
     )
 }
 
-private func historyPoint(secondsFromBase: Double, overallCPUUsage: Double = 10) -> SystemMetricsHistoryPoint {
+private func historyPoint(secondsFromBase: Double, overallCPUUsage: Double = 10, userRatio: Double = 0) -> SystemMetricsHistoryPoint {
     SystemMetricsHistoryPoint(
         timestamp: baseInstant.advanced(by: .seconds(secondsFromBase)),
         overallCPUUsage: overallCPUUsage,
+        userRatio: userRatio,
         swapUsedBytes: 0
     )
 }
@@ -326,6 +327,56 @@ struct HistoryPointDownsamplingTests {
         #expect(result.contains { $0.value == globalMax })
         #expect(result.contains { $0.value == globalMin })
     }
+
+    /// task-004 검증 조건: 다운샘플링 뒤 남은 각 점의 하위 계열 값(`subValue`)은 그 점(전체 사용률 기준으로
+    /// 뽑힌 대표 표본)과 같은 시각의 값이어야 합니다. `subValue`를 `value`와 무관한 표시자로 둬,
+    /// 대표 표본과 짝이 아닌 시각의 값이 붙으면(예: 버킷의 subValue 최댓값을 따로 골라 붙이면) 어긋나게 합니다.
+    @Test func subValueTravelsWithTheSameSampleAsItsChosenOverallValue() throws {
+        let points = (0..<601).map { index -> HistoryPoint in
+            let value = sin(Double(index) / 17) * 40 + 50
+            return HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(Double(index))), value: value, subValue: Double(index))
+        }
+        let subValueByTimestamp = Dictionary(uniqueKeysWithValues: points.map { ($0.timestamp, $0.subValue) })
+        let bucketCount = HistoryPoint.downsampledBucketCount(forRenderWidth: 248)
+
+        let result = HistoryPoint.downsampled(segment: points, bucketCount: bucketCount)
+
+        try #require(!result.isEmpty)
+        for point in result {
+            #expect(point.subValue == subValueByTimestamp[point.timestamp])
+        }
+    }
+}
+
+// MARK: - CPU 그래프 2계열 밴드 값(task-004, SPEC §5.5, ANALYSIS §5 DP7)
+
+/// 위 밴드(System)는 전체 사용률에서 아래 밴드(User)를 뺀 값으로 유도되므로 두 밴드의 합이 항상
+/// 전체 사용률과 같고, 뺀 값이 음수가 되지 않도록 0에서 잘립니다.
+struct HistoryPointBandValueTests {
+
+    @Test func lowerAndUpperBandValuesSplitTheOverallValue() {
+        let point = HistoryPoint(timestamp: baseInstant, value: 70, subValue: 30)
+
+        #expect(point.lowerBandValue == 30)
+        #expect(point.upperBandValue == 40)
+        #expect(point.lowerBandValue + point.upperBandValue == point.value)
+    }
+
+    /// subValue가 value보다 커도(순간적인 오차나 경계 표본) 위 밴드가 음수로 내려가지 않습니다.
+    @Test func upperBandValueIsClampedToZeroWhenSubValueExceedsOverallValue() {
+        let point = HistoryPoint(timestamp: baseInstant, value: 20, subValue: 35)
+
+        #expect(point.upperBandValue == 0)
+        #expect(point.upperBandValue >= 0)
+    }
+
+    /// `subValue`가 없는 1계열 점은 전체 값이 그대로 위 밴드가 됩니다(CPU 아닌 그래프에 쓰일 경우의 안전값).
+    @Test func missingSubValueLeavesTheWholeValueInTheUpperBand() {
+        let point = HistoryPoint(timestamp: baseInstant, value: 40)
+
+        #expect(point.lowerBandValue == 0)
+        #expect(point.upperBandValue == 40)
+    }
 }
 
 // MARK: - 그래프 가로축: 오른쪽 끝은 그리는 시점의 시각(재작업 회귀 고정)
@@ -455,6 +506,44 @@ struct CPUCardPresentationAssembleTests {
 
         #expect(presentation.topApplications.count == 5)
         #expect(presentation.topApplications == Array(entries.prefix(5)))
+    }
+
+    /// task-004 검증 조건: 그래프 점마다 그 점의 전체 사용률과 같은 표본에서 나온 User 비율이 `subValue`로 실립니다.
+    /// 스냅샷(`cpu.userRatio`, 여기서는 90으로 이력 값들과 다르게 둡니다)을 전체 구간에 덮어씌우면 이 단언이 실패합니다.
+    @Test func graphPointsCarryPerSampleUserRatioNotTheLatestSnapshotValue() {
+        let history = [
+            historyPoint(secondsFromBase: 0, overallCPUUsage: 40, userRatio: 10),
+            historyPoint(secondsFromBase: 1, overallCPUUsage: 60, userRatio: 50),
+        ]
+
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(overallUsage: 42, userRatio: 90, systemRatio: 12),
+            history: history,
+            topApplications: [],
+            currentTimestamp: baseInstant.advanced(by: .seconds(1))
+        )
+
+        #expect(presentation.graphPoints.map(\.subValue) == [10, 50])
+    }
+
+    /// 위 밴드가 음수가 되지 않고, 아래·위 밴드의 합이 그 점의 전체 사용률과 같습니다(SPEC §5.5).
+    @Test func graphPointsBandValuesSumToTheOverallValueAndNeverGoNegative() {
+        let history = [
+            historyPoint(secondsFromBase: 0, overallCPUUsage: 40, userRatio: 10),
+            historyPoint(secondsFromBase: 1, overallCPUUsage: 60, userRatio: 50),
+        ]
+
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(),
+            history: history,
+            topApplications: [],
+            currentTimestamp: baseInstant.advanced(by: .seconds(1))
+        )
+
+        for point in presentation.graphPoints {
+            #expect(point.upperBandValue >= 0)
+            #expect(point.lowerBandValue + point.upperBandValue == point.value)
+        }
     }
 }
 
@@ -593,6 +682,7 @@ private func swapHistoryPoint(secondsFromBase: Double, swapUsedBytes: UInt64) ->
     SystemMetricsHistoryPoint(
         timestamp: baseInstant.advanced(by: .seconds(secondsFromBase)),
         overallCPUUsage: 0,
+        userRatio: 0,
         swapUsedBytes: swapUsedBytes
     )
 }
@@ -626,6 +716,94 @@ struct MemoryPressureLevelDisplayTests {
 
         #expect(backToNormal == initialNormal)
         #expect(backToNormal != afterCriticalThenNormal)
+    }
+}
+
+// MARK: - Pressure·Swap 병합 줄 서식(ANALYSIS §5 DP4)
+
+/// task-006 검증 조건이 고정하는 것: 병합 줄 조립 요소의 순서가
+/// 「Pressure 기호 → Pressure 라벨 → 구분자 → Swap 사용량 → Swap 변화량 → 구분자 → 구성 합계」이고,
+/// 변화량 기준점이 없으면 그 요소를 담지 않습니다.
+/// 배열 전체를 리터럴과 비교해 순서 뒤바꿈·기호 누락·구분자 누락·변화량 위치 이동 mutation을 잡습니다.
+/// 구성 합계는 「사용 중」과 다른 지표라 줄 맨 뒤에 자기 자리로 남습니다(SPEC §5.3) —
+/// 그 요소를 지우거나 Swap 수치 앞으로 옮기는 mutation도 같은 비교가 잡습니다.
+struct MemoryPressureSwapLineFormattingTests {
+
+    private func format(_ bytes: UInt64) -> String { "\(bytes)B" }
+
+    @Test func normalLevelWithNoChangeOmitsChangeSegment() {
+        let segments = MemoryPressureSwapLineFormatting.assemble(
+            pressureDisplay: MemoryPressureLevel.normal.display,
+            swapUsedBytes: 0,
+            swapRecentChangeBytes: nil,
+            compositionTotalBytes: 300,
+            format: format
+        )
+
+        #expect(segments == [
+            .symbol(name: "checkmark.circle"),
+            .label("정상"),
+            .separator,
+            .swapUsage("0B"),
+            .separator,
+            .compositionTotal("300B")
+        ])
+    }
+
+    @Test func warningLevelWithZeroChangeIncludesSignedZero() {
+        let segments = MemoryPressureSwapLineFormatting.assemble(
+            pressureDisplay: MemoryPressureLevel.warning.display,
+            swapUsedBytes: 100,
+            swapRecentChangeBytes: 0,
+            compositionTotalBytes: 300,
+            format: format
+        )
+
+        #expect(segments == [
+            .symbol(name: "exclamationmark.triangle"),
+            .label("경고"),
+            .separator,
+            .swapUsage("100B"),
+            .swapChange("+0B"),
+            .separator,
+            .compositionTotal("300B")
+        ])
+    }
+
+    @Test func criticalLevelWithLargeNegativeChangeKeepsOrder() {
+        let segments = MemoryPressureSwapLineFormatting.assemble(
+            pressureDisplay: MemoryPressureLevel.critical.display,
+            swapUsedBytes: 5_000_000_000,
+            swapRecentChangeBytes: -1_200_000_000,
+            compositionTotalBytes: 14_000_000_000,
+            format: format
+        )
+
+        #expect(segments == [
+            .symbol(name: "xmark.octagon"),
+            .label("위험"),
+            .separator,
+            .swapUsage("5000000000B"),
+            .swapChange("-1200000000B"),
+            .separator,
+            .compositionTotal("14000000000B")
+        ])
+    }
+
+    @Test func placeholderIsDashedSymbolFollowedByDashLabelOnly() {
+        #expect(MemoryPressureSwapLineFormatting.placeholder == [
+            .symbol(name: "circle.dashed"),
+            .label("–")
+        ])
+    }
+
+    /// 병합 줄이 실제로 잘리는지는 `DashboardCardLayoutTests`의 렌더 높이 단언으로 잡을 수 없습니다 —
+    /// production 서식(`ByteCountFormatter`)이 어떤 바이트 값도 카드 콘텐츠 폭을 넘길 만큼 길게 만들지 않아
+    /// 줄바꿈 자체가 일어나지 않기 때문입니다. 대신 뷰가 실제로 쓰는 줄 수 상한을 이 상수 하나로 고정해 두고
+    /// (`MemoryCardView.pressureSwapLine`이 하드코딩된 `1`이 아니라 이 상수를 참조합니다) 그 값 자체를 단언합니다 —
+    /// `HistoryGraphGridline.placeholderDrawOrder`를 상수로 고정해 단언하는 것과 같은 앵커 방식입니다.
+    @Test func maximumLineCountIsOne() {
+        #expect(MemoryPressureSwapLineFormatting.maximumLineCount == 1)
     }
 }
 
@@ -745,6 +923,39 @@ struct MemoryCardPresentationAssembleTests {
         )
 
         #expect(presentation.topApplications == entries)
+    }
+
+    /// task-001 검증 조건: 카드 표시 값(`topApplications`)은 카드 정원(5)으로 잘리지만,
+    /// 증가량 순위(`recentIncreaseRanking`)는 상세 정원(20)까지 그대로 담겨야 합니다.
+    @Test func recentIncreaseRankingIsTrimmedToDetailCountNotCardCount() {
+        let entries = (0..<25).map { rankingEntry(name: "App\($0)", value: Double(25 - $0)) }
+
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(),
+            history: [],
+            topApplications: [],
+            memoryIncrease: entries,
+            currentTimestamp: baseInstant
+        )
+
+        #expect(presentation.topApplications.count == 0)
+        #expect(presentation.detail.recentIncreaseRanking.count == 20)
+        #expect(presentation.detail.recentIncreaseRanking == Array(entries.prefix(20)))
+    }
+
+    /// task-001 재작업(design/scope) 검증 조건: 증가량 순위 caption은 상세 정원(20)에 맞춘 문구여야 하며,
+    /// 뷰가 아니라 `assemble`이 만들어 `detail`에 담아 둡니다. 직접 문자열 비교라 `assemble`이 카드 정원(5)을
+    /// 넘기도록 바뀌면 이 단언이 실패합니다.
+    @Test func recentIncreaseRankingCaptionMatchesDetailGantryNotCardGantry() {
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(),
+            history: [],
+            topApplications: [],
+            currentTimestamp: baseInstant
+        )
+
+        #expect(presentation.detail.recentIncreaseRankingCaption == "시스템 프로세스는 TOP 20에 포함되지 않습니다")
+        #expect(presentation.detail.recentIncreaseRankingCaption != MemoryCardPresentation.topApplicationsCaption)
     }
 }
 
@@ -1269,6 +1480,16 @@ struct CPUCardDetailAssembleTests {
         #expect(presentation.detail.loadAverage == cpu.loadAverage)
     }
 
+    /// task-002 검증 조건: 앱 목록 머리글이 상세 정원(20)으로 조립됩니다 — 뷰가 정원을 고르지 않고
+    /// `assemble`이 이미 완성한 문구를 그대로 받아 씁니다(ANALYSIS §5 DP1, DP2).
+    @Test func detailApplicationsHeadingEmbedsDetailGantry() {
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(), history: [], topApplications: [], currentTimestamp: baseInstant
+        )
+
+        #expect(presentation.detail.applicationsHeading == "CPU 사용량 순위, 합계 내림차순 (상위 20개)")
+    }
+
     @Test func detailCarriesProcessGroupsThrough() {
         let (groups, _) = ApplicationRanking.groupByApplication(
             snapshots: [processHistorySnapshot(pid: 100, executablePath: "/bin/a", cpuUsagePercent: 10, residentBytes: 1_000)],
@@ -1326,6 +1547,16 @@ struct MemoryCardDetailAssembleTests {
         #expect(presentation.detail.cachedBytes == memory.cachedBytes)
     }
 
+    /// task-002 검증 조건: 앱 목록 머리글이 「현재 사용량」임을 밝히고 상세 정원(20)으로 조립되며,
+    /// CPU 상세의 머리글과 다른 문구를 씁니다(ANALYSIS §5 DP1, DP2).
+    @Test func detailApplicationsHeadingStatesCurrentUsageAndDetailGantry() {
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(), history: [], topApplications: [], currentTimestamp: baseInstant
+        )
+
+        #expect(presentation.detail.applicationsHeading == "현재 사용량 순위, Memory 사용량 합계 내림차순 (상위 20개)")
+    }
+
     /// task-010(재작업) 검증 조건: Memory 상세에 Swap 사용량과 증가량이 나타나야 합니다.
     /// `MemoryDetailView`가 렌더링하는 값은 `detail`이 아니라 `presentation` 최상위 필드
     /// (`swapUsedBytes`·`swapRecentChangeBytes`, task-009가 이미 승인한 계산)이므로 여기서 함께 단언합니다.
@@ -1358,21 +1589,62 @@ struct MemoryCardDetailAssembleTests {
         #expect(presentation.swapRecentChangeBytes == nil)
     }
 
-    @Test func currentUsageRankingAndIncreaseRankingAreDistinctLists() {
-        let currentUsageTop = [rankingEntry(name: "HeavyButStable", value: 10_000_000)]
+    /// task-002(재작업) 검증 조건: 「앱 목록과 증가량 순위가 서로 다른 지표를 담는다」.
+    /// `currentUsageRanking` 필드가 사라지고 `applications`(앱 목록)가 현재 사용량 순위를 겸하므로,
+    /// 두 목록이 서로 다른 앱 구성·다른 순서를 담는지 값으로 직접 비교합니다.
+    @Test func applicationsListAndIncreaseRankingCarryDifferentMetrics() {
+        let heavyButStable = processHistorySnapshot(
+            pid: 1, executablePath: "/Applications/HeavyButStable.app/Contents/MacOS/HeavyButStable",
+            cpuUsagePercent: 1, residentBytes: 10_000_000
+        )
+        let smallButGrowing = processHistorySnapshot(
+            pid: 2, executablePath: "/Applications/SmallButGrowing.app/Contents/MacOS/SmallButGrowing",
+            cpuUsagePercent: 1, residentBytes: 1_000_000
+        )
+        let (groups, _) = ApplicationRanking.groupByApplication(
+            snapshots: [smallButGrowing, heavyButStable],
+            resolver: ApplicationIdentityResolver()
+        )
         let increaseTop = [rankingEntry(name: "SmallButGrowing", value: 9_000_000)]
 
         let presentation = MemoryCardPresentation.assemble(
             memory: memoryMetricsForTests(),
             history: [],
-            topApplications: currentUsageTop,
+            topApplications: [],
             memoryIncrease: increaseTop,
+            processGroups: groups,
             currentTimestamp: baseInstant
         )
 
-        #expect(presentation.detail.currentUsageRanking == currentUsageTop)
+        // `applications`는 Resident Memory 내림차순이므로 HeavyButStable이 앞에 옵니다 — 두 목록이
+        // 서로 다른 지표(현재 사용량 vs 최근 증가량)를 담는다는 것을 이름 순서 자체로 보여줍니다.
+        #expect(presentation.detail.applications.map(\.displayName) == ["HeavyButStable", "SmallButGrowing"])
         #expect(presentation.detail.recentIncreaseRanking == increaseTop)
-        #expect(presentation.detail.currentUsageRanking != presentation.detail.recentIncreaseRanking)
+        #expect(presentation.detail.applications.map(\.displayName) != presentation.detail.recentIncreaseRanking.map(\.displayName))
+    }
+
+    /// task-002 검증 조건: Memory 상세 값이 현재 사용량 순위를 두 자리에 담지 않습니다.
+    /// 순위를 담을 수 있는 두 타입이 각각 한 자리씩만 있는지를 세어, 이름이 무엇이든 순위 전용 필드가
+    /// 되살아나면 실패합니다. 필드 전체 개수를 세면 지표와 무관한 표시 필드가 늘어도 함께 깨져
+    /// 무엇이 잘못됐는지 구분하지 못하므로, 타입으로 좁혀 셉니다.
+    @Test func memoryCardDetailDoesNotCarryASeparateCurrentUsageRankingField() {
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(), history: [], topApplications: [], currentTimestamp: baseInstant
+        )
+
+        let children = Mirror(reflecting: presentation.detail).children
+        // 값 캐스팅(`is`)은 빈 배열이면 원소 타입과 무관하게 참이 되므로 선언 타입으로 셉니다.
+        let rankingFields = children.filter { type(of: $0.value) == [ApplicationRankingEntry].self }
+        let groupListFields = children.filter { type(of: $0.value) == [ApplicationProcessGroup].self }
+
+        #expect(
+            rankingFields.count == 1,
+            "`[ApplicationRankingEntry]` 필드는 최근 증가량 순위 하나여야 합니다 — 현재 사용량 순위 전용 필드가 되살아났는지 확인하세요."
+        )
+        #expect(
+            groupListFields.count == 1,
+            "`[ApplicationProcessGroup]` 필드는 순위를 겸하는 앱 목록 하나여야 합니다 — 순위 목록이 따로 생겼는지 확인하세요."
+        )
     }
 
     /// 증가량 순위는 음수를 담을 수 있습니다(메모리가 줄어든 경우) — 이 값이 카드 표시에서 trap하지 않고
@@ -1532,5 +1804,84 @@ struct DashboardSelectionTests {
 
         store.dismissDetail(for: .cpu)
         #expect(store.selection == .none)
+    }
+}
+
+// MARK: - task-005: CPU 그래프 격자 기준선 값·좌표 변환
+
+/// 기준선 값 목록이 25·50·75%이고, 값→세로 좌표 변환이 0%를 그래프 바닥, 100%를 천장에 대응시킵니다(SPEC §5.6).
+/// 목록을 비우거나 50% 한 줄만 남기면, 변환의 위아래를 뒤집거나 높이를 무시하고 고정 좌표를 돌려주면
+/// 아래 단언들이 실패해야 합니다.
+struct HistoryGraphGridlineTests {
+
+    @Test func baselineValuesAreExactlyTwentyFiveFiftySeventyFive() {
+        #expect(HistoryGraphGridline.baselineValues == [25, 50, 75])
+    }
+
+    /// 60pt 높이에서 세 선이 15pt 간격으로 놓입니다(0%가 바닥 60, 100%가 천장 0).
+    @Test func yPositionsAreFifteenPointsApartAtSixtyPointHeight() {
+        let y25 = HistoryGraphGridline.yPosition(forValue: 25, height: 60)
+        let y50 = HistoryGraphGridline.yPosition(forValue: 50, height: 60)
+        let y75 = HistoryGraphGridline.yPosition(forValue: 75, height: 60)
+
+        #expect(y75 == 15)
+        #expect(y50 == 30)
+        #expect(y25 == 45)
+    }
+
+    @Test func zeroPercentIsAtTheBottomAndHundredPercentIsAtTheTop() {
+        #expect(HistoryGraphGridline.yPosition(forValue: 0, height: 60) == 60)
+        #expect(HistoryGraphGridline.yPosition(forValue: 100, height: 60) == 0)
+    }
+
+    /// 변환이 높이를 무시하고 고정 좌표를 돌려주면, 높이를 두 배로 늘려도 좌표가 그대로여서 이 단언이 실패합니다.
+    @Test func yPositionScalesWithHeight() {
+        #expect(HistoryGraphGridline.yPosition(forValue: 50, height: 60) == 30)
+        #expect(HistoryGraphGridline.yPosition(forValue: 50, height: 120) == 60)
+    }
+}
+
+// MARK: - task-005: CPU 그래프 격자·밴드 그리기 순서와 밴드 채움 불투명도
+
+/// `HistoryGraphView.body`는 `drawOrder`를 그대로 순회해 그리므로, 이 배열이 실제 그리기 순서 그 자체입니다.
+/// 격자가 밴드 채움·경계선보다 먼저(가장 뒤에) 와야 부하가 높아 밴드가 그 자리를 덮는 구간에서도
+/// 격자가 반투명 밴드 아래로 비칩니다(SPEC §5.6, ANALYSIS §5 DP10).
+/// 순서를 밴드가 격자보다 먼저 오도록 바꾸거나, 밴드 채움 불투명도를 1.0(불투명)으로 바꾸면
+/// 아래 단언들이 실패해야 합니다.
+struct HistoryGraphViewDrawOrderTests {
+
+    @Test func gridlinesAreDrawnBeforeBandFillsAndBoundaries() {
+        #expect(HistoryGraphView.drawOrder.first == .gridlines)
+    }
+
+    @Test func drawOrderIsGridlinesThenFillsThenBoundaries() {
+        #expect(HistoryGraphView.drawOrder == [
+            .gridlines,
+            .bandFill(.lower),
+            .bandFill(.upper),
+            .bandBoundary(.lower),
+            .bandBoundary(.upper)
+        ])
+    }
+
+    @Test func bandFillOpacitiesAreTranslucentSoGridlinesShowThrough() {
+        #expect(HistoryGraphView.fillOpacity(for: .lower) == 0.5)
+        #expect(HistoryGraphView.fillOpacity(for: .upper) == 0.28)
+        #expect(HistoryGraphView.fillOpacity(for: .lower) < 1.0)
+        #expect(HistoryGraphView.fillOpacity(for: .upper) < 1.0)
+    }
+}
+
+// MARK: - task-005(재작업): 값 없는 자리표시가 그리는 레이어 목록
+
+/// 값이 없는 상태의 그래프 자리(`GraphPlaceholderView`)는 `.frame(height: 60)`로 높이를 고정하므로,
+/// `Canvas`가 격자를 그리든 안 그리든 `NSHostingController.sizeThatFits(in:)` 높이는 같습니다 —
+/// 그래서 격자 유무는 높이 단언이 아니라 이 목록 자체로 잡습니다(SPEC §5.8, ANALYSIS §5 DP14).
+/// `GraphPlaceholderView.body`가 `HistoryGraphGridline.placeholderDrawOrder`를 그대로 순회해 그리므로,
+/// 이 배열이 자리표시의 실제 그리기 내용 그 자체입니다.
+struct HistoryGraphGridlinePlaceholderDrawOrderTests {
+
+    @Test func placeholderDrawOrderContainsGridlines() {
+        #expect(HistoryGraphGridline.placeholderDrawOrder == [.gridlines])
     }
 }

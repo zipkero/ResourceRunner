@@ -122,11 +122,13 @@ struct CircularBufferTests {
 
 // MARK: - 테스트용 샘플 조립
 
-/// 전체 사용률만 의미 있게 두고 나머지는 이력 링과 무관한 자리를 채우는 CPU 지표.
-private func cpuMetrics(overallUsage: Double) -> CPUSystemMetrics {
+/// 전체 사용률과 User 비율만 의미 있게 두고 나머지는 이력 링과 무관한 자리를 채우는 CPU 지표.
+/// `userRatio`의 기본값을 `overallUsage`와 다르게 두어, 이력 항목의 `userRatio`가 `overallCPUUsage`를
+/// 그대로 베낀 것이 아니라 실제로 전달된 값인지 테스트가 구분할 수 있게 합니다.
+private func cpuMetrics(overallUsage: Double, userRatio: Double = 0) -> CPUSystemMetrics {
     CPUSystemMetrics(
         overallUsage: overallUsage,
-        userRatio: overallUsage,
+        userRatio: userRatio,
         systemRatio: 0,
         idleRatio: 100 - overallUsage,
         coreUsages: [overallUsage],
@@ -152,12 +154,13 @@ private func memoryMetrics(swapUsedBytes: UInt64) -> MemorySystemMetrics {
 private func sample(
     at timestamp: ContinuousClock.Instant,
     cpuUsage: Double?,
+    userRatio: Double = 0,
     swapUsedBytes: UInt64 = 0
 ) -> TimestampedSample<SystemMetricsSample> {
     TimestampedSample(
         timestamp: timestamp,
         value: SystemMetricsSample(
-            cpu: .success(cpuUsage.map(cpuMetrics(overallUsage:))),
+            cpu: .success(cpuUsage.map { cpuMetrics(overallUsage: $0, userRatio: userRatio) }),
             memory: .success(memoryMetrics(swapUsedBytes: swapUsedBytes))
         )
     )
@@ -239,6 +242,21 @@ struct MonitoringSampleStoreTests {
         #expect(displayValue.recentHistory.map(\.timestamp) == [base, base.advanced(by: .seconds(4))])
         // 최신 스냅샷은 매 tick 교체되므로 마지막 tick을 담고 있습니다.
         #expect(displayValue.latest?.timestamp == base.advanced(by: .seconds(4)))
+    }
+
+    /// task-004 검증 조건: 이력 항목이 전체 CPU 사용률과 함께 User 비율도 담습니다.
+    /// `userRatio`를 채우지 않고 0으로 두는 mutation은 이 단언에서 실패해야 합니다.
+    @Test func historyPointCarriesUserRatioAlongsideOverallUsage() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+
+        await store.append(sample(at: base, cpuUsage: 40, userRatio: 25, swapUsedBytes: 100))
+        await store.append(sample(at: base.advanced(by: .seconds(1)), cpuUsage: 60, userRatio: 45, swapUsedBytes: 200))
+
+        let displayValue = await store.snapshot()
+
+        #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [40, 60])
+        #expect(displayValue.recentHistory.map(\.userRatio) == [25, 45])
     }
 
     /// 최신 스냅샷은 이력에 들어가지 못한 tick으로도 교체되고, 코어별 사용률처럼 현재값만 필요한 지표를 담습니다.

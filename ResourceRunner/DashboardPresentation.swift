@@ -8,9 +8,30 @@
 import Foundation
 
 /// 그래프 한 점. 인접 점의 시각 간격으로 빈 구간을 판별합니다.
+///
+/// `subValue`는 `value`(전체 사용률)와 같은 표본에서 나온 하위 계열 값입니다(예: CPU 그래프의 User 비율).
+/// `nil`이면 1계열 그래프라는 뜻이고, CPU 조립 경로는 항상 채웁니다.
+/// 연속 구간 분리·버킷 다운샘플링은 `value` 기준 대표 표본만 고르므로, 고른 표본의 `subValue`가
+/// 별도 계산 없이 그 표본에 그대로 딸려 나갑니다(ANALYSIS §5 DP8).
 nonisolated struct HistoryPoint: Sendable, Equatable {
     let timestamp: ContinuousClock.Instant
     let value: Double
+    let subValue: Double?
+
+    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil) {
+        self.timestamp = timestamp
+        self.value = value
+        self.subValue = subValue
+    }
+}
+
+extension HistoryPoint {
+    /// CPU 그래프의 아래 밴드(User) 값. `subValue`가 없으면 0입니다.
+    var lowerBandValue: Double { subValue ?? 0 }
+
+    /// CPU 그래프의 위 밴드(System) 값. 전체 사용률에서 아래 밴드 값을 뺀 값이며 0 아래로 내려가지 않습니다 —
+    /// 두 밴드의 합이 항상 전체 사용률과 같다는 성질이 이 계산 구조에서 나옵니다(SPEC §5.5, ANALYSIS §5 DP7).
+    var upperBandValue: Double { max(0, value - lowerBandValue) }
 }
 
 extension HistoryPoint {
@@ -110,13 +131,20 @@ nonisolated struct CPUCardDetail: Sendable, Equatable {
     let coreUsages: [Double]
     let loadAverage: LoadAverage
     /// 앱 단위로 묶은 하위 프로세스 목록. 앱 항목을 펼치면 이 목록이 나타납니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
+    /// CPU 사용량 순위 역할도 겸하므로 순위 전용 필드를 따로 두지 않습니다(ANALYSIS §5 DP1).
     let applications: [ApplicationProcessGroup]
+    /// `applications` 목록의 머리글. 어떤 지표의 순위이고 정원이 얼마인지 알립니다(ANALYSIS §5 DP1, DP2).
+    let applicationsHeading: String
 }
 
 extension CPUCardPresentation {
     /// TOP 5 목록에 시스템 프로세스가 포함되지 않는다는 상시 안내.
     /// Hover나 색상이 아니라 항상 보이는 문구이며 카드 접근성 이름에도 포함됩니다.
-    static let topApplicationsCaption = "시스템 프로세스는 TOP 5에 포함되지 않습니다"
+    /// 카드 정원(`ApplicationRankingSampling.cardDisplayCount`)에서 문구를 만들어, 정원 숫자가
+    /// 이 문자열 밖에 따로 남지 않게 합니다.
+    static let topApplicationsCaption = ApplicationRankingSampling.topApplicationsCaption(
+        count: ApplicationRankingSampling.cardDisplayCount
+    )
 
     /// 시스템 전체 CPU 사용률의 단위 라벨. 코어별 tick 합에서 계산하므로 항상 0~100% 범위이고,
     /// 여러 코어를 합산해 100%를 넘을 수 있는 프로세스 사용률의 단위(`ApplicationProcessDetail.cpuUsageUnitLabel`)와
@@ -154,20 +182,24 @@ extension CPUCardPresentation {
         let windowStart = currentTimestamp - HistoryCapacity.defaultTimeRange
         let graphPoints = history
             .filter { $0.timestamp >= windowStart }
-            .map { HistoryPoint(timestamp: $0.timestamp, value: $0.overallCPUUsage) }
+            .map { HistoryPoint(timestamp: $0.timestamp, value: $0.overallCPUUsage, subValue: $0.userRatio) }
 
         return CPUCardPresentation(
             overallUsage: cpu.overallUsage,
             userRatio: cpu.userRatio,
             systemRatio: cpu.systemRatio,
             graphPoints: graphPoints,
-            topApplications: Array(topApplications.prefix(ApplicationRankingSampling.topCount)),
+            topApplications: Array(topApplications.prefix(ApplicationRankingSampling.cardDisplayCount)),
             topApplicationsFailed: topApplicationsFailed,
             detail: CPUCardDetail(
                 idleRatio: cpu.idleRatio,
                 coreUsages: cpu.coreUsages,
                 loadAverage: cpu.loadAverage,
-                applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .cpuUsage)
+                applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .cpuUsage),
+                applicationsHeading: ApplicationRankingSampling.applicationListHeading(
+                    metricLabel: "CPU 사용량 순위, 합계 내림차순",
+                    count: ApplicationRankingSampling.detailCount
+                )
             )
         )
     }
@@ -271,6 +303,33 @@ extension HistoryPoint {
     }
 }
 
+/// CPU 그래프에 깔리는 기준선 격자. 값 25·50·75%에 선을 두어 세로 범위(0~100%)를 네 등분하고,
+/// 라벨 없이 높이만으로 어림할 수 있게 합니다(SPEC §5.6, ANALYSIS §5 DP10).
+/// `HistoryGraphView`와 값이 없는 자리표시(`GraphPlaceholderView`)가 같은 값·같은 변환을 써서
+/// 같은 높이에 같은 격자를 그립니다(SPEC §5.8, ANALYSIS §5 DP14).
+nonisolated enum HistoryGraphGridline {
+    /// 기준선 값(사용률 %). 순서는 그리기에 영향을 주지 않지만, 낮은 값부터 둡니다.
+    static let baselineValues: [Double] = [25, 50, 75]
+
+    /// 기준선 값을 그래프 높이 안의 세로 좌표로 바꿉니다. 0%가 그래프 바닥(`height`), 100%가 그래프 천장(0)입니다.
+    /// `HistoryGraphView`가 점 값을 좌표로 옮길 때 쓰는 변환과 같은 식이라, 격자와 밴드가 같은 기준을 씁니다.
+    static func yPosition(forValue value: Double, height: Double) -> Double {
+        height * (1 - value / 100)
+    }
+}
+
+extension HistoryGraphGridline {
+    /// 값 없는 자리표시(`GraphPlaceholderView`)가 그리는 레이어 목록. 값 있는 경로의
+    /// `HistoryGraphView.drawOrder`와 같은 방식으로 뷰 밖 상수에 둬, 자리표시 `Canvas`가 이 배열을
+    /// 그대로 순회해 그리게 합니다 — 격자를 빼는 mutation이 이 배열 자체를 바꾸므로 단위 테스트로 잡힙니다
+    /// (SPEC §5.8, ANALYSIS §5 DP14).
+    enum PlaceholderLayer: Equatable {
+        case gridlines
+    }
+
+    static let placeholderDrawOrder: [PlaceholderLayer] = [.gridlines]
+}
+
 extension ResourceCardState where Presentation == CPUCardPresentation {
     /// CPU 카드의 접근성 이름. 현재 사용률과 카드 상태, TOP 5 안내 문구, 선택·복귀 단축키를 포함합니다.
     var cpuAccessibilityLabel: String {
@@ -322,6 +381,213 @@ extension MemoryPressureLevel {
     }
 }
 
+/// Memory 카드의 Pressure·Swap 병합 줄을 이루는 조립 요소 하나.
+///
+/// 뷰는 `MemoryPressureSwapLineFormatting.assemble`이 돌려주는 배열을 순서대로 이어붙여
+/// `MemoryPressureSwapLineFormatting.maximumLineCount`로 묶어 그리고, 그 결과 잘림이 끝에서 일어납니다 —
+/// 이 배열의 순서 자체가 잘림 우선순위입니다(ANALYSIS §5 DP4).
+/// `HistoryGraphGridline.drawOrder`와 같은 방식으로 순서·구성을 뷰 밖 값으로 고정해 단위 테스트가 직접 검증합니다.
+nonisolated enum MemoryPressureSwapLineSegment: Sendable, Equatable {
+    /// Pressure 기호(SF Symbol). 색상 없이도 단계를 구분하는 수단(core SPEC §5.5)이라 항상 맨 앞에 옵니다.
+    case symbol(name: String)
+    case label(String)
+    case separator
+    case swapUsage(String)
+    case swapChange(String)
+    /// 구성 네 항목의 바이트 합. 「사용 중」과 정의가 다른 지표라 뷰가 「구성」 라벨을 함께 그려
+    /// 제목 줄의 「사용 중」 수치와 갈려 읽히게 합니다(SPEC §5.3).
+    case compositionTotal(String)
+}
+
+nonisolated enum MemoryPressureSwapLineFormatting {
+    /// 병합 줄에 허용하는 최대 줄 수. 뷰는 이 상수로 `lineLimit`을 걸어 폭이 부족할 때
+    /// 줄바꿈 대신 끝에서 잘리게 합니다 — 값을 바꾸면 잘림 동작이 바뀌므로 뷰에 하드코딩하지 않고 이 상수 하나로 고정합니다.
+    static let maximumLineCount = 1
+
+    /// 캐시된 값이 없을 때 쓰는 자리표시. 세 실제 단계 기호(원·삼각형·팔각형) 중 어느 것도 아닌
+    /// `circle.dashed`를 써서 값을 지어내지 않습니다(§5 DP17, SPEC §5.11).
+    static let placeholder: [MemoryPressureSwapLineSegment] = [
+        .symbol(name: "circle.dashed"),
+        .label("–")
+    ]
+
+    /// - Parameters:
+    ///   - format: Swap·구성 합계 바이트를 문자열로 바꾸는 함수. 카드가 이미 쓰는 `ByteCountFormatter` 기반 함수를 그대로 받아
+    ///     한 줄에 놓인 두 수치가 같은 서식으로 읽히게 합니다.
+    /// - Returns: 「Pressure 기호 → Pressure 라벨 → 구분자 → Swap 사용량 → Swap 변화량 → 구분자 → 구성 합계」 순서의 조립 요소.
+    ///   변화량 기준점이 없으면 `.swapChange`를 담지 않습니다.
+    ///
+    ///   구성 합계가 맨 뒤라 폭이 부족할 때 가장 먼저 잘립니다.
+    ///   카드 콘텐츠 폭 232pt에 대해 실측한 폭은 대표값 213pt, 16GB 기기 최댓값 228pt입니다.
+    ///   Swap 사용량과 10분 변화량이 모두 두 자리 GB로 함께 나오는 극단 입력(예: 세 수치가 모두 35.9 GB)에서만
+    ///   233~243pt로 넘쳐 끝이 잘립니다 — DP4가 병합 줄에 대해 이미 받아들인 대가입니다.
+    static func assemble(
+        pressureDisplay: MemoryPressureDisplay,
+        swapUsedBytes: UInt64,
+        swapRecentChangeBytes: Int64?,
+        compositionTotalBytes: UInt64,
+        format: (UInt64) -> String
+    ) -> [MemoryPressureSwapLineSegment] {
+        var segments: [MemoryPressureSwapLineSegment] = [
+            .symbol(name: pressureDisplay.symbolName),
+            .label(pressureDisplay.label),
+            .separator,
+            .swapUsage(format(swapUsedBytes))
+        ]
+        if let change = swapRecentChangeBytes {
+            let sign = change >= 0 ? "+" : "-"
+            segments.append(.swapChange("\(sign)\(format(UInt64(abs(change))))"))
+        }
+        segments.append(.separator)
+        segments.append(.compositionTotal(format(compositionTotalBytes)))
+        return segments
+    }
+}
+
+/// Memory 구성 항목 한 종류. 선언 순서가 곧 바 구간 순서이자 범례 순서입니다 —
+/// 바와 범례가 모두 `allCases`를 순회하므로 두 자리의 순서가 갈라질 경로가 없습니다(SPEC §5.3, ANALYSIS §5 DP5).
+nonisolated enum MemoryCompositionCategory: Sendable, Equatable, CaseIterable {
+    case app
+    case wired
+    case compressed
+    case cached
+
+    /// 범례에 쓰는 항목 이름. 색은 보조 수단이라 스와치 옆에 이 이름이 항상 함께 표시됩니다(SPEC §5.3).
+    var label: String {
+        switch self {
+        case .app: return "App"
+        case .wired: return "Wired"
+        case .compressed: return "Compressed"
+        case .cached: return "Cached"
+        }
+    }
+}
+
+/// 구성 네 항목의 바이트. 구간 계산이 항목 순서대로 값을 읽는 자리를 한 곳으로 모읍니다 —
+/// 상세 도넛 범례(task-008)도 같은 값을 씁니다.
+///
+/// 「사용 중」(`MemoryCardPresentation.usedBytes`)은 여기에 담기지 않습니다 —
+/// 구성 합계와 「사용 중」은 정의가 다른 별개 지표라 한 계산에 섞이면 화면에서도 갈리지 않습니다
+/// (SPEC §5.3, ANALYSIS §5 DP5).
+nonisolated struct MemoryCompositionBytes: Sendable, Equatable {
+    let app: UInt64
+    let wired: UInt64
+    let compressed: UInt64
+    let cached: UInt64
+
+    subscript(category: MemoryCompositionCategory) -> UInt64 {
+        switch category {
+        case .app: return app
+        case .wired: return wired
+        case .compressed: return compressed
+        case .cached: return cached
+        }
+    }
+
+    /// 네 항목의 실제 바이트 합. 카드는 이 값 하나를 「구성」 수치로 보여 주고(SPEC §5.3),
+    /// 누적 바가 트랙을 넘어 구간을 잘라도 이 값은 자르지 않습니다.
+    /// 실제 시스템에서 합이 `UInt64`를 넘을 수는 없지만, 넘치는 입력에 trap하는 대신 상한에서 멈춥니다.
+    var total: UInt64 {
+        MemoryCompositionCategory.allCases.reduce(UInt64.zero) { partial, category in
+            let (sum, overflowed) = partial.addingReportingOverflow(self[category])
+            return overflowed ? .max : sum
+        }
+    }
+}
+
+/// 구성 누적 바의 구간 하나.
+nonisolated struct MemoryCompositionSegment: Sendable, Equatable {
+    let category: MemoryCompositionCategory
+    /// 이 항목의 실제 바이트. 넘침으로 구간 길이가 잘려도 이 값은 자르지 않으므로,
+    /// 이 값을 읽는 자리(상세 범례·접근성 이름)의 수치는 언제나 실제 값입니다.
+    let bytes: UInt64
+    /// 트랙(전체 물리 메모리) 대비 구간 길이 비율. 트랙을 넘는 부분은 잘려 있어 `startRatio + ratio <= 1`입니다.
+    let ratio: Double
+    /// 트랙 왼쪽 끝에서 이 구간이 시작하는 비율. 앞 항목들의 비율 합입니다.
+    let startRatio: Double
+}
+
+/// 구성 누적 바·도넛이 공유하는 구간 계산 결과.
+nonisolated struct MemoryCompositionLayout: Sendable, Equatable {
+    let segments: [MemoryCompositionSegment]
+    /// 네 항목 합이 트랙을 넘어 구간을 트랙 끝에서 잘랐는지.
+    let isOverflowing: Bool
+
+    /// 구간을 만들 수 없는 입력(전체 물리 메모리 0)의 결과. 없는 값을 0 길이 구간으로도 만들지 않습니다(SPEC §5.11).
+    static let empty = MemoryCompositionLayout(segments: [], isOverflowing: false)
+
+    /// 트랙은 전체 물리 메모리이고 각 구간 길이는 「항목 바이트 ÷ 전체 물리 메모리」입니다 —
+    /// 네 항목의 합으로 정규화하면 구간이 트랙을 꽉 채우는 대신 실제 바이트에 비례하지 않게 됩니다(SPEC §5.3, ANALYSIS §5 DP5).
+    ///
+    /// 네 항목의 합이 트랙을 넘을 수 있어(compressor가 물고 있는 페이지가 internal 쪽에도 계상됨)
+    /// 누적이 트랙 끝에 닿는 구간은 그 자리에서 자르고, 그 뒤 항목은 길이 0으로 남습니다.
+    /// 잘렸다는 사실은 `isOverflowing`으로 함께 돌려주고, 각 구간의 `bytes`는 자르지 않습니다.
+    static func make(bytes: MemoryCompositionBytes, totalPhysicalBytes: UInt64) -> MemoryCompositionLayout {
+        guard totalPhysicalBytes > 0 else { return .empty }
+
+        let track = Double(totalPhysicalBytes)
+        var cumulativeRatio = 0.0
+        var segments: [MemoryCompositionSegment] = []
+        for category in MemoryCompositionCategory.allCases {
+            let categoryBytes = bytes[category]
+            let ratio = Double(categoryBytes) / track
+            let startRatio = min(cumulativeRatio, 1)
+            segments.append(
+                MemoryCompositionSegment(
+                    category: category,
+                    bytes: categoryBytes,
+                    ratio: min(ratio, 1 - startRatio),
+                    startRatio: startRatio
+                )
+            )
+            cumulativeRatio += ratio
+        }
+        return MemoryCompositionLayout(segments: segments, isOverflowing: cumulativeRatio > 1)
+    }
+}
+
+/// 구성 범례 줄을 이루는 조립 요소 하나.
+///
+/// 뷰는 `MemoryCompositionLegendFormatting.segments`를 순서대로 이어붙여 한 줄로 그립니다 —
+/// 이 배열의 순서가 곧 화면의 범례 순서이고, 바 구간 순서와 같아야 하므로 그 순서 자체가 검증 대상입니다.
+/// `MemoryPressureSwapLineSegment`와 같은 방식으로 순서·구성을 뷰 밖 값으로 고정합니다(ANALYSIS §5 DP15).
+nonisolated enum MemoryCompositionLegendSegment: Sendable, Equatable {
+    /// 항목 색 스와치. 색은 보조 수단이라 바로 뒤에 `.label`이 반드시 따라옵니다(SPEC §5.3).
+    case swatch(MemoryCompositionCategory)
+    /// 항목 이름. 색을 지운 화면에서 어느 구간인지 가리는 수단입니다.
+    case label(String)
+    case separator
+}
+
+nonisolated enum MemoryCompositionLegendFormatting {
+    /// 구성 바가 들어간 제목 줄과 범례 줄에 허용하는 최대 줄 수.
+    /// 바가 제목 줄의 남는 폭을 쓰고 범례가 네 항목을 한 줄에 담으므로, 두 줄 모두 이 상한으로 묶어
+    /// 내용이 길어져도 줄바꿈으로 카드가 커지지 않게 합니다(SPEC §5.8) — 뷰에 하드코딩하지 않고 이 상수 하나로 고정합니다.
+    static let maximumLineCount = 1
+
+    /// 범례 줄의 조립 결과. 바 구간 순서(App → Wired → Compressed → Cached)와 같은 순서이며,
+    /// 각 스와치 바로 뒤에 그 항목의 이름이 붙어 색을 지운 화면에서도 어느 구간인지 읽힙니다(SPEC §5.3).
+    ///
+    /// 수치는 담지 않습니다 — 네 이름과 네 수치를 한 줄에 담으면 카드 콘텐츠 폭(232pt)에 345pt가 필요하고,
+    /// 이름을 네 글자로 줄여도 253pt로 들어가지 않습니다(실측).
+    /// 카드에 남는 수치는 병합 줄의 구성 합계 하나이고, 항목별 수치는 상세 범례(SPEC §5.4)와
+    /// 카드 접근성 이름(SPEC §5.10)이 맡습니다.
+    ///
+    /// 그래서 이 값은 상태와 무관한 상수입니다. 캐시된 값이 있든 없든 같은 네 이름이 같은 자리에 남고,
+    /// 값 없음을 나타내는 자리표시를 따로 두지 않아도 카드가 흔들리지 않습니다(SPEC §5.8, ANALYSIS §5 DP14).
+    static let segments: [MemoryCompositionLegendSegment] = {
+        var result: [MemoryCompositionLegendSegment] = []
+        for category in MemoryCompositionCategory.allCases {
+            if !result.isEmpty {
+                result.append(.separator)
+            }
+            result.append(.swatch(category))
+            result.append(.label(category.label))
+        }
+        return result
+    }()
+}
+
 /// Memory 카드 표시 값. 전체 물리 메모리, 사용 중 메모리, Pressure 단계, Swap 사용량과 최근 변화량,
 /// 앱 단위 Memory TOP 5를 담습니다.
 nonisolated struct MemoryCardPresentation: Sendable, Equatable {
@@ -340,19 +606,47 @@ nonisolated struct MemoryCardPresentation: Sendable, Equatable {
 }
 
 /// Memory 상세 영역 전용 값.
-/// 현재 사용량 순위와 최근 증가량 순위는 서로 다른 목록이라 나란히 두지 않고 각자 필드를 둡니다(SPEC §5.2, SPEC §5.8).
+/// 현재 사용량 순위는 전용 필드를 두지 않고 앱 목록(`applications`)이 그 역할을 겸합니다 —
+/// 같은 지표가 두 자리에 나타나지 않도록 값 모델 형태로 막습니다(ANALYSIS §5 DP1).
+/// 최근 증가량 순위는 다른 지표라 별도 필드로 남습니다(SPEC §5.2, SPEC §5.8).
 nonisolated struct MemoryCardDetail: Sendable, Equatable {
     let appBytes: UInt64
     let wiredBytes: UInt64
     let compressedBytes: UInt64
     let cachedBytes: UInt64
-    /// 현재 메모리 사용량 순위. 값 자체는 `topApplications`와 같은 목록(정체성별 최근 세 개 평균의 앱 단위 합산)입니다.
-    let currentUsageRanking: [ApplicationRankingEntry]
-    /// 최근 10분 증가량 순위. 값이 음수일 수 있으므로 `currentUsageRanking`과 표시 방식을 공유하면 안 됩니다 —
+    /// 최근 10분 증가량 순위. 값이 음수일 수 있으므로 `applications`의 합계 값과 표시 방식을 공유하면 안 됩니다 —
     /// `TopApplicationsView`가 이미 쓰는 `UInt64` 변환 경로에 음수를 그대로 넣으면 trap합니다.
     let recentIncreaseRanking: [ApplicationRankingEntry]
-    /// 앱 단위로 묶은 하위 프로세스 목록. CPU 상세와 같은 그룹(`ApplicationRanking.groupByApplication(_:)`)을 공유합니다.
+    /// `recentIncreaseRanking`의 정원(상세 정원)에 맞춘 시스템 프로세스 제외 안내 문구.
+    /// 이 목록만 카드·현재 사용량 순위와 다른 정원(20)을 쓰므로, 뷰가 정원을 골라 문구를 만들지 않고
+    /// 조립 시점에 이미 정해진 문구를 그대로 받아 쓰게 합니다(ANALYSIS §5 DP2, DP15).
+    let recentIncreaseRankingCaption: String
+    /// 앱 단위로 묶은 하위 프로세스 목록. CPU 상세와 같은 그룹(`ApplicationRanking.groupByApplication(_:)`)을 공유하며,
+    /// 현재 메모리 사용량 순위 역할도 겸합니다(정체성별 최근 세 개 평균의 앱 단위 합산을 Resident Memory 기준 내림차순 정렬, ANALYSIS §5 DP1).
     let applications: [ApplicationProcessGroup]
+    /// `applications` 목록의 머리글. 「현재 사용량」 순위임과 정원을 알립니다(ANALYSIS §5 DP1, DP2).
+    let applicationsHeading: String
+}
+
+extension MemoryCardDetail {
+    /// 구성 시각화 입력. 카드 누적 바와 상세 도넛이 같은 값에서 나오도록 이 자리 하나로 모읍니다.
+    var compositionBytes: MemoryCompositionBytes {
+        MemoryCompositionBytes(app: appBytes, wired: wiredBytes, compressed: compressedBytes, cached: cachedBytes)
+    }
+}
+
+extension MemoryCardPresentation {
+    /// 카드 구성 누적 바가 그리는 구간. 트랙은 전체 물리 메모리이고 「사용 중」(`usedBytes`)은 입력이 아닙니다
+    /// (SPEC §5.3, ANALYSIS §5 DP5).
+    var compositionLayout: MemoryCompositionLayout {
+        MemoryCompositionLayout.make(bytes: detail.compositionBytes, totalPhysicalBytes: totalPhysicalBytes)
+    }
+
+    /// 카드 병합 줄에 놓이는 구성 합계. 「사용 중」(`usedBytes`)과 정의가 다른 지표이므로
+    /// 같은 값으로 합치지 않고 각자 라벨을 단 다른 자리에 둡니다(SPEC §5.3).
+    var compositionTotalBytes: UInt64 {
+        detail.compositionBytes.total
+    }
 }
 
 extension MemoryCardPresentation {
@@ -382,7 +676,7 @@ extension MemoryCardPresentation {
         processGroups: [ApplicationProcessGroup] = [],
         currentTimestamp: ContinuousClock.Instant
     ) -> MemoryCardPresentation {
-        let trimmedTopApplications = Array(topApplications.prefix(ApplicationRankingSampling.topCount))
+        let trimmedTopApplications = Array(topApplications.prefix(ApplicationRankingSampling.cardDisplayCount))
         return MemoryCardPresentation(
             totalPhysicalBytes: memory.totalPhysicalBytes,
             usedBytes: memory.usedBytes,
@@ -400,9 +694,15 @@ extension MemoryCardPresentation {
                 wiredBytes: memory.wiredBytes,
                 compressedBytes: memory.compressedBytes,
                 cachedBytes: memory.cachedBytes,
-                currentUsageRanking: trimmedTopApplications,
-                recentIncreaseRanking: Array(memoryIncrease.prefix(ApplicationRankingSampling.topCount)),
-                applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .residentMemory)
+                recentIncreaseRanking: Array(memoryIncrease.prefix(ApplicationRankingSampling.detailCount)),
+                recentIncreaseRankingCaption: ApplicationRankingSampling.topApplicationsCaption(
+                    count: ApplicationRankingSampling.detailCount
+                ),
+                applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .residentMemory),
+                applicationsHeading: ApplicationRankingSampling.applicationListHeading(
+                    metricLabel: "현재 사용량 순위, Memory 사용량 합계 내림차순",
+                    count: ApplicationRankingSampling.detailCount
+                )
             )
         )
     }

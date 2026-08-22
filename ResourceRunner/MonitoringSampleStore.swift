@@ -98,9 +98,13 @@ nonisolated struct CircularBuffer<Element> {
 /// 이력 링에 담는 한 tick의 시계열 값.
 /// CPU 최근 10분 그래프와 Swap 최근 변화량만 시계열을 요구하므로 그 둘에 필요한 스칼라만 담습니다.
 /// 코어별 사용률과 Memory 세부 구성처럼 현재값만 필요한 지표는 최신 스냅샷 쪽에 남습니다.
+/// `userRatio`는 CPU 그래프의 User·System 2계열 표현(SPEC §5.5)에 쓰이는 유일한 새 입력이고,
+/// System은 저장하지 않습니다 — 전체 사용률에서 User를 빼면 항상 System과 같으므로(ANALYSIS §5 DP7)
+/// 셋 중 둘만 저장해도 정보가 줄지 않습니다.
 nonisolated struct SystemMetricsHistoryPoint: Sendable, Equatable {
     let timestamp: ContinuousClock.Instant
     let overallCPUUsage: Double
+    let userRatio: Double
     let swapUsedBytes: UInt64
 }
 
@@ -195,6 +199,7 @@ actor MonitoringSampleStore: MonitoringSampleSink {
         return SystemMetricsHistoryPoint(
             timestamp: sample.timestamp,
             overallCPUUsage: cpu.overallUsage,
+            userRatio: cpu.userRatio,
             swapUsedBytes: memory.swapUsedBytes
         )
     }

@@ -305,3 +305,43 @@ CPU 그래프의 격자와 User·System 2계열, 목록의 앱 아이콘을 다�
   텍스트가 아닌 그림 요소를 단위 테스트로 잡는 첫 수단이라 task-011의 「값이 없을 때 구성 바를 그리지 않게 하면 실패해야」에도 쓸 수 있습니다.
   **mutation 둘을 실측 확인했습니다** — 바를 카드에서 통째로 지우면 이 테스트 1건만, 구간 그리기를 지워 트랙만 남겨도 1건만 실패합니다.
   단위 **346개 전부 통과**(345 → 346).
+- 2026-08-29: 진행 추적자에 후속 항목 둘을 등록했습니다(코드 변경 없음).
+  (1) task-012 확인 필드에 **`SPEC §5.3` 재판정**을 적었습니다 —
+  「각 구간이 … 수치를 확인할 수 있습니다」에서 항목별 네 수치를 카드 밖으로 뺐으므로,
+  접근성 이름과 상세 범례만으로 이 문장이 카드에서 성립하는지를 task-012 approve 시점에 판단해야 합니다.
+  `docs/product.md` 125행의 「중요한 분석 정보는 Hover에만 의존하지 않습니다」와 나란히 볼 자리입니다.
+  task-007 verify가 남긴 위험인데 어느 문서에도 없던 것을 옮겼습니다.
+  (2) task-011 확인 필드에 **task-010의 행 식별자·탭 동작 실행 확인**을 적었습니다 —
+  기기 인증 창이 풀린 뒤 `DashboardProcessListDisplayUITests`·`DashboardDetailExpansionUITests`로 닫습니다.
+  2026-08-21 task-010 항목의 「남은 위험 ②」가 본문에만 있고 어느 Task에도 걸려 있지 않았습니다.
+  **아직 열려 있는 것 — `ANALYSIS §5 DP4` 재작성 여부.** 채택안(옵션 D, 「네 항목의 이름과 수치가 카드에 남습니다」)이
+  실제 구현과 다른 채로 남아 있고, 대체 사실은 이 README 2026-08-22 첫 항목과 implement.md task-007 참조 필드에만 있습니다.
+  analyze.md는 부분 수정하지 않는 문서라 `/analyze-init` 재작성이 필요하고, 진행 여부는 사용자 판단입니다.
+- 2026-08-29: **task-008 완료**(verify `approved`). **`SPEC §5.4`가 닫혔습니다** —
+  §5.3은 task-011·012가, §5.8은 task-011이 남습니다.
+  구현은 Orca orchestration으로 codex worker가, 판정은 별도 claude worker가 독립 수행했습니다.
+  `MemoryDetailView`의 구성 텍스트 한 줄이 도넛 + 수치 범례 + 별도 「사용 중」 줄로 바뀌었고,
+  뷰 밖에 순수 타입 셋이 생겼습니다 — `MemoryCompositionDonutLayout`(각도 변환),
+  `MemoryCompositionDetailLegendFormatting`(범례 행 서식), `MemoryCompositionDetailSummary`(구성 합계 / 「사용 중」 분리).
+  **도넛이 새 분모를 두지 않습니다** — 카드의 `compositionLayout` 결과를 받아 `-90 + 360 × startRatio`로 각도만 옮기므로
+  카드와 상세가 갈릴 경로가 구조에 없고, 넘침 자르기도 카드 계산이 이미 한 값을 그대로 씁니다.
+  새 테스트 6개(도넛 3·범례 2·요약 1)를 `MemoryCompositionDetailTests.swift`에 뒀습니다.
+  **mutation 7종이 전부 잡힙니다**(verifier가 직접 넣고 재현 후 원복, `shasum` 대조 확인) —
+  네 항목 합 정규화 3건, 시작 방향 12시→3시 2건, 회전 방향 반전 2건, 넘침 자르기 제거 3건,
+  가운데 수치를 「사용 중」으로 1건, 범례 수치 제거 2건, 카드 축약 서식 바꿔치기 1건, 상세 전용 계산 분리 1건.
+  단위 스위트는 실패 0입니다(`TEST SUCCEEDED`).
+  **테스트 개수 세는 방식이 갈립니다** — `Test case … passed` 줄 수는 388, 서로 다른 테스트 이름은 351개입니다.
+  앞선 기록의 346은 또 다른 방식으로 센 값으로 보이며, 실패 건수는 어느 방식으로도 0입니다.
+  **남은 한계 넷** —
+  ① `MemoryDetailView` 뷰 본문에 회귀 그물이 **0**입니다. 축약 서식 주입·가운데 값 교체·범례 수치 제거를 한꺼번에 넣어도,
+  나아가 `MemoryCompositionDonutView` 호출을 **통째로 지워도** 단위 스위트가 전부 통과합니다.
+  `MemoryDetailView`·`MemoryCompositionDonutView`가 `private`이고 `.popover` 콘텐츠가 `sizeThatFits`에서 평가되지 않아서입니다
+  (2026-08-21 task-013 항목이 적은 것과 같은 벽). task-007에서 쓴 `ImageRenderer` 수단은 `MemoryCardView`가
+  기본 접근 수준이라 가능했던 것이고 상세에는 그대로 적용되지 않습니다.
+  task-008 `확인` 필드가 이 mutation들을 요구하지 않고 `ANALYSIS §5 DP15` 옵션 B가 이 잔여 범위를 이미 받아들여 반려 사유로 세지 않았습니다.
+  ② 팝업 400×480 고정은 **실행으로 확인하지 못했습니다** — UI 스위트가 기기 인증 창으로 막혀 있어
+  `MemoryDetailPopoverContent`의 `ScrollView`·`.frame`이 diff에 없다는 정적 근거뿐입니다.
+  140pt 도넛이 480pt 안에서 스크롤 양을 얼마나 늘리는지는 재지 않았습니다.
+  ③ 범례의 `-` 분기는 production에서 도달하지 않습니다(`compositionBytes`가 비옵셔널이고 `.normal`에서만 그려짐).
+  검증 조건이 명시한 동작이라 문제로 세지 않았습니다.
+  ④ 「카드보다 큰 형태」는 소스 상수 대조(도넛 지름 140pt·링 18pt 대 카드 바 높이 8pt)로만 판단했고 렌더 크기를 재지 않았습니다.

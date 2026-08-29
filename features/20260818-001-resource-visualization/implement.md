@@ -219,7 +219,7 @@
     ANALYSIS §3 「구성 시각화 계산」, ANALYSIS §5 DP5, ANALYSIS §5 DP14,
     ANALYSIS §5 DP4(카드 자리 — 항목별 수치를 구성 합계 하나로 바꾼 2026-08-22 사용자 결정으로 대체됨, README 참조)
 
-- [ ] task-008: Memory 상세의 구성 도넛과 수치 범례
+- [x] task-008: Memory 상세의 구성 도넛과 수치 범례
   - 목적: Memory 상세를 열면 카드와 같은 구성이 도넛으로 더 크게 보이고 각 항목의 수치가 범례 행으로 함께 보이며,
     구성 합계와 「사용 중」이 각각 라벨을 단 서로 다른 수치로 읽힙니다.
     같은 시점의 카드 바와 상세 도넛이 같은 구성 비율을 보여줍니다.
@@ -328,6 +328,11 @@
       카드에 줄을 하나 더하면, 순위 자리를 4줄로 줄이면, 범례·병합 줄의 줄 수 제한을 풀면 실패해야 합니다.
       네 상태 중 한 상태만 다른 슬롯 집합을 그리게 하는 mutation도 상태별 높이 비교 단언이 잡아야 합니다.
       상세 팝업 크기는 `DashboardDetailPopoverUITests`를 실행해 확인합니다.
+      task-010이 실행으로 닫지 못한 행 식별자·탭 동작도 이 자리에서 함께 확인합니다 —
+      기기 인증 창(`LocalAuthentication Code=-4 "System authentication is running."`)이 풀린 뒤
+      `DashboardProcessListDisplayUITests`·`DashboardDetailExpansionUITests`를 실행해
+      아이콘이 들어간 행이 여전히 같은 식별자로 도달되고 탭이 상세를 여는지 봅니다.
+      task-010 시점에는 소스 대조까지만 했습니다(feature README 2026-08-21 task-010 항목 「남은 위험 ②」).
   - 참조: SPEC §5.8, SPEC §5.3, ANALYSIS §2 「상태 전이에서의 새 요소」, ANALYSIS §5 DP14, ANALYSIS §5 DP15
 
 - [ ] task-012: 새 표시 요소의 접근성 도달
@@ -354,6 +359,12 @@
       카드가 하나의 노드로 남는지와 아이콘 감춤은 기존 카드 UI 테스트
       (`DashboardCPUCardUITests`·`DashboardMemoryCardUITests`)의 접근성 이름 판정으로 확인하고,
       그 판정이 새 수치를 포함하도록 단언을 함께 갱신합니다.
+      **이 Task가 approve되는 시점에 `SPEC §5.3`을 다시 판정합니다** —
+      「각 구간이 … 수치를 확인할 수 있습니다」에서 항목별 네 수치는 카드에 두지 않기로 했으므로
+      (2026-08-22 사용자 결정, 폭 실측 232pt에 345pt 필요),
+      접근성 이름과 상세 범례만으로 이 문장이 카드에서 성립하는지를 판단해야 합니다.
+      `docs/product.md`의 「중요한 분석 정보는 Hover에만 의존하지 않습니다」와 나란히 두고 봅니다.
+      task-007 verify가 남긴 위험입니다.
   - 참조: SPEC §5.10, SPEC §5.3, ANALYSIS §1 「접근성 노출 자리」, ANALYSIS §3 「접근성 이름」, ANALYSIS §5 DP13
 
 - [ ] task-013: 새 표시 요소 추가 뒤 자기 CPU 사용량 확인

@@ -546,6 +546,82 @@ nonisolated struct MemoryCompositionLayout: Sendable, Equatable {
     }
 }
 
+/// 카드 누적 바가 쓰는 구성 구간을 상세 도넛의 각도로 옮긴 결과.
+/// 비율과 누적 시작 위치는 다시 계산하지 않고 `MemoryCompositionLayout`의 값을 그대로 보존합니다.
+nonisolated struct MemoryCompositionDonutSegment: Sendable, Equatable {
+    let category: MemoryCompositionCategory
+    let bytes: UInt64
+    let ratio: Double
+    let startRatio: Double
+    let startAngleDegrees: Double
+    let endAngleDegrees: Double
+}
+
+nonisolated struct MemoryCompositionDonutLayout: Sendable, Equatable {
+    /// 12시 방향에서 시작해 시계 방향으로 진행합니다.
+    static let startAngleDegrees = -90.0
+    static let fullTrackAngleDegrees = 360.0
+
+    let segments: [MemoryCompositionDonutSegment]
+
+    /// 카드 구간 결과를 도넛 각도로만 바꿉니다. 별도의 바이트 분모나 구성 계산은 두지 않습니다.
+    static func make(from layout: MemoryCompositionLayout) -> MemoryCompositionDonutLayout {
+        MemoryCompositionDonutLayout(segments: layout.segments.map { segment in
+            let startAngle = startAngleDegrees + fullTrackAngleDegrees * segment.startRatio
+            return MemoryCompositionDonutSegment(
+                category: segment.category,
+                bytes: segment.bytes,
+                ratio: segment.ratio,
+                startRatio: segment.startRatio,
+                startAngleDegrees: startAngle,
+                endAngleDegrees: startAngle + fullTrackAngleDegrees * segment.ratio
+            )
+        })
+    }
+}
+
+/// Memory 상세 범례 한 행. 값이 없는 상태에서도 네 항목 이름과 `-` 자리를 유지합니다.
+nonisolated struct MemoryCompositionDetailLegendRow: Sendable, Equatable {
+    let category: MemoryCompositionCategory
+    let label: String
+    let valueText: String
+}
+
+nonisolated enum MemoryCompositionDetailLegendFormatting {
+    /// 상세는 카드 축약 서식이 아니라 호출부의 기존 바이트 서식을 그대로 씁니다.
+    static func rows(
+        bytes: MemoryCompositionBytes?,
+        format: (UInt64) -> String
+    ) -> [MemoryCompositionDetailLegendRow] {
+        MemoryCompositionCategory.allCases.map { category in
+            MemoryCompositionDetailLegendRow(
+                category: category,
+                label: category.label,
+                valueText: bytes.map { format($0[category]) } ?? "-"
+            )
+        }
+    }
+}
+
+/// 상세에서 서로 다른 자리를 차지하는 구성 합계와 「사용 중」 표시 값.
+/// 도넛 가운데와 별도 줄을 타입으로 나눠, 두 지표를 같은 값이나 같은 자리로 합치지 않습니다.
+nonisolated struct MemoryCompositionDetailSummary: Sendable, Equatable {
+    struct Metric: Sendable, Equatable {
+        let label: String
+        let bytes: UInt64
+    }
+
+    let donutCenter: Metric
+    let usedLine: Metric
+
+    static func make(compositionBytes: MemoryCompositionBytes, usedBytes: UInt64) -> MemoryCompositionDetailSummary {
+        MemoryCompositionDetailSummary(
+            donutCenter: Metric(label: "구성 합계", bytes: compositionBytes.total),
+            usedLine: Metric(label: "사용 중", bytes: usedBytes)
+        )
+    }
+}
+
 /// 구성 범례 줄을 이루는 조립 요소 하나.
 ///
 /// 뷰는 `MemoryCompositionLegendFormatting.segments`를 순서대로 이어붙여 한 줄로 그립니다 —
@@ -646,6 +722,16 @@ extension MemoryCardPresentation {
     /// 같은 값으로 합치지 않고 각자 라벨을 단 다른 자리에 둡니다(SPEC §5.3).
     var compositionTotalBytes: UInt64 {
         detail.compositionBytes.total
+    }
+
+    /// 상세 도넛도 카드와 같은 `compositionLayout`을 입력으로 삼고 각도 변환만 더합니다.
+    var compositionDonutLayout: MemoryCompositionDonutLayout {
+        MemoryCompositionDonutLayout.make(from: compositionLayout)
+    }
+
+    /// 도넛 가운데의 구성 합계와 별도 줄의 「사용 중」 값을 한 자리에서 조립합니다.
+    var compositionDetailSummary: MemoryCompositionDetailSummary {
+        MemoryCompositionDetailSummary.make(compositionBytes: detail.compositionBytes, usedBytes: usedBytes)
     }
 }
 

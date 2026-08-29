@@ -842,8 +842,8 @@ private struct CPUDetailView: View {
     private func fmt(_ value: Double) -> String { String(format: "%.2f", value) }
 }
 
-/// Memory 상세: App·Wired·Compressed·Cached, Swap 사용량과 증가량, 앱 목록(현재 사용량 순위와
-/// 하위 프로세스를 겸함), 최근 증가량 순위(SPEC §5.2, SPEC §5.8, ANALYSIS §5 DP1).
+/// Memory 상세: 구성 도넛·수치 범례, Swap 사용량과 증가량, 앱 목록(현재 사용량 순위와
+/// 하위 프로세스를 겸함), 최근 증가량 순위(SPEC §5.2, SPEC §5.4, SPEC §5.8, ANALYSIS §5 DP1, DP6).
 private struct MemoryDetailView: View {
     let presentation: MemoryCardPresentation
     let iconProvider: any ApplicationIconProviding
@@ -860,9 +860,19 @@ private struct MemoryDetailView: View {
 
     var body: some View {
         let detail = presentation.detail
+        let summary = presentation.compositionDetailSummary
         VStack(alignment: .leading, spacing: 6) {
-            Text("App \(format(detail.appBytes)) · Wired \(format(detail.wiredBytes)) · "
-                + "Compressed \(format(detail.compressedBytes)) · Cached \(format(detail.cachedBytes))")
+            MemoryCompositionDonutView(
+                layout: presentation.compositionDonutLayout,
+                legendRows: MemoryCompositionDetailLegendFormatting.rows(
+                    bytes: detail.compositionBytes,
+                    format: format
+                ),
+                centerLabel: summary.donutCenter.label,
+                centerValue: format(summary.donutCenter.bytes)
+            )
+
+            Text("\(summary.usedLine.label) \(format(summary.usedLine.bytes))")
                 .font(.caption)
 
             // Swap 사용량과 증가량은 `detail`이 아니라 카드 요약과 공유하는 `presentation` 최상위 필드입니다
@@ -903,6 +913,78 @@ private struct MemoryDetailView: View {
             ) { process in
                 format(process.residentBytes)
             }
+        }
+    }
+}
+
+/// 카드와 공유한 구성 구간을 12시 방향부터 시계 방향으로 그리는 상세 도넛과 수치 범례.
+private struct MemoryCompositionDonutView: View {
+    let layout: MemoryCompositionDonutLayout
+    let legendRows: [MemoryCompositionDetailLegendRow]
+    let centerLabel: String
+    let centerValue: String
+
+    private static let diameter: CGFloat = 140
+    private static let lineWidth: CGFloat = 18
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            ZStack {
+                Canvas { context, size in
+                    let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                    let radius = (min(size.width, size.height) - Self.lineWidth) / 2
+                    let track = Path(ellipseIn: CGRect(
+                        x: center.x - radius,
+                        y: center.y - radius,
+                        width: radius * 2,
+                        height: radius * 2
+                    ))
+                    context.stroke(
+                        track,
+                        with: .color(DashboardColorPalette.memoryCompositionTrack),
+                        lineWidth: Self.lineWidth
+                    )
+
+                    for segment in layout.segments where segment.ratio > 0 {
+                        var path = Path()
+                        path.addArc(
+                            center: center,
+                            radius: radius,
+                            startAngle: .degrees(segment.startAngleDegrees),
+                            endAngle: .degrees(segment.endAngleDegrees),
+                            clockwise: false
+                        )
+                        context.stroke(
+                            path,
+                            with: .color(DashboardColorPalette.memoryComposition(segment.category)),
+                            style: StrokeStyle(lineWidth: Self.lineWidth, lineCap: .butt)
+                        )
+                    }
+                }
+
+                VStack(spacing: 2) {
+                    Text(centerLabel)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(centerValue)
+                        .font(.caption.bold())
+                }
+            }
+            .frame(width: Self.diameter, height: Self.diameter)
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Array(legendRows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.fill")
+                            .foregroundStyle(DashboardColorPalette.memoryComposition(row.category))
+                        Text(row.label)
+                        Spacer(minLength: 8)
+                        Text(row.valueText)
+                    }
+                    .font(.caption)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

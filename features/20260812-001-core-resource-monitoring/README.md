@@ -294,3 +294,13 @@
   UI 스위트 전체(22개 약 200초)는 Task를 닫을 때나 `SPEC §5.N`이 닫힐 때만 돌립니다.
   전체 338개 중 UI 22개가 시간의 98%를 쓰는데, 원인이 단언 개수가 아니라 테스트마다 붙는 `app.launch()`와 수집 대기 고정비라
   개수를 줄여도 체감이 바뀌지 않기 때문입니다.
+- 2026-08-29: UI 테스트 중복 감사 결과 기록. 위 실행 정책의 근거 자료이며 아직 어느 테스트도 지우지 않았습니다.
+  UI 스위트 22개 약 200초 중 **약 80초를 단언 손실 없이 줄일 수 있다**는 감사 결과가 대화에만 남아 있었습니다.
+  완전 중복 셋 — `testOtherCardShortcutMovesSelectionWhileDetailIsOpen`(8.9초, 같은 단언을 다른 테스트가 이미 함),
+  `ResourceRunnerUITests.testMenuBarClickOpensPopover`(4.4초, 같은 경로 중복),
+  `ResourceRunnerUITestsLaunchTests.testLaunch`(2.2초, **단언이 하나도 없습니다**).
+  병합형 후보는 여섯이고 개별 목록은 정리되지 않았습니다.
+  줄이는 효과가 큰 이유는 위 정책이 적은 것과 같습니다 — 시간의 대부분이 테스트마다 붙는
+  `app.launch()`와 수집 대기 고정비라 테스트 건수를 줄이는 것이 곧 시간 감소입니다.
+  **실행 여부는 결정되지 않았습니다** — 지금은 기기 인증 창(`LocalAuthentication Code=-4`)으로 UI 스위트를 돌릴 수 없어
+  정리 전후 대조를 할 수 없습니다.

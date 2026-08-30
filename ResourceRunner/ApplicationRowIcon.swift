@@ -50,8 +50,10 @@ enum ApplicationRowIconLayout {
     /// 카드 순위 자리의 줄별 아이콘 대상. 정원만큼의 줄 **전부**에 자리가 생기도록 언제나 정원 길이로 돌려주고,
     /// 물을 앱이 없는 줄(값 없음·조사 실패)은 `nil`입니다.
     ///
-    /// 이 목록을 뷰가 순회하므로 「아이콘이 있는 줄에만 자리를 둔다」는 형태가 뷰 본문에 생길 수 없습니다 —
-    /// 줄마다 자리가 있는지는 이 함수의 결과 길이로 관찰됩니다(SPEC §5.7, ANALYSIS §5 DP15).
+    /// 이 목록은 줄 수와 줄별 아이콘 대상을 한 자리에서 정하지만, 뷰 본문이 `nil` 대상의 아이콘 자리를
+    /// 조건부로 생략하는 것까지 막지는 못합니다. 값 없음·조사 실패 줄의 실제 자리는
+    /// `DashboardCardPlaceholderRenderingTests`가 정원의 줄을 하나씩 꺼내 그 줄의 이상적 폭에
+    /// 12pt 아이콘과 4pt 간격이 들어 있는지 재서 지킵니다(SPEC §5.7, ANALYSIS §5 DP15).
     nonisolated static func cardRowIconKeys(
         entries: [ApplicationRankingEntry],
         failed: Bool,

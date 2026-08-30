@@ -309,7 +309,7 @@
 
 ## Section: 상태 전이·접근성·자기 사용량
 
-- [ ] task-011: 새 표시 요소가 모두 있는 상태에서의 크기 불변
+- [x] task-011: 새 표시 요소가 모두 있는 상태에서의 크기 불변
   - 목적: 그래프 2계열·격자, 구성 바·범례, 병합 줄, 행 아이콘이 모두 들어간 뒤에도
     수집 중·정상·실패·중지 사이를 오갈 때 두 카드와 상세 팝업의 크기·위치가 변하지 않습니다.
   - 접근: 단위 테스트 계층. `DashboardCardLayoutTests`에 네 상태 × 새 요소 조합의 렌더 높이 단언을 더하고,
@@ -365,6 +365,11 @@
       접근성 이름과 상세 범례만으로 이 문장이 카드에서 성립하는지를 판단해야 합니다.
       `docs/product.md`의 「중요한 분석 정보는 Hover에만 의존하지 않습니다」와 나란히 두고 봅니다.
       task-007 verify가 남긴 위험입니다.
+      **task-011에서 이월된 UI 실행 확인 셋도 이 자리에서 함께 닫습니다**(task-011이 `[x]`가 되어 걸릴 자리가 없어졌습니다) —
+      기기 인증 창(`LocalAuthentication Code=-4 "System authentication is running."`)이 풀린 뒤
+      `DashboardDetailPopoverUITests`(상세 팝업 고정 크기)와
+      `DashboardProcessListDisplayUITests`·`DashboardDetailExpansionUITests`(아이콘이 들어간 행의 식별자·탭 동작)를 실행합니다.
+      task-010·011 시점에는 소스 대조와 변경 내용 판정까지만 했습니다.
       **방향은 「성립」으로 정해져 있습니다**(2026-08-29 사용자 결정, feature README) —
       항목별 네 수치가 product.md가 정상 경로로 지정한 상세 팝업에 있고 카드에도 구성 합계와 색 외 구분 수단이 남기 때문입니다.
       **다만 이 Task가 실제로 카드 접근성 이름에 항목별 네 수치를 넣는 것이 확정 조건이며,

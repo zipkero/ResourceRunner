@@ -165,13 +165,7 @@ struct CPUCardView: View {
                 GraphPlaceholderView()
             }
 
-            CardRankingSlotView(
-                entries: cached?.topApplications ?? [],
-                failed: cached?.topApplicationsFailed ?? false,
-                caption: CPUCardPresentation.topApplicationsCaption,
-                valueText: { "\(Int($0.value.rounded()))%" },
-                iconProvider: iconProvider
-            )
+            rankingSlot
 
             // 선택·복귀 단축키는 수집 상태와 무관하게 카드에 항상 보이는 표시입니다(ANALYSIS §5 DP15) —
             // Hover에 숨기지 않고 접근성 이름(`cpuAccessibilityLabel`)에도 같은 문자열을 함께 둡니다.
@@ -182,6 +176,19 @@ struct CPUCardView: View {
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
+    }
+
+    /// 카드 순위 자리. 값이 없으면 빈 항목 목록을 넘겨 정원만큼의 자리표시 줄이 남습니다.
+    // `private`가 아닌 것은 task-011 테스트가 이 카드가 실제로 넘기는 항목·정원 그대로 줄별 아이콘 자리를
+    // 재기 때문입니다 — 테스트가 슬롯을 따로 조립하면 카드가 다른 인자를 넘기는 변경을 놓칩니다.
+    var rankingSlot: CardRankingSlotView {
+        CardRankingSlotView(
+            entries: cached?.topApplications ?? [],
+            failed: cached?.topApplicationsFailed ?? false,
+            caption: CPUCardPresentation.topApplicationsCaption,
+            valueText: { "\(Int($0.value.rounded()))%" },
+            iconProvider: iconProvider
+        )
     }
 
     /// 요약 줄의 첫 번째 줄. 캐시된 값이 있으면 그 사용률을, 없으면 상태 문구를 보여줍니다(§5 DP17).
@@ -204,11 +211,13 @@ struct CPUCardView: View {
     /// 보여주고, 없으면 자리표시로 채웁니다 — 값을 지어내지 않으므로 구체적인 비율 대신 중립 기호를 씁니다
     /// (§5 DP17, SPEC §5.11). 스와치는 색이 아니라 밴드의 채움 밀도·경계선 모양을 그대로 옮겨,
     /// 색을 지운 화면에서도 어느 스와치가 어느 계열인지 그래프와 같은 방식으로 구분됩니다(SPEC §5.5, ANALYSIS §5 DP9).
+    // `private`가 아닌 것은 task-011 테스트가 값 없음 줄의 이상적 폭을 재기 때문입니다 — 이 줄의 스와치·이름·
+    // 중립 기호·구분자는 무채색이거나 좁아 카드 렌더 높이·픽셀로는 사라져도 드러나지 않습니다.
     @ViewBuilder
-    private var secondaryLine: some View {
+    var secondaryLine: some View {
         Group {
             if let presentation = cached {
-                HStack(spacing: 4) {
+                HStack(spacing: CPUSeriesPlaceholderLayout.spacing) {
                     CPUSeriesSwatchView(band: .lower)
                     Text("User \(Int(presentation.userRatio.rounded()))%")
                     Text("·")
@@ -216,7 +225,15 @@ struct CPUCardView: View {
                     Text("System \(Int(presentation.systemRatio.rounded()))%")
                 }
             } else {
-                Text("–")
+                HStack(spacing: CPUSeriesPlaceholderLayout.spacing) {
+                    ForEach(Array(CPUSeriesPlaceholderLayout.entries.enumerated()), id: \.offset) { index, entry in
+                        if index > 0 {
+                            Text("·")
+                        }
+                        CPUSeriesSwatchView(band: entry.band)
+                        Text("\(entry.label) \(entry.valueText)")
+                    }
+                }
             }
         }
         .font(.caption)
@@ -224,10 +241,36 @@ struct CPUCardView: View {
     }
 }
 
+/// CPU 계열 값이 없을 때도 요약 줄에 남는 범례 항목입니다.
+///
+/// 이 배열이 고정하는 것은 항목의 순서·개수와 각 항목의 이름·중립 기호 문자열뿐입니다.
+/// 뷰가 어느 항목의 스와치나 텍스트를 실제로 그리는지는 고정하지 못합니다 —
+/// 배열을 그대로 두고 순회 안에서 조각을 빼면 이 값에 대한 단언은 그대로 통과합니다.
+/// 그 자리는 `DashboardCardPlaceholderRenderingTests`가 값 없음 요약 줄의 이상적 폭을
+/// 조각별 기준 조립과 견주어 지킵니다.
+@MainActor
+enum CPUSeriesPlaceholderLayout {
+    struct Entry: Equatable {
+        let band: HistoryGraphView.BandRole
+        let label: String
+        let valueText: String
+    }
+
+    /// 요약 줄 조각 사이 간격. 값이 있는 줄과 값 없음 줄이 같은 간격을 써야 상태 전이에서 줄 폭이 흔들리지 않습니다.
+    static let spacing: CGFloat = 4
+
+    static let entries: [Entry] = [
+        Entry(band: .lower, label: "User", valueText: "–"),
+        Entry(band: .upper, label: "System", valueText: "–")
+    ]
+}
+
 /// CPU 요약 줄의 계열 스와치. 그래프 밴드와 같은 채움 밀도·경계선 모양을 옮겨 색을 지운 화면에서도
 /// User·System을 구분할 수 있게 합니다(SPEC §5.5, ANALYSIS §5 DP9).
 /// 크기는 그 줄의 텍스트 높이를 넘지 않도록 `.caption` 줄 높이보다 작은 고정 값으로 둡니다.
-private struct CPUSeriesSwatchView: View {
+// `private`가 아닌 것은 task-011 테스트가 값 없음 요약 줄의 기준 폭을 조립할 때 이 뷰를 그대로 쓰기 때문입니다 —
+// 테스트가 같은 크기의 대역 뷰를 따로 만들면 스와치 크기 변경이 기준 폭에 반영되지 않습니다.
+struct CPUSeriesSwatchView: View {
     let band: HistoryGraphView.BandRole
 
     private static let size: CGFloat = 8
@@ -286,13 +329,7 @@ struct MemoryCardView: View {
 
             compositionLegendLine
 
-            CardRankingSlotView(
-                entries: cached?.topApplications ?? [],
-                failed: cached?.topApplicationsFailed ?? false,
-                caption: MemoryCardPresentation.topApplicationsCaption,
-                valueText: { format(UInt64($0.value.rounded())) },
-                iconProvider: iconProvider
-            )
+            rankingSlot
 
             // CPU 카드와 같은 이유로 단축키 표시를 수집 상태와 무관하게 항상 둡니다(ANALYSIS §5 DP15).
             Text("\(MemoryCardPresentation.selectionShortcutDisplayText) 선택·복귀")
@@ -304,6 +341,17 @@ struct MemoryCardView: View {
         .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
     }
 
+    /// 카드 순위 자리. CPU 카드의 같은 속성과 같은 이유로 기본 접근 수준입니다.
+    var rankingSlot: CardRankingSlotView {
+        CardRankingSlotView(
+            entries: cached?.topApplications ?? [],
+            failed: cached?.topApplicationsFailed ?? false,
+            caption: MemoryCardPresentation.topApplicationsCaption,
+            valueText: { format(UInt64($0.value.rounded())) },
+            iconProvider: iconProvider
+        )
+    }
+
     /// 제목 줄. 「사용 중 / 전체」 수치가 왼쪽에 남고, 그 줄의 남는 폭을 구성 누적 바가 씁니다(SPEC §5.3).
     /// 바 높이는 제목 텍스트 높이 이하이고 제목은 한 줄로 묶여 있어, 이 바 때문에 카드가 커지지 않습니다(SPEC §5.8).
     private var titleLine: some View {
@@ -313,7 +361,7 @@ struct MemoryCardView: View {
                 .lineLimit(MemoryCompositionLegendFormatting.maximumLineCount)
                 .layoutPriority(1)
 
-            MemoryCompositionBarView(segments: cached?.compositionLayout.segments ?? [])
+            MemoryCompositionBarView(segments: cached?.compositionLayout.segments ?? MemoryCompositionBarLayout.placeholderSegments)
         }
     }
 
@@ -337,7 +385,9 @@ struct MemoryCardView: View {
     /// 그대로 이어붙여 그리고 `MemoryPressureSwapLineFormatting.maximumLineCount`로 묶어
     /// 폭이 부족할 때 줄바꿈 대신 끝에서 잘리게 합니다 — 뷰는 순서도 줄 수 상한도 정하지 않고 조립 결과를 그리기만 합니다(ANALYSIS §5 DP4).
     /// 줄 끝의 구성 합계는 제목 줄의 「사용 중」과 다른 지표라 「구성」 라벨을 달아 그립니다(SPEC §5.3).
-    private var pressureSwapLine: some View {
+    // `private`가 아닌 것은 task-011 테스트가 값 없음 자리표시(`…placeholder`)의 조각이 이 줄에 실제로 남는지
+    // 이 줄의 이상적 폭으로 재기 때문입니다 — 조립 배열만 단언하면 뷰가 조각을 건너뛰어도 통과합니다.
+    var pressureSwapLine: some View {
         let segments = cached.map {
             MemoryPressureSwapLineFormatting.assemble(
                 pressureDisplay: $0.pressureDisplay,
@@ -376,7 +426,9 @@ struct MemoryCardView: View {
     ///
     /// 수집 상태와 무관하게 같은 네 이름을 그립니다 — 범례에 수치가 없어 값 없음을 나타낼 것이 없고,
     /// 그래서 이 줄은 어느 상태에서도 같은 자리를 같은 크기로 차지합니다(SPEC §5.8, ANALYSIS §5 DP14).
-    private var compositionLegendLine: some View {
+    // `private`가 아닌 것은 task-011 테스트가 네 스와치와 네 이름이 상태마다 이 줄에 실제로 남는지
+    // 이 줄의 이상적 폭으로 재기 때문입니다 — `segments` 배열만 단언하면 뷰가 조각을 건너뛰어도 통과합니다.
+    var compositionLegendLine: some View {
         MemoryCompositionLegendFormatting.segments.reduce(Text("")) { line, segment in
             switch segment {
             case .swatch(let category):
@@ -400,7 +452,9 @@ struct MemoryCardView: View {
 ///
 /// 값이 없으면 구간 배열이 비어 트랙만 남습니다 — 없는 값을 길이 0 구간으로도 그리지 않습니다(ANALYSIS §5 DP14).
 /// 트랙의 남는 부분에는 이름을 붙이지 않습니다. 여유 메모리와 같은 값이 아니기 때문입니다(ANALYSIS §5 DP5).
-private struct MemoryCompositionBarView: View {
+// `private`가 아닌 것은 task-011 테스트가 값 없음 트랙을 이 뷰만 따로 그려 같은 크기의 투명한 자리와
+// 픽셀로 견주기 때문입니다 — 카드 전체 렌더로는 트랙이 제목 줄 안에 묻혀 그리기 여부가 드러나지 않습니다.
+struct MemoryCompositionBarView: View {
     let segments: [MemoryCompositionSegment]
 
     /// 바 높이. 제목 줄 글꼴(`.subheadline`)의 텍스트 높이보다 작아야 카드 높이가 이 바 때문에 늘지 않습니다.
@@ -409,18 +463,38 @@ private struct MemoryCompositionBarView: View {
 
     var body: some View {
         Canvas { context, size in
-            let track = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: Self.cornerRadius)
-            context.fill(track, with: .color(DashboardColorPalette.memoryCompositionTrack))
-            context.clip(to: track)
-
-            for segment in segments {
-                let width = size.width * CGFloat(segment.ratio)
-                guard width > 0 else { continue }
-                let rect = CGRect(x: size.width * CGFloat(segment.startRatio), y: 0, width: width, height: size.height)
-                context.fill(Path(rect), with: .color(DashboardColorPalette.memoryComposition(segment.category)))
+            for layer in MemoryCompositionBarLayout.layers(for: segments) {
+                switch layer {
+                case .track:
+                    let track = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: Self.cornerRadius)
+                    context.fill(track, with: .color(DashboardColorPalette.memoryCompositionTrack))
+                    context.clip(to: track)
+                case .segments:
+                    for segment in segments {
+                        let width = size.width * CGFloat(segment.ratio)
+                        guard width > 0 else { continue }
+                        let rect = CGRect(x: size.width * CGFloat(segment.startRatio), y: 0, width: width, height: size.height)
+                        context.fill(Path(rect), with: .color(DashboardColorPalette.memoryComposition(segment.category)))
+                    }
+                }
             }
         }
         .frame(height: Self.height)
+    }
+}
+
+/// Memory 구성 바가 값 유무에 따라 그리는 레이어입니다.
+/// 값 없음은 트랙만 남기고 구간 배열 자체를 비워, 길이 0 구간이나 지어낸 비율이 값처럼 들어올 수 없게 합니다.
+nonisolated enum MemoryCompositionBarLayout {
+    enum Layer: Equatable {
+        case track
+        case segments
+    }
+
+    static let placeholderSegments: [MemoryCompositionSegment] = []
+
+    static func layers(for segments: [MemoryCompositionSegment]) -> [Layer] {
+        segments.isEmpty ? [.track] : [.track, .segments]
     }
 }
 
@@ -655,7 +729,9 @@ struct ApplicationRowIconView: View {
 /// 한 줄로 나타내며 나머지 줄은 자리표시로 남습니다(SPEC §5.11).
 /// 상세 팝업(`TopApplicationsView`)과 달리 카드 쪽 순위는 이 정원이 고정되어야 하므로 별도 뷰로 둡니다 —
 /// 상세 팝업의 크기 정책은 task-016 몫입니다.
-private struct CardRankingSlotView: View {
+// `private`가 아닌 것은 task-011 테스트가 카드가 넘긴 인자 그대로 이 슬롯의 줄을 하나씩 꺼내 재고,
+// 정원·아이콘 간격 상수를 기준 폭 조립에 쓰기 때문입니다.
+struct CardRankingSlotView: View {
     let entries: [ApplicationRankingEntry]
     let failed: Bool
     let caption: String
@@ -664,7 +740,7 @@ private struct CardRankingSlotView: View {
 
     private static let capacity = ApplicationRankingSampling.cardDisplayCount
     /// 아이콘 자리와 이름 사이 간격.
-    private static let iconSpacing: CGFloat = 4
+    static let iconSpacing: CGFloat = 4
 
     var body: some View {
         // 그릴 줄 수와 줄별 아이콘 대상이 같은 목록에서 나옵니다 — 아이콘이 있는 줄에만 자리를 두면
@@ -682,13 +758,21 @@ private struct CardRankingSlotView: View {
         }
     }
 
-    private func row(at index: Int, iconKey: ApplicationKey?) -> some View {
+    // `private`가 아닌 것은 task-011 테스트가 정원의 **줄마다** 아이콘 자리가 남아 있는지 한 줄씩 재기
+    // 때문입니다 — 슬롯 전체의 이상적 폭은 가장 넓은 한 줄만 드러내 일부 줄의 자리 손실을 가립니다.
+    func row(at index: Int, iconKey: ApplicationKey?) -> some View {
         HStack(spacing: Self.iconSpacing) {
-            ApplicationRowIconView(
-                content: ApplicationRowIconLayout.content(for: iconKey, from: iconProvider),
-                pointSize: ApplicationRowIconLayout.cardPointSize
-            )
-            rowContent(at: index)
+            ForEach(CardRankingRowLayout.elements, id: \.self) { element in
+                switch element {
+                case .icon:
+                    ApplicationRowIconView(
+                        content: ApplicationRowIconLayout.content(for: iconKey, from: iconProvider),
+                        pointSize: ApplicationRowIconLayout.cardPointSize
+                    )
+                case .content:
+                    rowContent(at: index)
+                }
+            }
         }
     }
 
@@ -718,6 +802,18 @@ private struct CardRankingSlotView: View {
         Text(" ")
             .opacity(0)
     }
+}
+
+/// 카드 순위 한 줄의 고정 요소 순서입니다.
+/// 이 배열은 순서만 정하고 줄마다 요소가 실제로 그려지는지까지는 정하지 못합니다 —
+/// 특정 줄에서만 아이콘 자리를 건너뛰는 변경은 `row(at:iconKey:)`를 줄마다 재는 단위 테스트가 잡습니다.
+nonisolated enum CardRankingRowLayout {
+    enum Element: Equatable, Hashable {
+        case icon
+        case content
+    }
+
+    static let elements: [Element] = [.icon, .content]
 }
 
 /// 앱 단위 순위 목록. 상세 팝업(`MemoryDetailView`)의 최근 증가량 순위 한 자리에서만 쓰이며, 정원보다 적으면

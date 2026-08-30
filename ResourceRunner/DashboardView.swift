@@ -965,7 +965,8 @@ private struct MemoryDetailView: View {
                     format: format
                 ),
                 centerLabel: summary.donutCenter.label,
-                centerValue: format(summary.donutCenter.bytes)
+                centerValue: format(summary.donutCenter.bytes),
+                accessibilityLabel: presentation.compositionDonutAccessibilityLabel
             )
 
             Text("\(summary.usedLine.label) \(format(summary.usedLine.bytes))")
@@ -1019,6 +1020,7 @@ private struct MemoryCompositionDonutView: View {
     let legendRows: [MemoryCompositionDetailLegendRow]
     let centerLabel: String
     let centerValue: String
+    let accessibilityLabel: String
 
     private static let diameter: CGFloat = 140
     private static let lineWidth: CGFloat = 18
@@ -1067,6 +1069,9 @@ private struct MemoryCompositionDonutView: View {
                 }
             }
             .frame(width: Self.diameter, height: Self.diameter)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityIdentifier("MemoryCompositionDonut")
 
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(legendRows.enumerated()), id: \.offset) { _, row in

@@ -10,7 +10,7 @@ CPU 그래프의 격자와 User·System 2계열, 목록의 앱 아이콘을 다�
 
 - [x] SPEC
 - [x] ANALYSIS
-- [ ] IMPLEMENT
+- [x] IMPLEMENT
 
 ## 문서
 
@@ -404,3 +404,102 @@ CPU 그래프의 격자와 User·System 2계열, 목록의 앱 아이콘을 다�
   ④ `CardRankingRowLayout` 앵커가 단독으로 여는 그물은 좁습니다 — 순서 뒤집기는 아이콘 픽셀 영역으로도 잡힙니다.
   ⑤ `CPUCardView.secondaryLine` 위 주석이 커버리지를 **과소** 진술합니다(「픽셀로는 드러나지 않습니다」가 두 계열 스와치에는 사실이 아님).
   거짓 안전감을 만드는 방향이 아니라 `style/minor`로도 세지 않았고, 다음에 이 줄을 만질 때 정리하면 됩니다.
+- 2026-08-30: **task-012 완료**(재검증 `approved`).
+  첫 독립 검증은 구현의 정적 연결과 정상 실행 증거를 충족으로 보면서도 mutation 직접 실행 증거가 없어 `evidence`로 반려했습니다.
+  권한이 승인된 macOS 호스트에서 필수 mutation 여섯 건을 직접 실행해 그 유일한 근거 부족을 해소했습니다.
+  기준선은 전체 단위 테스트 401 passed / 0 failed이며 `TEST SUCCEEDED`입니다.
+  (a) 카드 이름의 `MemoryCompositionCategory.allCases.map`을 `dropLast().map`으로 바꾸면 Cached 수치가 빠져 400 passed / 1 failed가 됐습니다.
+  실패한 테스트는 `MemoryCardAccessibilityLabelTests/normalStateIncludesAllCompositionAndMergedLineValuesWithDistinctMetricLabels()`입니다.
+  (b) 「구성 합계」 라벨을 「사용 중」으로 바꾸면 같은 테스트가 `구성 합계 9 GiB`를 찾지 못해 400 passed / 1 failed가 됐습니다.
+  (c) CPU 이름에서 `기준선 25%·50%·75%` 문구를 빼면 400 passed / 1 failed가 됐습니다.
+  실패한 테스트는 `CPUCardAccessibilityLabelTests/normalStateIncludesGraphSeriesBaselinesAndTopApplicationsCaption()`입니다.
+  (d) 구성 합계 자리에 `composition.total` 대신 `usedBytes`를 넣으면 9 GiB 기대값 대신 8 GiB가 나와 400 passed / 1 failed가 됐습니다.
+  실패한 테스트는 Memory 카드 이름의 구성 합계 단언입니다.
+  (e) 상세 도넛 이름을 `Memory 구성 도넛`만 남기면 400 passed / 1 failed가 됐습니다.
+  실패한 테스트는 `MemoryCardAccessibilityLabelTests/detailDonutAccessibilityLabelIncludesEveryCompositionValueTotalAndPhysicalMemory()`입니다.
+  (f) `MemoryCompositionDonutView`의 `.accessibilityLabel(accessibilityLabel)` 부착을 지우면 Memory UI 테스트가 2 passed / 1 failed가 됐습니다.
+  실패한 테스트는 `testMemoryDetailDonutIsOneAccessibilityNodeWithCompleteCompositionLabel`입니다.
+  실제 렌더 노드의 이름은 빈 문자열이었고 `DashboardMemoryCardUITests.swift` 78행의 App 수치 단언이 실패했습니다.
+  따라서 단위 테스트가 조립 상수만 확인하는 항진명제가 아니며 뷰의 실제 접근성 부착 소실도 UI 테스트가 잡습니다.
+  **`SPEC §5.3` 재판정은 「성립」으로 확정했습니다.**
+  카드 접근성 이름에 App·Wired·Compressed·Cached 네 수치가 실제로 들어가 2026-08-29 결정의 확정 조건을 만족합니다.
+  구성 합계와 「사용 중」은 서로 다른 라벨과 값으로 읽힙니다.
+  상세 팝업과 접근성 이름은 `docs/product.md`의 「중요한 분석 정보는 Hover에만 의존하지 않습니다」 원칙과 맞습니다.
+  task-012 승인으로 `SPEC §5.10`도 닫혔습니다.
+  **task-010·011에서 이월된 UI 확인 셋도 종결했습니다.**
+  `DashboardDetailPopoverUITests`는 6 passed / 0 failed입니다.
+  `DashboardProcessListDisplayUITests`는 3 passed / 0 failed입니다.
+  `DashboardDetailExpansionUITests`는 3 passed / 0 failed입니다.
+  모든 mutation은 단독 실행 뒤 백업본으로 복구했습니다.
+  최종 MD5는 `DashboardPresentation.swift` `eb7acbb25495355d751fbaabe429b4b8`입니다.
+  최종 MD5는 `DashboardView.swift` `2ca06ecf0b8b18b96abbaf8df0b368f4`입니다.
+  최종 MD5는 `DashboardPresentationTests.swift` `1008e50860d7a05247311976ffb4117c`입니다.
+  최종 MD5는 `DashboardCPUCardUITests.swift` `6f4630368110ab3459fc2c200d0d0359`입니다.
+  최종 MD5는 `DashboardMemoryCardUITests.swift` `deb1a58f723cc5aca3ce45b3a9c4e994`이며 다섯 파일 모두 시작값과 같습니다.
+  task-013이 미완료이므로 기능 `IMPLEMENT`는 `[ ]`로 유지합니다.
+- 2026-08-30: **task-013 독립 검증 `rejected`**.
+  사람 관찰 부분 (a)·(b)은 충족했지만, 요구된 `xcodebuild test` 단위 스위트의 기준선 `401 passed / 0 failed`를 이 검증 환경에서 직접 재현하지 못해 `evidence`로 반려했습니다.
+  지정 명령은 처음에 외부 샌드박스가 Swift 매크로의 하위 샌드박스를 막아 `PreviewsMacros.SwiftUIView`를 불러오지 못했습니다.
+  `OTHER_SWIFT_FLAGS=-disable-sandbox`로 컴파일까지 진행한 재시도는 `com.apple.testmanagerd.control` 연결이 외부 샌드박스에 거부돼 테스트 실행 전에 `TEST FAILED`가 됐습니다.
+  같은 빌드의 테스트 번들을 직접 실행한 무변경 대조에서는 task-013 대상 네 테스트가 모두 통과했습니다.
+  `remembersThatAnIconCouldNotBeObtained()`와 `repeatedTicksNeverLoadAnIconMoreThanOnce()`가 통과했습니다.
+  `capLimitsResultToLeadingEntriesWhenNoRowIsExpanded()`와 `capIsAppliedAfterStableOrderIsFixedNotBeforeIt()`도 통과했습니다.
+  다만 직접 실행 방식에서는 샌드박스가 `sysctl(KERN_PROC_ALL)`을 막아 task-013과 무관한 실기기 테스트 2건이 실패했으므로 전체 스위트 기준선을 대신하는 근거로 쓰지 않았습니다.
+  **부정 결과 캐시 제거 mutation은 task-013의 핵심 단언을 깨뜨렸습니다.**
+  첫 tick 로더 호출은 기대 5회 대신 11회였고, 뒤 아홉 tick 추가 호출은 기대 0회 대신 72회였습니다.
+  요청 키는 고유 키 5개에 총 83회였으며, 부정 결과 단독 테스트도 호출 3회 대 기대 1회와 캐시 키 0개 대 기대 1개로 실패했습니다.
+  **`displayedGroups` 정원 자르기 제거 mutation도 task-001의 정원 단언을 깨뜨렸습니다.**
+  펼친 행이 없을 때 결과는 기대 3행 대신 5행이었고, 펼친 행이 있을 때는 기대 `[/A, /B, /C]` 뒤에 `/New`가 남았습니다.
+  mutation은 각각 단독 실행 직후 원복했습니다.
+  최종 MD5는 `ApplicationIconCache.swift` `d33ceae5c1c6e323b3326f2650bd1133`입니다.
+  최종 MD5는 `ApplicationRanking.swift` `6a489d31a4869ce23e89fc8e0b4efde2`입니다.
+  최종 MD5는 `ApplicationIconCacheTests.swift` `c9bada77882314cac99996e9cc6deda7`입니다.
+  최종 MD5는 `ApplicationRankingTests.swift` `86c6defc62521e036bd53314c14d9a00`이며 네 파일 모두 시작값과 같습니다.
+  **사람 관찰 (a)는 충족입니다.**
+  변경 후 전반 5회 평균은 2.30%이고 후반 5회 평균은 2.42%로 차이는 +0.12%p입니다.
+  원시 값은 1.8~2.9% 사이에서 오르내리고 2.9% 뒤 2.2%로 내려가 단조 상승이 아닙니다.
+  **사람 관찰 (b)도 충족입니다.**
+  변경 전 10회 평균은 2.230%, 변경 후는 2.360%로 차이는 +0.130%p입니다.
+  변경 전 표본 표준편차 0.741%와 변경 후 0.306%에 비해 평균 차이가 작아 뚜렷한 상승으로 보지 않았습니다.
+  유효한 두 표본의 20개 행은 모두 `popover_open=1`이었습니다.
+  **남은 한계 ① — 측정 수단이 문언과 다릅니다.**
+  명세는 Activity Monitor CPU 탭을 적었지만 실제 측정은 `top -pid <pid> -l 2 -s 1 -stats cpu`였습니다.
+  같은 프로세스 CPU 통계를 변경 전후 동일한 방법으로 읽었으므로 사람 관찰 자체를 무효로 보지는 않았지만 절차 일치 증거는 아닙니다.
+  **남은 한계 ② — 첫 변경 전 표본을 폐기하고 재측정했습니다.**
+  폐기 표본은 1회차 뒤 9개 행이 `popover_open=0`이라 관찰 조건을 벗어났고 `cpu-before-invalid.tsv`에 보존돼 있습니다.
+  객관적인 무효 조건에 따른 재측정이라 유효 표본 판정을 무효로 보지는 않았지만 최초 시도 결과가 아니라는 사실은 남습니다.
+  task-013이 `[ ]`이므로 매핑된 `SPEC §5.9`는 닫히지 않았습니다.
+  task-013을 승인하면 §5.1~§5.10의 모든 매핑 Task가 닫히지만 현재는 그 조건이 성립하지 않습니다.
+  기능 `IMPLEMENT`는 `[ ]`로 유지하며 완료 이력을 추가하지 않았습니다.
+- 2026-08-30: **task-013 완료**(재검증 `approved`). **`SPEC §5.9`가 닫히고 IMPLEMENT가 완료됐습니다** — Task 13개 전부 `[x]`입니다.
+  앞선 반려의 유일한 사유였던 「단위 스위트 기준선 미재현」을 샌드박스 밖에서 실행해 채웠습니다 —
+  `xcodebuild test … -only-testing:ResourceRunnerTests`가 401 passed / 0 failed, `** TEST SUCCEEDED **`입니다.
+  재검증자는 보고된 mutation 수치를 그대로 받지 않고 **코드로 검산했습니다** —
+  부정 결과 캐시를 지우면 아이콘 없는 앱 2개 × 카드 2개 × 본문 평가 2회 = tick당 8회 재조회가 되고,
+  첫 tick은 그중 2회가 기준 5회에 이미 포함돼 `5 → 11`, 남은 아홉 tick이 `9 × 8 = 72`로 `0 → 72`가 됩니다.
+  보고값과 산술이 정확히 맞아떨어집니다. 정원 mutation의 `3 → 5`도 그룹 5개에 `cap: 3`을 넣는 테스트 구조와 그대로 맞습니다.
+  `ApplicationIconCacheTests.swift:281`의 `repeatedTicksNeverLoadAnIconMoreThanOnce()`가 항진명제가 아님도 확인했습니다 —
+  실제 `CPUCardView`·`MemoryCardView`를 `NSHostingController.sizeThatFits`로 tick마다 렌더링하고,
+  `#require(afterFirstTick > 0, …)` 가드가 뷰가 주입된 제공자를 아예 조회하지 않는 mutation까지 걸며,
+  아이콘 없는 앱이 표본에 남아 있다는 전제 자체를 `#require(entries.contains { !hasIcon($0.key) })`로 잠갔습니다.
+  **사람 관찰에는 통계 근거를 더했습니다.**
+  20개 표본 전체에 정확 순열검정(184,756가지 전수)을 돌려 **양측 p = 0.671**을 얻었습니다 — 차이가 잡음과 구분되지 않습니다.
+  시간 추세 상관은 변경 전 rho +0.565가 변경 후 +0.458보다 오히려 큽니다(n=10 유의 임계값 약 0.648, 둘 다 미달).
+  즉 관찰된 완만한 후반 상승은 두 빌드에 공통인 환경 잡음이며 **새 표시 요소가 없는 기준선 쪽이 더 강합니다.**
+  §5.9의 완료 조건 문장 자체로 봐도 성립합니다 —
+  task-009의 캐시(부정 결과 포함, 상한 512, 16pt 축소 저장)가 반복 조회 비용을 구조적으로 0으로 만들고
+  실제 카드 뷰를 10 tick 렌더링하는 테스트가 그것을 고정하며, 정원 통합으로 행 수가 20으로 한정된 위에서
+  실기기 20개 표본이 지속 상승 없음을 보입니다.
+  **남은 한계 넷** —
+  ① 측정 수단이 문언과 다릅니다(Activity Monitor 대신 `top -pid <pid> -l 2 -s 1 -stats cpu`).
+  변경 전후 동일 수단이라 체계적 편향이 차분에서 상쇄되므로 비교 판정은 유효하지만, 절차 문언 일치 증거는 아닙니다.
+  ② 표본이 각 10개로 작아, 이 관찰이 배제하는 것은 「뚜렷한 상승」이지 「1%p 미만 미세 상승의 부재」가 아닙니다.
+  검증 조건이 요구한 것은 전자입니다.
+  ③ 변경 전 표본의 10회차 `4.0`은 이상치이고, 이를 빼면 변경 전 평균이 2.033으로 내려가 차이가 **+0.327%p**로 커집니다.
+  판정을 바꾸지는 않지만(변경 전 산포 sd 0.741·범위 1.3~4.0 안에 묻힘) 사후 판단이라 주된 근거로 쓰지 않았고, 수치를 인용할 때 함께 알려져야 합니다.
+  ④ 사람 관찰은 재현 불가능한 일회성 증거입니다. 이후 성능 회귀를 잡는 그물은 자동 부분 두 단언뿐입니다.
+  **첫 변경 전 표본 폐기가 승인에 유리하지 않았음도 확인했습니다** —
+  폐기본(`cpu-before-invalid.tsv`)에는 `0.1`·`0.3`·`0.7` 같은 낮은 값이 여럿이라
+  그대로 썼다면 변경 전 평균이 더 낮아져 변경 후가 상대적으로 **더 나빠 보였을** 것입니다.
+  폐기 기준은 결과가 아니라 `CGWindowListCopyWindowInfo`가 읽은 `popover_open`이라는 객관적 관측값이었습니다.
+- 2026-08-30: IMPLEMENT 완료

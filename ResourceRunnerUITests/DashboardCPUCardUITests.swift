@@ -37,6 +37,10 @@ final class DashboardCPUCardUITests: XCTestCase {
         let label = cpuCard.label
         XCTAssertFalse(label.contains("수집 중"), "값이 있는데도 로딩 문구가 남아 있습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("전체 사용률"), "CPU 값 텍스트가 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertNotNil(label.range(of: #"User [0-9]+%"#, options: .regularExpression), "CPU User 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertNotNil(label.range(of: #"System [0-9]+%"#, options: .regularExpression), "CPU System 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertTrue(label.contains("두 계열 중첩 그래프"), "CPU 그래프의 중첩 관계가 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertTrue(label.contains("기준선 25%·50%·75%"), "CPU 기준선 값이 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertTrue(
             label.contains("시스템 프로세스는 TOP 5에 포함되지 않습니다"),
             "TOP 5 안내 문구가 접근성 이름에 없습니다. 실제 값: \(label)"

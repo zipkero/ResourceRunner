@@ -566,7 +566,7 @@ struct CPUCardAccessibilityLabelTests {
         #expect(state.cpuAccessibilityLabel.contains(CPUCardPresentation.selectionShortcutDisplayText))
     }
 
-    @Test func normalStateIncludesUsageAndTopApplicationsCaption() {
+    @Test func normalStateIncludesGraphSeriesBaselinesAndTopApplicationsCaption() {
         let presentation = CPUCardPresentation.assemble(
             cpu: cpuMetrics(overallUsage: 55, userRatio: 40, systemRatio: 15),
             history: [],
@@ -576,7 +576,11 @@ struct CPUCardAccessibilityLabelTests {
         let state = ResourceCardState.normal(presentation, timestamp: baseInstant)
 
         let label = state.cpuAccessibilityLabel
-        #expect(label.contains("55"))
+        #expect(label.contains("전체 사용률 55%"))
+        #expect(label.contains("User 40%"))
+        #expect(label.contains("System 15%"))
+        #expect(label.contains("두 계열 중첩 그래프"))
+        #expect(label.contains("기준선 25%·50%·75%"))
         #expect(label.contains(CPUCardPresentation.topApplicationsCaption))
     }
 
@@ -676,6 +680,16 @@ private func memoryMetricsForTests(
         swapUsedBytes: swapUsedBytes,
         pressureLevel: pressureLevel
     )
+}
+
+private let memoryAccessibilityByteCountFormatter: ByteCountFormatter = {
+    let formatter = ByteCountFormatter()
+    formatter.countStyle = .memory
+    return formatter
+}()
+
+private func formattedMemoryBytesForAccessibility(_ bytes: UInt64) -> String {
+    memoryAccessibilityByteCountFormatter.string(fromByteCount: Int64(bytes))
 }
 
 private func swapHistoryPoint(secondsFromBase: Double, swapUsedBytes: UInt64) -> SystemMetricsHistoryPoint {
@@ -977,20 +991,52 @@ struct MemoryCardAccessibilityLabelTests {
         #expect(state.memoryAccessibilityLabel.contains(MemoryCardPresentation.selectionShortcutDisplayText))
     }
 
-    @Test func normalStateIncludesPressureLevelAndUsedMemory() {
+    @Test func normalStateIncludesAllCompositionAndMergedLineValuesWithDistinctMetricLabels() {
         let presentation = MemoryCardPresentation.assemble(
-            memory: memoryMetricsForTests(pressureLevel: .warning),
-            history: [],
+            memory: memoryMetricsForTests(swapUsedBytes: 3 * 1024 * 1024 * 1024, pressureLevel: .warning),
+            history: [
+                swapHistoryPoint(secondsFromBase: -60, swapUsedBytes: 2 * 1024 * 1024 * 1024),
+                swapHistoryPoint(secondsFromBase: 0, swapUsedBytes: 3 * 1024 * 1024 * 1024),
+            ],
             topApplications: [],
-            currentTimestamp: baseInstant
+            currentTimestamp: baseInstant.advanced(by: .seconds(1))
         )
         let state = ResourceCardState.normal(presentation, timestamp: baseInstant)
 
         let label = state.memoryAccessibilityLabel
-        #expect(label.contains("경고"))
-        #expect(label.contains("사용 중 메모리"))
+        let gibibyte: UInt64 = 1024 * 1024 * 1024
+        #expect(label.contains("Memory Pressure 경고"))
+        #expect(label.contains("사용 중 \(formattedMemoryBytesForAccessibility(8 * gibibyte))"))
+        #expect(label.contains("전체 물리 메모리 \(formattedMemoryBytesForAccessibility(16 * gibibyte))"))
+        #expect(label.contains("Swap \(formattedMemoryBytesForAccessibility(3 * gibibyte))"))
+        #expect(label.contains("Swap 최근 변화 +\(formattedMemoryBytesForAccessibility(gibibyte))"))
+        #expect(label.contains("App \(formattedMemoryBytesForAccessibility(4 * gibibyte))"))
+        #expect(label.contains("Wired \(formattedMemoryBytesForAccessibility(2 * gibibyte))"))
+        #expect(label.contains("Compressed \(formattedMemoryBytesForAccessibility(2 * gibibyte))"))
+        #expect(label.contains("Cached \(formattedMemoryBytesForAccessibility(gibibyte))"))
+        #expect(label.contains("구성 합계 \(formattedMemoryBytesForAccessibility(9 * gibibyte))"))
+        #expect(!label.contains("사용 중 및 구성 합계"))
         #expect(label.contains(MemoryCardPresentation.topApplicationsCaption))
         #expect(label.contains(MemoryCardPresentation.selectionShortcutDisplayText))
+    }
+
+    @Test func detailDonutAccessibilityLabelIncludesEveryCompositionValueTotalAndPhysicalMemory() {
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(),
+            history: [],
+            topApplications: [],
+            currentTimestamp: baseInstant
+        )
+
+        let label = presentation.compositionDonutAccessibilityLabel
+        let gibibyte: UInt64 = 1024 * 1024 * 1024
+        #expect(label.contains("Memory 구성 도넛"))
+        #expect(label.contains("App \(formattedMemoryBytesForAccessibility(4 * gibibyte))"))
+        #expect(label.contains("Wired \(formattedMemoryBytesForAccessibility(2 * gibibyte))"))
+        #expect(label.contains("Compressed \(formattedMemoryBytesForAccessibility(2 * gibibyte))"))
+        #expect(label.contains("Cached \(formattedMemoryBytesForAccessibility(gibibyte))"))
+        #expect(label.contains("구성 합계 \(formattedMemoryBytesForAccessibility(9 * gibibyte))"))
+        #expect(label.contains("전체 물리 메모리 \(formattedMemoryBytesForAccessibility(16 * gibibyte))"))
     }
 }
 

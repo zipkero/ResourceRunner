@@ -331,32 +331,43 @@ extension HistoryGraphGridline {
 }
 
 extension ResourceCardState where Presentation == CPUCardPresentation {
-    /// CPU 카드의 접근성 이름. 현재 사용률과 카드 상태, TOP 5 안내 문구, 선택·복귀 단축키를 포함합니다.
+    /// CPU 카드의 접근성 이름. 현재 사용률과 카드 상태, 겹쳐 그린 두 계열, 기준선,
+    /// TOP 5 안내 문구, 선택·복귀 단축키를 포함합니다.
     var cpuAccessibilityLabel: String {
         let shortcut = "단축키 \(CPUCardPresentation.selectionShortcutDisplayText)"
         switch self {
         case .collecting:
             return "CPU 카드, 수집 중, \(shortcut)"
         case .normal(let presentation, _):
-            let overall = Int(presentation.overallUsage.rounded())
-            let user = Int(presentation.userRatio.rounded())
-            let system = Int(presentation.systemRatio.rounded())
-            return "CPU 카드, 전체 사용률 \(overall)%, User \(user)%, System \(system)%, "
+            return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
                 + CPUCardPresentation.topApplicationsCaption
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
                 return "CPU 카드, 수집 실패, \(shortcut)"
             }
-            let overall = Int(lastKnown.presentation.overallUsage.rounded())
-            return "CPU 카드, 수집 실패, 마지막 전체 사용률 \(overall)%, \(shortcut)"
+            return "CPU 카드, 수집 실패, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), \(shortcut)"
         case .stopped(let lastKnown):
             guard let lastKnown else {
                 return "CPU 카드, 수집 중지, \(shortcut)"
             }
-            let overall = Int(lastKnown.presentation.overallUsage.rounded())
-            return "CPU 카드, 수집 중지, 마지막 전체 사용률 \(overall)%, \(shortcut)"
+            return "CPU 카드, 수집 중지, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), \(shortcut)"
         }
+    }
+}
+
+extension CPUCardPresentation {
+    /// 그래프가 나타내는 두 계열과 라벨 없는 기준선 값까지 카드의 단일 접근성 노드에 모읍니다
+    /// (SPEC §5.10, ANALYSIS §5 DP10, DP13).
+    fileprivate var cpuAccessibilityMetricsLabel: String {
+        let overall = Int(overallUsage.rounded())
+        let user = Int(userRatio.rounded())
+        let system = Int(systemRatio.rounded())
+        let baselines = HistoryGraphGridline.baselineValues
+            .map { "\(Int($0.rounded()))%" }
+            .joined(separator: "·")
+        return "전체 사용률 \(overall)%, User \(user)%, System \(system)%, "
+            + "User와 System 두 계열 중첩 그래프, 기준선 \(baselines)"
     }
 }
 
@@ -733,6 +744,44 @@ extension MemoryCardPresentation {
     var compositionDetailSummary: MemoryCompositionDetailSummary {
         MemoryCompositionDetailSummary.make(compositionBytes: detail.compositionBytes, usedBytes: usedBytes)
     }
+
+    /// 상세 도넛 하나가 내보내는 접근성 이름. 도넛의 네 구간 수치는 잘리지 않은 원래 바이트를 쓰고,
+    /// 링의 기준인 전체 물리 메모리와 구성 합계를 함께 읽습니다(SPEC §5.10, ANALYSIS §5 DP13).
+    var compositionDonutAccessibilityLabel: String {
+        let composition = detail.compositionBytes
+        let categories = MemoryCompositionCategory.allCases.map { category in
+            "\(category.label) \(Self.accessibilityByteCount(composition[category]))"
+        }.joined(separator: ", ")
+        return "Memory 구성 도넛, \(categories), 구성 합계 \(Self.accessibilityByteCount(composition.total)), "
+            + "전체 물리 메모리 \(Self.accessibilityByteCount(totalPhysicalBytes))"
+    }
+
+    /// 카드의 화면 폭과 무관하게 제목·병합 줄·구성 그래프가 가진 모든 새 수치를 온전히 보존합니다.
+    fileprivate var memoryAccessibilityMetricsLabel: String {
+        let composition = detail.compositionBytes
+        let categories = MemoryCompositionCategory.allCases.map { category in
+            "\(category.label) \(Self.accessibilityByteCount(composition[category]))"
+        }.joined(separator: ", ")
+        var swap = "Swap \(Self.accessibilityByteCount(swapUsedBytes))"
+        if let change = swapRecentChangeBytes {
+            let sign = change >= 0 ? "+" : "-"
+            swap += ", Swap 최근 변화 \(sign)\(Self.accessibilityByteCount(UInt64(abs(change))))"
+        }
+        return "사용 중 \(Self.accessibilityByteCount(usedBytes)), "
+            + "전체 물리 메모리 \(Self.accessibilityByteCount(totalPhysicalBytes)), "
+            + "Memory Pressure \(pressureDisplay.label), \(swap), \(categories), "
+            + "구성 합계 \(Self.accessibilityByteCount(composition.total))"
+    }
+
+    private static func accessibilityByteCount(_ bytes: UInt64) -> String {
+        accessibilityByteCountFormatter.string(fromByteCount: Int64(bytes))
+    }
+
+    private static let accessibilityByteCountFormatter: ByteCountFormatter = {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .memory
+        return formatter
+    }()
 }
 
 extension MemoryCardPresentation {
@@ -817,35 +866,27 @@ extension MemoryCardPresentation {
 }
 
 extension ResourceCardState where Presentation == MemoryCardPresentation {
-    /// Memory 카드의 접근성 이름. 현재 단계와 사용 중 메모리, 선택·복귀 단축키를 포함합니다.
+    /// Memory 카드의 접근성 이름. 현재 단계와 사용 중·구성 수치, 병합 줄 수치,
+    /// 선택·복귀 단축키를 포함합니다.
     var memoryAccessibilityLabel: String {
         let shortcut = "단축키 \(MemoryCardPresentation.selectionShortcutDisplayText)"
         switch self {
         case .collecting:
             return "Memory 카드, 수집 중, \(shortcut)"
         case .normal(let presentation, _):
-            let used = Self.byteCountFormatter.string(fromByteCount: Int64(presentation.usedBytes))
-            return "Memory 카드, 사용 중 메모리 \(used), Memory Pressure \(presentation.pressureDisplay.label), "
+            return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel), "
                 + MemoryCardPresentation.topApplicationsCaption
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
                 return "Memory 카드, 수집 실패, \(shortcut)"
             }
-            let used = Self.byteCountFormatter.string(fromByteCount: Int64(lastKnown.presentation.usedBytes))
-            return "Memory 카드, 수집 실패, 마지막 사용 중 메모리 \(used), \(shortcut)"
+            return "Memory 카드, 수집 실패, 마지막 \(lastKnown.presentation.memoryAccessibilityMetricsLabel), \(shortcut)"
         case .stopped(let lastKnown):
             guard let lastKnown else {
                 return "Memory 카드, 수집 중지, \(shortcut)"
             }
-            let used = Self.byteCountFormatter.string(fromByteCount: Int64(lastKnown.presentation.usedBytes))
-            return "Memory 카드, 수집 중지, 마지막 사용 중 메모리 \(used), \(shortcut)"
+            return "Memory 카드, 수집 중지, 마지막 \(lastKnown.presentation.memoryAccessibilityMetricsLabel), \(shortcut)"
         }
     }
-
-    private static let byteCountFormatter: ByteCountFormatter = {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .memory
-        return formatter
-    }()
 }

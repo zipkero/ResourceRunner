@@ -1,63 +1,71 @@
 # Context
 
-저장: 2026-08-30 16:39 +09:00
+저장: 2026-08-31 20:19 +09:00
 
 ## 현재 목표
 
-feature `20260818-001-resource-visualization`의 Task 13개를 구현해 CPU·Memory 카드와 상세 팝업의 표시를 개선합니다.
-사용자가 「디자인이 마음에 안 든다」며 요청한 작업이고, SPEC~IMPLEMENT까지 이미 작성돼 있습니다.
+feature `20260831-001-detail-popover-readability`의 Task 7개를 구현해
+CPU·Memory 상세 팝업에서 값을 읽어내기 어려운 두 자리를 고칩니다 —
+펼친 하위 프로세스 행의 간격·들여쓰기와 CPU 상세의 논리 코어별 사용률 표현입니다.
+사용자가 실행 중인 앱을 보고 지적한 사안이고, SPEC~IMPLEMENT까지 이미 작성돼 있습니다.
 
 ## 현재 상태
 
-resource-visualization은 **13개 중 11개 완료**입니다 — task-001~011이 `[x]`이고
-`SPEC §5.1`·`§5.2`·`§5.4`·`§5.5`·`§5.6`·`§5.7`·`§5.8`이 닫혔습니다.
-막힌 자리 없이 다음 Task(task-012)를 바로 시작할 수 있습니다.
-남은 둘 중 task-013은 자동 부분만 끝났고 사람 관찰(Activity Monitor 10분 비교)이 남았습니다.
+`20260831-001-detail-popover-readability`는 **SPEC·DESIGN이 `[x]`이고 IMPLEMENT는 시작 전**입니다 —
+Task 7개가 전부 `[ ]`이고 `task-001`부터 시작하면 됩니다.
+막힌 자리는 없습니다.
 
-core-resource-monitoring은 16개 중 10개 완료이고, 남은 006·007·012·013·014·015는 전부 실기기 조작·관찰이 필요합니다.
+`20260818-001-resource-visualization`은 **IMPLEMENT 완료**입니다 — Task 13개 전부 `[x]`, `SPEC §5.1`~`§5.10` 전부 닫힘.
+`20260812-001-core-resource-monitoring`은 16개 중 10개 완료이고, 남은 006·007·012·013·014·015는 전부 실기기 조작·관찰이 필요합니다.
 
-마지막 검증은 격리 DerivedData로 실행한 `ResourceRunnerTests` **실패 0**(`** TEST SUCCEEDED **`)입니다.
-**UI 스위트는 실행할 수 없습니다** — 기기에서 XCUITest 초기화가
-`LocalAuthentication Code=-4 "System authentication is running."`으로 막히며, 이 인증 창이 풀려야 해소됩니다.
-branch `main`, HEAD `1512125`, `origin/main`과 같습니다.
-task-011 구현분(코드 3개 파일)과 그 후처리(문서 2개 파일)가 uncommitted로 남아 있습니다.
+마지막 검증은 `ResourceRunnerTests` **401 passed / 0 failed**(`** TEST SUCCEEDED **`)와
+UI 스위트 다섯 **17건 전부 통과**입니다.
+**앞 세션을 막던 기기 인증 문제는 해소됐습니다** — macOS 자동화 권한이 승인되어 XCUITest가 실행됩니다.
+다만 이 승인이 풀리면 `task-006`이 닫히지 않습니다(UI 스위트 셋 실행이 유일한 판정 수단).
+
+branch `main`, HEAD `4d1c5cf`, `origin/main`과 같습니다.
 
 ## 현재 작업 문서
 
-- [features/20260818-001-resource-visualization/implement.md](./features/20260818-001-resource-visualization/implement.md)
-  — 다음 항목은 `task-012`(새 표시 요소의 접근성 도달)입니다.
+- [features/20260831-001-detail-popover-readability/implement.md](./features/20260831-001-detail-popover-readability/implement.md)
+  — 다음 항목은 `task-001`(코어 수를 따라가는 격자 행·열 분할)입니다.
 
 ## 확정된 결정
 
-- **카드에 두는 구성 수치는 「구성 합계」 하나이고 Pressure·Swap 병합 줄 맨 뒤에 놓습니다.**
-  항목별 네 수치는 폭 실측(232pt에 345pt 필요)으로 카드에 들어가지 않아 상세 범례(task-008)와 접근성 이름(task-012)이 맡습니다.
-  [features/20260818-001-resource-visualization/README.md](./features/20260818-001-resource-visualization/README.md)
-  2026-08-22 첫 항목에 실측표와 함께 있습니다.
-- **`SPEC §5.3` 재판정의 방향은 「성립」이고, 판정 자체는 task-012 approve 시점에 확정합니다.**
-  확정 조건은 task-012가 실제로 카드 접근성 이름에 항목별 네 수치를 넣는 것이며, 빠지면 이 방향은 성립하지 않습니다.
-  같은 README 2026-08-29 항목과 implement.md task-012 `확인` 필드에 있습니다.
-- **`ANALYSIS §5 DP4` 재작성은 task-012 approve 뒤에 `/analyze-init`으로 합니다.**
-  순서를 「§5.3 판정 → DP4 재작성」으로 고정했습니다. 어긋난 자리 셋과 참조 행 번호가 같은 README 항목에 있습니다.
-- **UI 테스트 중복 정리는 기기 인증 창이 풀리고 task-012가 UI 스위트를 요구하는 시점에 함께 합니다.**
-  착수 시 병합형 후보 여섯은 목록이 없어 재감사가 필요합니다.
-  [features/20260812-001-core-resource-monitoring/README.md](./features/20260812-001-core-resource-monitoring/README.md)
-  2026-08-29 UI 감사 항목에 있습니다.
-- **테스트 통과 건수는 baseline으로 쓰지 않습니다.** 기준은 「실패 0 + `** TEST SUCCEEDED **`」이고,
-  건수는 필요할 때 `Test case … passed` 줄 수를 보조로만 덧붙입니다. 같은 README 2026-08-29 마지막 항목에 있습니다.
-- 카드와 상세는 같은 구간 계산(`MemoryCompositionLayout.make`)을 공유하고 「사용 중」은 그 입력이 아닙니다.
-  [features/20260818-001-resource-visualization/analyze.md](./features/20260818-001-resource-visualization/analyze.md)
-  §5 DP5·DP6과 rv README 2026-08-29 task-008 항목에 있습니다.
-- **값 없음 자리표시의 회귀 그물은 「요소 전수 목록 + 상태 × 요소 순회」로 세웁니다.**
-  목록을 production 조립 배열에서 파생시키고, 색 있는 요소는 픽셀·텍스트는 줄 이상적 폭 등식·순위 자리는 **줄별** 폭 등식으로 재며,
-  폭 등식에는 감도 자기점검을 붙입니다. task-011이 다섯 번 reject된 끝에 이 방식으로 닫혔습니다.
-  rv README 2026-08-30 항목에 원인 진단과 함께 있습니다.
-- 색 팔레트를 확정했습니다. CPU User `#2a78d6`/`#3987e5`, System `#eb6834`/`#d95926`,
-  Memory App·Wired·Compressed·Cached는 앞의 둘에 `#1baf7a`/`#199e70`·`#eda100`/`#c98500`를 더한 순서입니다(라이트/다크).
-  [ResourceRunner/DashboardColorPalette.swift](./ResourceRunner/DashboardColorPalette.swift)에 있고 근거는 rv README task-004 항목에 있습니다.
-- 테스트 실행 정책은 「단위 전체 + 변경에 걸리는 UI만, UI 스위트 전체는 Task나 `SPEC §5.N`이 닫힐 때만」입니다.
-  core README 2026-08-21 항목에 있습니다.
-- core-resource-monitoring `SPEC §5.2`의 「상세 상위 5개가 같은 시점 카드 순위와 일치」는 정상 갱신 상태 기준입니다.
-  같은 README task-003 항목에 있습니다.
+- **코어 표현은 격자입니다.** 코어 전체가 스크롤 없이 한 화면에 들어오는 배치를 씁니다.
+  세로 목록을 접은 근거는 이 기기가 논리 코어 14개(Apple M3 Max)라는 실측입니다.
+  [features/20260831-001-detail-popover-readability/spec.md](./features/20260831-001-detail-popover-readability/spec.md) §3과 §5.4에 있습니다.
+- **열 수는 코어 수에서 두 단계로 유도합니다** — `행 수 = ⌈n ÷ 8⌉` → `열 수 = ⌈n ÷ 행 수⌉`.
+  가용 폭은 인자로 받지 않고, 폭에서 온 값은 열 상한 8 하나뿐입니다.
+  열 상한 8의 근거는 `"100%"` 28.0pt에 8열 칸 폭 40.8pt라는 실측이고 10열은 31.4pt로 배제했습니다.
+  [features/20260831-001-detail-popover-readability/design.md](./features/20260831-001-detail-popover-readability/design.md) §5 DP1에 있습니다.
+- **코어 칸은 고정 트랙(18pt) 세로 막대 + 수치 + 코어 번호 세 줄(48pt)이고, 수치를 화면에도 둡니다.**
+  앞 feature가 카드 폭 232pt에 345pt가 필요해 수치를 뺐던 것과 반대로 여기선 자리가 남습니다.
+  코어 번호를 화면에 두는 것은 2026-08-31 사용자 결정입니다. 같은 design.md §5 DP2·DP3에 있습니다.
+- **하위 행 들여쓰기는 34pt(부모 앱 이름 시작선), 세 경계 간격은 4 / 10 / 16pt입니다.**
+  34pt는 2026-08-31 사용자 결정이고, 46pt 안은 가장 긴 하위 행이 363pt로 목록 폭 360pt를 넘겨 접었습니다.
+  현재 실측은 들여쓰기 0pt·간격 `0 / 2 / 2pt`입니다 — macOS `DisclosureGroup`이 펼친 내용에 들여쓰기를 0pt 줍니다.
+  같은 design.md §5 DP5·DP6에 있습니다.
+- **하위 행 구분은 들여쓰기와 간격만 씁니다.** 구분선·배경·테두리는 제외 범위입니다(2026-08-31 사용자 결정).
+  같은 spec.md §4에 있습니다.
+- **`DisclosureGroup`을 유지하고, 하위 행 접근성 요소를 합치지 않습니다.**
+  자체 조립이나 합침은 `DashboardDetailExpansionUITests`·`DashboardProcessListDisplayUITests`가 매여 있는
+  `AXDisclosureTriangle` 요소·`triangle.value` 0/1 판정과 `value CONTAINS "PID"` 조회를 깨뜨립니다.
+  같은 design.md §5 DP7·DP10에 있습니다.
+- **값 없음 상태에 자리표시를 새로 만들지 않습니다.** 새 표시 요소 8종이 전부 `.normal` 분기 안쪽에만 있고
+  팝업 크기는 상태 분기 밖 `.frame`이 고정합니다. 이 판단의 검증은 `task-007`이 성립 조건 셋으로 확인합니다.
+  같은 design.md §5 DP9에 있습니다.
+- **상세 팝업은 400×480 고정입니다.** 넘치면 팝업을 키우지 않고 기존 세로 스크롤로 해결하며 가로 스크롤은 쓰지 않습니다.
+  같은 spec.md §3·§4에 있습니다.
+- **테스트 통과 건수는 baseline으로 쓰지 않습니다.** 기준은 「실패 0 + `** TEST SUCCEEDED **`」입니다.
+  [features/20260812-001-core-resource-monitoring/README.md](./features/20260812-001-core-resource-monitoring/README.md) 2026-08-29 마지막 항목에 있습니다.
+- **테스트 실행 정책**은 「단위 전체 + 변경에 걸리는 UI만, UI 스위트 전체는 Task나 `SPEC §5.N`이 닫힐 때만」입니다.
+  같은 README 2026-08-21 항목에 있습니다.
+- **UI 테스트 중복 정리가 착수 가능해졌습니다.** 기기 인증이 풀리는 것이 조건이었고 해소됐습니다.
+  병합형 후보 여섯은 목록이 없어 재감사가 필요합니다. 같은 README 2026-08-29 UI 감사 항목에 있습니다.
+- **`ANALYSIS §5 DP4` 재작성은 아직 하지 않았습니다.** 「`§5.3` 판정 → DP4 재작성」 순서 중 앞 절반만 끝났습니다.
+  [features/20260818-001-resource-visualization/README.md](./features/20260818-001-resource-visualization/README.md) 2026-08-29 항목에 어긋난 자리 셋과 참조 행 번호가 있습니다.
+- **도구 선택에서 Codex 사용 한도는 판단 기준으로 쓰지 않습니다.** 사용자가 한도는 직접 관리한다고 밝혔습니다.
 
 ## 미확정 판단
 
@@ -65,31 +73,25 @@ task-011 구현분(코드 3개 파일)과 그 후처리(문서 2개 파일)가 u
 
 ## 다음 작업
 
-- 작업: `task-012`(새 표시 요소의 접근성 도달)를 구현합니다.
-  `cpuAccessibilityLabel`에 두 계열 수치와 기준선 값을, `memoryAccessibilityLabel`에 구성 네 항목의 수치와 구성 합계를 더하고
-  「사용 중」과 라벨을 갈라 씁니다. 상세 도넛에도 자체 접근성 이름을 줍니다.
-- 완료 기준: implement.md task-012의 검증 조건이 요구하는 mutation이 모두 잡히고,
+- 작업: `task-001`(코어 수를 따라가는 격자 행·열 분할)을 구현합니다.
+  코어 수 하나만 받아 행별 코어 인덱스 묶음을 돌려주는 순수 타입을 만들고, 가용 폭은 인자로 받지 않습니다.
+- 완료 기준: 코어 8·10·14·16·24·64에서 행×열이 각각 1×8 · 2×5 · 2×7 · 2×8 · 3×8 · 8×8이 되고,
+  implement.md task-001이 요구한 mutation 다섯이 모두 잡히며,
   단위 스위트가 실패 0으로 끝난 뒤 verify가 `approved`를 돌려주어 체크박스가 `[x]`로 넘어갑니다.
-  approve 시점에 `SPEC §5.3` 재판정(위 확정된 결정)과 task-011에서 이월된 UI 실행 확인 셋을 함께 처리합니다.
 
 ## 먼저 읽을 파일
 
-- [features/20260818-001-resource-visualization/implement.md](./features/20260818-001-resource-visualization/implement.md) (변경함)
-  — task-012의 목적·접근·검증 조건. `확인` 필드에 `SPEC §5.3` 재판정과 이월된 UI 실행 확인 셋이 함께 있습니다.
-- [features/20260818-001-resource-visualization/README.md](./features/20260818-001-resource-visualization/README.md) (변경함)
-  — 2026-08-30 항목에 task-011 결과와 남은 한계 다섯
-- [features/20260818-001-resource-visualization/spec.md](./features/20260818-001-resource-visualization/spec.md) — `§5.10`(접근성)과 `§5.3`
-- [features/20260818-001-resource-visualization/analyze.md](./features/20260818-001-resource-visualization/analyze.md)
-  — `§1 「접근성 노출 자리」`, `§3 「접근성 이름」`, `§5 DP13`
-- [ResourceRunner/DashboardPresentation.swift](./ResourceRunner/DashboardPresentation.swift)
-  — `cpuAccessibilityLabel`·`memoryAccessibilityLabel`이 있는 자리(이름 조립은 순수 함수)
-- [ResourceRunner/DashboardView.swift](./ResourceRunner/DashboardView.swift) (변경함)
-  — task-011이 완화한 접근 수준 여섯과 `CPUSeriesPlaceholderLayout.spacing`
-- [ResourceRunnerTests/DashboardCardLayoutTests.swift](./ResourceRunnerTests/DashboardCardLayoutTests.swift) (변경함)
-  — 요소 전수 순회 테스트와 폭 등식·감도 자기점검
-- [ResourceRunner/ApplicationRowIcon.swift](./ResourceRunner/ApplicationRowIcon.swift) (변경함) — 주석을 사실에 맞게 고친 자리
-- [features/20260812-001-core-resource-monitoring/README.md](./features/20260812-001-core-resource-monitoring/README.md)
-  — 테스트 실행 정책, UI 중복 감사와 정리 시점, 통과 건수 기준
+- [features/20260831-001-detail-popover-readability/implement.md](./features/20260831-001-detail-popover-readability/implement.md)
+  — task-001의 목적·접근·검증 조건과 mutation 다섯
+- [features/20260831-001-detail-popover-readability/design.md](./features/20260831-001-detail-popover-readability/design.md)
+  — `§1` 구조, `§3` 인터페이스, `§5 DP1`·`DP4`. `§근거`의 「실측한 값」·「격자 후보의 실측」과 「추정으로 남는 것」
+- [features/20260831-001-detail-popover-readability/spec.md](./features/20260831-001-detail-popover-readability/spec.md) — `§5.3`·`§5.4`와 `§3` 제약
+- [ResourceRunner/DashboardView.swift](./ResourceRunner/DashboardView.swift)
+  — `CPUDetailView`(코어별 사용률 `Text`), `ApplicationProcessGroupRow`(`DisclosureGroup`), `ApplicationProcessGroupListView`(`spacing: 2`)
+- [ResourceRunner/DashboardPresentation.swift](./ResourceRunner/DashboardPresentation.swift) — `MemoryCompositionLayout` 계열이 있는 자리(순수 계산 관례)
+- [ResourceRunnerTests/DashboardCardLayoutTests.swift](./ResourceRunnerTests/DashboardCardLayoutTests.swift) — 렌더 실측·폭 등식·감도 자기점검 관례
+- [features/20260818-001-resource-visualization/README.md](./features/20260818-001-resource-visualization/README.md)
+  — 2026-08-30 항목의 값 없음 회귀 그물 해법(요소 전수 목록 + 상태 × 요소 순회)과 항진명제 전례
 
 ## 문서 반영 필요
 

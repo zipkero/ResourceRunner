@@ -371,6 +371,96 @@ extension CPUCardPresentation {
     }
 }
 
+/// 논리 코어 격자의 행·열 분할. 코어 수 하나만으로 행별 코어 인덱스 묶음을 정합니다.
+/// 뷰는 여기서 나온 행을 좌표와 그리기로 옮기기만 합니다(SPEC §5.4, DESIGN §5 DP1, DP4).
+nonisolated enum CPUCoreGridLayout {
+    /// 한 행에 놓을 수 있는 칸의 최대 수. 가용 폭을 인자로 받는 대신 이 상수 하나에 폭 판단을 모읍니다 —
+    /// 폭을 인자로 받으면 행·열이 렌더 시점에만 정해져 코어 수를 바꿔 가며 확인할 수 없습니다.
+    /// 상세 팝업 콘텐츠 폭 368pt에서 칸 간격 6pt를 빼면 8열의 칸 폭이 40.8pt로
+    /// 칸의 화면 수치 `"100%"`(.caption2 실측 28.0pt)를 담고도 남습니다(DESIGN §5 DP1).
+    static let maximumColumnCount = 8
+
+    /// 칸 막대의 트랙 높이. 값과 무관하게 고정이라 값이 0이든 100이든 칸 높이가 같고,
+    /// 값이 바뀌어도 격자와 그 아래 내용이 밀리지 않습니다(DESIGN §5 DP2).
+    static let barHeight: CGFloat = 18
+
+    /// 칸 사이 가로·세로 간격. 열 상한 8의 칸 폭 40.8pt가 이 값을 뺀 나머지에서 나옵니다.
+    static let cellSpacing: CGFloat = 6
+
+    /// 코어 인덱스 `0..<coreCount`를 행별로 묶어 왼쪽에서 오른쪽, 위에서 아래 순서로 돌려줍니다.
+    /// 마지막 행을 뺀 모든 행의 길이가 같고 마지막 행만 짧을 수 있습니다.
+    ///
+    /// 행 수를 먼저 정하고 열 수를 되돌려 구하는 두 단계를 거칩니다 —
+    /// `열 수 = min(코어 수, 열 상한)` 한 단계로 구하면 코어 14개가 8 + 6으로 들쭉날쭉하게 나뉩니다(DESIGN §5 DP1).
+    ///
+    /// 코어 수가 0이면 빈 배열입니다. 없는 코어를 빈 행으로도 만들지 않습니다.
+    static func rows(coreCount: Int) -> [[Int]] {
+        guard coreCount > 0 else { return [] }
+
+        let rowCount = divideRoundingUp(coreCount, by: maximumColumnCount)
+        let columnCount = divideRoundingUp(coreCount, by: rowCount)
+        return stride(from: 0, to: coreCount, by: columnCount).map { start in
+            Array(start..<min(start + columnCount, coreCount))
+        }
+    }
+
+    /// 나눗셈의 올림. `rows`가 행 수·열 수를 모두 이 헬퍼로 구하므로, 내림으로 바꾸면 코어 수가 열 상한 미만일 때
+    /// 행 수가 0이 되어 0으로 나누고, 그 위에서는 열 수가 `maximumColumnCount`를 넘어 팝업 폭을 벗어납니다.
+    private static func divideRoundingUp(_ dividend: Int, by divisor: Int) -> Int {
+        (dividend + divisor - 1) / divisor
+    }
+}
+
+/// 펼친 하위 프로세스 행의 들여쓰기와 세 경계 간격. 뷰 본문에 두면 값을 바꿔 가며 확인할 방법이
+/// 렌더링밖에 남지 않으므로 계산 자리로 분리했습니다(DESIGN §5 DP5, DP6).
+/// 아이콘 자리 크기를 `ApplicationRowIconLayout`에서 가져오므로 그 자리와 같은 격리를 씁니다.
+@MainActor
+enum ApplicationProcessRowLayout {
+    /// `DisclosureGroup` 라벨에서 삼각형이 차지하는 폭(pt). macOS가 정하는 값이라 실측 상수로 둡니다 —
+    /// OS가 이 폭을 바꾸면 하위 행이 부모 앱 이름 시작선에서 그만큼 어긋납니다.
+    static let disclosureTriangleWidth: CGFloat = 12
+
+    /// 앱 행 라벨의 아이콘 자리와 앱 이름 사이 간격. 들여쓰기가 이 값에서 유도되므로
+    /// 라벨 `HStack`이 다른 간격을 쓰면 두 층의 시작선이 어긋납니다.
+    static let labelIconSpacing: CGFloat = 6
+
+    /// 하위 행의 왼쪽 들여쓰기. 부모 앱 이름 시작선과 같아지도록 삼각형 폭·아이콘 자리 크기·라벨 간격에서
+    /// 유도합니다 — 아이콘 크기가 바뀌면 들여쓰기가 따라가야 정렬이 유지됩니다.
+    static let childIndent: CGFloat =
+        disclosureTriangleWidth + ApplicationRowIconLayout.detailPointSize + labelIconSpacing
+
+    /// 하위 행끼리의 간격. 같은 앱 안이라 세 경계 중 가장 좁습니다.
+    static let betweenChildren: CGFloat = 4
+
+    /// 부모 앱 행과 첫 하위 행 사이 간격. 앱 행에서 그 앱 안쪽으로 들어가는 경계입니다.
+    static let parentToFirstChild: CGFloat = 10
+
+    /// `ApplicationProcessGroupListView`의 목록 `VStack`이 행 사이에 두는 간격. 마지막 하위 행과 다음 앱 행
+    /// 사이에는 이 값이 이미 들어가므로, 그만큼을 뺀 몫만 펼친 내용 아래에 겁니다.
+    /// 목록이 다른 간격을 쓰기 시작하면 마지막 경계가 목표 간격에서 벗어납니다.
+    static let listRowSpacing: CGFloat = 2
+
+    /// 마지막 하위 행과 다음 앱 행 사이 간격. 앱 하나를 벗어나는 경계라 세 경계 중 가장 넓습니다.
+    static let lastChildToNextApplication: CGFloat = 16
+
+    /// 펼친 내용 아래에 거는 여백. 목록 `VStack`의 간격 위에 더해져 마지막 경계를 만듭니다.
+    static let afterLastChild: CGFloat = lastChildToNextApplication - listRowSpacing
+}
+
+/// 코어 격자가 화면에 내놓는 문자열. 뷰가 문자열을 직접 조립하지 않게 모아 둡니다.
+nonisolated enum CPUCoreUsageFormatting {
+    /// 칸에 보이는 정수 퍼센트. 코어 사용률 표현이 문자열 한 줄이던 때의 반올림 규칙을 그대로 씁니다 —
+    /// 규칙을 바꾸면 화면 수치와 접근성 값이 갈립니다.
+    static func valueText(_ usage: Double) -> String {
+        "\(Int(usage.rounded()))%"
+    }
+
+    /// 격자 머리글. 코어 수를 인자에서 받아 만듭니다.
+    static func headingText(coreCount: Int) -> String {
+        "논리 코어 \(coreCount)개 사용률"
+    }
+}
+
 /// Memory Pressure 한 단계의 표시 값. 색상을 지워도 라벨과 기호 형태만으로 세 단계가 구분되게 합니다(SPEC §5.5).
 nonisolated struct MemoryPressureDisplay: Sendable, Equatable {
     let label: String

@@ -23,6 +23,12 @@ enum DashboardColorPalette {
     /// 색맹 시뮬레이션 대상이 아니며, 시스템이 라이트·다크에 맞춰 이미 조정하는 구분선 색을 그대로 씁니다.
     static let cpuGridline = Color(NSColor.separatorColor)
 
+    /// 코어 격자 막대의 트랙과 채움(SPEC §5.3). 막대가 나르는 정보는 채움 높이 하나뿐이라 색이 구분에
+    /// 쓰이는 자리가 없고, `cpuGridline`과 같은 이유로 계열 색이 아닌 시스템 색을 씁니다.
+    /// 여기에 계열 색을 넣으면 카드의 User 밴드와 같은 색이 코어 합계라는 다른 뜻을 갖게 됩니다.
+    static let cpuCoreTrack = Color(NSColor.quaternaryLabelColor)
+    static let cpuCoreFill = Color(NSColor.secondaryLabelColor)
+
     /// Memory 구성 바·도넛의 구간 색(SPEC §5.3). App·Wired는 CPU 계열과 값이 같지만,
     /// 검증기가 통과시킨 것은 이 네 색을 App → Wired → Compressed → Cached 순서로 함께 돌린 결과이므로
     /// CPU 상수를 재사용하지 않고 이 집합을 따로 둡니다 — 인접쌍 색 분리 검증이 이 순서 기준입니다.

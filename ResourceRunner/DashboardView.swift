@@ -94,8 +94,8 @@ struct DashboardView: View {
     /// 실행 중인 모든 프로세스를 앱 단위로 나열하므로(`ApplicationProcessGroupListView`) 자연 높이가 화면보다
     /// 훨씬 크고, 어떤 고정 높이를 골라도 대부분의 환경에서 스크롤이 필요합니다. 화면 `visibleFrame` 높이가
     /// 1084pt(이 환경 실측)인 것에 견줘 충분히 작게 잡아 위·아래 여백 없이 화면 안에 들어가면서도, 요약 지표와
-    /// 순위 앞부분 몇 줄은 스크롤 없이 보이도록 400×480을 씁니다. 폭은 두 상세의 실측 폭(406, 371) 안에 들어
-    /// 코어별 사용률처럼 긴 한 줄만 접히고 그 밖의 줄은 접히지 않습니다.
+    /// 순위 앞부분 몇 줄은 스크롤 없이 보이도록 400×480을 씁니다. 폭은 두 상세의 실측 폭(406, 371)을 기준으로 잡았고,
+    /// 코어별 사용률은 콘텐츠 폭을 균등 분할하는 격자로 배치되며 그 밖의 줄은 접히지 않습니다.
     fileprivate static let detailPopupWidth: CGFloat = 400
     fileprivate static let detailPopupHeight: CGFloat = 480
 
@@ -905,7 +905,9 @@ private struct MemoryDetailPopoverContent: View {
 }
 
 /// CPU 상세: User·System·Idle, 논리 코어별 사용률, Load Average, 앱별 하위 프로세스(SPEC §5.2).
-private struct CPUDetailView: View {
+// `private`가 아닌 것은 task-002 테스트가 이 뷰를 직접 렌더해 코어 격자가 실제로 조립되는지 보기 때문입니다 —
+// `.popover` 콘텐츠는 크기 측정에서 평가되지 않아, 팝오버 쪽에서 재면 격자 호출을 통째로 지워도 드러나지 않습니다.
+struct CPUDetailView: View {
     let presentation: CPUCardPresentation
     let iconProvider: any ApplicationIconProviding
 
@@ -914,9 +916,13 @@ private struct CPUDetailView: View {
             Text("User \(pct(presentation.userRatio)) · System \(pct(presentation.systemRatio)) · Idle \(pct(presentation.detail.idleRatio))")
                 .font(.caption)
 
-            Text("코어별 사용률: " + presentation.detail.coreUsages.map(pct).joined(separator: ", "))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: CPUCoreUsageGridView.headingSpacing) {
+                Text(CPUCoreUsageFormatting.headingText(coreCount: presentation.detail.coreUsages.count))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                CPUCoreUsageGridView(usages: presentation.detail.coreUsages)
+            }
 
             let load = presentation.detail.loadAverage
             Text("Load Average \(fmt(load.oneMinute)) / \(fmt(load.fiveMinutes)) / \(fmt(load.fifteenMinutes))")
@@ -938,9 +944,113 @@ private struct CPUDetailView: View {
     private func fmt(_ value: Double) -> String { String(format: "%.2f", value) }
 }
 
+/// 논리 코어별 사용률 격자. `CPUCoreGridLayout`이 나눈 행을 좌표로 옮겨 그리기만 합니다.
+///
+/// 칸 하나는 위에서부터 막대 · 화면 수치 · 코어 번호 세 줄입니다. 번호를 맨 아래에 두면 격자 전체가
+/// 가로축 눈금이 달린 막대 그래프로 읽힙니다(DESIGN §5 DP3).
+///
+/// `LazyVGrid`도 `sizeThatFits`에서는 화면 밖 행까지 모두 실체화해 이 조립과 렌더 높이가 소수점까지 같습니다.
+/// 쓰지 않는 근거는 화면 밖 행의 접근성 요소가 언제 존재하는지를 이 코드가 보증할 수 없기 때문입니다(DESIGN §5 DP4).
+// `private`가 아닌 것은 task-002 테스트가 이 뷰만 따로 렌더해 칸 폭·채움 픽셀을 재기 때문입니다.
+struct CPUCoreUsageGridView: View {
+    let usages: [Double]
+
+    /// 격자 머리글과 격자 사이 간격. 머리글이 격자에 딸린 이름으로 읽히도록 상세 `VStack`의 6pt보다 좁습니다.
+    static let headingSpacing: CGFloat = 4
+
+    var body: some View {
+        let rows = CPUCoreGridLayout.rows(coreCount: usages.count)
+        let columnCount = rows.first?.count ?? 0
+
+        // 균등 분할한 칸 폭이 나눠떨어지지 않는 코어 수에서 `HStack`이 되돌리는 폭에 부동소수점 잔차가 남습니다.
+        // 그대로 두면 상세 팝업 콘텐츠 폭이 400pt에서 미세하게 벗어나 CPU·Memory 두 상세의 크기가 갈립니다.
+        ProposedWidthLayout {
+            VStack(spacing: CPUCoreGridLayout.cellSpacing) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: CPUCoreGridLayout.cellSpacing) {
+                        ForEach(row, id: \.self) { coreIndex in
+                            CPUCoreUsageCellView(coreIndex: coreIndex, usage: usages[coreIndex])
+                        }
+                        // 짧은 마지막 행에 같은 폭의 빈 자리를 채웁니다. 채우지 않으면 남은 칸들이 늘어나
+                        // 마지막 행의 열이 위 행과 어긋납니다(DESIGN §5 DP2).
+                        // 높이를 0으로 묶는 것은 `Color`가 세로로도 무한히 늘어나기 때문입니다 —
+                        // 묶지 않으면 짧은 마지막 행이 있는 코어 수에서 격자의 필요 높이가 무한대가 됩니다.
+                        ForEach(row.count..<columnCount, id: \.self) { _ in
+                            Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// 자식에게 제안 폭을 그대로 주되, 자식이 되돌린 폭 대신 제안 폭을 그대로 보고하는 레이아웃.
+/// 자식 안에서 생긴 폭 오차가 상위 레이아웃의 폭 계산으로 새어 나가지 않습니다.
+///
+/// 폭 제안이 없거나 무한대인 측정(`fixedSize(horizontal: true, vertical: false)`)에서는
+/// 자식이 되돌린 필요 폭을 그대로 보고합니다 — 무한대를 보고하면 필요 폭 측정이 무너집니다.
+private struct ProposedWidthLayout: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let subviewSize = subviews.first?.sizeThatFits(proposal) ?? .zero
+        guard let width = proposal.width, width.isFinite else { return subviewSize }
+        return CGSize(width: width, height: subviewSize.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        subviews.first?.place(
+            at: CGPoint(x: bounds.minX, y: bounds.minY),
+            anchor: .topLeading,
+            proposal: ProposedViewSize(width: bounds.width, height: bounds.height)
+        )
+    }
+}
+
+/// 코어 격자의 칸 하나. 고정 높이 트랙 안에서 아래부터 차오르는 막대와 같은 값의 화면 수치, 코어 번호를 담습니다.
+///
+/// 값이 0이면 채움을 그리지 않고 최소 채움 높이도 두지 않습니다 — 쉬고 있는 코어가 활동하는 것처럼
+/// 보이지 않게 하는 대신, 0%와 1%의 구분은 같은 칸의 수치가 맡습니다(DESIGN §5 DP2).
+private struct CPUCoreUsageCellView: View {
+    let coreIndex: Int
+    let usage: Double
+
+    /// 칸 안 세 줄 사이 간격. 칸 높이(18 + 2 + 13 + 2 + 13 = 48pt)가 이 값에서 나옵니다.
+    private static let rowSpacing: CGFloat = 2
+    private static let cornerRadius: CGFloat = 2
+
+    var body: some View {
+        VStack(spacing: Self.rowSpacing) {
+            ZStack(alignment: .bottom) {
+                Rectangle()
+                    .fill(DashboardColorPalette.cpuCoreTrack)
+                Rectangle()
+                    .fill(DashboardColorPalette.cpuCoreFill)
+                    .frame(height: fillHeight)
+            }
+            .frame(height: CPUCoreGridLayout.barHeight)
+            .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
+
+            Text(CPUCoreUsageFormatting.valueText(usage))
+                .font(.caption2)
+
+            Text("\(coreIndex)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// 트랙 높이에 대한 값의 비율. 100%를 넘는 값은 트랙을 넘지 않게 자릅니다.
+    private var fillHeight: CGFloat {
+        CPUCoreGridLayout.barHeight * min(max(CGFloat(usage) / 100, 0), 1)
+    }
+}
+
 /// Memory 상세: 구성 도넛·수치 범례, Swap 사용량과 증가량, 앱 목록(현재 사용량 순위와
 /// 하위 프로세스를 겸함), 최근 증가량 순위(SPEC §5.2, SPEC §5.4, SPEC §5.8, ANALYSIS §5 DP1, DP6).
-private struct MemoryDetailView: View {
+// `private`가 아닌 것은 task-004 테스트가 CPU 상세와 나란히 렌더해 두 상세가 같은 앱 목록을
+// 그리는지 보기 때문입니다.
+struct MemoryDetailView: View {
     let presentation: MemoryCardPresentation
     let iconProvider: any ApplicationIconProviding
 
@@ -1107,7 +1217,9 @@ private struct MemoryCompositionDonutView: View {
 /// 시도가 이동 전 좌표를 써서 엉뚱한 행을 클릭하는 결함이 있었습니다(상세 팝업 결함 조사 — 접힘 클릭이 8회 중
 /// 1회꼴로 실패했고, 클릭 직전·직후 프레임 비교로 행이 한 칸 이동했음을 확인).
 /// 값 자체는 고정하지 않습니다 — 순서만 멈추고 표시 값은 계속 최신 `groups`를 따라갑니다.
-private struct ApplicationProcessGroupListView: View {
+// `private`가 아닌 것은 task-004 테스트가 이 목록을 직접 렌더해 접힌 앱 행 사이 간격을 재기 때문입니다 —
+// 마지막 하위 행과 다음 앱 행 사이 간격에 이 목록의 행 간격이 더해집니다.
+struct ApplicationProcessGroupListView: View {
     let groups: [ApplicationProcessGroup]
     /// 목록이 어떤 값으로, 어떤 방향으로 정렬됐는지 알리는 머리글.
     let sortDescription: String
@@ -1167,28 +1279,35 @@ private struct ApplicationProcessGroupListView: View {
 
 /// 앱 하나에 대응하는 행. 펼침 상태는 부모(`ApplicationProcessGroupListView`)가 앱 키로 모아서 들고 있습니다 —
 /// `ForEach`의 `id`가 앱 키라 안정적이므로 목록이 매초 재조립되어도 같은 앱을 가리키는 행이 그대로 유지됩니다.
-private struct ApplicationProcessGroupRow: View {
+// `private`가 아닌 것은 task-004 테스트가 이 행을 펼친 채로 직접 렌더해 하위 행의 시작 x와
+// 세 경계 간격을 재기 때문입니다 — 펼침 상태는 목록의 `@State`라 목록 쪽에서는 펼칠 수 없습니다.
+struct ApplicationProcessGroupRow: View {
     let group: ApplicationProcessGroup
     let groupValueText: (Double?) -> String
     let valueText: (ApplicationProcessDetail) -> String
     let iconProvider: any ApplicationIconProviding
     @Binding var isExpanded: Bool
 
-    /// 아이콘 자리와 앱 이름 사이 간격.
-    private static let iconSpacing: CGFloat = 6
-
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
-            ForEach(group.processes, id: \.pid) { process in
-                HStack {
-                    Text("\(process.executableName) (PID \(process.pid))")
-                    Spacer()
-                    Text(valueText(process))
+            // macOS `DisclosureGroup`은 펼친 내용에 들여쓰기도 위아래 여백도 주지 않으므로, 하위 행이
+            // 부모 앱 이름보다 왼쪽에서 시작하고 부모 행에 그대로 달라붙습니다. 세 경계와 시작선을
+            // 이 `VStack`이 전부 만듭니다 — 상수만 두고 이 여백을 걸지 않으면 화면은 그대로 붙어 있습니다.
+            VStack(alignment: .leading, spacing: ApplicationProcessRowLayout.betweenChildren) {
+                ForEach(group.processes, id: \.pid) { process in
+                    HStack {
+                        Text("\(process.executableName) (PID \(process.pid))")
+                        Spacer()
+                        Text(valueText(process))
+                    }
+                    .font(.caption2)
                 }
-                .font(.caption2)
             }
+            .padding(.leading, ApplicationProcessRowLayout.childIndent)
+            .padding(.top, ApplicationProcessRowLayout.parentToFirstChild)
+            .padding(.bottom, ApplicationProcessRowLayout.afterLastChild)
         } label: {
-            HStack(spacing: Self.iconSpacing) {
+            HStack(spacing: ApplicationProcessRowLayout.labelIconSpacing) {
                 ApplicationRowIconView(
                     content: ApplicationRowIconLayout.content(for: group.key, from: iconProvider),
                     pointSize: ApplicationRowIconLayout.detailPointSize

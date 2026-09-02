@@ -17,6 +17,11 @@ import XCTest
 /// `value` 기준으로 만듭니다(`DashboardCardSelectionUITests`와 같은 관례).
 final class DashboardDetailPopoverUITests: XCTestCase {
 
+    // production의 fileprivate 상수에는 UI 테스트 타깃에서 접근할 수 없어 기대 크기를 지역 상수로 둡니다.
+    // 따라서 두 선언이 같은 값을 공유한다는 소스 수준 보증은 없고 선언 사이의 어긋남 자체도 직접 잡지 못합니다.
+    // 아래 단언이 보증하는 범위는 실제 렌더 프레임이 계약값 400×480인지뿐입니다.
+    private let expectedDetailSize = CGSize(width: 400, height: 480)
+
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
@@ -29,6 +34,16 @@ final class DashboardDetailPopoverUITests: XCTestCase {
     /// 고정 크기 `ScrollView`에 붙어 있으므로, 이 식별자의 프레임이 곧 팝업 콘텐츠의 고정 크기입니다.
     private func detailContent(_ app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: "DashboardDetail").firstMatch
+    }
+
+    private func isExpanded(_ triangle: XCUIElement) -> Bool {
+        (triangle.value as? NSNumber)?.intValue == 1
+    }
+
+    private func clickRowLabel(_ triangle: XCUIElement) {
+        triangle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
+            .withOffset(CGVector(dx: 0, dy: 8))
+            .click()
     }
 
     private func openDashboard(_ app: XCUIApplication) -> XCUIElement {
@@ -62,6 +77,10 @@ final class DashboardDetailPopoverUITests: XCTestCase {
 
         let cpuDetailFrame = detailContent(app).frame
         XCTAssertGreaterThan(cpuDetailFrame.width, 0, "CPU 상세 팝업 콘텐츠 프레임을 찾지 못했습니다.")
+        XCTAssertEqual(
+            cpuDetailFrame.size, expectedDetailSize,
+            "CPU 상세 팝업 콘텐츠가 400×480 고정 크기가 아닙니다. 실제: \(cpuDetailFrame.size)"
+        )
 
         // Memory로 전환합니다. 자식 팝오버는 key window를 가져가지 않으므로(ANALYSIS §5 DP15) 팝업이 열려
         // 있어도 본체 등록만으로 전환이 계속 닿습니다.
@@ -72,8 +91,56 @@ final class DashboardDetailPopoverUITests: XCTestCase {
 
         let memoryDetailFrame = detailContent(app).frame
         XCTAssertEqual(
+            memoryDetailFrame.size, expectedDetailSize,
+            "Memory 상세 팝업 콘텐츠가 400×480 고정 크기가 아닙니다. 실제: \(memoryDetailFrame.size)"
+        )
+        XCTAssertEqual(
             cpuDetailFrame.size, memoryDetailFrame.size,
             "CPU 상세와 Memory 상세의 팝업 콘텐츠 크기가 다릅니다. CPU: \(cpuDetailFrame.size), Memory: \(memoryDetailFrame.size)"
+        )
+    }
+
+    /// 앱 행을 펼치기 전과 후 모두 CPU 상세 콘텐츠가 정확히 400×480인지 확인합니다.
+    /// 전후 프레임끼리만 비교하면 둘 다 잘못된 같은 크기일 때 통과하므로 각 시점에 절대값도 단언합니다.
+    @MainActor
+    func testCPUDetailFrameRemainsExactlyFixedWhenAppRowExpands() throws {
+        let app = XCUIApplication()
+        _ = openDashboard(app)
+
+        let loadAverageText = detailValue(app, containing: "Load Average")
+        app.typeKey("1", modifierFlags: .command)
+        XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세가 나타나지 않았습니다.")
+
+        let detail = detailContent(app)
+        XCTAssertTrue(detail.waitForExistence(timeout: 2), "CPU 상세 팝업 콘텐츠 프레임을 찾지 못했습니다.")
+        let collapsedFrame = detail.frame
+        XCTAssertEqual(
+            collapsedFrame.size, expectedDetailSize,
+            "앱 행을 펼치기 전 CPU 상세 팝업 콘텐츠가 400×480이 아닙니다. 실제: \(collapsedFrame.size)"
+        )
+
+        let triangle = app.popovers.descendants(matching: .disclosureTriangle)
+            .matching(NSPredicate(format: "identifier CONTAINS %@", "ResourceRunnerUITests-Runner.app"))
+            .firstMatch
+        XCTAssertTrue(
+            waitUntil({ triangle.exists && triangle.isHittable }, timeout: 5),
+            "테스트 러너 자신의 행을 앱 목록에서 찾지 못했습니다."
+        )
+
+        clickRowLabel(triangle)
+        XCTAssertTrue(
+            waitUntil({ triangle.exists && self.isExpanded(triangle) }, timeout: 3),
+            "행 중앙 클릭 직후 펼쳐지지 않았습니다."
+        )
+
+        let expandedFrame = detail.frame
+        XCTAssertEqual(
+            expandedFrame.size, expectedDetailSize,
+            "앱 행을 펼친 뒤 CPU 상세 팝업 콘텐츠가 400×480이 아닙니다. 실제: \(expandedFrame.size)"
+        )
+        XCTAssertEqual(
+            expandedFrame, collapsedFrame,
+            "앱 행을 펼친 뒤 CPU 상세 팝업 콘텐츠 프레임이 달라졌습니다. 이전: \(collapsedFrame), 이후: \(expandedFrame)"
         )
     }
 

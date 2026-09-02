@@ -411,7 +411,7 @@ nonisolated enum CPUCoreGridLayout {
     }
 }
 
-/// 펼친 하위 프로세스 행의 들여쓰기와 세 경계 간격. 뷰 본문에 두면 값을 바꿔 가며 확인할 방법이
+/// 펼친 하위 프로세스 행의 두 시작선과 네 경계 간격. 뷰 본문에 두면 값을 바꿔 가며 확인할 방법이
 /// 렌더링밖에 남지 않으므로 계산 자리로 분리했습니다(DESIGN §5 DP5, DP6).
 /// 아이콘 자리 크기를 `ApplicationRowIconLayout`에서 가져오므로 그 자리와 같은 격리를 씁니다.
 @MainActor
@@ -424,24 +424,30 @@ enum ApplicationProcessRowLayout {
     /// 라벨 `HStack`이 다른 간격을 쓰면 두 층의 시작선이 어긋납니다.
     static let labelIconSpacing: CGFloat = 6
 
-    /// 하위 행의 왼쪽 들여쓰기. 부모 앱 이름 시작선과 같아지도록 삼각형 폭·아이콘 자리 크기·라벨 간격에서
+    /// 하위 행 이름 줄의 왼쪽 들여쓰기. 부모 앱 이름 시작선과 같아지도록 삼각형 폭·아이콘 자리 크기·라벨 간격에서
     /// 유도합니다 — 아이콘 크기가 바뀌면 들여쓰기가 따라가야 정렬이 유지됩니다.
     static let childIndent: CGFloat =
         disclosureTriangleWidth + ApplicationRowIconLayout.detailPointSize + labelIconSpacing
 
-    /// 하위 행끼리의 간격. 같은 앱 안이라 세 경계 중 가장 좁습니다.
-    static let betweenChildren: CGFloat = 4
+    /// 하위 행 값 줄의 왼쪽 들여쓰기. 이름보다 부모 아이콘 한 칸만큼 더 들어갑니다.
+    static let childValueIndent: CGFloat = childIndent + ApplicationRowIconLayout.detailPointSize
+
+    /// 한 하위 행 안에서 이름 줄과 값 줄 사이 간격.
+    static let withinChildRow: CGFloat = 2
+
+    /// 하위 행끼리의 간격. 같은 앱 안의 경계입니다.
+    static let betweenChildren: CGFloat = 10
 
     /// 부모 앱 행과 첫 하위 행 사이 간격. 앱 행에서 그 앱 안쪽으로 들어가는 경계입니다.
-    static let parentToFirstChild: CGFloat = 10
+    static let parentToFirstChild: CGFloat = 18
 
     /// `ApplicationProcessGroupListView`의 목록 `VStack`이 행 사이에 두는 간격. 마지막 하위 행과 다음 앱 행
     /// 사이에는 이 값이 이미 들어가므로, 그만큼을 뺀 몫만 펼친 내용 아래에 겁니다.
     /// 목록이 다른 간격을 쓰기 시작하면 마지막 경계가 목표 간격에서 벗어납니다.
     static let listRowSpacing: CGFloat = 2
 
-    /// 마지막 하위 행과 다음 앱 행 사이 간격. 앱 하나를 벗어나는 경계라 세 경계 중 가장 넓습니다.
-    static let lastChildToNextApplication: CGFloat = 16
+    /// 마지막 하위 행과 다음 앱 행 사이 간격. 앱 하나를 벗어나는 경계라 네 경계 중 가장 넓습니다.
+    static let lastChildToNextApplication: CGFloat = 26
 
     /// 펼친 내용 아래에 거는 여백. 목록 `VStack`의 간격 위에 더해져 마지막 경계를 만듭니다.
     static let afterLastChild: CGFloat = lastChildToNextApplication - listRowSpacing
@@ -449,6 +455,11 @@ enum ApplicationProcessRowLayout {
 
 /// 코어 격자가 화면에 내놓는 문자열. 뷰가 문자열을 직접 조립하지 않게 모아 둡니다.
 nonisolated enum CPUCoreUsageFormatting {
+    /// 칸에 보이는 코어 번호. 접근성 이름도 이 문자열을 포함해 화면 번호와 갈리지 않게 합니다.
+    static func coreNumberText(coreIndex: Int) -> String {
+        String(coreIndex)
+    }
+
     /// 칸에 보이는 정수 퍼센트. 코어 사용률 표현이 문자열 한 줄이던 때의 반올림 규칙을 그대로 씁니다 —
     /// 규칙을 바꾸면 화면 수치와 접근성 값이 갈립니다.
     static func valueText(_ usage: Double) -> String {
@@ -458,6 +469,21 @@ nonisolated enum CPUCoreUsageFormatting {
     /// 격자 머리글. 코어 수를 인자에서 받아 만듭니다.
     static func headingText(coreCount: Int) -> String {
         "논리 코어 \(coreCount)개 사용률"
+    }
+
+    /// 코어 칸의 접근성 이름. 화면 번호와 같은 `coreIndex`를 받아 둘이 갈리지 않게 합니다.
+    static func accessibilityLabel(coreIndex: Int) -> String {
+        "코어 \(coreNumberText(coreIndex: coreIndex))"
+    }
+
+    /// 코어 칸의 접근성 값. 화면 수치와 같은 서식을 공유해 반올림 규칙이 갈리지 않게 합니다.
+    static func accessibilityValue(_ usage: Double) -> String {
+        valueText(usage)
+    }
+
+    /// UI 테스트가 코어 칸 하나를 안정적으로 찾는 식별자. 번호를 포함해 칸마다 겹치지 않습니다.
+    static func cellAccessibilityIdentifier(coreIndex: Int) -> String {
+        "CPUCore-\(coreIndex)"
     }
 }
 

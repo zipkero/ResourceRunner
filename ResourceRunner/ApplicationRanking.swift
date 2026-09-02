@@ -275,6 +275,17 @@ nonisolated enum ApplicationProcessValueFormatting {
     }
 }
 
+/// 하위 프로세스 행의 접근성 이름 서식. 값 줄은 화면 문자열을 접근성 값으로 그대로 내놓으므로
+/// 이 함수는 이름 줄에 필요한 소속 앱·실행 파일 이름·PID만 모읍니다(DESIGN §5 DP10).
+nonisolated enum ApplicationProcessRowFormatting {
+    static func childAccessibilityLabel(
+        applicationDisplayName: String,
+        process: ApplicationProcessDetail
+    ) -> String {
+        "\(applicationDisplayName), \(process.executableName) (PID \(process.pid))"
+    }
+}
+
 /// 상세 목록(`ApplicationProcessGroupListView`)이 화면에 보여줄 그룹 순서를 정합니다.
 /// 펼친 앱 행이 하나라도 있으면 최신 정렬을 곧장 반영하지 않고 `stableOrder`를 유지합니다 —
 /// 목록이 매 tick 다시 정렬되는 동안 펼친 행이 화면에서 자리를 옮기면, 그 행을 다시 클릭하는 시도가

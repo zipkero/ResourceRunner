@@ -1033,11 +1033,18 @@ private struct CPUCoreUsageCellView: View {
             Text(CPUCoreUsageFormatting.valueText(usage))
                 .font(.caption2)
 
-            Text("\(coreIndex)")
+            Text(CPUCoreUsageFormatting.coreNumberText(coreIndex: coreIndex))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
+        // macOS에서 합쳐진 컨테이너의 기본 AXGroup은 `accessibilityValue`를 내보내지 않으므로,
+        // 칸을 static text로 노출해 이름과 값을 분리한 채 AXValue가 실리게 합니다.
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityLabel(CPUCoreUsageFormatting.accessibilityLabel(coreIndex: coreIndex))
+        .accessibilityValue(CPUCoreUsageFormatting.accessibilityValue(usage))
+        .accessibilityIdentifier(CPUCoreUsageFormatting.cellAccessibilityIdentifier(coreIndex: coreIndex))
     }
 
     /// 트랙 높이에 대한 값의 비율. 100%를 넘는 값은 트랙을 넘지 않게 자릅니다.
@@ -1291,19 +1298,26 @@ struct ApplicationProcessGroupRow: View {
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             // macOS `DisclosureGroup`은 펼친 내용에 들여쓰기도 위아래 여백도 주지 않으므로, 하위 행이
-            // 부모 앱 이름보다 왼쪽에서 시작하고 부모 행에 그대로 달라붙습니다. 세 경계와 시작선을
+            // 부모 앱 이름보다 왼쪽에서 시작하고 부모 행에 그대로 달라붙습니다. 네 경계와 두 시작선을
             // 이 `VStack`이 전부 만듭니다 — 상수만 두고 이 여백을 걸지 않으면 화면은 그대로 붙어 있습니다.
             VStack(alignment: .leading, spacing: ApplicationProcessRowLayout.betweenChildren) {
                 ForEach(group.processes, id: \.pid) { process in
-                    HStack {
+                    VStack(alignment: .leading, spacing: ApplicationProcessRowLayout.withinChildRow) {
                         Text("\(process.executableName) (PID \(process.pid))")
-                        Spacer()
+                            .padding(.leading, ApplicationProcessRowLayout.childIndent)
+                            .accessibilityLabel(
+                                ApplicationProcessRowFormatting.childAccessibilityLabel(
+                                    applicationDisplayName: group.displayName,
+                                    process: process
+                                )
+                            )
                         Text(valueText(process))
+                            .padding(.leading, ApplicationProcessRowLayout.childValueIndent)
                     }
                     .font(.caption2)
                 }
             }
-            .padding(.leading, ApplicationProcessRowLayout.childIndent)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, ApplicationProcessRowLayout.parentToFirstChild)
             .padding(.bottom, ApplicationProcessRowLayout.afterLastChild)
         } label: {

@@ -26,6 +26,46 @@ import XCTest
 /// `value`는 문자열이 아니라 `NSNumber`(0/1)로 노출되므로 비교할 때 문자열로 캐스팅하지 않습니다.
 final class DashboardDetailExpansionUITests: XCTestCase {
 
+    private final class RelaunchableProcessProbe {
+        let rowIdentifier: String
+
+        private let executableURL: URL
+        private var process: Process?
+
+        init() {
+            let executableURL = (0..<4).reduce(Bundle(for: Self.self).bundleURL) { url, _ in
+                url.deletingLastPathComponent()
+            }
+            .appendingPathComponent("ResourceRunnerExpansionProbe")
+            self.executableURL = executableURL
+            rowIdentifier = "AppRow-\(executableURL.path)"
+        }
+
+        deinit {
+            terminate()
+        }
+
+        func launch() throws {
+            let process = Process()
+            process.executableURL = executableURL
+            process.arguments = ["\(ProcessInfo.processInfo.processIdentifier)"]
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try process.run()
+            self.process = process
+        }
+
+        func terminate() {
+            guard let process else { return }
+            if process.isRunning {
+                process.terminate()
+                process.waitUntilExit()
+            }
+            self.process = nil
+        }
+
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
@@ -117,6 +157,58 @@ final class DashboardDetailExpansionUITests: XCTestCase {
             "1초 이상(재렌더링 이후)이 지난 뒤 펼침이 유지되지 않았습니다."
         )
         XCTAssertTrue(childProcessRow.exists, "재렌더링 이후 하위 프로세스 행이 사라졌습니다.")
+    }
+
+    /// 같은 앱 키의 행이 목록 갱신으로 실제 제거됐다가 다시 만들어져도 펼침 상태가 목록에 남아 있어야 합니다.
+    /// 단순 tick은 `ForEach(id: \.key)`의 행 identity를 유지하므로 행별 `@State` mutation도 통과합니다.
+    /// 이 probe는 같은 실행 경로의 프로세스를 종료·재실행해 행 identity를 실제로 끊어 두 상태 소유 방식을 가릅니다.
+    @MainActor
+    func testExpansionPersistsWhenRowDisappearsAndReturnsOnListRefresh() throws {
+        let probe = RelaunchableProcessProbe()
+        defer { probe.terminate() }
+        try probe.launch()
+
+        let app = XCUIApplication()
+        _ = openDashboard(app)
+
+        let loadAverageText = detailValue(app, containing: "Load Average")
+        app.typeKey("1", modifierFlags: .command)
+        XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세가 나타나지 않았습니다.")
+
+        let triangle = app.popovers.descendants(matching: .disclosureTriangle)
+            .matching(NSPredicate(format: "identifier == %@", probe.rowIdentifier))
+            .firstMatch
+        XCTAssertTrue(
+            waitUntil({ triangle.exists && triangle.isHittable }, timeout: 10),
+            "펼침 유지 probe 행이 CPU 목록에 나타나지 않았습니다."
+        )
+
+        clickRowLabel(triangle)
+        XCTAssertTrue(
+            waitUntil({ triangle.exists && self.isExpanded(triangle) }, timeout: 3),
+            "probe 행을 펼치지 못했습니다. 현재 값: \(String(describing: triangle.value))"
+        )
+
+        probe.terminate()
+        XCTAssertTrue(
+            waitUntil({ !triangle.exists }, timeout: 10),
+            "probe 종료 뒤 목록 갱신에서 행이 제거되지 않았습니다."
+        )
+
+        try probe.launch()
+        XCTAssertTrue(
+            waitUntil({ triangle.exists && triangle.isHittable }, timeout: 10),
+            "같은 앱 키의 probe를 재실행한 뒤 행이 목록에 돌아오지 않았습니다."
+        )
+        let remainedExpanded = isExpanded(triangle)
+        let expansionValueAfterReturn = triangle.value
+        // continueAfterFailure=false 환경에서도 mutation 실패가 다음 테스트에 probe를 남기지 않도록
+        // 마지막 단언 전에 재실행한 프로세스를 명시적으로 끝냅니다.
+        probe.terminate()
+        XCTAssertTrue(
+            remainedExpanded,
+            "목록 갱신으로 행이 제거됐다가 같은 앱 키로 돌아온 뒤 펼침 상태가 사라졌습니다. 현재 값: \(String(describing: expansionValueAfterReturn))"
+        )
     }
 
     /// 펼친 행을 다시 중앙 클릭하면 접혀야 합니다.

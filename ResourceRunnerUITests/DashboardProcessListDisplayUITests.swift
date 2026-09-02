@@ -120,6 +120,23 @@ final class DashboardProcessListDisplayUITests: XCTestCase {
             childProcessRow.waitForExistence(timeout: 2),
             "펼친 뒤에도 \"이름 (PID 번호)\" 형식의 하위 프로세스 행이 나타나지 않았습니다."
         )
+        // macOS StaticText는 SwiftUI의 accessibilityLabel을 XCUITest의 value로 내놓습니다.
+        // 소속 앱 이름이 실행 파일 이름 앞에 별도 접두사로 있어야 화면 문자열만 합친 요소와 구분됩니다.
+        let childProcessAccessibilityName = childProcessRow.value as? String ?? ""
+        let runnerChildTexts = app.popovers.staticTexts.matching(
+            NSPredicate(format: "identifier == %@", triangle.identifier)
+        )
+        XCTAssertEqual(
+            runnerChildTexts.count, 2,
+            "하위 프로세스의 이름 줄과 값 줄이 각각 접근성 요소로 남아 있지 않습니다. "
+                + "실제 요소 수: \(runnerChildTexts.count)"
+        )
+        XCTAssertTrue(
+            childProcessAccessibilityName.hasPrefix("ResourceRunnerUITests-Runner, ")
+                && childProcessAccessibilityName.contains("ResourceRunnerUITests-Runner (PID"),
+            "하위 프로세스 행의 접근성 이름에 소속 앱과 실행 파일 이름이 함께 없습니다. "
+                + "실제 접근성 이름: \(childProcessAccessibilityName)"
+        )
     }
 
     /// Memory 상세의 모든 앱 행 값이 바이트 단위(KB·MB·GB)로 표시되는지 확인합니다.

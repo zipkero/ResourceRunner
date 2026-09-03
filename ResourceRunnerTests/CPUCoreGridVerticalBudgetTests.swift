@@ -12,11 +12,9 @@ import Testing
 
 private let baseInstant = ContinuousClock().now
 
-/// 상세 팝업의 고정 프레임. `DashboardView.detailPopupWidth`·`detailPopupHeight`가 `fileprivate`라 다시 적은 값이고,
-/// 두 쪽이 어긋나도 잡는 자리가 없습니다 — production 높이만 줄면 실제로는 넘치는 격자를 이 스위트가 통과로 판정합니다.
-/// 팝업 크기를 바꾸면 이 두 줄도 함께 고쳐야 합니다.
-private let popupWidth: CGFloat = 400
-private let popupHeight: CGFloat = 480
+/// production 상세 팝업의 고정 프레임을 직접 써서 세로 예산과 실제 프레임이 어긋나지 않게 합니다.
+private let popupWidth = DashboardView.detailPopupWidth
+private let popupHeight = DashboardView.detailPopupHeight
 
 /// 팝업 콘텐츠 폭. `.padding()` 기본값 좌우 16pt씩을 뺀 값입니다.
 private let detailContentWidth: CGFloat = popupWidth - 32

@@ -224,6 +224,19 @@ struct CPUSystemMetricsCollectorTests {
         #expect(try collector.collect(at: baseInstant.advanced(by: .seconds(1))) == nil)
     }
 
+    @Test func zeroTotalTickDeltaProducesNoUsage() throws {
+        let reader = StubCPUTickReader(tickOutcomes: [
+            .success([ticks(user: 10, system: 10, idle: 80)]),
+            .success([ticks(user: 10, system: 10, idle: 80)]),
+        ])
+        var collector = CPUSystemMetricsCollector(reader: reader)
+
+        _ = try collector.collect(at: baseInstant)
+
+        #expect(try collector.collect(at: baseInstant.advanced(by: .seconds(1))) == nil)
+        #expect(reader.loadAverageCallCount == 0)
+    }
+
     @Test func tickReadFailureIsThrownAsCPUCollectorFailure() throws {
         let failure = CollectorFailure(metric: .cpu, cause: .systemCall(name: "host_processor_info", code: 5))
         let reader = StubCPUTickReader(tickOutcomes: [.failure(failure)])

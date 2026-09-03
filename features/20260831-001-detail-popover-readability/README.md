@@ -9,7 +9,7 @@
 
 - [x] SPEC
 - [x] DESIGN
-- [ ] IMPLEMENT
+- [x] IMPLEMENT
 
 ## 문서
 
@@ -101,3 +101,15 @@
 - 2026-09-01: DESIGN 재작성으로 하위 승인 상태 초기화.
   되돌린 항목 — implement.md task-001·002·003 체크박스.
   DP1~DP4·DP7~DP11 채택안이 그대로라 그 구현 코드 자체는 유효하며, 재검증만 다시 받습니다.
+- 2026-09-03: IMPLEMENT 완료.
+  Task 7개가 모두 `[x]`이고 `SPEC §5.1`~`§5.7`이 전부 닫혔습니다.
+  하위 프로세스 행은 이름 줄(34pt)·값 줄(50pt) 두 줄이 되고 네 간격은 2 / 10 / 18 / 26pt이며,
+  CPU 상세의 코어 사용률은 쉼표 한 줄에서 고정 트랙 18pt 막대 격자로 바뀌었습니다.
+  implement와 verify를 별도 Codex 세션으로 분리해 진행했고,
+  같은 세션 자체 verifier가 통과시킨 결함을 독립 verifier가 여러 차례 잡았습니다 —
+  기존 단언 삭제(task-004), 코어 칸 AXValue 미도달(task-005),
+  회귀 그물 구멍 셋과 combine 감도·probe 안전성(task-006),
+  전수 목록이 실제 조립에서 파생되지 않던 것(task-007)입니다.
+  task-006은 격리된 probe를 위해 새 Xcode 타겟을 더했다가 design.md §1(새 모듈 금지) 이탈로 reject됐고,
+  사용자 결정으로 타겟을 지우고 기존 UI test target 안의 실행별 UUID fixture로 바꿨습니다.
+  마지막 검증은 단위 412건 실패 0과 UI 스위트 전부 통과입니다.

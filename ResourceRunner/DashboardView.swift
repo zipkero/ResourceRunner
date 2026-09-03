@@ -96,8 +96,8 @@ struct DashboardView: View {
     /// 1084pt(이 환경 실측)인 것에 견줘 충분히 작게 잡아 위·아래 여백 없이 화면 안에 들어가면서도, 요약 지표와
     /// 순위 앞부분 몇 줄은 스크롤 없이 보이도록 400×480을 씁니다. 폭은 두 상세의 실측 폭(406, 371)을 기준으로 잡았고,
     /// 코어별 사용률은 콘텐츠 폭을 균등 분할하는 격자로 배치되며 그 밖의 줄은 접히지 않습니다.
-    fileprivate static let detailPopupWidth: CGFloat = 400
-    fileprivate static let detailPopupHeight: CGFloat = 480
+    static let detailPopupWidth: CGFloat = 400
+    static let detailPopupHeight: CGFloat = 480
 
     /// CPU 상세 팝업의 표시 여부. `get`은 `store.selection`을 그대로 반영하고,
     /// `set`은 팝업이 스스로 닫힐 때만(예: 팝업 밖 클릭) 호출되며 `store.dismissDetail(for:)`에 그 사실을 넘깁니다.
@@ -857,31 +857,46 @@ private struct TopApplicationsView: View {
 /// 카드를 오가거나 프로세스 수·값이 달라져도 팝업 크기가 흔들리지 않게 합니다(ANALYSIS §5 DP18).
 /// 카드 선택·복귀 단축키는 본체(`DashboardView`) 한 곳에만 등록합니다 — 자식 팝오버가 key window를 가져가지
 /// 않는 것이 실행 환경에서 확인되어 본체 등록만으로 팝업이 열린 뒤에도 계속 닿습니다(ANALYSIS §5 DP15).
-private struct CPUDetailPopoverContent: View {
+// `private`가 아닌 것은 task-007 테스트가 네 상태의 콘텐츠를 직접 렌더해 고정 프레임과
+// 값 없음 분기의 동일성을 재야 하기 때문입니다. `.popover` 안에 둔 채 재면 콘텐츠가 실체화되지 않습니다.
+struct CPUDetailPopoverContent: View {
     let state: ResourceCardState<CPUCardPresentation>
     let iconProvider: any ApplicationIconProviding
 
+    /// 이 상태에서 상세 본문이 조립하는 이 feature의 새 표시 요소.
+    /// 정상 목록을 `CPUDetailView`의 production 조립에서 가져오므로 하위 조립에 요소가 더해지면
+    /// task-007의 상태 × 요소 순회 목록도 같은 경로로 늘어납니다.
+    var newDisplayElements: [DetailPopoverNewDisplayElement] {
+        guard case .normal = state else { return [] }
+        return CPUDetailView.newDisplayElements
+    }
+
     var body: some View {
         ScrollView {
-            Group {
-                if case .normal(let presentation, _) = state {
-                    CPUDetailView(presentation: presentation, iconProvider: iconProvider)
-                } else {
-                    Text("아직 CPU 값이 수집되지 않았습니다.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            detailContent
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
         .accessibilityIdentifier("DashboardDetail")
     }
+
+    /// 상태 분기를 한 자리에 두고 `body`가 이를 production `ScrollView`와 고정 프레임 아래에 조립합니다.
+    /// task-007은 `detailContent` 조각이 아니라 그 `body` 전체를 AppKit hosting view로 렌더합니다.
+    @ViewBuilder var detailContent: some View {
+        if case .normal(let presentation, _) = state {
+            CPUDetailView(presentation: presentation, iconProvider: iconProvider)
+        } else {
+            Text("아직 CPU 값이 수집되지 않았습니다.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
 }
 
 /// Memory 카드 옆에 앵커되는 상세 팝업 콘텐츠. CPU 쪽과 같은 이유로 같은 형태를 씁니다.
-private struct MemoryDetailPopoverContent: View {
+// CPU 쪽과 같은 고정 프레임 계약을 단위 테스트에서 직접 재기 위해 기본 접근 수준으로 둡니다.
+struct MemoryDetailPopoverContent: View {
     let state: ResourceCardState<MemoryCardPresentation>
     let iconProvider: any ApplicationIconProviding
 
@@ -911,32 +926,94 @@ struct CPUDetailView: View {
     let presentation: CPUCardPresentation
     let iconProvider: any ApplicationIconProviding
 
+    private enum AssemblyElement: CaseIterable {
+        case summary
+        case coreUsage
+        case loadAverage
+        case applicationGroups
+
+        var newDisplayElements: [DetailPopoverNewDisplayElement] {
+            switch self {
+            case .summary, .loadAverage:
+                []
+            case .coreUsage:
+                CPUCoreUsageSection.assembly.flatMap(\.newDisplayElements)
+            case .applicationGroups:
+                ApplicationProcessGroupRow.assembly.flatMap(\.newDisplayElements)
+            }
+        }
+    }
+
+    /// `body`가 실제로 순회하는 production 조립 항목에서 파생한 task-007 전수 목록입니다.
+    /// 표시 요소를 더하려면 이 조립에 항목을 넣어야 하므로 별도 목록을 함께 고칠 자리가 없습니다.
+    static var newDisplayElements: [DetailPopoverNewDisplayElement] {
+        AssemblyElement.allCases.flatMap(\.newDisplayElements)
+    }
+
+    /// 코어 머리글과 격자를 한 조립으로 둡니다. task-007은 이 production 조립과 머리글만 뺀 기준의
+    /// 높이를 견주어 머리글 존재 단언의 감도를 확인합니다.
+    private struct CPUCoreUsageSection: View {
+        let presentation: CPUCardPresentation
+
+        fileprivate enum AssemblyElement: CaseIterable {
+            case heading
+            case grid
+
+            var newDisplayElements: [DetailPopoverNewDisplayElement] {
+                switch self {
+                case .heading: [.coreGridHeading]
+                case .grid: CPUCoreUsageGridView.assembly.flatMap(\.newDisplayElements)
+                }
+            }
+        }
+
+        fileprivate static let assembly = AssemblyElement.allCases
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: CPUCoreUsageGridView.headingSpacing) {
+                ForEach(Self.assembly, id: \.self) { element in
+                    switch element {
+                    case .heading:
+                        Text(CPUCoreUsageFormatting.headingText(coreCount: presentation.detail.coreUsages.count))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    case .grid:
+                        CPUCoreUsageGridView(usages: presentation.detail.coreUsages)
+                    }
+                }
+            }
+        }
+    }
+
+    var coreUsageSection: some View {
+        CPUCoreUsageSection(presentation: presentation)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("User \(pct(presentation.userRatio)) · System \(pct(presentation.systemRatio)) · Idle \(pct(presentation.detail.idleRatio))")
-                .font(.caption)
-
-            VStack(alignment: .leading, spacing: CPUCoreUsageGridView.headingSpacing) {
-                Text(CPUCoreUsageFormatting.headingText(coreCount: presentation.detail.coreUsages.count))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-
-                CPUCoreUsageGridView(usages: presentation.detail.coreUsages)
+            ForEach(AssemblyElement.allCases, id: \.self) { element in
+                switch element {
+                case .summary:
+                    Text("User \(pct(presentation.userRatio)) · System \(pct(presentation.systemRatio)) · Idle \(pct(presentation.detail.idleRatio))")
+                        .font(.caption)
+                case .coreUsage:
+                    coreUsageSection
+                case .loadAverage:
+                    let load = presentation.detail.loadAverage
+                    Text("Load Average \(fmt(load.oneMinute)) / \(fmt(load.fiveMinutes)) / \(fmt(load.fifteenMinutes))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                case .applicationGroups:
+                    ApplicationProcessGroupListView(
+                        groups: presentation.detail.applications,
+                        sortDescription: presentation.detail.applicationsHeading,
+                        // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
+                        groupValueText: ApplicationProcessValueFormatting.cpuGroupValueText,
+                        iconProvider: iconProvider,
+                        valueText: ApplicationProcessValueFormatting.cpuProcessValueText
+                    )
+                }
             }
-
-            let load = presentation.detail.loadAverage
-            Text("Load Average \(fmt(load.oneMinute)) / \(fmt(load.fiveMinutes)) / \(fmt(load.fifteenMinutes))")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-
-            ApplicationProcessGroupListView(
-                groups: presentation.detail.applications,
-                sortDescription: presentation.detail.applicationsHeading,
-                // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
-                groupValueText: ApplicationProcessValueFormatting.cpuGroupValueText,
-                iconProvider: iconProvider,
-                valueText: ApplicationProcessValueFormatting.cpuProcessValueText
-            )
         }
     }
 
@@ -955,6 +1032,21 @@ struct CPUDetailView: View {
 struct CPUCoreUsageGridView: View {
     let usages: [Double]
 
+    enum AssemblyElement: CaseIterable {
+        case cells
+        case lastRowEmptySlots
+
+        var newDisplayElements: [DetailPopoverNewDisplayElement] {
+            switch self {
+            case .cells: CPUCoreUsageCellView.assembly.flatMap(\.newDisplayElements)
+            case .lastRowEmptySlots: [.lastRowEmptySlot]
+            }
+        }
+    }
+
+    /// 각 격자 행의 `body`가 실제로 순회하는 조립 항목입니다.
+    static let assembly = AssemblyElement.allCases
+
     /// 격자 머리글과 격자 사이 간격. 머리글이 격자에 딸린 이름으로 읽히도록 상세 `VStack`의 6pt보다 좁습니다.
     static let headingSpacing: CGFloat = 4
 
@@ -968,15 +1060,21 @@ struct CPUCoreUsageGridView: View {
             VStack(spacing: CPUCoreGridLayout.cellSpacing) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                     HStack(spacing: CPUCoreGridLayout.cellSpacing) {
-                        ForEach(row, id: \.self) { coreIndex in
-                            CPUCoreUsageCellView(coreIndex: coreIndex, usage: usages[coreIndex])
-                        }
-                        // 짧은 마지막 행에 같은 폭의 빈 자리를 채웁니다. 채우지 않으면 남은 칸들이 늘어나
-                        // 마지막 행의 열이 위 행과 어긋납니다(DESIGN §5 DP2).
-                        // 높이를 0으로 묶는 것은 `Color`가 세로로도 무한히 늘어나기 때문입니다 —
-                        // 묶지 않으면 짧은 마지막 행이 있는 코어 수에서 격자의 필요 높이가 무한대가 됩니다.
-                        ForEach(row.count..<columnCount, id: \.self) { _ in
-                            Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                        ForEach(Self.assembly, id: \.self) { element in
+                            switch element {
+                            case .cells:
+                                ForEach(row, id: \.self) { coreIndex in
+                                    CPUCoreUsageCellView(coreIndex: coreIndex, usage: usages[coreIndex])
+                                }
+                            case .lastRowEmptySlots:
+                                // 짧은 마지막 행에 같은 폭의 빈 자리를 채웁니다. 채우지 않으면 남은 칸들이 늘어나
+                                // 마지막 행의 열이 위 행과 어긋납니다(DESIGN §5 DP2).
+                                // 높이를 0으로 묶는 것은 `Color`가 세로로도 무한히 늘어나기 때문입니다 —
+                                // 묶지 않으면 짧은 마지막 행이 있는 코어 수에서 격자의 필요 높이가 무한대가 됩니다.
+                                ForEach(row.count..<columnCount, id: \.self) { _ in
+                                    Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                                }
+                            }
                         }
                     }
                 }
@@ -1010,32 +1108,72 @@ private struct ProposedWidthLayout: Layout {
 ///
 /// 값이 0이면 채움을 그리지 않고 최소 채움 높이도 두지 않습니다 — 쉬고 있는 코어가 활동하는 것처럼
 /// 보이지 않게 하는 대신, 0%와 1%의 구분은 같은 칸의 수치가 맡습니다(DESIGN §5 DP2).
-private struct CPUCoreUsageCellView: View {
+// task-007이 production 칸과 요소 하나를 뺀 기준을 직접 렌더해 견주므로 기본 접근 수준으로 둡니다.
+struct CPUCoreUsageCellView: View {
     let coreIndex: Int
     let usage: Double
 
+    enum AssemblyElement: CaseIterable {
+        case bar
+        case valueText
+        case coreNumber
+
+        var newDisplayElements: [DetailPopoverNewDisplayElement] {
+            switch self {
+            case .bar: BarAssemblyElement.allCases.map(\.newDisplayElement)
+            case .valueText: [.coreValueText]
+            case .coreNumber: [.coreNumber]
+            }
+        }
+    }
+
+    enum BarAssemblyElement: CaseIterable {
+        case track
+        case fill
+
+        var newDisplayElement: DetailPopoverNewDisplayElement {
+            switch self {
+            case .track: .coreBarTrack
+            case .fill: .coreBarFill
+            }
+        }
+    }
+
+    /// 칸의 `body`가 실제로 순회하는 조립 항목입니다.
+    static let assembly = AssemblyElement.allCases
+
     /// 칸 안 세 줄 사이 간격. 칸 높이(18 + 2 + 13 + 2 + 13 = 48pt)가 이 값에서 나옵니다.
-    private static let rowSpacing: CGFloat = 2
-    private static let cornerRadius: CGFloat = 2
+    static let rowSpacing: CGFloat = 2
+    static let cornerRadius: CGFloat = 2
 
     var body: some View {
         VStack(spacing: Self.rowSpacing) {
-            ZStack(alignment: .bottom) {
-                Rectangle()
-                    .fill(DashboardColorPalette.cpuCoreTrack)
-                Rectangle()
-                    .fill(DashboardColorPalette.cpuCoreFill)
-                    .frame(height: fillHeight)
+            ForEach(Self.assembly, id: \.self) { element in
+                switch element {
+                case .bar:
+                    ZStack(alignment: .bottom) {
+                        ForEach(BarAssemblyElement.allCases, id: \.self) { barElement in
+                            switch barElement {
+                            case .track:
+                                Rectangle().fill(DashboardColorPalette.cpuCoreTrack)
+                            case .fill:
+                                Rectangle()
+                                    .fill(DashboardColorPalette.cpuCoreFill)
+                                    .frame(height: fillHeight)
+                            }
+                        }
+                    }
+                    .frame(height: CPUCoreGridLayout.barHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
+                case .valueText:
+                    Text(CPUCoreUsageFormatting.valueText(usage))
+                        .font(.caption2)
+                case .coreNumber:
+                    Text(CPUCoreUsageFormatting.coreNumberText(coreIndex: coreIndex))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .frame(height: CPUCoreGridLayout.barHeight)
-            .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
-
-            Text(CPUCoreUsageFormatting.valueText(usage))
-                .font(.caption2)
-
-            Text(CPUCoreUsageFormatting.coreNumberText(coreIndex: coreIndex))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         // macOS에서 합쳐진 컨테이너의 기본 AXGroup은 `accessibilityValue`를 내보내지 않으므로,
@@ -1295,6 +1433,23 @@ struct ApplicationProcessGroupRow: View {
     let iconProvider: any ApplicationIconProviding
     @Binding var isExpanded: Bool
 
+    enum AssemblyElement: CaseIterable {
+        case childNameLine
+        case childValueLine
+        case boundarySpacings
+
+        var newDisplayElements: [DetailPopoverNewDisplayElement] {
+            switch self {
+            case .childNameLine: [.childNameIndent]
+            case .childValueLine: [.childValueIndent]
+            case .boundarySpacings: [.childBoundarySpacings]
+            }
+        }
+    }
+
+    /// 펼친 내용의 `body`와 여백 적용이 함께 소비하는 production 조립 항목입니다.
+    static let assembly = AssemblyElement.allCases
+
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             // macOS `DisclosureGroup`은 펼친 내용에 들여쓰기도 위아래 여백도 주지 않으므로, 하위 행이
@@ -1303,23 +1458,31 @@ struct ApplicationProcessGroupRow: View {
             VStack(alignment: .leading, spacing: ApplicationProcessRowLayout.betweenChildren) {
                 ForEach(group.processes, id: \.pid) { process in
                     VStack(alignment: .leading, spacing: ApplicationProcessRowLayout.withinChildRow) {
-                        Text("\(process.executableName) (PID \(process.pid))")
-                            .padding(.leading, ApplicationProcessRowLayout.childIndent)
-                            .accessibilityLabel(
-                                ApplicationProcessRowFormatting.childAccessibilityLabel(
-                                    applicationDisplayName: group.displayName,
-                                    process: process
-                                )
-                            )
-                        Text(valueText(process))
-                            .padding(.leading, ApplicationProcessRowLayout.childValueIndent)
+                        ForEach(Self.assembly.filter { $0 != .boundarySpacings }, id: \.self) { element in
+                            switch element {
+                            case .childNameLine:
+                                Text("\(process.executableName) (PID \(process.pid))")
+                                    .padding(.leading, ApplicationProcessRowLayout.childIndent)
+                                    .accessibilityLabel(
+                                        ApplicationProcessRowFormatting.childAccessibilityLabel(
+                                            applicationDisplayName: group.displayName,
+                                            process: process
+                                        )
+                                    )
+                            case .childValueLine:
+                                Text(valueText(process))
+                                    .padding(.leading, ApplicationProcessRowLayout.childValueIndent)
+                            case .boundarySpacings:
+                                EmptyView()
+                            }
+                        }
                     }
                     .font(.caption2)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, ApplicationProcessRowLayout.parentToFirstChild)
-            .padding(.bottom, ApplicationProcessRowLayout.afterLastChild)
+            .padding(.top, Self.assembly.contains(.boundarySpacings) ? ApplicationProcessRowLayout.parentToFirstChild : 0)
+            .padding(.bottom, Self.assembly.contains(.boundarySpacings) ? ApplicationProcessRowLayout.afterLastChild : 0)
         } label: {
             HStack(spacing: ApplicationProcessRowLayout.labelIconSpacing) {
                 ApplicationRowIconView(

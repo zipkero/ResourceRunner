@@ -453,6 +453,20 @@ enum ApplicationProcessRowLayout {
     static let afterLastChild: CGFloat = lastChildToNextApplication - listRowSpacing
 }
 
+/// 상세 팝업 가독성 feature가 production 상세 조립에 더한 표시 요소의 식별자입니다.
+/// 전수 목록은 별도 배열이 아니라 각 뷰의 `body`가 순회하는 조립 항목에서 파생됩니다.
+enum DetailPopoverNewDisplayElement: String, CaseIterable, Sendable {
+    case coreGridHeading
+    case coreBarTrack
+    case coreBarFill
+    case coreValueText
+    case coreNumber
+    case lastRowEmptySlot
+    case childNameIndent
+    case childValueIndent
+    case childBoundarySpacings
+}
+
 /// 코어 격자가 화면에 내놓는 문자열. 뷰가 문자열을 직접 조립하지 않게 모아 둡니다.
 nonisolated enum CPUCoreUsageFormatting {
     /// 칸에 보이는 코어 번호. 접근성 이름도 이 문자열을 포함해 화면 번호와 갈리지 않게 합니다.

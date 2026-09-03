@@ -89,7 +89,10 @@ Lazy 컨테이너가 화면 밖 행을 실체화하지 않는다는 통념은 �
 
 - `DashboardDetailExpansionUITests`와 `DashboardProcessListDisplayUITests`는 앱 행을 `app.popovers.descendants(matching: .disclosureTriangle)`로 찾고, 펼침을 `(triangle.value as? NSNumber)?.intValue == 1`로 판정합니다.
   즉 두 스위트가 `DisclosureGroup`이 만드는 `AXDisclosureTriangle` 요소와 그 AX value에 직접 매여 있습니다.
-- 같은 두 스위트가 하위 행을 `app.popovers.staticTexts`의 `value CONTAINS "PID"`로 찾습니다 — 하위 행 **이름** `Text`가 독립 요소로 남고 그 AX value가 화면 문자열 그대로여야 성립합니다.
+- 같은 두 스위트가 하위 행을 `app.popovers.staticTexts`의 `value CONTAINS "PID"`로 찾습니다.
+- task-006의 XCUITest mutation에서 하위 행에 `.accessibilityElement(children: .combine)`을 걸면 AX 요소가 1개가 되고 label은 빈 문자열, value는 모든 문자열을 이어 붙인 값이 되어 `value CONTAINS "PID"` 조회가 통과했습니다.
+  `.ignore`를 걸면 AX 요소가 0개가 되어 조회 자체가 실패했습니다.
+  `.combine`을 가르는 것은 같은 `AppRow-<앱 키>` 식별자의 `StaticText`가 정확히 2개인지와 이름 줄 접근성 이름에 소속 앱이 포함되는지를 보는 단언입니다(`DashboardProcessListDisplayUITests`, task-006).
 - `DashboardDetailPopoverUITests`는 두 상세의 `DashboardDetail` 프레임 크기가 같은지, 스크롤 전후에 그 프레임이 그대로인지, `"Load Average"` `staticText`가 `popovers` 아래에 있는지를 단언합니다.
 - 팝업 AX 프레임이 정확히 400.0인지도 이 스위트가 잡습니다 — 격자 폭 잔차가 그대로 새어 나가 `400.0000000000001`이 되면서 실제로 깨졌고, `ProposedWidthLayout`(`DashboardView.swift:993`)이 격자의 **보고 폭**을 제안 폭으로 고정해 막았습니다.
 - `DashboardCardLayoutTests`는 **카드**만 렌더링합니다(CPU 243.0pt, Memory 181.0pt). 상세 팝업 높이를 단언하는 단위 테스트는 없습니다.
@@ -107,7 +110,6 @@ Lazy 컨테이너가 화면 밖 행을 실체화하지 않는다는 통념은 �
 ### 추정으로 남는 것
 
 - 픽셀 probe로 얻은 `DisclosureGroup` 삼각형 폭 12.0pt와 라벨 행의 자체 여백 4pt는 이 macOS 버전에서 잰 값입니다. OS가 이 값을 바꾸면 하위 이름 줄과 부모 이름의 정렬, 그리고 잉크 기준 세로 간격이 그만큼 어긋납니다.
-- 하위 행을 하나의 접근성 요소로 합치면 AX value가 사라져 위 두 UI 스위트의 `value CONTAINS "PID"` 조회가 깨질 것으로 봅니다. 이 환경에서 XCUITest를 돌려 확인하지는 못했습니다.
 - macOS 스크롤 막대를 「항상 표시」로 둔 환경에서는 레거시 스크롤러가 콘텐츠 폭을 15pt 안팎 줄일 수 있습니다. 그 경우까지 칸 폭과 하위 행 폭에 여유를 남겨 뒀지만 그 설정으로 재보지는 않았습니다.
 - 네 간격이 「서로 확실히 갈려 보이는가」는 배치 값과 잉크 간격까지만 실측했고, 지각 판정은 화면 확인의 몫입니다.
 
@@ -417,12 +419,14 @@ spec.md §4가 제외한 가로 스크롤을 새로 만들 이유가 생기지 �
 
 **하위 프로세스 행**은 두 옵션이 갈립니다.
 
-- **행 전체를 요소 하나로 합침(`children: .combine`이나 `.ignore`)** — 소속 앱·이름·값이 한 번에 낭독됩니다. 대가: 합치면 하위 `Text`의 AX value가 사라질 것으로 보이는데, `DashboardProcessListDisplayUITests`와 `DashboardDetailExpansionUITests`가 하위 행을 `staticTexts`의 `value CONTAINS "PID"`로 찾습니다. 두 스위트의 조회가 함께 깨집니다.
+- **행 전체를 요소 하나로 합침(`children: .combine`이나 `.ignore`)** — 대가: `.ignore`는 AX 요소를 0개로 만들어 `value CONTAINS "PID"` 조회 자체를 깨뜨립니다.
+  `.combine`은 AX 요소 하나의 label을 빈 문자열로 만들고 모든 문자열을 value에 이어 붙여 해당 조회는 통과하지만, 이름·값 두 요소 분리가 사라져 같은 `AppRow-<앱 키>` 식별자의 `StaticText` 2개 단언과 이름 줄 접근성 이름의 소속 앱 단언이 실패합니다.
 - **두 `Text`를 그대로 두고 이름 줄에만 접근성 이름을 덧붙임** (채택).
 
 채택안은 이름 줄 `Text`의 접근성 이름을 `ApplicationProcessRowFormatting.childAccessibilityLabel`이 만든 「소속 앱 + 실행 파일 이름 + PID」로 바꾸고, 값 줄 `Text`는 손대지 않습니다.
-접근성 **이름**만 바꾸고 요소를 합치지 않으므로 AX value는 화면 문자열 그대로 남습니다.
-한 줄에서 두 줄로 바뀌어도 이 구조는 그대로입니다 — 두 `Text`가 `HStack`에서 `VStack`으로 옮겨 앉을 뿐 요소 수와 각 요소의 AX value가 같아, 두 UI 스위트의 조회가 유지되고 접근성 계층에서의 낭독 순서(이름 → 값)도 화면 순서와 같아집니다.
+요소를 합치지 않으므로 이름 줄과 값 줄은 독립된 AX 요소로 남습니다.
+macOS XCUITest에서는 이름 줄에 붙인 SwiftUI `accessibilityLabel`이 해당 `StaticText`의 value로 드러나 소속 앱·실행 파일 이름·PID를 담고, 손대지 않은 값 줄의 value는 화면 문자열 그대로 남습니다.
+따라서 두 UI 스위트의 `value CONTAINS "PID"` 조회가 유지되고 접근성 계층에서의 낭독 순서(이름 → 값)도 화면 순서와 같아집니다.
 대가는 소속 앱과 값이 한 요소로 묶여 낭독되지 않는 것인데, 두 요소가 인접해 있어 행 단위 탐색으로는 이어집니다.
 
 값 줄 `Text`를 감추는 선택은 하지 않습니다 — 화면에 보이는 수치를 접근성 계층에서 지우는 셈이라 `SPEC §5.7`과 정면으로 부딪힙니다.

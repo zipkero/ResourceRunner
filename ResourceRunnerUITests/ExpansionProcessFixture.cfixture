@@ -1,0 +1,29 @@
+#include <signal.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+
+static uint64_t monotonic_nanoseconds(void) {
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &time);
+    return (uint64_t)time.tv_sec * 1000000000ULL + (uint64_t)time.tv_nsec;
+}
+
+int main(int argc, char *argv[]) {
+    pid_t expected_parent_pid = argc > 1 ? (pid_t)strtol(argv[1], NULL, 10) : -1;
+    const struct timespec rest = { .tv_sec = 0, .tv_nsec = 95000000 };
+
+    for (int poll_count = 0; poll_count < 300; poll_count++) {
+        if (kill(expected_parent_pid, 0) != 0) {
+            return EXIT_SUCCESS;
+        }
+
+        // CPU 상세 순위에 잡힐 최소 활동만 만들고 나머지 주기는 잠듭니다.
+        uint64_t work_deadline = monotonic_nanoseconds() + 5000000;
+        while (monotonic_nanoseconds() < work_deadline) {}
+        nanosleep(&rest, NULL);
+    }
+
+    return EXIT_SUCCESS;
+}

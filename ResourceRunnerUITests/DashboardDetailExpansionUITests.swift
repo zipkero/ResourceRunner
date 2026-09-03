@@ -32,11 +32,22 @@ final class DashboardDetailExpansionUITests: XCTestCase {
         private let executableURL: URL
         private var process: Process?
 
-        init() {
-            let executableURL = (0..<4).reduce(Bundle(for: Self.self).bundleURL) { url, _ in
+        init() throws {
+            let productsURL = (0..<4).reduce(Bundle(for: Self.self).bundleURL) { url, _ in
                 url.deletingLastPathComponent()
             }
-            .appendingPathComponent("ResourceRunnerExpansionProbe")
+            let fixtureDirectoryURL = productsURL
+                .appendingPathComponent("ResourceRunnerExpansionFixture", isDirectory: true)
+            let fixtureName = try String(
+                contentsOf: fixtureDirectoryURL.appendingPathComponent("current"),
+                encoding: .utf8
+            )
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !fixtureName.isEmpty else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+
+            let executableURL = fixtureDirectoryURL.appendingPathComponent(fixtureName)
             self.executableURL = executableURL
             rowIdentifier = "AppRow-\(executableURL.path)"
         }
@@ -164,7 +175,7 @@ final class DashboardDetailExpansionUITests: XCTestCase {
     /// 이 probe는 같은 실행 경로의 프로세스를 종료·재실행해 행 identity를 실제로 끊어 두 상태 소유 방식을 가릅니다.
     @MainActor
     func testExpansionPersistsWhenRowDisappearsAndReturnsOnListRefresh() throws {
-        let probe = RelaunchableProcessProbe()
+        let probe = try RelaunchableProcessProbe()
         defer { probe.terminate() }
         try probe.launch()
 

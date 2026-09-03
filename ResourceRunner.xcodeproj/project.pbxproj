@@ -21,20 +21,12 @@
 			remoteGlobalIDString = C0C93A93301ECAA300D7FAB0;
 			remoteInfo = ResourceRunner;
 		};
-		D10000000000000000000001 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C0C93A8C301ECAA300D7FAB0 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = D10000000000000000000006;
-			remoteInfo = ResourceRunnerExpansionProbe;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		C0C93A94301ECAA300D7FAB0 /* ResourceRunner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ResourceRunner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0C93AA1301ECAA400D7FAB0 /* ResourceRunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ResourceRunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0C93AAB301ECAA400D7FAB0 /* ResourceRunnerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ResourceRunnerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		D10000000000000000000002 /* ResourceRunnerExpansionProbe */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ResourceRunnerExpansionProbe; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -51,11 +43,6 @@
 		C0C93AAE301ECAA400D7FAB0 /* ResourceRunnerUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ResourceRunnerUITests;
-			sourceTree = "<group>";
-		};
-		D10000000000000000000003 /* ResourceRunnerExpansionProbe */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ResourceRunnerExpansionProbe;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -82,13 +69,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D10000000000000000000004 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -98,7 +78,6 @@
 				C0C93A96301ECAA300D7FAB0 /* ResourceRunner */,
 				C0C93AA4301ECAA400D7FAB0 /* ResourceRunnerTests */,
 				C0C93AAE301ECAA400D7FAB0 /* ResourceRunnerUITests */,
-				D10000000000000000000003 /* ResourceRunnerExpansionProbe */,
 				C0C93A95301ECAA300D7FAB0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -109,7 +88,6 @@
 				C0C93A94301ECAA300D7FAB0 /* ResourceRunner.app */,
 				C0C93AA1301ECAA400D7FAB0 /* ResourceRunnerTests.xctest */,
 				C0C93AAB301ECAA400D7FAB0 /* ResourceRunnerUITests.xctest */,
-				D10000000000000000000002 /* ResourceRunnerExpansionProbe */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -169,12 +147,12 @@
 				C0C93AA7301ECAA400D7FAB0 /* Sources */,
 				C0C93AA8301ECAA400D7FAB0 /* Frameworks */,
 				C0C93AA9301ECAA400D7FAB0 /* Resources */,
+				E20000000000000000000001 /* Prepare expansion fixture */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				C0C93AAD301ECAA400D7FAB0 /* PBXTargetDependency */,
-				D10000000000000000000007 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C0C93AAE301ECAA400D7FAB0 /* ResourceRunnerUITests */,
@@ -185,27 +163,6 @@
 			productName = ResourceRunnerUITests;
 			productReference = C0C93AAB301ECAA400D7FAB0 /* ResourceRunnerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
-		};
-		D10000000000000000000006 /* ResourceRunnerExpansionProbe */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = D1000000000000000000000A /* Build configuration list for PBXNativeTarget "ResourceRunnerExpansionProbe" */;
-			buildPhases = (
-				D10000000000000000000005 /* Sources */,
-				D10000000000000000000004 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				D10000000000000000000003 /* ResourceRunnerExpansionProbe */,
-			);
-			name = ResourceRunnerExpansionProbe;
-			packageProductDependencies = (
-			);
-			productName = ResourceRunnerExpansionProbe;
-			productReference = D10000000000000000000002 /* ResourceRunnerExpansionProbe */;
-			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -228,9 +185,6 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = C0C93A93301ECAA300D7FAB0;
 					};
-					D10000000000000000000006 = {
-						CreatedOnToolsVersion = 26.6;
-					};
 				};
 			};
 			buildConfigurationList = C0C93A8F301ECAA300D7FAB0 /* Build configuration list for PBXProject "ResourceRunner" */;
@@ -250,7 +204,6 @@
 				C0C93A93301ECAA300D7FAB0 /* ResourceRunner */,
 				C0C93AA0301ECAA400D7FAB0 /* ResourceRunnerTests */,
 				C0C93AAA301ECAA400D7FAB0 /* ResourceRunnerUITests */,
-				D10000000000000000000006 /* ResourceRunnerExpansionProbe */,
 			);
 		};
 /* End PBXProject section */
@@ -279,6 +232,26 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		E20000000000000000000001 /* Prepare expansion fixture */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/ResourceRunnerUITests/ExpansionProcessFixture.cfixture",
+			);
+			name = "Prepare expansion fixture";
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/ResourceRunnerExpansionFixture",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\nfixture_dir=\"${BUILT_PRODUCTS_DIR}/ResourceRunnerExpansionFixture\"\n/bin/mkdir -p \"${fixture_dir}\"\n/usr/bin/find \"${fixture_dir}\" -mindepth 1 -delete\nfixture_name=\"expansion-fixture-$(/usr/bin/uuidgen | /usr/bin/tr '[:upper:]' '[:lower:]')\"\nfixture_path=\"${fixture_dir}/${fixture_name}\"\n/usr/bin/xcrun --sdk macosx clang -Os -x c \"${SRCROOT}/ResourceRunnerUITests/ExpansionProcessFixture.cfixture\" -o \"${fixture_path}\"\n/usr/bin/codesign --force --sign - \"${fixture_path}\"\n/usr/bin/printf '%s\\n' \"${fixture_name}\" > \"${fixture_dir}/current\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		C0C93A90301ECAA300D7FAB0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -301,13 +274,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D10000000000000000000005 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -320,11 +286,6 @@
 			isa = PBXTargetDependency;
 			target = C0C93A93301ECAA300D7FAB0 /* ResourceRunner */;
 			targetProxy = C0C93AAC301ECAA400D7FAB0 /* PBXContainerItemProxy */;
-		};
-		D10000000000000000000007 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = D10000000000000000000006 /* ResourceRunnerExpansionProbe */;
-			targetProxy = D10000000000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -556,6 +517,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunnerUITests;
@@ -574,6 +536,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunnerUITests;
@@ -584,27 +547,6 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TEST_TARGET_NAME = ResourceRunner;
-			};
-			name = Release;
-		};
-		D10000000000000000000008 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				MACOSX_DEPLOYMENT_TARGET = 26.5;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		D10000000000000000000009 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				MACOSX_DEPLOYMENT_TARGET = 26.5;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -643,15 +585,6 @@
 			buildConfigurations = (
 				C0C93ABC301ECAA400D7FAB0 /* Debug */,
 				C0C93ABD301ECAA400D7FAB0 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		D1000000000000000000000A /* Build configuration list for PBXNativeTarget "ResourceRunnerExpansionProbe" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				D10000000000000000000008 /* Debug */,
-				D10000000000000000000009 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

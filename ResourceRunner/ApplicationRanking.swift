@@ -250,16 +250,16 @@ nonisolated struct ApplicationProcessDetail: Sendable, Equatable {
 extension ApplicationProcessDetail {
     /// 프로세스 CPU 사용률의 단위 라벨. 논리 코어 합산 관례라 100%를 넘을 수 있어
     /// 시스템 전체 사용률의 단위(`CPUCardPresentation.overallUsageUnitLabel`)와 다른 문자열을 씁니다.
-    static let cpuUsageUnitLabel = "% (코어 합산)"
+    nonisolated static let cpuUsageUnitLabel = "% (코어 합산)"
 }
 
 /// 상세 목록의 값 표시 서식. CPU·Memory 상세 뷰(`DashboardView`)가 공유합니다.
 /// 값을 만들지 못한 경우 0을 지어내지 않고 `"-"`로 남깁니다(SPEC §5.6) — 이 규칙을 뷰 본문 안에 인라인
 /// 클로저로만 두면 단위 테스트로 직접 확인할 수 없어 이 자리로 분리했습니다.
 nonisolated enum ApplicationProcessValueFormatting {
-    /// CPU 그룹 합계(`ApplicationProcessGroup.sortValue`)의 표시 문자열.
-    static func cpuGroupValueText(_ value: Double?) -> String {
-        value.map { "\(Int($0.rounded()))\(ApplicationProcessDetail.cpuUsageUnitLabel)" } ?? "-"
+    /// CPU 그룹 합계(`ApplicationProcessGroup.sortValue`)의 정렬된 숫자·단위 쌍.
+    static func cpuGroupValueText(_ value: Double?) -> DashboardValueColumn.Value {
+        DashboardValueColumn.percent(value, unit: ApplicationProcessDetail.cpuUsageUnitLabel)
     }
 
     /// CPU 프로세스 개별 값의 표시 문자열. Rosetta로 변환 실행 중이면 그 사실을 덧붙입니다.
@@ -268,10 +268,10 @@ nonisolated enum ApplicationProcessValueFormatting {
         return process.isTranslated ? "\(usageText) · Rosetta" : usageText
     }
 
-    /// Memory 그룹 합계의 표시 문자열. 바이트 서식은 호출부(`MemoryDetailView`)가 공유하는
-    /// `ByteCountFormatter` 기반 함수를 그대로 받아써, 서식 규칙을 이 자리에 중복 두지 않습니다.
-    static func memoryGroupValueText(_ value: Double?, format: (UInt64) -> String) -> String {
-        value.map { format(UInt64($0.rounded())) } ?? "-"
+    /// Memory 그룹 합계의 정렬된 숫자·단위 쌍. 바이트 서식은 `DashboardValueColumn` 한 자리와 공유합니다.
+    static func memoryGroupValueText(_ value: Double?) -> DashboardValueColumn.Value {
+        value.map { DashboardValueColumn.bytes(UInt64($0.rounded())) }
+            ?? DashboardValueColumn.unavailable(kind: .bytes)
     }
 }
 

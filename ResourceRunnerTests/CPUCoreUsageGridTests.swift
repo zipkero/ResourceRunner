@@ -266,11 +266,49 @@ struct CPUCoreUsageGridRenderTests {
             VStack {
                 Rectangle().frame(height: CPUCoreGridLayout.barHeight)
                 if includingValueText {
-                    Text(CPUCoreUsageFormatting.valueText(100)).font(.caption2)
+                    Text(CPUCoreUsageFormatting.valueText(100))
+                        .dashboardTypography(DashboardStyle.TypographyRole.value)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 Text("0").font(.caption2)
             }
         )
+    }
+
+    @Test("코어 칸 수치의 %가 칸마다 같은 오른쪽 자리에 놓인다", arguments: [detailContentWidth, 353])
+    func coreValuesAlignToTheSameTrailingPosition(width: CGFloat) throws {
+        let bitmap = try #require(gridBitmap(usages: Array(repeating: 100, count: 8), width: width))
+        let cells = inkRuns(
+            in: bitmap,
+            y: Int(CPUCoreGridLayout.barHeight / 2),
+            x: 0..<bitmap.pixelsWide,
+            matching: anyInk
+        )
+        try #require(cells.count == 8)
+
+        let trailingOffsets = try cells.map { cell in
+            let bands = inkBands(in: bitmap, x: cell, y: 0..<bitmap.pixelsHigh)
+            try #require(bands.count == 3)
+            let valueBand = bands[1].y
+            let trailingInk = try #require(cell.reversed().first { x in
+                valueBand.contains { y in
+                    bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB).map(anyInk) ?? false
+                }
+            })
+            return cell.upperBound - trailingInk
+        }
+        #expect(Set(trailingOffsets).count == 1, "칸별 % 오른쪽 여백이 \(trailingOffsets)로 갈립니다")
+    }
+
+    @Test("최대 코어 수치가 8열 칸과 스크롤러로 좁아진 칸 안에 든다", arguments: [detailContentWidth, 353])
+    func widestCoreValueFitsEightColumnCell(width: CGFloat) {
+        let spacing = CPUCoreGridLayout.cellSpacing * CGFloat(CPUCoreGridLayout.maximumColumnCount - 1)
+        let cellWidth = (width - spacing) / CGFloat(CPUCoreGridLayout.maximumColumnCount)
+        let ideal = measuredIdealWidth(
+            Text(CPUCoreUsageFormatting.valueText(100))
+                .dashboardTypography(DashboardStyle.TypographyRole.value)
+        )
+        #expect(ideal <= cellWidth, "코어 수치 폭 \(ideal)이 \(width)pt 격자의 칸 폭 \(cellWidth)을 넘습니다")
     }
 
     // MARK: - 막대 채움

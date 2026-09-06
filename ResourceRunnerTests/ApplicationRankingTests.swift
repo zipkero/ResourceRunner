@@ -887,11 +887,14 @@ struct ApplicationProcessGroupDisplayValueRegressionTests {
 struct ApplicationProcessValueFormattingTests {
 
     @Test func cpuGroupValueTextKeepsNilAsDashInsteadOfZero() {
-        #expect(ApplicationProcessValueFormatting.cpuGroupValueText(nil) == "-")
+        #expect(ApplicationProcessValueFormatting.cpuGroupValueText(nil).text == "-")
     }
 
     @Test func cpuGroupValueTextFormatsRoundedPercentageWithCoreSumUnit() {
-        #expect(ApplicationProcessValueFormatting.cpuGroupValueText(12.6) == "13\(ApplicationProcessDetail.cpuUsageUnitLabel)")
+        let value = ApplicationProcessValueFormatting.cpuGroupValueText(12.6)
+        #expect(value.number == "13")
+        #expect(value.unit == ApplicationProcessDetail.cpuUsageUnitLabel)
+        #expect(value.text == "13\(ApplicationProcessDetail.cpuUsageUnitLabel)")
     }
 
     @Test func cpuProcessValueTextKeepsNilAsDashInsteadOfZero() {
@@ -907,19 +910,15 @@ struct ApplicationProcessValueFormattingTests {
     }
 
     @Test func memoryGroupValueTextKeepsNilAsDashInsteadOfZero() {
-        #expect(ApplicationProcessValueFormatting.memoryGroupValueText(nil, format: { "\($0) bytes" }) == "-")
+        #expect(ApplicationProcessValueFormatting.memoryGroupValueText(nil).text == "-")
     }
 
-    /// 값이 있으면 반올림한 바이트 수를 그대로 `format`에 넘겨야 합니다 — 별도 계산으로 값을 바꿔치기하면
-    /// (예: 다른 프로세스 값을 대신 쓰면) 이 단언이 깨집니다.
-    @Test func memoryGroupValueTextPassesRoundedValueToFormatUnchanged() {
-        var receivedBytes: UInt64?
-        let result = ApplicationProcessValueFormatting.memoryGroupValueText(1024.6) { bytes in
-            receivedBytes = bytes
-            return "\(bytes) bytes"
-        }
-        #expect(receivedBytes == 1025)
-        #expect(result == "1025 bytes")
+    /// 값이 있으면 반올림한 바이트 수를 공용 바이트 자리의 숫자·단위 쌍으로 만듭니다.
+    @Test func memoryGroupValueTextUsesRoundedValueInSharedByteColumns() {
+        let result = ApplicationProcessValueFormatting.memoryGroupValueText(1024.6)
+        #expect(result.number == "1.0")
+        #expect(result.unit == "KB")
+        #expect(result.text == "1.0 KB")
     }
 }
 

@@ -7,6 +7,95 @@
 
 import Foundation
 
+/// 대시보드가 표시하는 값의 서식과 고정 열 폭을 함께 소유합니다.
+///
+/// 바이트는 `ByteCountFormatter(.memory)`와 같은 1024 기반 단위를 쓰되 KB보다 작은 단위를 쓰지 않고,
+/// 숫자는 로케일의 소수 구분자를 따르는 소수 한 자리로 고정합니다.
+nonisolated enum DashboardValueColumn {
+    enum Kind: Sendable, Equatable {
+        case percent(unit: String)
+        case bytes
+        case signedBytes
+
+        var numberWidth: CGFloat {
+            switch self {
+            case .percent: DashboardStyle.ValueColumn.percentNumberWidth
+            case .bytes: DashboardStyle.ValueColumn.byteNumberWidth
+            case .signedBytes: DashboardStyle.ValueColumn.signedByteNumberWidth
+            }
+        }
+
+        var unitWidth: CGFloat {
+            switch self {
+            case .percent(let unit):
+                unit == ApplicationProcessDetail.cpuUsageUnitLabel
+                    ? DashboardStyle.ValueColumn.processPercentUnitWidth
+                    : DashboardStyle.ValueColumn.compactUnitWidth
+            case .bytes, .signedBytes:
+                DashboardStyle.ValueColumn.byteUnitWidth
+            }
+        }
+    }
+
+    struct Value: Sendable, Equatable {
+        let number: String
+        let unit: String
+        let kind: Kind
+
+        /// 열로 나누지 않는 초점 줄·하위 프로세스 값 줄·접근성 이름이 공유하는 한 문자열입니다.
+        var text: String {
+            guard !unit.isEmpty else { return number }
+            switch kind {
+            case .percent: return number + unit
+            case .bytes, .signedBytes: return "\(number) \(unit)"
+            }
+        }
+    }
+
+    static func percent(_ value: Double?, unit: String) -> Value {
+        guard let value else { return unavailable(kind: .percent(unit: unit)) }
+        return Value(number: String(Int(value.rounded())), unit: unit, kind: .percent(unit: unit))
+    }
+
+    static func bytes(_ bytes: UInt64, locale: Locale = .current) -> Value {
+        let selected = byteUnit(for: bytes)
+        let number = (Double(bytes) / selected.divisor).formatted(
+            .number.locale(locale).precision(.fractionLength(1))
+        )
+        return Value(number: number, unit: selected.label, kind: .bytes)
+    }
+
+    static func signedBytes(_ bytes: Int64, locale: Locale = .current) -> Value {
+        let magnitude = DashboardValueColumn.bytes(bytes.magnitude, locale: locale)
+        return Value(
+            number: (bytes >= 0 ? "+" : "-") + magnitude.number,
+            unit: magnitude.unit,
+            kind: .signedBytes
+        )
+    }
+
+    static func byteText(_ bytes: UInt64, locale: Locale = .current) -> String {
+        DashboardValueColumn.bytes(bytes, locale: locale).text
+    }
+
+    static func unavailable(kind: Kind) -> Value {
+        Value(number: "-", unit: "", kind: kind)
+    }
+
+    private static func byteUnit(for bytes: UInt64) -> (divisor: Double, label: String) {
+        let units: [(UInt64, String)] = [
+            (1 << 60, "EB"),
+            (1 << 50, "PB"),
+            (1 << 40, "TB"),
+            (1 << 30, "GB"),
+            (1 << 20, "MB"),
+            (1 << 10, "KB")
+        ]
+        let selected = units.first { bytes >= $0.0 } ?? units[units.count - 1]
+        return (Double(selected.0), selected.1)
+    }
+}
+
 /// 그래프 한 점. 인접 점의 시각 간격으로 빈 구간을 판별합니다.
 ///
 /// `subValue`는 `value`(전체 사용률)와 같은 표본에서 나온 하위 계열 값입니다(예: CPU 그래프의 User 비율).
@@ -376,16 +465,16 @@ extension CPUCardPresentation {
 nonisolated enum CPUCoreGridLayout {
     /// 한 행에 놓을 수 있는 칸의 최대 수. 가용 폭을 인자로 받는 대신 이 상수 하나에 폭 판단을 모읍니다 —
     /// 폭을 인자로 받으면 행·열이 렌더 시점에만 정해져 코어 수를 바꿔 가며 확인할 수 없습니다.
-    /// 상세 팝업 콘텐츠 폭 368pt에서 칸 간격 6pt를 빼면 8열의 칸 폭이 40.8pt로
-    /// 칸의 화면 수치 `"100%"`(.caption2 실측 28.0pt)를 담고도 남습니다(DESIGN §5 DP1).
+    /// 상세 팝업 콘텐츠 폭 368pt에서 칸 간격을 빼면 8열의 칸 폭이 39pt로
+    /// 칸의 화면 수치 `"100%"`(값 역할 실측 29.0pt)를 담고도 남습니다(DESIGN §5 DP6, DP13).
     static let maximumColumnCount = 8
 
     /// 칸 막대의 트랙 높이. 값과 무관하게 고정이라 값이 0이든 100이든 칸 높이가 같고,
     /// 값이 바뀌어도 격자와 그 아래 내용이 밀리지 않습니다(DESIGN §5 DP2).
     static let barHeight: CGFloat = 18
 
-    /// 칸 사이 가로·세로 간격. 열 상한 8의 칸 폭 40.8pt가 이 값을 뺀 나머지에서 나옵니다.
-    static let cellSpacing: CGFloat = 6
+    /// 칸 사이 가로·세로 간격. 상세 안쪽의 같은 위계 간격 단계에서 유도합니다.
+    static let cellSpacing = DashboardStyle.Spacing.betweenGroups
 
     /// 코어 인덱스 `0..<coreCount`를 행별로 묶어 왼쪽에서 오른쪽, 위에서 아래 순서로 돌려줍니다.
     /// 마지막 행을 뺀 모든 행의 길이가 같고 마지막 행만 짧을 수 있습니다.
@@ -422,7 +511,7 @@ enum ApplicationProcessRowLayout {
 
     /// 앱 행 라벨의 아이콘 자리와 앱 이름 사이 간격. 들여쓰기가 이 값에서 유도되므로
     /// 라벨 `HStack`이 다른 간격을 쓰면 두 층의 시작선이 어긋납니다.
-    static let labelIconSpacing: CGFloat = 6
+    static let labelIconSpacing = DashboardStyle.Spacing.labelToContent
 
     /// 하위 행 이름 줄의 왼쪽 들여쓰기. 부모 앱 이름 시작선과 같아지도록 삼각형 폭·아이콘 자리 크기·라벨 간격에서
     /// 유도합니다 — 아이콘 크기가 바뀌면 들여쓰기가 따라가야 정렬이 유지됩니다.
@@ -433,7 +522,7 @@ enum ApplicationProcessRowLayout {
     static let childValueIndent: CGFloat = childIndent + ApplicationRowIconLayout.detailPointSize
 
     /// 한 하위 행 안에서 이름 줄과 값 줄 사이 간격.
-    static let withinChildRow: CGFloat = 2
+    static let withinChildRow = DashboardStyle.Spacing.withinGroup
 
     /// 하위 행끼리의 간격. 같은 앱 안의 경계입니다.
     static let betweenChildren: CGFloat = 10
@@ -444,7 +533,7 @@ enum ApplicationProcessRowLayout {
     /// `ApplicationProcessGroupListView`의 목록 `VStack`이 행 사이에 두는 간격. 마지막 하위 행과 다음 앱 행
     /// 사이에는 이 값이 이미 들어가므로, 그만큼을 뺀 몫만 펼친 내용 아래에 겁니다.
     /// 목록이 다른 간격을 쓰기 시작하면 마지막 경계가 목표 간격에서 벗어납니다.
-    static let listRowSpacing: CGFloat = 2
+    static let listRowSpacing = DashboardStyle.Spacing.withinGroup
 
     /// 마지막 하위 행과 다음 앱 행 사이 간격. 앱 하나를 벗어나는 경계라 네 경계 중 가장 넓습니다.
     static let lastChildToNextApplication: CGFloat = 26
@@ -553,7 +642,7 @@ nonisolated enum MemoryPressureSwapLineFormatting {
     ]
 
     /// - Parameters:
-    ///   - format: Swap·구성 합계 바이트를 문자열로 바꾸는 함수. 카드가 이미 쓰는 `ByteCountFormatter` 기반 함수를 그대로 받아
+    ///   - format: Swap·구성 합계 바이트를 문자열로 바꾸는 함수. 호출부가 `DashboardValueColumn`의 공용 서식을 넘겨
     ///     한 줄에 놓인 두 수치가 같은 서식으로 읽히게 합니다.
     /// - Returns: 「Pressure 기호 → Pressure 라벨 → 구분자 → Swap 사용량 → Swap 변화량 → 구분자 → 구성 합계」 순서의 조립 요소.
     ///   변화량 기준점이 없으면 `.swapChange`를 담지 않습니다.
@@ -725,20 +814,17 @@ nonisolated struct MemoryCompositionDonutLayout: Sendable, Equatable {
 nonisolated struct MemoryCompositionDetailLegendRow: Sendable, Equatable {
     let category: MemoryCompositionCategory
     let label: String
-    let valueText: String
+    let value: DashboardValueColumn.Value
 }
 
 nonisolated enum MemoryCompositionDetailLegendFormatting {
-    /// 상세는 카드 축약 서식이 아니라 호출부의 기존 바이트 서식을 그대로 씁니다.
-    static func rows(
-        bytes: MemoryCompositionBytes?,
-        format: (UInt64) -> String
-    ) -> [MemoryCompositionDetailLegendRow] {
+    static func rows(bytes: MemoryCompositionBytes?) -> [MemoryCompositionDetailLegendRow] {
         MemoryCompositionCategory.allCases.map { category in
             MemoryCompositionDetailLegendRow(
                 category: category,
                 label: category.label,
-                valueText: bytes.map { format($0[category]) } ?? "-"
+                value: bytes.map { DashboardValueColumn.bytes($0[category]) }
+                    ?? DashboardValueColumn.unavailable(kind: .bytes)
             )
         }
     }
@@ -904,14 +990,8 @@ extension MemoryCardPresentation {
     }
 
     private static func accessibilityByteCount(_ bytes: UInt64) -> String {
-        accessibilityByteCountFormatter.string(fromByteCount: Int64(bytes))
+        DashboardValueColumn.byteText(bytes)
     }
-
-    private static let accessibilityByteCountFormatter: ByteCountFormatter = {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .memory
-        return formatter
-    }()
 }
 
 extension MemoryCardPresentation {

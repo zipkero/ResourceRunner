@@ -69,6 +69,19 @@ final class DashboardCardSelectionUITests: XCTestCase {
         return cpuCard
     }
 
+    /// 카드의 텍스트·그래프·순위 값이 닿지 않는 오른쪽 안쪽 여백을 실제로 눌러도 카드 전체가
+    /// 클릭 대상이 되어 상세 팝오버가 열리는지 확인합니다.
+    @MainActor
+    func testClickingBlankAreaInsideCardOpensDetailPopover() throws {
+        let app = XCUIApplication()
+        let cpuCard = openDashboard(app)
+
+        coordinateInTrailingBlankArea(of: cpuCard).click()
+
+        let detail = app.descendants(matching: .any).matching(identifier: "DashboardDetail").firstMatch
+        XCTAssertTrue(detail.waitForExistence(timeout: 2), "CPU 카드의 빈 오른쪽 여백을 눌렀는데 상세 팝오버가 열리지 않았습니다.")
+    }
+
     /// 원래 다섯 개 테스트(선택·해제로 팝오버 수가 늘고 주는지, 그 과정에서 두 카드·본체 팝오버 프레임이
     /// 흔들리지 않는지(SPEC §5.15, ANALYSIS §5 DP14), CPU·Memory 각각의 팝업 자기 해제 회귀(task-010이 두 번
     /// 반려된 끝에 확보한 그물), CPU에서 Memory로 전환 시 팝오버 수가 2에 머무는지)를 하나로 모았습니다.
@@ -86,6 +99,8 @@ final class DashboardCardSelectionUITests: XCTestCase {
 
         let parent = parentPopover(app)
         XCTAssertTrue(parent.waitForExistence(timeout: 2), "본체 팝오버를 찾지 못했습니다.")
+        let dashboardContainer = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
+        XCTAssertTrue(dashboardContainer.waitForExistence(timeout: 2), "대시보드 본체 컨테이너를 찾지 못했습니다.")
 
         XCTAssertEqual(app.popovers.count, 1, "선택 전에는 본체 팝오버 하나만 있어야 합니다.")
 
@@ -130,13 +145,9 @@ final class DashboardCardSelectionUITests: XCTestCase {
         XCTAssertTrue(loadAverageText.waitForExistence(timeout: 2), "⌘1로 CPU 상세가 나타나지 않았습니다.")
         XCTAssertEqual(app.popovers.count, 2, "CPU 카드를 선택하면 팝오버 수가 2가 되어야 합니다.")
 
-        // 부모 팝오버 안이면서 자식 팝업 밖인 자리(제목 텍스트)를 클릭해 자식 팝업을 스스로 닫습니다.
-        // 라벨("ResourceRunner")이 아니라 식별자로 찾습니다 — 상세 목록에 앱 자신(ResourceRunner)의 프로세스
-        // 행이 같은 라벨로 나타나 라벨 조회가 둘 이상과 일치할 수 있기 때문입니다(`DashboardView.swift`
-        // `accessibilityIdentifier("DashboardTitle")` 주석 참고).
-        let title = app.staticTexts["DashboardTitle"]
-        XCTAssertTrue(title.waitForExistence(timeout: 2), "본체 제목을 찾지 못했습니다.")
-        title.click()
+        // 본체 컨테이너의 위쪽 여백 가운데를 계산해 부모 팝오버 안이면서 두 카드와 자식 팝업 밖인 자리를 누릅니다.
+        let outsideCards = coordinateBetweenCards(in: dashboardContainer, upperCard: cpuCard, lowerCard: memoryCard)
+        outsideCards.click()
 
         XCTAssertTrue(
             waitUntil({ app.popovers.count == 1 }, timeout: 2),
@@ -169,8 +180,7 @@ final class DashboardCardSelectionUITests: XCTestCase {
         //    `DashboardView`의 `memoryDetailIsPresented` 바인딩 `set`은 `cpuDetailIsPresented`와 별도
         //    클로저이므로, CPU 쪽만 확인하면 Memory 쪽에서 `store.dismissDetail(for: .memory)` 호출이
         //    빠지는 회귀를 잡지 못합니다. 근거·판정 방식은 위 3단계 CPU 쪽과 같습니다.
-        XCTAssertTrue(title.waitForExistence(timeout: 2), "본체 제목을 찾지 못했습니다.")
-        title.click()
+        outsideCards.click()
 
         XCTAssertTrue(
             waitUntil({ app.popovers.count == 1 }, timeout: 2),
@@ -186,6 +196,29 @@ final class DashboardCardSelectionUITests: XCTestCase {
             waitUntil({ app.popovers.count == 2 }, timeout: 2),
             "자기 닫힘 뒤 같은 단축키를 눌렀는데도 팝오버가 다시 열리지 않았습니다 - 선택이 실제로 해제되지 않았을 수 있습니다. 현재: \(app.popovers.count)"
         )
+    }
+
+    /// 컨테이너 안에서 두 카드 사이 여백의 가운데를 돌려줍니다.
+    /// 카드의 위치가 바뀌어도 고정 좌표 대신 현재 접근성 프레임에서 카드 밖 클릭 지점을 유도합니다.
+    private func coordinateBetweenCards(
+        in container: XCUIElement,
+        upperCard: XCUIElement,
+        lowerCard: XCUIElement
+    ) -> XCUICoordinate {
+        let gapStart = upperCard.frame.maxY
+        let gapEnd = lowerCard.frame.minY
+        XCTAssertGreaterThan(gapEnd, gapStart, "본체 컨테이너 안에 카드 사이 클릭 영역이 없습니다.")
+        let gapMidY = (gapStart + gapEnd) / 2
+
+        return container.coordinate(withNormalizedOffset: .zero).withOffset(
+            CGVector(dx: container.frame.width / 2, dy: gapMidY - container.frame.minY)
+        )
+    }
+
+    /// 카드 오른쪽 끝에서 카드 폭의 2%만큼 안쪽인 지점은 테두리에는 닿지 않으면서도 콘텐츠가 끝나는
+    /// 안쪽 여백에 머뭅니다. 세로 중앙을 택해 순위 행의 오른쪽 값과도 겹치지 않게 합니다.
+    private func coordinateInTrailingBlankArea(of card: XCUIElement) -> XCUICoordinate {
+        card.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5))
     }
 
     /// CPU Collector는 두 번째 tick부터 값을 만들므로, 앱 시작 직후 첫 조회에서는 카드가 "수집 중"일 수

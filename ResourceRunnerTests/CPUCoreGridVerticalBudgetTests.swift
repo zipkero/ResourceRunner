@@ -146,11 +146,11 @@ struct CPUCoreGridVerticalBudgetTests {
     func gridFitsTheFirstScreenOnTheReferenceDevice() throws {
         let bottom = try gridBottomFromPopupTop(coreCount: 14)
 
-        #expect(bottom == 154, "코어 14개의 격자 아래끝이 \(bottom)pt로 154pt와 다릅니다")
+        #expect(bottom == 166, "코어 14개의 격자 아래끝이 \(bottom)pt로 166pt와 다릅니다")
         #expect(bottom <= popupHeight, "코어 14개의 격자 아래끝 \(bottom)pt가 팝업 높이 \(popupHeight)pt를 넘습니다")
     }
 
-    @Test("코어 수가 달라져도 격자 아래끝이 첫 화면 안이다", arguments: [8, 10, 16, 24, 32, 64])
+    @Test("코어 수가 달라져도 격자 아래끝이 첫 화면 안이다", arguments: [8, 10, 16, 24, 32, 56])
     func gridFitsTheFirstScreenAcrossCoreCounts(coreCount: Int) throws {
         let bottom = try gridBottomFromPopupTop(coreCount: coreCount)
 
@@ -160,15 +160,15 @@ struct CPUCoreGridVerticalBudgetTests {
         )
     }
 
-    @Test("논리 코어 64개가 첫 화면에 들어가는 마지막 코어 수다")
-    func sixtyFourCoresIsTheLastCountThatFits() throws {
-        let bottom = try gridBottomFromPopupTop(coreCount: 64)
+    @Test("논리 코어 56개가 첫 화면에 들어가는 마지막 코어 수다")
+    func fiftySixCoresIsTheLastCountThatFits() throws {
+        let bottom = try gridBottomFromPopupTop(coreCount: 56)
 
-        #expect(bottom == 478, "코어 64개의 격자 아래끝이 \(bottom)pt로 478pt와 다릅니다")
+        #expect(bottom == 446, "코어 56개의 격자 아래끝이 \(bottom)pt로 446pt와 다릅니다")
     }
 
-    @Test("코어 65개 이상에서는 격자 아래끝이 첫 화면을 벗어난다", arguments: [65, 80, 128])
-    func beyondSixtyFourCoresTheGridOverflowsTheFirstScreen(coreCount: Int) throws {
+    @Test("코어 57개 이상에서는 격자 아래끝이 첫 화면을 벗어난다", arguments: [57, 65, 80, 128])
+    func beyondFiftySixCoresTheGridOverflowsTheFirstScreen(coreCount: Int) throws {
         let bottom = try gridBottomFromPopupTop(coreCount: coreCount)
 
         #expect(
@@ -179,7 +179,7 @@ struct CPUCoreGridVerticalBudgetTests {
 
     @Test(
         "어떤 코어 수에서도 격자의 필요 폭이 콘텐츠 폭을 넘지 않는다",
-        arguments: [1, 2, 8, 10, 14, 16, 24, 32, 64, 65, 128]
+        arguments: [1, 2, 8, 10, 14, 16, 24, 32, 56, 57, 64, 65, 128]
     )
     func gridNeverNeedsMoreThanTheContentWidth(coreCount: Int) {
         let idealWidth = measuredIdealWidth(CPUCoreUsageGridView(usages: Array(repeating: 100, count: coreCount)))
@@ -194,7 +194,7 @@ struct CPUCoreGridVerticalBudgetTests {
 
     @Test(
         "콘텐츠 폭을 스크롤 막대 몫만큼 좁혀도 격자 아래끝이 그대로다",
-        arguments: [8, 10, 14, 16, 24, 32, 64]
+        arguments: [8, 10, 14, 16, 24, 32, 56]
     )
     func narrowedContentWidthKeepsTheSameGridBottom(coreCount: Int) throws {
         let full = try gridBottomFromPopupTop(coreCount: coreCount)
@@ -212,11 +212,14 @@ struct CPUCoreGridVerticalBudgetTests {
 
     @Test(
         "좁힌 폭에서도 칸이 화면 수치를 담을 만큼 넓다",
-        arguments: [8, 10, 14, 16, 24, 32, 64]
+        arguments: [8, 10, 14, 16, 24, 32, 56, 64]
     )
     func cellsStayWideEnoughForTheOnScreenValueWhenNarrowed(coreCount: Int) throws {
         // 칸에 들어가는 가장 넓은 화면 수치. 칸이 이보다 좁아지면 수치가 잘립니다.
-        let valueTextWidth = measuredIdealWidth(Text(CPUCoreUsageFormatting.valueText(100)).font(.caption2))
+        let valueTextWidth = measuredIdealWidth(
+            Text(CPUCoreUsageFormatting.valueText(100))
+                .dashboardTypography(DashboardStyle.TypographyRole.value)
+        )
         #expect(valueTextWidth > 0)
 
         let columnCount = try #require(CPUCoreGridLayout.rows(coreCount: coreCount).first?.count)

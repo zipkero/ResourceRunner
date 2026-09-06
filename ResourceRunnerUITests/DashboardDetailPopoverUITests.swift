@@ -19,7 +19,8 @@ final class DashboardDetailPopoverUITests: XCTestCase {
 
     // production의 fileprivate 상수에는 UI 테스트 타깃에서 접근할 수 없어 기대 크기를 지역 상수로 둡니다.
     // 따라서 두 선언이 같은 값을 공유한다는 소스 수준 보증은 없고 선언 사이의 어긋남 자체도 직접 잡지 못합니다.
-    // 아래 단언이 보증하는 범위는 실제 렌더 프레임이 계약값 400×480인지뿐입니다.
+    // 아래 단언이 보증하는 범위는 이상적 폭·14코어 아래끝 단위 테스트 뒤 재확정한 실제 렌더 프레임이
+    // 계약값 400×480인지뿐입니다.
     private let expectedDetailSize = CGSize(width: 400, height: 480)
 
     override func setUpWithError() throws {

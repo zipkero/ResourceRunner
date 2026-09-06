@@ -14,10 +14,21 @@ import SwiftUI
 /// 다크 모드는 SwiftUI의 자동 반전이 아니라 라이트·다크 각각 따로 확정한 값을 씁니다 — 검증기가 통과시킨 것은
 /// 이 두 값의 조합이지 한쪽에서 유도한 반전 값이 아니기 때문입니다.
 enum DashboardColorPalette {
-    /// CPU 그래프 아래 밴드(User)와 요약 줄 스와치 색.
-    static let cpuUser = dynamicColor(light: 0x2a78d6, dark: 0x3987e5)
-    /// CPU 그래프 위 밴드(System)와 요약 줄 스와치 색.
-    static let cpuSystem = dynamicColor(light: 0xeb6834, dark: 0xd95926)
+    /// 표시 계열족을 이루는 두 색조의 진한 단계(step 1)와 밝은 단계(step 2).
+    /// CPU는 색조 A를 공유하고, Memory는 App·Wired에 A, Compressed·Cached에 B를 씁니다.
+    private static let hueA = ColorRamp(
+        step1: dynamicColor(light: 0x165698, dark: 0x5287d5),
+        step2: dynamicColor(light: 0x4b82d0, dark: 0xa1bbf5)
+    )
+    private static let hueB = ColorRamp(
+        step1: dynamicColor(light: 0x83441d, dark: 0xc07345),
+        step2: dynamicColor(light: 0xba6e41, dark: 0xecae8c)
+    )
+
+    /// CPU 그래프 아래 밴드(User)와 요약 줄 스와치는 밝은 단계.
+    static let cpuUser = hueA.step2
+    /// CPU 그래프 위 밴드(System)와 요약 줄 스와치는 진한 단계.
+    static let cpuSystem = hueA.step1
 
     /// CPU 그래프 기준선 격자 색(task-005). 계열 색과 달리 다른 색과 구분할 필요가 없는 배경 대비 요소라
     /// 색맹 시뮬레이션 대상이 아니며, 시스템이 라이트·다크에 맞춰 이미 조정하는 구분선 색을 그대로 씁니다.
@@ -33,10 +44,8 @@ enum DashboardColorPalette {
     /// 검증기가 통과시킨 것은 이 네 색을 App → Wired → Compressed → Cached 순서로 함께 돌린 결과이므로
     /// CPU 상수를 재사용하지 않고 이 집합을 따로 둡니다 — 인접쌍 색 분리 검증이 이 순서 기준입니다.
     ///
-    /// 라이트 모드에서 Wired·Compressed·Cached는 배경 대비가 3:1 아래라 검증기가
-    /// `relief required (visible labels or table view)`를 통과 조건으로 걸었습니다.
-    /// 범례가 각 스와치 옆에 항목 이름을 항상 보여주는 것이 그 조건이므로, 이름을 지우고 색만 남기거나
-    /// 이름을 Hover로 옮기면 이 색 선택이 성립하지 않습니다.
+    /// 네 구간은 App → Wired → Compressed → Cached 순서로 진함·밝음을 번갈아 써서
+    /// 인접 경계마다 명도 단계가 생깁니다. 범례 이름은 색 비의존 구분 수단으로 계속 유지합니다.
     static func memoryComposition(_ category: MemoryCompositionCategory) -> Color {
         switch category {
         case .app: return memoryCompositionApp
@@ -50,10 +59,15 @@ enum DashboardColorPalette {
     /// 시스템이 라이트·다크에 맞춰 이미 조정하는 색을 그대로 씁니다.
     static let memoryCompositionTrack = Color(NSColor.quaternaryLabelColor)
 
-    private static let memoryCompositionApp = dynamicColor(light: 0x2a78d6, dark: 0x3987e5)
-    private static let memoryCompositionWired = dynamicColor(light: 0xeb6834, dark: 0xd95926)
-    private static let memoryCompositionCompressed = dynamicColor(light: 0x1baf7a, dark: 0x199e70)
-    private static let memoryCompositionCached = dynamicColor(light: 0xeda100, dark: 0xc98500)
+    private static let memoryCompositionApp = hueA.step1
+    private static let memoryCompositionWired = hueA.step2
+    private static let memoryCompositionCompressed = hueB.step1
+    private static let memoryCompositionCached = hueB.step2
+
+    private struct ColorRamp {
+        let step1: Color
+        let step2: Color
+    }
 
     private static func dynamicColor(light: UInt32, dark: UInt32) -> Color {
         Color(NSColor(name: nil) { appearance in

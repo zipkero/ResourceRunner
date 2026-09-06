@@ -18,12 +18,12 @@ private func detailProcess(_ index: Int) -> ApplicationProcessDetail {
     )
 }
 
-private func detailGroup(childCount: Int = 2, suffix: String = "") -> ApplicationProcessGroup {
+private func detailGroup(childCount: Int = 2, suffix: String = "", sortValue: Double = 12.3) -> ApplicationProcessGroup {
     ApplicationProcessGroup(
         key: ApplicationKey(value: detailGroupKey.value + suffix),
         displayName: "Probe",
         processes: (0..<childCount).map(detailProcess),
-        sortValue: 12.3
+        sortValue: sortValue
     )
 }
 
@@ -69,6 +69,11 @@ private func detailMeasuredSize(_ view: some View, width: CGFloat = .greatestFin
     NSHostingController(rootView: view).sizeThatFits(
         in: CGSize(width: width, height: .greatestFiniteMagnitude)
     )
+}
+
+@MainActor
+private func detailIdealWidth(_ view: some View) -> CGFloat {
+    detailMeasuredSize(view.fixedSize(horizontal: true, vertical: false)).width
 }
 
 @MainActor
@@ -135,7 +140,9 @@ private struct ReferenceCoreCell: View {
             .clipShape(RoundedRectangle(cornerRadius: CPUCoreUsageCellView.cornerRadius))
 
             if omission != .valueText {
-                Text(CPUCoreUsageFormatting.valueText(usage)).font(.caption2)
+                Text(CPUCoreUsageFormatting.valueText(usage))
+                    .dashboardTypography(DashboardStyle.TypographyRole.value)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             if omission != .coreNumber {
                 Text(CPUCoreUsageFormatting.coreNumberText(coreIndex: 0))
@@ -189,7 +196,7 @@ private struct ReferenceApplicationRow: View {
                 )
                 Text(group.displayName)
                 Spacer()
-                Text(ApplicationProcessValueFormatting.cpuGroupValueText(group.sortValue))
+                DashboardAlignedValueView(value: ApplicationProcessValueFormatting.cpuGroupValueText(group.sortValue))
             }
         }
         .font(.caption)
@@ -197,10 +204,10 @@ private struct ReferenceApplicationRow: View {
 }
 
 @MainActor
-private func productionApplicationRow(expanded: Bool) -> some View {
+private func productionApplicationRow(expanded: Bool, sortValue: Double = 12.3) -> some View {
     ApplicationProcessGroupRow(
-        group: detailGroup(),
-        groupValueText: ApplicationProcessValueFormatting.cpuGroupValueText,
+        group: detailGroup(sortValue: sortValue),
+        groupValue: ApplicationProcessValueFormatting.cpuGroupValueText,
         valueText: ApplicationProcessValueFormatting.cpuProcessValueText,
         iconProvider: StubApplicationIconProvider(),
         isExpanded: .constant(expanded)
@@ -311,7 +318,7 @@ private struct CPUDetailWithoutGridHeading: View {
             ApplicationProcessGroupListView(
                 groups: presentation.detail.applications,
                 sortDescription: presentation.detail.applicationsHeading,
-                groupValueText: ApplicationProcessValueFormatting.cpuGroupValueText,
+                groupValue: ApplicationProcessValueFormatting.cpuGroupValueText,
                 iconProvider: StubApplicationIconProvider(),
                 valueText: ApplicationProcessValueFormatting.cpuProcessValueText
             )
@@ -325,7 +332,51 @@ private struct CPUDetailWithoutGridHeading: View {
 @Suite("상세 팝업 값 없음 상태")
 @MainActor
 struct DetailPopoverValuelessStateTests {
-    @Test("CPU·Memory 상세 콘텐츠의 프레임은 네 상태 모두 400×480이다")
+    @Test("확정 후보 400×480의 폭에 가장 넓은 상세 조립이 들어간다")
+    func widestDetailAssembliesFitTheCandidateWidth() {
+        let cpuApplicationRowWidth = detailIdealWidth(
+            productionApplicationRow(expanded: false, sortValue: 9_999)
+        )
+        let cpuApplicationContentWidth = detailContentWidth
+            - ApplicationProcessGroupListView.contentLeadingPadding
+        let gibibyte: UInt64 = 1024 * 1024 * 1024
+        let memoryLegendRows = MemoryCompositionCategory.allCases.map {
+            MemoryCompositionDetailLegendRow(
+                category: $0,
+                label: $0.label,
+                value: DashboardValueColumn.bytes(1_023 * gibibyte)
+            )
+        }
+        let memoryDonut = MemoryCompositionDonutView(
+            layout: MemoryCompositionDonutLayout(segments: []),
+            legendRows: memoryLegendRows,
+            centerLabel: "",
+            centerValue: "",
+            accessibilityLabel: ""
+        )
+        let memoryLegendWidths = memoryLegendRows.map { detailIdealWidth(memoryDonut.legendRow($0)) }
+        let memoryLegendContentWidth = detailContentWidth
+            - MemoryCompositionDonutView.diameter
+            - DashboardStyle.Spacing.betweenSections
+        let coreGridWidth = detailIdealWidth(
+            CPUCoreUsageGridView(usages: Array(repeating: 100, count: 14))
+        )
+
+        #expect(
+            cpuApplicationRowWidth <= cpuApplicationContentWidth,
+            "CPU 상세 앱 행 이상적 폭 \(cpuApplicationRowWidth)pt가 목록 안쪽 폭 \(cpuApplicationContentWidth)pt를 넘습니다"
+        )
+        #expect(
+            memoryLegendWidths.allSatisfy { $0 <= memoryLegendContentWidth },
+            "Memory 상세 범례 행 이상적 폭 \(memoryLegendWidths)pt가 범례 콘텐츠 폭 \(memoryLegendContentWidth)pt를 넘습니다"
+        )
+        #expect(
+            coreGridWidth <= detailContentWidth,
+            "14코어 격자 이상적 폭 \(coreGridWidth)pt가 콘텐츠 폭 \(detailContentWidth)pt를 넘습니다"
+        )
+    }
+
+    @Test("CPU·Memory 상세 콘텐츠의 프레임은 네 상태 모두 재확정한 400×480이다")
     func framesStayFixedAcrossAllStates() {
         let cpu = detailCPUPresentation()
         let cpuStates: [ResourceCardState<CPUCardPresentation>] = [

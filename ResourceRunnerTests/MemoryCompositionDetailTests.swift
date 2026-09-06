@@ -93,24 +93,23 @@ struct MemoryCompositionDetailLegendTests {
     /// 수치를 지우거나 카드 축약 서식으로 바꿔치기하면 전체 행 비교가 실패합니다.
     @Test func rowsContainNamesAndDetailedByteValuesInDonutOrder() {
         let rows = MemoryCompositionDetailLegendFormatting.rows(
-            bytes: detailCompositionBytes(),
-            format: { "detail:\($0) bytes" }
+            bytes: detailCompositionBytes()
         )
 
         #expect(rows == [
-            MemoryCompositionDetailLegendRow(category: .app, label: "App", valueText: "detail:4294967296 bytes"),
-            MemoryCompositionDetailLegendRow(category: .wired, label: "Wired", valueText: "detail:2147483648 bytes"),
-            MemoryCompositionDetailLegendRow(category: .compressed, label: "Compressed", valueText: "detail:2147483648 bytes"),
-            MemoryCompositionDetailLegendRow(category: .cached, label: "Cached", valueText: "detail:1073741824 bytes")
+            MemoryCompositionDetailLegendRow(category: .app, label: "App", value: DashboardValueColumn.Value(number: "4.0", unit: "GB", kind: .bytes)),
+            MemoryCompositionDetailLegendRow(category: .wired, label: "Wired", value: DashboardValueColumn.Value(number: "2.0", unit: "GB", kind: .bytes)),
+            MemoryCompositionDetailLegendRow(category: .compressed, label: "Compressed", value: DashboardValueColumn.Value(number: "2.0", unit: "GB", kind: .bytes)),
+            MemoryCompositionDetailLegendRow(category: .cached, label: "Cached", value: DashboardValueColumn.Value(number: "1.0", unit: "GB", kind: .bytes))
         ])
     }
 
     /// 값이 없을 때도 네 항목 이름은 남고 수치 자리만 `-`가 됩니다.
     @Test func unavailableValuesUseDashWithoutDroppingLegendRows() {
-        let rows = MemoryCompositionDetailLegendFormatting.rows(bytes: nil, format: { "\($0)" })
+        let rows = MemoryCompositionDetailLegendFormatting.rows(bytes: nil)
 
         #expect(rows.map(\.label) == ["App", "Wired", "Compressed", "Cached"])
-        #expect(rows.map(\.valueText) == ["-", "-", "-", "-"])
+        #expect(rows.map(\.value.text) == ["-", "-", "-", "-"])
     }
 }
 

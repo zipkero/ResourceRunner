@@ -3,7 +3,8 @@ import SwiftUI
 import Testing
 @testable import ResourceRunner
 
-private let applicationListInnerWidth: CGFloat = 400 - 32 - 8
+private let applicationListInnerWidth: CGFloat =
+    400 - 32 - ApplicationProcessGroupListView.contentLeadingPadding
 private let childExecutableName = "Helper"
 private let longestChildExecutableName = "Google Chrome Helper (Renderer)"
 private let firstChildPID: pid_t = 12345
@@ -34,14 +35,8 @@ private enum DetailValueFormatting: String, CaseIterable, CustomStringConvertibl
 
     var description: String { rawValue }
 
-    private static let byteCountFormatter: ByteCountFormatter = {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .memory
-        return formatter
-    }()
-
     private static func format(_ bytes: UInt64) -> String {
-        byteCountFormatter.string(fromByteCount: Int64(bytes))
+        DashboardValueColumn.byteText(bytes)
     }
 
     var valueText: (ApplicationProcessDetail) -> String {
@@ -51,10 +46,10 @@ private enum DetailValueFormatting: String, CaseIterable, CustomStringConvertibl
         }
     }
 
-    var groupValueText: (Double?) -> String {
+    var groupValueText: (Double?) -> DashboardValueColumn.Value {
         switch self {
         case .cpu: ApplicationProcessValueFormatting.cpuGroupValueText
-        case .memory: { ApplicationProcessValueFormatting.memoryGroupValueText($0, format: Self.format) }
+        case .memory: ApplicationProcessValueFormatting.memoryGroupValueText
         }
     }
 }
@@ -148,7 +143,7 @@ private extension Array where Element == Int {
 @MainActor
 private func expandedRow(childCount: Int, formatting: DetailValueFormatting) -> some View {
     ApplicationProcessGroupRow(
-        group: fixtureGroup(childCount: childCount), groupValueText: formatting.groupValueText,
+        group: fixtureGroup(childCount: childCount), groupValue: formatting.groupValueText,
         valueText: formatting.valueText, iconProvider: iconProvider(), isExpanded: .constant(true)
     )
 }
@@ -156,7 +151,7 @@ private func expandedRow(childCount: Int, formatting: DetailValueFormatting) -> 
 @MainActor
 private func collapsedRow(formatting: DetailValueFormatting = .cpu) -> some View {
     ApplicationProcessGroupRow(
-        group: fixtureGroup(childCount: 3), groupValueText: formatting.groupValueText,
+        group: fixtureGroup(childCount: 3), groupValue: formatting.groupValueText,
         valueText: formatting.valueText, iconProvider: iconProvider(), isExpanded: .constant(false)
     )
 }
@@ -236,6 +231,7 @@ struct ApplicationProcessRowIndentTests {
         let parentBearing = try #require(leadingSideBearing(Text(parentDisplayName).font(.caption)))
         let parentStart = probe.parentNameInkX - parentBearing
         #expect(CGFloat(parentStart - probe.iconEndX) == ApplicationProcessRowLayout.labelIconSpacing)
+        #expect(ApplicationProcessRowLayout.labelIconSpacing == DashboardStyle.Spacing.labelToContent)
         #expect(ApplicationProcessRowLayout.childIndent == ApplicationProcessRowLayout.disclosureTriangleWidth
             + ApplicationRowIconLayout.detailPointSize + ApplicationProcessRowLayout.labelIconSpacing)
         #expect(ApplicationProcessRowLayout.childValueIndent
@@ -256,7 +252,7 @@ struct ApplicationProcessRowSpacingTests {
     private func list(groupCount: Int) -> some View {
         ApplicationProcessGroupListView(
             groups: (0..<groupCount).map { fixtureGroup(childCount: 3, keySuffix: "-\($0)") },
-            sortDescription: "CPU 사용률 순", groupValueText: DetailValueFormatting.cpu.groupValueText,
+            sortDescription: "CPU 사용률 순", groupValue: DetailValueFormatting.cpu.groupValueText,
             iconProvider: iconProvider(), valueText: DetailValueFormatting.cpu.valueText
         )
     }
@@ -313,6 +309,7 @@ struct ApplicationProcessRowSpacingTests {
     func collapsedRowsKeepTheirPreviousSpacing() {
         #expect(measuredHeight(collapsedRow()) == 24)
         #expect(listRowSpacing() == ApplicationProcessRowLayout.listRowSpacing)
+        #expect(ApplicationProcessRowLayout.listRowSpacing == ApplicationProcessGroupListView.rowSpacing)
         #expect(ApplicationProcessRowLayout.afterLastChild == 24)
     }
 }

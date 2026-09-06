@@ -682,14 +682,8 @@ private func memoryMetricsForTests(
     )
 }
 
-private let memoryAccessibilityByteCountFormatter: ByteCountFormatter = {
-    let formatter = ByteCountFormatter()
-    formatter.countStyle = .memory
-    return formatter
-}()
-
 private func formattedMemoryBytesForAccessibility(_ bytes: UInt64) -> String {
-    memoryAccessibilityByteCountFormatter.string(fromByteCount: Int64(bytes))
+    DashboardValueColumn.byteText(bytes)
 }
 
 private func swapHistoryPoint(secondsFromBase: Double, swapUsedBytes: UInt64) -> SystemMetricsHistoryPoint {
@@ -812,7 +806,7 @@ struct MemoryPressureSwapLineFormattingTests {
     }
 
     /// 병합 줄이 실제로 잘리는지는 `DashboardCardLayoutTests`의 렌더 높이 단언으로 잡을 수 없습니다 —
-    /// production 서식(`ByteCountFormatter`)이 어떤 바이트 값도 카드 콘텐츠 폭을 넘길 만큼 길게 만들지 않아
+    /// production 공용 바이트 서식이 어떤 바이트 값도 카드 콘텐츠 폭을 넘길 만큼 길게 만들지 않아
     /// 줄바꿈 자체가 일어나지 않기 때문입니다. 대신 뷰가 실제로 쓰는 줄 수 상한을 이 상수 하나로 고정해 두고
     /// (`MemoryCardView.pressureSwapLine`이 하드코딩된 `1`이 아니라 이 상수를 참조합니다) 그 값 자체를 단언합니다 —
     /// `HistoryGraphGridline.placeholderDrawOrder`를 상수로 고정해 단언하는 것과 같은 앵커 방식입니다.
@@ -1911,8 +1905,8 @@ struct HistoryGraphViewDrawOrderTests {
     }
 
     @Test func bandFillOpacitiesAreTranslucentSoGridlinesShowThrough() {
-        #expect(HistoryGraphView.fillOpacity(for: .lower) == 0.5)
-        #expect(HistoryGraphView.fillOpacity(for: .upper) == 0.28)
+        #expect(HistoryGraphView.fillOpacity(for: .lower) == 0.55)
+        #expect(HistoryGraphView.fillOpacity(for: .upper) == 0.20)
         #expect(HistoryGraphView.fillOpacity(for: .lower) < 1.0)
         #expect(HistoryGraphView.fillOpacity(for: .upper) < 1.0)
     }

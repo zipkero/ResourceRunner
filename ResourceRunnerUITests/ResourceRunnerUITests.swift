@@ -9,6 +9,33 @@ import XCTest
 
 final class ResourceRunnerUITests: XCTestCase {
 
+    @MainActor
+    func testDashboardPopoverKeepsItsMeasuredHeightFromCollectingToNormal() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let statusItem = app.statusItems.firstMatch
+        XCTAssertTrue(statusItem.waitForExistence(timeout: 5))
+        statusItem.click()
+
+        let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
+        XCTAssertTrue(cpuCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            cpuCard.label.contains("수집 중"),
+            "첫 높이를 읽기 전에 CPU 카드가 수집 중 상태여야 합니다."
+        )
+        let collectingHeight = app.popovers.firstMatch.frame.height
+        XCTAssertEqual(collectingHeight, 473, "수집 중 본체 팝오버가 재실측 기준 473pt와 다릅니다.")
+        let normal = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "NOT label CONTAINS %@", "수집 중"),
+            object: cpuCard
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [normal], timeout: 5), .completed)
+        let normalHeight = app.popovers.firstMatch.frame.height
+        XCTAssertEqual(normalHeight, 473, "정상 상태 본체 팝오버가 재실측 기준 473pt와 다릅니다.")
+        XCTAssertEqual(collectingHeight, normalHeight)
+    }
+
     override func setUpWithError() throws {
         // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
@@ -25,8 +52,8 @@ final class ResourceRunnerUITests: XCTestCase {
 
         statusItem.click()
 
-        let dashboardTitle = app.staticTexts["ResourceRunner"]
-        XCTAssertTrue(dashboardTitle.waitForExistence(timeout: 2), "메뉴바 클릭 뒤 팝오버가 열리지 않았습니다.")
+        let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
+        XCTAssertTrue(cpuCard.waitForExistence(timeout: 2), "메뉴바 클릭 뒤 팝오버가 열리지 않았습니다.")
     }
 
     /// task-001 검증 조건: 메뉴바 클릭을 반복해도(열림 → 닫힘 → 열림) 표시 상태가 어긋나지 않습니다.
@@ -42,12 +69,12 @@ final class ResourceRunnerUITests: XCTestCase {
         let statusItem = app.statusItems.firstMatch
         XCTAssertTrue(statusItem.waitForExistence(timeout: 5), "메뉴바 항목이 나타나지 않았습니다.")
 
-        let dashboardTitle = app.staticTexts["ResourceRunner"]
+        let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
 
         for iteration in 0..<5 {
             statusItem.click()
             XCTAssertTrue(
-                dashboardTitle.waitForExistence(timeout: 2),
+                cpuCard.waitForExistence(timeout: 2),
                 "반복 \(iteration): 클릭 뒤 팝오버가 열리지 않았습니다."
             )
 
@@ -57,7 +84,7 @@ final class ResourceRunnerUITests: XCTestCase {
 
             statusItem.click()
             XCTAssertTrue(
-                waitUntilGone(dashboardTitle, timeout: 2),
+                waitUntilGone(cpuCard, timeout: 2),
                 "반복 \(iteration): 재클릭 뒤 팝오버가 닫히지 않았습니다."
             )
 

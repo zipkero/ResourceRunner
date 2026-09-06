@@ -92,13 +92,15 @@ struct ApplicationRowIconTests {
     }
 
     /// task-010 검증 조건: 카드 아이콘 크기가 그 줄의 텍스트 높이를 넘으면 카드 높이가 늘어납니다.
-    /// 기준은 카드 순위 행이 실제로 쓰는 글꼴(`.caption`) 한 줄의 렌더 높이이며, 리터럴이 아니라 여기서 잽니다.
+    /// 기준은 카드 순위 행 수치가 실제로 쓰는 `value` 역할 한 줄의 렌더 높이이며, 리터럴이 아니라 여기서 잽니다.
     @Test func cardIconIsNotTallerThanTheRowTextItSitsOn() {
-        let captionLineHeight = Self.measuredSize(Text("Ag").font(.caption)).height
+        let valueLineHeight = Self.measuredSize(
+            Text("Ag").dashboardTypography(DashboardStyle.TypographyRole.value)
+        ).height
 
         #expect(
-            ApplicationRowIconLayout.cardPointSize <= captionLineHeight,
-            "카드 아이콘 크기 \(ApplicationRowIconLayout.cardPointSize)pt가 줄 텍스트 높이 \(captionLineHeight)pt를 넘습니다"
+            ApplicationRowIconLayout.cardPointSize <= valueLineHeight,
+            "카드 아이콘 크기 \(ApplicationRowIconLayout.cardPointSize)pt가 값 역할 줄 높이 \(valueLineHeight)pt를 넘습니다"
         )
     }
 

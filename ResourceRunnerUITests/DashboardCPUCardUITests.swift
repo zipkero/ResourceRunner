@@ -7,7 +7,7 @@
 
 import XCTest
 
-/// task-008 검증 조건: 팝오버를 열면 CPU 값 텍스트와 TOP 5 안내 문구가 존재하고 로딩 문구가 나타나지 않는지 확인합니다.
+/// 팝오버를 열면 CPU 값·그래프 수집 진행·TOP 5 머리글이 접근성 이름에 함께 있는지 확인합니다.
 final class DashboardCPUCardUITests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -15,7 +15,7 @@ final class DashboardCPUCardUITests: XCTestCase {
     }
 
     @MainActor
-    func testOpeningPopoverShowsCPUValueAndTopApplicationsCaptionWithoutLoadingText() throws {
+    func testOpeningPopoverShowsCPUValueCollectionProgressAndTopApplicationsHeading() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -30,20 +30,24 @@ final class DashboardCPUCardUITests: XCTestCase {
         // CPU Collector는 두 번째 tick부터 값을 만들므로, 앱 시작 직후 첫 조회에서는
         // 카드가 "수집 중"일 수 있습니다. 값이 채워질 때까지 정상 수집 주기(최대 2초) 안에서 기다립니다.
         XCTAssertTrue(
-            waitUntilLabelNoLongerContainsCollecting(cpuCard, timeout: 5),
+            waitUntilLabelContainsUsage(cpuCard, timeout: 5),
             "CPU 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(cpuCard.label)"
         )
 
         let label = cpuCard.label
-        XCTAssertFalse(label.contains("수집 중"), "값이 있는데도 로딩 문구가 남아 있습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("전체 사용률"), "CPU 값 텍스트가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertNotNil(label.range(of: #"User [0-9]+%"#, options: .regularExpression), "CPU User 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertNotNil(label.range(of: #"System [0-9]+%"#, options: .regularExpression), "CPU System 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("두 계열 중첩 그래프"), "CPU 그래프의 중첩 관계가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("기준선 25%·50%·75%"), "CPU 기준선 값이 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertTrue(label.contains("최근 10분 그래프"), "CPU 그래프의 시간 창이 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertNotNil(
+            label.range(of: #"데이터 수집 중 · [0-9]{2}:[0-9]{2} / 10:00"#, options: .regularExpression),
+            "CPU 그래프의 수집 진행 문구가 접근성 이름에 없습니다. 실제 값: \(label)"
+        )
         XCTAssertTrue(
-            label.contains("시스템 프로세스는 TOP 5에 포함되지 않습니다"),
-            "TOP 5 안내 문구가 접근성 이름에 없습니다. 실제 값: \(label)"
+            label.contains("앱 TOP 5 · 시스템 프로세스 제외"),
+            "TOP 5 머리글이 접근성 이름에 없습니다. 실제 값: \(label)"
         )
     }
 
@@ -67,7 +71,7 @@ final class DashboardCPUCardUITests: XCTestCase {
         let frameBeforeFirstCollection = cpuCard.frame
 
         XCTAssertTrue(
-            waitUntilLabelNoLongerContainsCollecting(cpuCard, timeout: 5),
+            waitUntilLabelContainsUsage(cpuCard, timeout: 5),
             "CPU 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(cpuCard.label)"
         )
 
@@ -77,14 +81,14 @@ final class DashboardCPUCardUITests: XCTestCase {
         )
     }
 
-    private func waitUntilLabelNoLongerContainsCollecting(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+    private func waitUntilLabelContainsUsage(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if !element.label.contains("수집 중") {
+            if element.label.contains("전체 사용률") {
                 return true
             }
             RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
         }
-        return !element.label.contains("수집 중")
+        return element.label.contains("전체 사용률")
     }
 }

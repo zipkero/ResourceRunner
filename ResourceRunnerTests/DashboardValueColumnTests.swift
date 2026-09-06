@@ -221,7 +221,7 @@ struct DashboardValueColumnAlignmentTests {
         let slot = CardRankingSlotView(
             entries: entries,
             failed: false,
-            caption: "",
+            heading: "",
             value: { DashboardValueColumn.percent($0.value, unit: "%") },
             iconProvider: StubApplicationIconProvider()
         )

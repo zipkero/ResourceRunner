@@ -336,6 +336,14 @@ struct ApplicationRankingCaptionTests {
     }
 }
 
+struct CardTopApplicationsHeadingTests {
+
+    @Test func headingEmbedsTheGivenCountExactly() {
+        #expect(ApplicationRankingSampling.cardTopApplicationsHeading(count: 5) == "앱 TOP 5 · 시스템 프로세스 제외")
+        #expect(ApplicationRankingSampling.cardTopApplicationsHeading(count: 12) == "앱 TOP 12 · 시스템 프로세스 제외")
+    }
+}
+
 /// task-002 검증 조건: 상세 앱 목록 머리글(`applicationListHeading(metricLabel:count:)`)이 지표 문구와
 /// 정원을 실제로 반영하는지 직접 문자열 비교로 고정합니다. 지표 문구를 지우거나 두 목록에 같은 문구를
 /// 넣는 mutation은 이 단언에서 잡힙니다.

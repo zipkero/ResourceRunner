@@ -279,13 +279,15 @@ struct ApplicationProcessRowSpacingTests {
         )
     }
 
-    @Test("네 간격이 2 / 10 / 18 / 26pt다")
-    func boundariesMeasureTwoTenEighteenTwentySix() throws {
+    @Test("네 간격은 하위 행 안 간격과 라벨 간격 단계에서 유도된다")
+    func boundariesAreDerivedFromTheSpacingScale() throws {
         let measured = try measuredBoundaries()
-        #expect(measured.within == 2)
-        #expect(measured.between == 10)
-        #expect(measured.top == 18)
-        #expect(measured.bottom == 26)
+        let within = DashboardStyle.Spacing.withinGroup
+        let step = DashboardStyle.Spacing.labelToContent
+        #expect(measured.within == within)
+        #expect(measured.between == within + step)
+        #expect(measured.top == within + step * 2)
+        #expect(measured.bottom == within + step * 3)
     }
 
     @Test("네 간격은 모두 다르고 층을 넘을수록 넓어진다")
@@ -298,11 +300,14 @@ struct ApplicationProcessRowSpacingTests {
         #expect(measured.top < measured.bottom)
     }
 
-    @Test("하위가 1·2·3개일 때 접힘 대비 70pt에서 38pt씩 늘어난다", arguments: [1, 2, 3], DetailValueFormatting.allCases)
+    @Test("하위가 1·2·3개일 때 접힘 대비 50pt에서 34pt씩 늘어나며 변경 전보다 작다", arguments: [1, 2, 3], DetailValueFormatting.allCases)
     fileprivate func expandedHeightFollowsTheFourBoundaries(childCount: Int, formatting: DetailValueFormatting) {
         let growth = measuredHeight(expandedRow(childCount: childCount, formatting: formatting))
             - measuredHeight(collapsedRow(formatting: formatting))
-        #expect(growth == 70 + CGFloat(childCount - 1) * 38)
+        let expectedGrowth = 50 + CGFloat(childCount - 1) * 34
+        let previousGrowth = 70 + CGFloat(childCount - 1) * 38
+        #expect(growth == expectedGrowth)
+        #expect(growth < previousGrowth)
     }
 
     @Test("접힌 앱 행 사이 간격이 변경 전과 같다")
@@ -310,7 +315,9 @@ struct ApplicationProcessRowSpacingTests {
         #expect(measuredHeight(collapsedRow()) == 24)
         #expect(listRowSpacing() == ApplicationProcessRowLayout.listRowSpacing)
         #expect(ApplicationProcessRowLayout.listRowSpacing == ApplicationProcessGroupListView.rowSpacing)
-        #expect(ApplicationProcessRowLayout.afterLastChild == 24)
+        #expect(ApplicationProcessRowLayout.afterLastChild
+            == DashboardStyle.Spacing.withinGroup + DashboardStyle.Spacing.labelToContent * 3
+                - ApplicationProcessRowLayout.listRowSpacing)
     }
 }
 
@@ -357,7 +364,7 @@ struct DetailViewsShareTheApplicationRowTests {
             - measuredHeight(collapsedRow(formatting: formatting))
         #expect(probe.nameInkX.count == 2)
         #expect(probe.valueInkX.count == 2)
-        #expect(growth == 108)
+        #expect(growth == 50 + CGFloat(2 - 1) * 34)
     }
 }
 

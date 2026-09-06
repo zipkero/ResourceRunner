@@ -65,12 +65,9 @@ struct DashboardView: View {
         .accessibilityIdentifier("DashboardContainer")
     }
 
-    /// 본체 팝오버의 고정 높이. 새 카드 조립에서 `.frame(height:)` 제약을 걷고 XCUITest로 팝오버를 열어
-    /// 다시 실측했습니다 — 자연 크기는 항상 최종 팝오버 프레임 473pt였고(앱 시작 직후 수집 중 상태와
-    /// 첫 수집이 도착한 정상 상태 모두 동일),
-    /// `NSPopover`가 SwiftUI 콘텐츠 크기에 자체 여백(26pt)을 더해 최종 프레임을 만들므로
-    /// 이 상수에는 그 여백을 뺀 447을 넣어야 제약을 되건 뒤 팝오버가 다시 473pt로 나옵니다.
-    fileprivate static let bodyHeight: CGFloat = 447
+    /// 높이 제약을 걷고 수집 중·정상 상태를 각각 재었을 때 팝오버 프레임은 모두 534pt였습니다.
+    /// `NSPopover` chrome 26pt를 뺀 콘텐츠 높이로 고정해 상태 전이에도 프레임이 흔들리지 않게 합니다.
+    fileprivate static let bodyHeight: CGFloat = 508
 
     /// 두 카드가 회색 블록 없이 테두리만으로도 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
     static let cardSpacing = DashboardStyle.Spacing.betweenSections
@@ -151,12 +148,7 @@ struct CPUCardView: View {
                 secondaryLine
             }
 
-            if let presentation = cached {
-                HistoryGraphView(points: presentation.graphPoints)
-                    .frame(height: 60)
-            } else {
-                GraphPlaceholderView()
-            }
+            HistoryGraphSlotView(points: cached?.graphPoints)
 
             rankingSlot
         }
@@ -179,7 +171,7 @@ struct CPUCardView: View {
         CardRankingSlotView(
             entries: cached?.topApplications ?? [],
             failed: cached?.topApplicationsFailed ?? false,
-            caption: CPUCardPresentation.topApplicationsCaption,
+            heading: CPUCardPresentation.topApplicationsHeading,
             value: { DashboardValueColumn.percent($0.value, unit: CPUCardPresentation.overallUsageUnitLabel) },
             iconProvider: iconProvider
         )
@@ -356,7 +348,7 @@ struct MemoryCardView: View {
         CardRankingSlotView(
             entries: cached?.topApplications ?? [],
             failed: cached?.topApplicationsFailed ?? false,
-            caption: MemoryCardPresentation.topApplicationsCaption,
+            heading: MemoryCardPresentation.topApplicationsHeading,
             value: { DashboardValueColumn.bytes(UInt64($0.value.rounded())) },
             iconProvider: iconProvider
         )
@@ -555,24 +547,29 @@ struct HistoryGraphView: View {
         case upper
     }
 
-    /// `Canvas`가 그리는 것과 순서. 격자가 항상 맨 먼저(가장 뒤)이고, 그 뒤로 두 밴드 채움, 마지막에 두 밴드
-    /// 경계선이 옵니다(SPEC §5.6, ANALYSIS §5 DP10) — 밴드 채움이 격자보다 먼저 오면 부하가 높은 구간에서
-    /// 밴드가 격자를 덮어 SPEC §5.6이 그 구간에서 성립하지 않습니다.
+    /// `Canvas`가 그리는 것과 순서. 격자가 맨 먼저(가장 뒤)에 오고, 두 밴드 채움·경계선 뒤에 판 테두리가 옵니다.
+    /// 격자를 먼저 그려야 반투명 밴드 사이로 비치고 테두리를 마지막에 그려야 100% 구간에서도 위 변이 남습니다.
     /// `body`가 이 배열을 그대로 순회해 그리므로, 이 배열 자체가 실제 그리기 순서입니다 —
     /// 순서를 검증하는 단위 테스트는 `Canvas` 내부가 아니라 이 배열을 단언합니다.
     enum DrawLayer: Equatable {
         case gridlines
+        case uncollectedRegion
         case bandFill(BandRole)
         case bandBoundary(BandRole)
+        case graphBorder
     }
 
     static let drawOrder: [DrawLayer] = [
         .gridlines,
+        .uncollectedRegion,
         .bandFill(.lower),
         .bandFill(.upper),
         .bandBoundary(.lower),
-        .bandBoundary(.upper)
+        .bandBoundary(.upper),
+        .graphBorder
     ]
+
+    let currentTimestamp: ContinuousClock.Instant
 
     /// `context.stroke`의 선 두께. 다운샘플링 버킷 최소 간격(`HistoryPoint.minimumDownsampledBucketSpacing`)의
     /// 절반(버킷당 평균 점 수 2개 기준 평균 간격)보다 확실히 작아야 인접 버킷의 선분이 두께에 묻혀 뭉개지지 않습니다.
@@ -589,12 +586,12 @@ struct HistoryGraphView: View {
         }
     }
 
-    /// 밴드 채움 불투명도. 두 밴드가 서로 다른 밀도로 채워지고, 격자(task-005)가 부하가 높은 구간에서도
-    /// 비치도록 둘 다 반투명입니다(ANALYSIS §5 DP9, DP10).
+    /// 밴드 채움 불투명도. 두 밴드가 서로 다른 밀도로 채워지고, 격자가 부하가 높은 구간에서도
+    /// 비치도록 둘 다 반투명입니다.
     static func fillOpacity(for band: BandRole) -> Double {
         switch band {
-        case .lower: return 0.55
-        case .upper: return 0.20
+        case .lower: return 0.60
+        case .upper: return 0.15
         }
     }
 
@@ -606,9 +603,7 @@ struct HistoryGraphView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
-            GeometryReader { proxy in
-                let currentTimestamp = ContinuousClock().now
+        GeometryReader { proxy in
                 Canvas { context, size in
                     func xPosition(_ point: HistoryPoint) -> CGFloat {
                         size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp, currentTimestamp: currentTimestamp))
@@ -668,6 +663,16 @@ struct HistoryGraphView: View {
                         switch layer {
                         case .gridlines:
                             drawCPUGraphGridlines(in: &context, size: size)
+                        case .uncollectedRegion:
+                            let timeAxis = HistoryGraphTimeAxis.make(
+                                points: points,
+                                currentTimestamp: currentTimestamp
+                            )
+                            drawCPUUncollectedRegion(
+                                in: &context,
+                                size: size,
+                                normalizedWidth: timeAxis.uncollectedNormalizedWidth
+                            )
                         case .bandFill(let band):
                             for segment in segments {
                                 let path = band == .lower ? lowerFillPath(for: segment) : upperFillPath(for: segment)
@@ -679,11 +684,12 @@ struct HistoryGraphView: View {
                                 guard let path = boundaryPath(for: segment, band: band) else { continue }
                                 context.stroke(path, with: .color(Self.color(for: band)), style: Self.boundaryStyle(for: band))
                             }
+                        case .graphBorder:
+                            drawCPUGraphBorder(in: &context, size: size)
                         }
                     }
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
-            }
         }
     }
 }
@@ -697,13 +703,120 @@ private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSi
         var path = Path()
         path.move(to: CGPoint(x: 0, y: y))
         path.addLine(to: CGPoint(x: size.width, y: y))
-        context.stroke(path, with: .color(DashboardColorPalette.cpuGridline))
+        context.stroke(
+            path,
+            with: .color(DashboardColorPalette.cpuGridline),
+            lineWidth: HistoryGraphGridline.lineWidth
+        )
+    }
+
+    for normalizedX in HistoryGraphGridline.verticalTickNormalizedXPositions() {
+        let x = size.width * CGFloat(normalizedX)
+        var path = Path()
+        path.move(to: CGPoint(x: x, y: 0))
+        path.addLine(to: CGPoint(x: x, y: size.height))
+        context.stroke(
+            path,
+            with: .color(DashboardColorPalette.cpuGridline),
+            lineWidth: HistoryGraphGridline.lineWidth
+        )
     }
 }
 
-/// 그래프 자리의 자리표시(task-015). `HistoryGraphView`와 같은 높이만 차지하고, 값이 없는 상태에도
-/// 같은 격자를 같은 높이로 그립니다 — 격자는 값이 아니라 눈금이라 그려도 되지만, 점이나 선은 값을 지어내는
-/// 것이라 그리지 않습니다(ANALYSIS §5 DP14, SPEC §5.6, §5.8).
+private func drawCPUGraphBorder(in context: inout GraphicsContext, size: CGSize) {
+    let halfLineWidth = HistoryGraphGridline.lineWidth / 2
+    let bounds = CGRect(origin: .zero, size: size).insetBy(dx: halfLineWidth, dy: halfLineWidth)
+    context.stroke(
+        Path(bounds),
+        with: .color(DashboardColorPalette.cpuGridline),
+        lineWidth: HistoryGraphGridline.lineWidth
+    )
+}
+
+nonisolated enum CPUUncollectedRegionHatch {
+    static let spacing: CGFloat = 8
+
+    static func lineSegmentCount(size: CGSize, normalizedWidth: Double) -> Int {
+        let width = size.width * CGFloat(min(1, max(0, normalizedWidth)))
+        guard width > 0, size.height > 0 else { return 0 }
+        return Int(((width + size.height) / spacing).rounded(.down)) + 1
+    }
+}
+
+private func drawCPUUncollectedRegion(
+    in context: inout GraphicsContext,
+    size: CGSize,
+    normalizedWidth: Double
+) {
+    let width = size.width * CGFloat(min(1, max(0, normalizedWidth)))
+    let lineSegmentCount = CPUUncollectedRegionHatch.lineSegmentCount(
+        size: size,
+        normalizedWidth: normalizedWidth
+    )
+    guard lineSegmentCount > 0 else { return }
+
+    let bounds = CGRect(x: 0, y: 0, width: width, height: size.height)
+    context.drawLayer { hatchContext in
+        hatchContext.clip(to: Path(bounds))
+
+        for index in 0..<lineSegmentCount {
+            let startX = -size.height + CGFloat(index) * CPUUncollectedRegionHatch.spacing
+            var path = Path()
+            path.move(to: CGPoint(x: startX, y: size.height))
+            path.addLine(to: CGPoint(x: startX + size.height, y: 0))
+            hatchContext.stroke(
+                path,
+                with: .color(DashboardColorPalette.cpuGridline.opacity(0.55)),
+                lineWidth: HistoryGraphGridline.lineWidth
+            )
+        }
+    }
+}
+
+/// 값 있음·없음 경로가 공유하는 그래프 판과 시간 축 줄입니다.
+private struct HistoryGraphSlotView: View {
+    let points: [HistoryPoint]?
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            let currentTimestamp = ContinuousClock().now
+            let timeAxis = HistoryGraphTimeAxis.make(
+                points: points ?? [],
+                currentTimestamp: currentTimestamp
+            )
+
+            VStack(spacing: HistoryGraphLayout.axisSpacing) {
+                Group {
+                    if let points {
+                        HistoryGraphView(points: points, currentTimestamp: currentTimestamp)
+                    } else {
+                        GraphPlaceholderView()
+                    }
+                }
+                .frame(height: HistoryGraphLayout.plotHeight)
+
+                ZStack {
+                    HStack(spacing: 0) {
+                        axisLabel(timeAxis.leadingLabel)
+                        Spacer(minLength: 0)
+                        axisLabel(timeAxis.trailingLabel)
+                    }
+                    axisLabel(timeAxis.collectionProgressLabel)
+                }
+                .frame(height: HistoryGraphLayout.axisLabelHeight)
+            }
+            .frame(height: HistoryGraphLayout.slotHeight)
+        }
+    }
+
+    private func axisLabel(_ text: String) -> some View {
+        Text(text)
+            .dashboardTypography(DashboardStyle.TypographyRole.label)
+    }
+}
+
+/// 그래프 자리의 자리표시(task-015). 값이 없는 상태에도 같은 격자와 판 테두리를 그립니다.
+/// 둘은 값이 아니라 눈금과 영역 경계라 그려도 되지만, 점이나 값 선은 그리지 않습니다.
 private struct GraphPlaceholderView: View {
     var body: some View {
         Canvas { context, size in
@@ -711,10 +824,13 @@ private struct GraphPlaceholderView: View {
                 switch layer {
                 case .gridlines:
                     drawCPUGraphGridlines(in: &context, size: size)
+                case .uncollectedRegion:
+                    drawCPUUncollectedRegion(in: &context, size: size, normalizedWidth: 1)
+                case .graphBorder:
+                    drawCPUGraphBorder(in: &context, size: size)
                 }
             }
         }
-        .frame(height: 60)
     }
 }
 
@@ -755,7 +871,7 @@ struct ApplicationRowIconView: View {
 }
 
 /// 카드 순위 자리(task-015). 항목 수(0개·3개·5개)나 프로세스 조사 실패 여부와 무관하게
-/// TOP 5 정원만큼의 줄과 안내 문구 한 줄을 항상 차지합니다(ANALYSIS §5 DP17).
+/// 머리글과 TOP 5 정원만큼의 줄을 항상 차지합니다(ANALYSIS §5 DP17).
 /// 자리가 남으면 이름·수치를 만들어 넣지 않는 자리표시로 채우고, 조사 실패도 이 정원 안에서
 /// 한 줄로 나타내며 나머지 줄은 자리표시로 남습니다(SPEC §5.11).
 /// 상세 팝업(`TopApplicationsView`)과 달리 카드 쪽 순위는 이 정원이 고정되어야 하므로 별도 뷰로 둡니다 —
@@ -765,11 +881,13 @@ struct ApplicationRowIconView: View {
 struct CardRankingSlotView: View {
     let entries: [ApplicationRankingEntry]
     let failed: Bool
-    let caption: String
+    let heading: String
     let value: (ApplicationRankingEntry) -> DashboardValueColumn.Value
     let iconProvider: any ApplicationIconProviding
 
     private static let capacity = ApplicationRankingSampling.cardDisplayCount
+    /// 머리글과 순위 목록 사이 간격.
+    static let headingSpacing = DashboardStyle.Spacing.labelToContent
     /// 아이콘 자리와 이름 사이 간격.
     static let iconSpacing = DashboardStyle.Spacing.labelToContent
 
@@ -777,13 +895,15 @@ struct CardRankingSlotView: View {
         // 그릴 줄 수와 줄별 아이콘 대상이 같은 목록에서 나옵니다 — 아이콘이 있는 줄에만 자리를 두면
         // 줄마다 텍스트 시작 위치가 달라지므로, 값이 없는 줄과 조사 실패 줄도 이 목록에 자리를 갖습니다(SPEC §5.7).
         let iconKeys = ApplicationRowIconLayout.cardRowIconKeys(entries: entries, failed: failed, capacity: Self.capacity)
-        VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
-            ForEach(Array(iconKeys.enumerated()), id: \.offset) { index, iconKey in
-                row(at: index, iconKey: iconKey)
-            }
+        VStack(alignment: .leading, spacing: Self.headingSpacing) {
+            Text(heading)
+                .dashboardTypography(DashboardStyle.TypographyRole.heading)
 
-            Text(caption)
-                .dashboardTypography(DashboardStyle.TypographyRole.label)
+            VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
+                ForEach(Array(iconKeys.enumerated()), id: \.offset) { index, iconKey in
+                    row(at: index, iconKey: iconKey)
+                }
+            }
         }
     }
 
@@ -1213,7 +1333,7 @@ struct CPUCoreUsageCellView: View {
                                 Rectangle().fill(DashboardColorPalette.cpuCoreTrack)
                             case .fill:
                                 Rectangle()
-                                    .fill(DashboardColorPalette.cpuCoreFill)
+                                    .fill(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: usage)))
                                     .frame(height: fillHeight)
                             }
                         }

@@ -9,7 +9,7 @@ CPU 그래프를 키우고 시간 축을 두어 최근 흐름을 눈으로 따�
 
 - [x] SPEC
 - [x] DESIGN
-- [ ] IMPLEMENT
+- [x] IMPLEMENT
 
 ## 문서
 
@@ -27,3 +27,4 @@ CPU 그래프를 키우고 시간 축을 두어 최근 흐름을 눈으로 따�
 - 2026-09-06: DESIGN DP1 정정 — 「Network·Disk 그래프만 낮추기」 레버를 철회(ROADMAP M3 「네 카드의 구조가 일관됩니다」와 충돌).
   판 100pt 확정과 M3 본체 배치 구조 변경 의무를 사용자 결정으로 기록하고 ROADMAP.md·docs/design.md에 함께 반영
 - 2026-09-06: IMPLEMENT 체크리스트 작성
+- 2026-09-06: IMPLEMENT 완료

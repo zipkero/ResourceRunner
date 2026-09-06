@@ -13,9 +13,10 @@ import Testing
 private let baseInstant = ContinuousClock().now
 
 private enum CardHeightBaseline {
-    static let cpu: CGFloat = 231
-    static let memory: CGFloat = 169
-    static let previousCPUUpperBound: CGFloat = 243
+    static let cpu: CGFloat = 290
+    static let memory: CGFloat = 171
+    static let previousCPUHeight: CGFloat = 231
+    static let cpuM3BudgetUpperBound: CGFloat = 334
     static let previousMemoryUpperBound: CGFloat = 181
 }
 
@@ -156,10 +157,13 @@ private struct CardPixelRegion {
     let x: Range<Int>
     let y: Range<Int>
 
+    // 값 없음 요약 줄의 두 계열 스와치와 라벨 영역입니다.
     static let cpuPlaceholderSummary = CardPixelRegion(x: 0..<248, y: 45..<60)
-    static let cpuPlaceholderGraph = CardPixelRegion(x: 0..<248, y: 65..<129)
+    // 값 없음 그래프의 100pt 판과 둘레 경계를 포함하는 영역입니다.
+    static let cpuPlaceholderGraph = CardPixelRegion(x: 0..<248, y: 65..<169)
     static let memoryPlaceholderTrack = CardPixelRegion(x: 210..<238, y: 15..<23)
-    static let cpuFirstRankingIcon = CardPixelRegion(x: 8..<20, y: 136..<148)
+    // 117pt 그래프 슬롯 아래 첫 순위 행의 아이콘 영역입니다.
+    static let cpuFirstRankingIcon = CardPixelRegion(x: 8..<20, y: 210..<222)
 }
 
 /// 투명 배경과 구분되는 잉크 픽셀을 고릅니다. 1/255보다 낮은 렌더 반올림은 투명으로 취급합니다.
@@ -672,8 +676,8 @@ struct DashboardCardHeightTests {
         #expect(Set(memoryHeights).count == 1, "아이콘 유무·조사 실패에 따라 Memory 카드 높이가 달라졌습니다: \(memoryHeights)")
     }
 
-    /// task-010 검증 조건: 아이콘을 더한 뒤에도 두 카드의 렌더 높이가 새 조립 실측값과 같아야 합니다.
-    /// 기준값 231.0·169.0은 초점 타이포와 세 묶음 조립을 적용한 같은 조건(폭 280 − 32, 정상 상태, 순위 항목 5개)에서 실측했고,
+    /// 아이콘을 더한 뒤에도 두 카드의 렌더 높이가 새 조립 실측값과 같아야 합니다.
+    /// 기준값 290.0·171.0은 그래프와 순위 머리글을 반영한 같은 조건(폭 280 − 32, 정상 상태, 순위 항목 5개)에서 실측했고,
     /// 항목 수가 높이를 바꾸지 않는다는 것은 위 `…RegardlessOfTopApplicationsCount` 단언이 잇습니다.
     /// 여기서는 순위 항목 5개에 아이콘을 모두 채운 상태로 재므로, 그려진 아이콘이 줄 높이를 밀어 올리는지까지 걸립니다.
     @Test func cardHeightsMatchBaselineBeforeRowIcons() {
@@ -687,12 +691,13 @@ struct DashboardCardHeightTests {
 
         #expect(cpuHeight == CardHeightBaseline.cpu, "CPU 카드 높이가 새 조립 실측값 \(CardHeightBaseline.cpu)에서 \(cpuHeight)로 달라졌습니다")
         #expect(memoryHeight == CardHeightBaseline.memory, "Memory 카드 높이가 새 조립 실측값 \(CardHeightBaseline.memory)에서 \(memoryHeight)로 달라졌습니다")
-        #expect(cpuHeight <= CardHeightBaseline.previousCPUUpperBound, "CPU 카드 높이 \(cpuHeight)가 변경 전 상한 \(CardHeightBaseline.previousCPUUpperBound)를 넘습니다")
+        #expect(cpuHeight >= CardHeightBaseline.previousCPUHeight, "CPU 카드 높이 \(cpuHeight)가 변경 전 높이 \(CardHeightBaseline.previousCPUHeight)보다 작습니다")
+        #expect(cpuHeight <= CardHeightBaseline.cpuM3BudgetUpperBound, "CPU 카드 높이 \(cpuHeight)가 M3 세로 예산 상한 \(CardHeightBaseline.cpuM3BudgetUpperBound)를 넘습니다")
         #expect(memoryHeight <= CardHeightBaseline.previousMemoryUpperBound, "Memory 카드 높이 \(memoryHeight)가 변경 전 상한 \(CardHeightBaseline.previousMemoryUpperBound)를 넘습니다")
     }
 
     /// 새 표시 요소가 모두 있는 정상 상태와 값이 없는 세 상태, 캐시를 쓰는 실패·중지 상태가
-    /// 각각 변경 전 기준 높이를 지키는지 한 번에 고정합니다.
+    /// 각각 현재 기준 높이를 지키는지 한 번에 고정합니다.
     @Test func cardHeightsMatchBaselinesAcrossEveryStateWithNewElements() {
         let cpuPresentation = cpuPresentation(topApplicationsCount: 5)
         let cpuLastKnown = LastKnownCardValue(presentation: cpuPresentation, timestamp: baseInstant)
@@ -708,7 +713,8 @@ struct DashboardCardHeightTests {
         let cpuHeights = cpuStates.map { measuredHeight(cpuCardView($0, iconProvider: cpuProvider)) }
 
         #expect(cpuHeights.allSatisfy { $0 == CardHeightBaseline.cpu }, "CPU 카드 상태별 높이가 새 조립 실측값 \(CardHeightBaseline.cpu)과 다릅니다: \(cpuHeights)")
-        #expect(cpuHeights.allSatisfy { $0 <= CardHeightBaseline.previousCPUUpperBound }, "CPU 카드 상태별 높이가 변경 전 상한 \(CardHeightBaseline.previousCPUUpperBound)를 넘습니다: \(cpuHeights)")
+        #expect(cpuHeights.allSatisfy { $0 >= CardHeightBaseline.previousCPUHeight }, "CPU 카드 상태별 높이가 변경 전 높이 \(CardHeightBaseline.previousCPUHeight)보다 작습니다: \(cpuHeights)")
+        #expect(cpuHeights.allSatisfy { $0 <= CardHeightBaseline.cpuM3BudgetUpperBound }, "CPU 카드 상태별 높이가 M3 세로 예산 상한 \(CardHeightBaseline.cpuM3BudgetUpperBound)를 넘습니다: \(cpuHeights)")
 
         let memoryPresentation = memoryPresentationWithLongestPressureSwapLine()
         let memoryLastKnown = LastKnownCardValue(presentation: memoryPresentation, timestamp: baseInstant)
@@ -744,6 +750,8 @@ struct DashboardStyleTests {
         #expect(DashboardStyle.Spacing.labelToContent > DashboardStyle.Spacing.withinGroup)
 
         #expect(CPUSeriesPlaceholderLayout.spacing == DashboardStyle.Spacing.labelToContent)
+        #expect(CardRankingSlotView.headingSpacing == DashboardStyle.Spacing.labelToContent)
+        #expect(CardRankingSlotView.headingSpacing == 4)
         #expect(CardRankingSlotView.iconSpacing == DashboardStyle.Spacing.labelToContent)
         #expect(TopApplicationsView.iconSpacing == DashboardStyle.Spacing.labelToContent)
         #expect(ApplicationProcessRowLayout.labelIconSpacing == DashboardStyle.Spacing.labelToContent)
@@ -758,13 +766,21 @@ struct DashboardStyleTests {
         #expect(DashboardView.cardSpacing == 16)
     }
 
+    @Test func cardRankingHeadingFitsTheCardContentWidth() {
+        let width = measuredIdealWidth(
+            Text(CPUCardPresentation.topApplicationsHeading)
+                .dashboardTypography(DashboardStyle.TypographyRole.heading)
+        )
+
+        #expect(width <= 232, "카드 순위 머리글의 이상적 폭 \(width)가 카드 콘텐츠 폭 232pt를 넘습니다")
+    }
+
     @Test func cardSurfaceConstantsKeepTheApprovedSlot() {
         #expect(DashboardStyle.CardSurface.cornerRadius == 8)
         #expect(DashboardStyle.CardSurface.borderWidth == 1)
     }
 
-    /// task-004 검증 조건: 카드 표면을 바꿔도 배경 수정자는 레이아웃에 참여하지 않아
-    /// task-003에서 실측한 카드 높이와 변경 전 상한을 그대로 지켜야 합니다.
+    /// 카드 표면을 바꿔도 배경 수정자는 레이아웃에 참여하지 않아 현재 카드 높이와 예산 경계를 지켜야 합니다.
     @Test func borderOnlySurfaceKeepsPreSurfaceChangeCardHeights() {
         let provider = allIconsProvider(count: 5)
         let cpuHeight = measuredHeight(
@@ -776,7 +792,8 @@ struct DashboardStyleTests {
 
         #expect(cpuHeight == CardHeightBaseline.cpu, "테두리 표면 적용 뒤 CPU 카드 높이 \(cpuHeight)가 적용 전 \(CardHeightBaseline.cpu)와 다릅니다")
         #expect(memoryHeight == CardHeightBaseline.memory, "테두리 표면 적용 뒤 Memory 카드 높이 \(memoryHeight)가 적용 전 \(CardHeightBaseline.memory)와 다릅니다")
-        #expect(cpuHeight <= CardHeightBaseline.previousCPUUpperBound)
+        #expect(cpuHeight >= CardHeightBaseline.previousCPUHeight)
+        #expect(cpuHeight <= CardHeightBaseline.cpuM3BudgetUpperBound)
         #expect(memoryHeight <= CardHeightBaseline.previousMemoryUpperBound)
     }
 
@@ -877,14 +894,17 @@ struct DashboardCardPlaceholderRenderingTests {
         }
     }
 
-    /// CPU 두 스와치는 색조를 공유하고, 아래(User)가 위(System)보다 밝은 단계여야 합니다.
+    /// CPU 두 스와치는 같은 색조의 서로 다른 램프 단계여야 합니다.
     @Test func cpuSeriesSwatchesShareHueAndUseDifferentBrightnessSteps() throws {
         let user = try #require(NSColor(DashboardColorPalette.cpuUser).usingColorSpace(.sRGB))
         let system = try #require(NSColor(DashboardColorPalette.cpuSystem).usingColorSpace(.sRGB))
+        let expectedUser = try #require(NSColor(DashboardColorPalette.cpu(.step3)).usingColorSpace(.sRGB))
+        let expectedSystem = try #require(NSColor(DashboardColorPalette.cpu(.step1)).usingColorSpace(.sRGB))
 
         #expect(circularHueDistance(user.hueComponent, system.hueComponent) < 0.03)
-        #expect(user.brightnessComponent > system.brightnessComponent)
-        #expect(user.brightnessComponent - system.brightnessComponent > 0.1)
+        #expect(user == expectedUser)
+        #expect(system == expectedSystem)
+        #expect(user != system)
     }
 
     /// CPU 값이 없을 때도 두 계열 스와치와 이름은 남고, 수치는 0이 아닌 중립 기호로 표시됩니다.
@@ -984,7 +1004,7 @@ struct DashboardCardPlaceholderRenderingTests {
             let slot = CardRankingSlotView(
                 entries: [],
                 failed: failed,
-                caption: "",
+                heading: "",
                 value: { _ in DashboardValueColumn.unavailable(kind: .bytes) },
                 iconProvider: StubApplicationIconProvider()
             )
@@ -1020,7 +1040,7 @@ struct DashboardCardPlaceholderRenderingTests {
         let slot = CardRankingSlotView(
             entries: entries,
             failed: false,
-            caption: "",
+            heading: "",
             value: { _ in DashboardValueColumn.percent(1, unit: CPUCardPresentation.overallUsageUnitLabel) },
             iconProvider: StubApplicationIconProvider(images: images)
         )

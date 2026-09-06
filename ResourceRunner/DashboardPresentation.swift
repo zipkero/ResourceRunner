@@ -227,11 +227,11 @@ nonisolated struct CPUCardDetail: Sendable, Equatable {
 }
 
 extension CPUCardPresentation {
-    /// TOP 5 목록에 시스템 프로세스가 포함되지 않는다는 상시 안내.
+    /// TOP 5 목록과 시스템 프로세스 제외 사실을 함께 나타내는 카드 머리글.
     /// Hover나 색상이 아니라 항상 보이는 문구이며 카드 접근성 이름에도 포함됩니다.
     /// 카드 정원(`ApplicationRankingSampling.cardDisplayCount`)에서 문구를 만들어, 정원 숫자가
     /// 이 문자열 밖에 따로 남지 않게 합니다.
-    static let topApplicationsCaption = ApplicationRankingSampling.topApplicationsCaption(
+    static let topApplicationsHeading = ApplicationRankingSampling.cardTopApplicationsHeading(
         count: ApplicationRankingSampling.cardDisplayCount
     )
 
@@ -378,7 +378,7 @@ extension HistoryPoint {
     /// 마지막 샘플이 오래된 상황(중지 뒤 재개 첫 tick이 값을 만들지 못해 카드가 갱신되지 않는 경우 등)에서도
     /// 그 점이 오른쪽 끝에 들러붙지 않고 실제 경과 시간만큼 왼쪽으로 밀려나, 오른쪽에 빈 구간이 제자리에 보입니다
     /// (ANALYSIS §5 DP3, task-008 검증 조건).
-    static func normalizedXPosition(
+    nonisolated static func normalizedXPosition(
         for timestamp: ContinuousClock.Instant,
         currentTimestamp: ContinuousClock.Instant,
         timeRange: Duration = HistoryCapacity.defaultTimeRange
@@ -392,13 +392,33 @@ extension HistoryPoint {
     }
 }
 
-/// CPU 그래프에 깔리는 기준선 격자. 값 25·50·75%에 선을 두어 세로 범위(0~100%)를 네 등분하고,
-/// 라벨 없이 높이만으로 어림할 수 있게 합니다(SPEC §5.6, ANALYSIS §5 DP10).
+/// CPU 그래프 판과 시간 축 줄이 차지하는 고정 레이아웃입니다.
+/// 값 유무와 무관하게 한 조립이 이 값을 써야 상태 전환 때 카드 높이가 흔들리지 않습니다.
+nonisolated enum HistoryGraphLayout {
+    static let plotHeight: CGFloat = 100
+    static let axisSpacing = DashboardStyle.Spacing.labelToContent
+    static let axisLabelHeight: CGFloat = 13
+    static let slotHeight = plotHeight + axisSpacing + axisLabelHeight
+}
+
+/// CPU 그래프에 깔리는 기준선 격자. 값 25·50·75%에 가로선을 두어 세로 범위(0~100%)를 네 등분하고,
+/// 시간 창을 다섯 등분하는 네 세로선으로 가로 범위를 표시합니다.
 /// `HistoryGraphView`와 값이 없는 자리표시(`GraphPlaceholderView`)가 같은 값·같은 변환을 써서
-/// 같은 높이에 같은 격자를 그립니다(SPEC §5.8, ANALYSIS §5 DP14).
+/// 같은 높이에 같은 격자를 그립니다.
 nonisolated enum HistoryGraphGridline {
     /// 기준선 값(사용률 %). 순서는 그리기에 영향을 주지 않지만, 낮은 값부터 둡니다.
     static let baselineValues: [Double] = [25, 50, 75]
+    static let verticalDivisionCount = 5
+    static let lineWidth: CGFloat = 1
+
+    /// 시간 창의 길이가 달라져도 같은 수의 등분선을 돌려줍니다.
+    static func verticalTickNormalizedXPositions(timeRange: Duration = HistoryCapacity.defaultTimeRange) -> [Double] {
+        let duration = timeRange.secondsAsDouble
+        guard duration > 0 else { return [] }
+
+        let interval = duration / Double(verticalDivisionCount)
+        return (1..<verticalDivisionCount).map { Double($0) * interval / duration }
+    }
 
     /// 기준선 값을 그래프 높이 안의 세로 좌표로 바꿉니다. 0%가 그래프 바닥(`height`), 100%가 그래프 천장(0)입니다.
     /// `HistoryGraphView`가 점 값을 좌표로 옮길 때 쓰는 변환과 같은 식이라, 격자와 밴드가 같은 기준을 씁니다.
@@ -407,16 +427,98 @@ nonisolated enum HistoryGraphGridline {
     }
 }
 
+/// CPU 코어 사용률을 그래프 기준선과 같은 네 단계로 나눕니다.
+/// 경계를 별도 숫자로 복제하지 않아 카드 그래프와 상세 코어 막대가 같은 눈금을 씁니다.
+nonisolated enum CPUCoreUsageStep {
+    static let boundaries = HistoryGraphGridline.baselineValues
+
+    static func step(
+        for usage: Double,
+        boundaries: [Double] = CPUCoreUsageStep.boundaries
+    ) -> DashboardColorPalette.RampStep {
+        if usage >= boundaries[2] { return .step1 }
+        if usage >= boundaries[1] { return .step2 }
+        if usage >= boundaries[0] { return .step3 }
+        return .step4
+    }
+}
+
+/// 그래프의 시간 창과 아직 표본이 없는 왼쪽 구간을 화면 표시 값으로 바꿉니다.
+/// 중간 공백은 연결 구간 분리만 담당하므로 여기서는 가장 이른 표본 시각만 봅니다.
+nonisolated struct HistoryGraphTimeAxis: Sendable, Equatable {
+    let leadingLabel: String
+    let trailingLabel: String
+    let collectionProgressLabel: String
+    let uncollectedNormalizedWidth: Double
+
+    static func make(
+        points: [HistoryPoint],
+        currentTimestamp: ContinuousClock.Instant,
+        timeRange: Duration = HistoryCapacity.defaultTimeRange
+    ) -> HistoryGraphTimeAxis {
+        let totalSeconds = max(0, timeRange.secondsAsDouble)
+        let uncollectedNormalizedWidth: Double
+
+        if let firstTimestamp = points.first?.timestamp, totalSeconds > 0 {
+            uncollectedNormalizedWidth = min(
+                1,
+                max(
+                    0,
+                    HistoryPoint.normalizedXPosition(
+                        for: firstTimestamp,
+                        currentTimestamp: currentTimestamp,
+                        timeRange: timeRange
+                    )
+                )
+            )
+        } else {
+            uncollectedNormalizedWidth = 1
+        }
+
+        let elapsedSeconds = totalSeconds * (1 - uncollectedNormalizedWidth)
+        let progress = uncollectedNormalizedWidth > 0
+            ? "데이터 수집 중 · \(durationLabel(seconds: elapsedSeconds)) / \(durationLabel(seconds: totalSeconds))"
+            : ""
+
+        return HistoryGraphTimeAxis(
+            leadingLabel: leadingLabel(seconds: totalSeconds),
+            trailingLabel: "지금",
+            collectionProgressLabel: progress,
+            uncollectedNormalizedWidth: uncollectedNormalizedWidth
+        )
+    }
+
+    static var accessibilityTimeWindowLabel: String {
+        "최근 \(leadingLabel(seconds: HistoryCapacity.defaultTimeRange.secondsAsDouble).replacingOccurrences(of: " 전", with: "")) 그래프"
+    }
+
+    private static func leadingLabel(seconds: Double) -> String {
+        let wholeSeconds = max(0, Int(seconds.rounded()))
+        let minutes = wholeSeconds / 60
+        let secondsRemainder = wholeSeconds % 60
+        if secondsRemainder == 0 {
+            return "\(minutes)분 전"
+        }
+        return "\(minutes)분 \(secondsRemainder)초 전"
+    }
+
+    private static func durationLabel(seconds: Double) -> String {
+        let wholeSeconds = max(0, Int(seconds.rounded()))
+        return String(format: "%02d:%02d", wholeSeconds / 60, wholeSeconds % 60)
+    }
+}
+
 extension HistoryGraphGridline {
     /// 값 없는 자리표시(`GraphPlaceholderView`)가 그리는 레이어 목록. 값 있는 경로의
     /// `HistoryGraphView.drawOrder`와 같은 방식으로 뷰 밖 상수에 둬, 자리표시 `Canvas`가 이 배열을
-    /// 그대로 순회해 그리게 합니다 — 격자를 빼는 mutation이 이 배열 자체를 바꾸므로 단위 테스트로 잡힙니다
-    /// (SPEC §5.8, ANALYSIS §5 DP14).
+    /// 그대로 순회해 그리게 합니다 — 격자나 마지막 판 테두리를 빼거나 순서를 바꾸는 변경을 단위 테스트로 잡습니다.
     enum PlaceholderLayer: Equatable {
         case gridlines
+        case uncollectedRegion
+        case graphBorder
     }
 
-    static let placeholderDrawOrder: [PlaceholderLayer] = [.gridlines]
+    static let placeholderDrawOrder: [PlaceholderLayer] = [.gridlines, .uncollectedRegion, .graphBorder]
 }
 
 extension ResourceCardState where Presentation == CPUCardPresentation {
@@ -426,22 +528,46 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
         let shortcut = "단축키 \(CPUCardPresentation.selectionShortcutDisplayText)"
         switch self {
         case .collecting:
-            return "CPU 카드, 수집 중, \(shortcut)"
-        case .normal(let presentation, _):
+            let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
+            return "CPU 카드, 수집 중, \(timeAxis.accessibilityLabel), \(shortcut)"
+        case .normal(let presentation, let timestamp):
+            let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints, currentTimestamp: timestamp)
             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
-                + CPUCardPresentation.topApplicationsCaption
+                + "\(timeAxis.accessibilityLabel), "
+                + CPUCardPresentation.topApplicationsHeading
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
-                return "CPU 카드, 수집 실패, \(shortcut)"
+                let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
+                return "CPU 카드, 수집 실패, \(timeAxis.accessibilityLabel), \(shortcut)"
             }
-            return "CPU 카드, 수집 실패, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), \(shortcut)"
+            let timeAxis = HistoryGraphTimeAxis.make(
+                points: lastKnown.presentation.graphPoints,
+                currentTimestamp: lastKnown.timestamp
+            )
+            return "CPU 카드, 수집 실패, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
+                + "\(timeAxis.accessibilityLabel), \(shortcut)"
         case .stopped(let lastKnown):
             guard let lastKnown else {
-                return "CPU 카드, 수집 중지, \(shortcut)"
+                let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
+                return "CPU 카드, 수집 중지, \(timeAxis.accessibilityLabel), \(shortcut)"
             }
-            return "CPU 카드, 수집 중지, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), \(shortcut)"
+            let timeAxis = HistoryGraphTimeAxis.make(
+                points: lastKnown.presentation.graphPoints,
+                currentTimestamp: lastKnown.timestamp
+            )
+            return "CPU 카드, 수집 중지, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
+                + "\(timeAxis.accessibilityLabel), \(shortcut)"
         }
+    }
+}
+
+private extension HistoryGraphTimeAxis {
+    var accessibilityLabel: String {
+        if collectionProgressLabel.isEmpty {
+            return Self.accessibilityTimeWindowLabel
+        }
+        return "\(Self.accessibilityTimeWindowLabel), \(collectionProgressLabel)"
     }
 }
 
@@ -525,10 +651,10 @@ enum ApplicationProcessRowLayout {
     static let withinChildRow = DashboardStyle.Spacing.withinGroup
 
     /// 하위 행끼리의 간격. 같은 앱 안의 경계입니다.
-    static let betweenChildren: CGFloat = 10
+    static let betweenChildren = withinChildRow + DashboardStyle.Spacing.labelToContent
 
     /// 부모 앱 행과 첫 하위 행 사이 간격. 앱 행에서 그 앱 안쪽으로 들어가는 경계입니다.
-    static let parentToFirstChild: CGFloat = 18
+    static let parentToFirstChild = withinChildRow + DashboardStyle.Spacing.labelToContent * 2
 
     /// `ApplicationProcessGroupListView`의 목록 `VStack`이 행 사이에 두는 간격. 마지막 하위 행과 다음 앱 행
     /// 사이에는 이 값이 이미 들어가므로, 그만큼을 뺀 몫만 펼친 내용 아래에 겁니다.
@@ -536,7 +662,7 @@ enum ApplicationProcessRowLayout {
     static let listRowSpacing = DashboardStyle.Spacing.withinGroup
 
     /// 마지막 하위 행과 다음 앱 행 사이 간격. 앱 하나를 벗어나는 경계라 네 경계 중 가장 넓습니다.
-    static let lastChildToNextApplication: CGFloat = 26
+    static let lastChildToNextApplication = withinChildRow + DashboardStyle.Spacing.labelToContent * 3
 
     /// 펼친 내용 아래에 거는 여백. 목록 `VStack`의 간격 위에 더해져 마지막 경계를 만듭니다.
     static let afterLastChild: CGFloat = lastChildToNextApplication - listRowSpacing
@@ -995,8 +1121,8 @@ extension MemoryCardPresentation {
 }
 
 extension MemoryCardPresentation {
-    /// TOP 5 목록에 시스템 프로세스가 포함되지 않는다는 상시 안내. CPU 카드와 같은 문구를 공유합니다.
-    static let topApplicationsCaption = CPUCardPresentation.topApplicationsCaption
+    /// TOP 5 목록과 시스템 프로세스 제외 사실을 함께 나타내는 머리글. CPU 카드와 같은 문구를 공유합니다.
+    static let topApplicationsHeading = CPUCardPresentation.topApplicationsHeading
 
     /// Memory 카드를 선택·복귀하는 키보드 단축키의 실제 키. CPU 카드와 다른 단축키를 씁니다(ANALYSIS §5 DP15).
     static let selectionShortcutKey: Character = "2"
@@ -1085,7 +1211,7 @@ extension ResourceCardState where Presentation == MemoryCardPresentation {
             return "Memory 카드, 수집 중, \(shortcut)"
         case .normal(let presentation, _):
             return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel), "
-                + MemoryCardPresentation.topApplicationsCaption
+                + MemoryCardPresentation.topApplicationsHeading
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {

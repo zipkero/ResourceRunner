@@ -63,7 +63,7 @@ final class DashboardCardSelectionUITests: XCTestCase {
         // 있습니다. 그 상태에서 상세를 열면 "Load Average" 대신 "아직 CPU 값이 수집되지 않았습니다."가 나와
         // 아래 단언이 어긋나므로, task-008 UI 테스트와 같은 방식으로 값이 채워질 때까지 먼저 기다립니다.
         XCTAssertTrue(
-            waitUntilLabelNoLongerContainsCollecting(cpuCard, timeout: 5),
+            waitUntilLabelContainsUsage(cpuCard, timeout: 5),
             "CPU 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(cpuCard.label)"
         )
         return cpuCard
@@ -223,8 +223,8 @@ final class DashboardCardSelectionUITests: XCTestCase {
 
     /// CPU Collector는 두 번째 tick부터 값을 만들므로, 앱 시작 직후 첫 조회에서는 카드가 "수집 중"일 수
     /// 있습니다. 값이 채워질 때까지 정상 수집 주기(최대 2초) 안에서 기다립니다(`DashboardCPUCardUITests`와 같은 관례).
-    private func waitUntilLabelNoLongerContainsCollecting(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
-        waitUntil({ !element.label.contains("수집 중") }, timeout: timeout)
+    private func waitUntilLabelContainsUsage(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        waitUntil({ element.label.contains("전체 사용률") }, timeout: timeout)
     }
 
     private func waitUntilGone(_ element: XCUIElement, timeout: TimeInterval) -> Bool {

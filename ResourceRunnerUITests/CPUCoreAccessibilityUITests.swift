@@ -24,7 +24,7 @@ final class CPUCoreAccessibilityUITests: XCTestCase {
         let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
         XCTAssertTrue(cpuCard.waitForExistence(timeout: 5), "팝오버를 연 뒤 CPU 카드가 나타나지 않았습니다.")
         XCTAssertTrue(
-            waitUntil({ !cpuCard.label.contains("수집 중") }, timeout: 5),
+            waitUntil({ !cpuCard.label.hasPrefix("CPU 카드, 수집 중,") }, timeout: 5),
             "CPU 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(cpuCard.label)"
         )
 

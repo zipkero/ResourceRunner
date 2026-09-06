@@ -91,12 +91,38 @@ private func gridBitmap(usages: [Double], width: CGFloat = detailContentWidth) -
     renderedBitmap(CPUCoreUsageGridView(usages: usages), width: width)
 }
 
-/// 막대 트랙과 채움을 가르는 알파 기준. 팔레트의 두 색에서 유도하므로 시스템 색이 바뀌어도 따라갑니다 —
-/// 트랙 위에 채움을 얹은 픽셀의 알파는 채움 알파보다 작아지지 않고, 트랙만 있는 픽셀은 트랙 알파 그대로입니다.
-private let coreBarFillAlphaThreshold: CGFloat = {
-    let track = NSColor(DashboardColorPalette.cpuCoreTrack).usingColorSpace(.sRGB)?.alphaComponent ?? 0
-    let fill = NSColor(DashboardColorPalette.cpuCoreFill).usingColorSpace(.sRGB)?.alphaComponent ?? 1
-    return (track + fill) / 2
+private let coreBarBackground = NSColor.windowBackgroundColor.usingColorSpace(.sRGB) ?? .white
+
+private func linearized(_ component: CGFloat) -> CGFloat {
+    component <= 0.04045 ? component / 12.92 : pow((component + 0.055) / 1.055, 2.4)
+}
+
+private func relativeLuminance(_ color: NSColor) -> CGFloat {
+    0.2126 * linearized(color.redComponent)
+        + 0.7152 * linearized(color.greenComponent)
+        + 0.0722 * linearized(color.blueComponent)
+}
+
+private func compositedOverCoreBarBackground(_ color: NSColor) -> NSColor {
+    let alpha = color.alphaComponent
+    return NSColor(
+        srgbRed: color.redComponent * alpha + coreBarBackground.redComponent * (1 - alpha),
+        green: color.greenComponent * alpha + coreBarBackground.greenComponent * (1 - alpha),
+        blue: color.blueComponent * alpha + coreBarBackground.blueComponent * (1 - alpha),
+        alpha: 1
+    )
+}
+
+private func contrastAgainstCoreBarBackground(_ color: NSColor) -> CGFloat {
+    let foreground = relativeLuminance(compositedOverCoreBarBackground(color))
+    let background = relativeLuminance(coreBarBackground)
+    return (max(foreground, background) + 0.05) / (min(foreground, background) + 0.05)
+}
+
+/// 막대 채움은 유채색 불투명 색이고 트랙은 반투명 시스템 색이므로, 배경 대비로 둘을 가릅니다.
+private let coreBarTrackContrast: CGFloat = {
+    let track = NSColor(DashboardColorPalette.cpuCoreTrack).usingColorSpace(.sRGB) ?? .clear
+    return contrastAgainstCoreBarBackground(track)
 }()
 
 /// 한 가로줄에서 조건을 만족하는 픽셀이 이어지는 구간들.
@@ -124,8 +150,8 @@ private func inkRuns(
 /// 어떤 색이든 칠해진 픽셀. 칸 사이 간격과 마지막 행의 빈 자리는 완전히 투명합니다.
 private let anyInk: (NSColor) -> Bool = { $0.alphaComponent > 0.01 }
 
-/// 막대 채움 픽셀. 트랙만 있는 자리와 알파로 갈립니다.
-private let barFillInk: (NSColor) -> Bool = { $0.alphaComponent > coreBarFillAlphaThreshold }
+/// 막대 채움 픽셀. 트랙보다 배경 대비가 큰 픽셀만 채움으로 셉니다.
+private let barFillInk: (NSColor) -> Bool = { contrastAgainstCoreBarBackground($0) > coreBarTrackContrast }
 
 /// 세로로 이어지는 잉크 띠 하나. 칸 안의 막대·수치·번호가 각각 하나씩 나옵니다.
 private struct InkBand: Equatable {
@@ -312,6 +338,51 @@ struct CPUCoreUsageGridRenderTests {
     }
 
     // MARK: - 막대 채움
+
+    @Test("코어 단계가 그래프 기준선에서 유도되고 기준선 변경을 따라간다")
+    func usageStepsFollowGraphGridlineBoundaries() {
+        #expect(CPUCoreUsageStep.boundaries == HistoryGraphGridline.baselineValues)
+        #expect(CPUCoreUsageStep.boundaries.count == 3)
+        #expect(DashboardColorPalette.RampStep.allCases.count == 4)
+
+        let boundaries = CPUCoreUsageStep.boundaries
+        #expect(CPUCoreUsageStep.step(for: boundaries[2]) == .step1)
+        #expect(CPUCoreUsageStep.step(for: boundaries[2].nextDown) == .step2)
+        #expect(CPUCoreUsageStep.step(for: boundaries[1]) == .step2)
+        #expect(CPUCoreUsageStep.step(for: boundaries[1].nextDown) == .step3)
+        #expect(CPUCoreUsageStep.step(for: boundaries[0]) == .step3)
+        #expect(CPUCoreUsageStep.step(for: boundaries[0].nextDown) == .step4)
+
+        let shiftedBoundaries = [20.0, 40.0, 60.0]
+        #expect(CPUCoreUsageStep.step(for: 19.9, boundaries: shiftedBoundaries) == .step4)
+        #expect(CPUCoreUsageStep.step(for: 20, boundaries: shiftedBoundaries) == .step3)
+        #expect(CPUCoreUsageStep.step(for: 40, boundaries: shiftedBoundaries) == .step2)
+        #expect(CPUCoreUsageStep.step(for: 60, boundaries: shiftedBoundaries) == .step1)
+    }
+
+    @Test("각 그래프 기준선의 바로 아래와 바로 위에서 코어 단계가 갈린다")
+    func valuesAcrossEveryBoundaryUseDifferentSteps() {
+        for boundary in CPUCoreUsageStep.boundaries {
+            let below = CPUCoreUsageStep.step(for: boundary.nextDown)
+            let above = CPUCoreUsageStep.step(for: boundary.nextUp)
+            #expect(below != above, "\(boundary)% 바로 아래와 바로 위가 모두 \(below)입니다")
+        }
+    }
+
+    @Test("단계가 갈리는 두 코어 사용률은 서로 다른 채움 색을 쓴다")
+    func usagesInDifferentStepsUseDifferentFillColors() throws {
+        let boundary = try #require(CPUCoreUsageStep.boundaries.first)
+        let lower = try #require(
+            NSColor(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: boundary.nextDown)))
+                .usingColorSpace(.sRGB)
+        )
+        let upper = try #require(
+            NSColor(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: boundary)))
+                .usingColorSpace(.sRGB)
+        )
+
+        #expect(lower != upper)
+    }
 
     @Test("칸의 채움 높이가 그 코어의 값을 따라 커진다")
     func fillHeightFollowsCoreUsage() throws {

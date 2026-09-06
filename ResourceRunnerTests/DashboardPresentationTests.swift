@@ -7,6 +7,7 @@
 
 import Darwin
 import Foundation
+import SwiftUI
 import Testing
 @testable import ResourceRunner
 
@@ -556,6 +557,8 @@ struct CPUCardAccessibilityLabelTests {
         let state = ResourceCardState<CPUCardPresentation>.collecting
 
         #expect(state.cpuAccessibilityLabel.contains("수집 중"))
+        #expect(state.cpuAccessibilityLabel.contains("최근 10분 그래프"))
+        #expect(state.cpuAccessibilityLabel.contains("데이터 수집 중 · 00:00 / 10:00"))
     }
 
     /// task-010(재작업, DP15) 검증 조건: 단축키의 존재가 카드 접근성 이름에서 확인되어야 하며,
@@ -566,7 +569,19 @@ struct CPUCardAccessibilityLabelTests {
         #expect(state.cpuAccessibilityLabel.contains(CPUCardPresentation.selectionShortcutDisplayText))
     }
 
-    @Test func normalStateIncludesGraphSeriesBaselinesAndTopApplicationsCaption() {
+    @Test func valuelessFailureAndStoppedStatesKeepTheTimeWindowAndCollectionProgress() {
+        let states: [ResourceCardState<CPUCardPresentation>] = [
+            .failure(lastKnown: nil),
+            .stopped(lastKnown: nil),
+        ]
+
+        for state in states {
+            #expect(state.cpuAccessibilityLabel.contains("최근 10분 그래프"))
+            #expect(state.cpuAccessibilityLabel.contains("데이터 수집 중 · 00:00 / 10:00"))
+        }
+    }
+
+    @Test func normalStateIncludesGraphSeriesBaselinesAndTopApplicationsHeading() {
         let presentation = CPUCardPresentation.assemble(
             cpu: cpuMetrics(overallUsage: 55, userRatio: 40, systemRatio: 15),
             history: [],
@@ -581,7 +596,9 @@ struct CPUCardAccessibilityLabelTests {
         #expect(label.contains("System 15%"))
         #expect(label.contains("두 계열 중첩 그래프"))
         #expect(label.contains("기준선 25%·50%·75%"))
-        #expect(label.contains(CPUCardPresentation.topApplicationsCaption))
+        #expect(label.contains("최근 10분 그래프"))
+        #expect(label.contains("데이터 수집 중 · 00:00 / 10:00"))
+        #expect(label.contains(CPUCardPresentation.topApplicationsHeading))
     }
 
     /// task-010(재작업, DP15) 검증 조건: 단축키 안내는 조립 함수(`assemble(_:)`)를 거친 정상 상태에서도
@@ -963,7 +980,7 @@ struct MemoryCardPresentationAssembleTests {
         )
 
         #expect(presentation.detail.recentIncreaseRankingCaption == "시스템 프로세스는 TOP 20에 포함되지 않습니다")
-        #expect(presentation.detail.recentIncreaseRankingCaption != MemoryCardPresentation.topApplicationsCaption)
+        #expect(presentation.detail.recentIncreaseRankingCaption != MemoryCardPresentation.topApplicationsHeading)
     }
 }
 
@@ -1010,7 +1027,7 @@ struct MemoryCardAccessibilityLabelTests {
         #expect(label.contains("Cached \(formattedMemoryBytesForAccessibility(gibibyte))"))
         #expect(label.contains("구성 합계 \(formattedMemoryBytesForAccessibility(9 * gibibyte))"))
         #expect(!label.contains("사용 중 및 구성 합계"))
-        #expect(label.contains(MemoryCardPresentation.topApplicationsCaption))
+        #expect(label.contains(MemoryCardPresentation.topApplicationsHeading))
         #expect(label.contains(MemoryCardPresentation.selectionShortcutDisplayText))
     }
 
@@ -1847,15 +1864,36 @@ struct DashboardSelectionTests {
     }
 }
 
-// MARK: - task-005: CPU 그래프 격자 기준선 값·좌표 변환
+// MARK: - CPU 그래프 레이아웃과 격자 좌표
 
 /// 기준선 값 목록이 25·50·75%이고, 값→세로 좌표 변환이 0%를 그래프 바닥, 100%를 천장에 대응시킵니다(SPEC §5.6).
 /// 목록을 비우거나 50% 한 줄만 남기면, 변환의 위아래를 뒤집거나 높이를 무시하고 고정 좌표를 돌려주면
 /// 아래 단언들이 실패해야 합니다.
 struct HistoryGraphGridlineTests {
 
+    @Test func graphSlotHeightIsDerivedFromPlotAxisSpacingAndLabelHeight() {
+        #expect(
+            HistoryGraphLayout.slotHeight
+                == HistoryGraphLayout.plotHeight
+                + HistoryGraphLayout.axisSpacing
+                + HistoryGraphLayout.axisLabelHeight
+        )
+        #expect(HistoryGraphLayout.plotHeight == 100)
+        #expect(HistoryGraphLayout.slotHeight == 117)
+    }
+
+    @Test func graphPlotIsTallerAndLessHorizontallyCompressedThanBefore() {
+        let plotWidth: CGFloat = 232
+        let previousPlotHeight: CGFloat = 60
+        let previousAspectRatio = plotWidth / previousPlotHeight
+
+        #expect(HistoryGraphLayout.plotHeight > previousPlotHeight)
+        #expect(plotWidth / HistoryGraphLayout.plotHeight < previousAspectRatio)
+    }
+
     @Test func baselineValuesAreExactlyTwentyFiveFiftySeventyFive() {
         #expect(HistoryGraphGridline.baselineValues == [25, 50, 75])
+        #expect(HistoryGraphGridline.lineWidth == 1)
     }
 
     /// 60pt 높이에서 세 선이 15pt 간격으로 놓입니다(0%가 바닥 60, 100%가 천장 0).
@@ -1879,49 +1917,148 @@ struct HistoryGraphGridlineTests {
         #expect(HistoryGraphGridline.yPosition(forValue: 50, height: 60) == 30)
         #expect(HistoryGraphGridline.yPosition(forValue: 50, height: 120) == 60)
     }
+
+    @Test func fourVerticalTicksDivideAnyPositiveTimeRangeIntoFifths() {
+        let tenMinutePositions = HistoryGraphGridline.verticalTickNormalizedXPositions(timeRange: .seconds(600))
+        let oneMinutePositions = HistoryGraphGridline.verticalTickNormalizedXPositions(timeRange: .seconds(60))
+
+        #expect(HistoryGraphGridline.verticalDivisionCount == 5)
+        #expect(tenMinutePositions == [0.2, 0.4, 0.6, 0.8])
+        #expect(oneMinutePositions == tenMinutePositions)
+    }
 }
 
-// MARK: - task-005: CPU 그래프 격자·밴드 그리기 순서와 밴드 채움 불투명도
+// MARK: - 그래프 시간 축과 미수집 구간
+
+struct HistoryGraphTimeAxisTests {
+
+    @Test func emptyPointsMarkTheWholeWindowAsUncollected() {
+        let axis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: baseInstant)
+
+        #expect(axis.leadingLabel == "10분 전")
+        #expect(axis.trailingLabel == "지금")
+        #expect(axis.uncollectedNormalizedWidth == 1)
+        #expect(axis.collectionProgressLabel == "데이터 수집 중 · 00:00 / 10:00")
+    }
+
+    @Test func firstPointInTheMiddleDeterminesTheUncollectedWidth() {
+        let currentTimestamp = baseInstant.advanced(by: .seconds(600))
+        let points = [
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(300)), value: 10),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(600)), value: 20),
+        ]
+
+        let axis = HistoryGraphTimeAxis.make(points: points, currentTimestamp: currentTimestamp)
+
+        #expect(axis.uncollectedNormalizedWidth == 0.5)
+        #expect(axis.collectionProgressLabel == "데이터 수집 중 · 05:00 / 10:00")
+    }
+
+    @Test func fullWindowHasNoCollectionProgressTextButKeepsTheSameSlotHeight() {
+        let currentTimestamp = baseInstant.advanced(by: .seconds(600))
+        let points = [HistoryPoint(timestamp: baseInstant, value: 10)]
+
+        let axis = HistoryGraphTimeAxis.make(points: points, currentTimestamp: currentTimestamp)
+
+        #expect(axis.uncollectedNormalizedWidth == 0)
+        #expect(axis.collectionProgressLabel.isEmpty)
+        #expect(HistoryGraphLayout.slotHeight == 117)
+    }
+
+    @Test func fullWindowDrawsNoUncollectedHatchSegments() {
+        let currentTimestamp = baseInstant.advanced(by: .seconds(600))
+        let points = [HistoryPoint(timestamp: baseInstant, value: 10)]
+        let axis = HistoryGraphTimeAxis.make(points: points, currentTimestamp: currentTimestamp)
+
+        #expect(
+            CPUUncollectedRegionHatch.lineSegmentCount(
+                size: CGSize(width: 232, height: HistoryGraphLayout.plotHeight),
+                normalizedWidth: axis.uncollectedNormalizedWidth
+            ) == 0
+        )
+    }
+
+    @Test func middleGapDoesNotChangeTheFirstPointBasedUncollectedWidth() {
+        let currentTimestamp = baseInstant.advanced(by: .seconds(600))
+        let pointsWithMiddleGap = [
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(180)), value: 10),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(181)), value: 20),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(590)), value: 30),
+        ]
+
+        let axis = HistoryGraphTimeAxis.make(points: pointsWithMiddleGap, currentTimestamp: currentTimestamp)
+
+        #expect(axis.uncollectedNormalizedWidth == 0.3)
+        #expect(axis.collectionProgressLabel == "데이터 수집 중 · 07:00 / 10:00")
+    }
+
+    @Test func collectionProgressUsesElapsedAndTotalDurations() {
+        let currentTimestamp = baseInstant.advanced(by: .seconds(600))
+        let points = [HistoryPoint(timestamp: currentTimestamp.advanced(by: .seconds(-42)), value: 10)]
+
+        let axis = HistoryGraphTimeAxis.make(points: points, currentTimestamp: currentTimestamp)
+
+        #expect(axis.collectionProgressLabel == "데이터 수집 중 · 00:42 / 10:00")
+    }
+}
+
+// MARK: - CPU 그래프 격자·밴드·판 테두리 그리기 순서
 
 /// `HistoryGraphView.body`는 `drawOrder`를 그대로 순회해 그리므로, 이 배열이 실제 그리기 순서 그 자체입니다.
 /// 격자가 밴드 채움·경계선보다 먼저(가장 뒤에) 와야 부하가 높아 밴드가 그 자리를 덮는 구간에서도
 /// 격자가 반투명 밴드 아래로 비칩니다(SPEC §5.6, ANALYSIS §5 DP10).
 /// 순서를 밴드가 격자보다 먼저 오도록 바꾸거나, 밴드 채움 불투명도를 1.0(불투명)으로 바꾸면
 /// 아래 단언들이 실패해야 합니다.
+@MainActor
 struct HistoryGraphViewDrawOrderTests {
 
     @Test func gridlinesAreDrawnBeforeBandFillsAndBoundaries() {
         #expect(HistoryGraphView.drawOrder.first == .gridlines)
     }
 
-    @Test func drawOrderIsGridlinesThenFillsThenBoundaries() {
+    @Test func drawOrderIsGridlinesThenFillsBoundariesAndGraphBorder() {
         #expect(HistoryGraphView.drawOrder == [
             .gridlines,
+            .uncollectedRegion,
             .bandFill(.lower),
             .bandFill(.upper),
             .bandBoundary(.lower),
-            .bandBoundary(.upper)
+            .bandBoundary(.upper),
+            .graphBorder
         ])
+        #expect(HistoryGraphView.drawOrder.last == .graphBorder)
     }
 
     @Test func bandFillOpacitiesAreTranslucentSoGridlinesShowThrough() {
-        #expect(HistoryGraphView.fillOpacity(for: .lower) == 0.55)
-        #expect(HistoryGraphView.fillOpacity(for: .upper) == 0.20)
+        #expect(HistoryGraphView.fillOpacity(for: .lower) == 0.60)
+        #expect(HistoryGraphView.fillOpacity(for: .upper) == 0.15)
         #expect(HistoryGraphView.fillOpacity(for: .lower) < 1.0)
         #expect(HistoryGraphView.fillOpacity(for: .upper) < 1.0)
     }
+
+    @Test func lowerBoundaryIsDashedAndUpperBoundaryIsSolid() {
+        let lower = HistoryGraphView.boundaryStyle(for: .lower)
+        let upper = HistoryGraphView.boundaryStyle(for: .upper)
+
+        #expect(lower.dash == [3, 2])
+        #expect(upper.dash.isEmpty)
+        #expect(lower.lineWidth == upper.lineWidth)
+    }
 }
 
-// MARK: - task-005(재작업): 값 없는 자리표시가 그리는 레이어 목록
+// MARK: - 값 없는 자리표시가 그리는 레이어 목록
 
-/// 값이 없는 상태의 그래프 자리(`GraphPlaceholderView`)는 `.frame(height: 60)`로 높이를 고정하므로,
+/// 값이 없는 상태의 그래프 자리는 값 있는 경로와 같은 `HistoryGraphLayout` 높이를 쓰므로,
 /// `Canvas`가 격자를 그리든 안 그리든 `NSHostingController.sizeThatFits(in:)` 높이는 같습니다 —
 /// 그래서 격자 유무는 높이 단언이 아니라 이 목록 자체로 잡습니다(SPEC §5.8, ANALYSIS §5 DP14).
-/// `GraphPlaceholderView.body`가 `HistoryGraphGridline.placeholderDrawOrder`를 그대로 순회해 그리므로,
+/// 값 없음 경로가 `HistoryGraphGridline.placeholderDrawOrder`를 그대로 순회해 그리므로,
 /// 이 배열이 자리표시의 실제 그리기 내용 그 자체입니다.
+@MainActor
 struct HistoryGraphGridlinePlaceholderDrawOrderTests {
 
-    @Test func placeholderDrawOrderContainsGridlines() {
-        #expect(HistoryGraphGridline.placeholderDrawOrder == [.gridlines])
+    @Test func placeholderDrawOrderContainsGridlinesUncollectedRegionThenGraphBorder() {
+        #expect(HistoryGraphGridline.placeholderDrawOrder == [.gridlines, .uncollectedRegion, .graphBorder])
+        #expect(HistoryGraphGridline.placeholderDrawOrder[1] == .uncollectedRegion)
+        #expect(HistoryGraphGridline.placeholderDrawOrder.last == .graphBorder)
     }
 }

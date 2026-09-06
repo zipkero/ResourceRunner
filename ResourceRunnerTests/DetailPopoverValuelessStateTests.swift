@@ -132,7 +132,7 @@ private struct ReferenceCoreCell: View {
                 }
                 if omission != .fill {
                     Rectangle()
-                        .fill(DashboardColorPalette.cpuCoreFill)
+                        .fill(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: usage)))
                         .frame(height: CPUCoreGridLayout.barHeight * CGFloat(usage) / 100)
                 }
             }

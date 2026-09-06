@@ -6,118 +6,121 @@ spec.md는 §1부터 §5까지 전부 읽었습니다.
 `승인 전 확인` 섹션이 spec.md에 없으므로 미답 질문은 없습니다.
 범위는 spec.md §1이 제한하는 표시 계층 안이고, 요구사항을 더하거나 약하게 바꾸지 않았습니다.
 
-읽은 입력 맥락 — `ROADMAP.md`의 `M2`·`M3`, `docs/product.md`의 「대시보드 > 공통 정보 구조·접근성」·「CPU > 기본 카드·상세 정보·TOP 5 정책」·「Network > 기본 카드」·「Disk > 기본 카드」·「최근 그래프와 데이터 보관」, `docs/design.md`의 「SwiftUI 레이아웃과 접근성 제약」 전체, core-resource-monitoring `§5.6`, resource-visualization `§3`·`§5.5`·`§5.6`, detail-popover-readability `§5.1`, dashboard-visual-refinement `§3`·`§5.6`·`§5.10`과 그 feature의 design.md 전문(DP1–DP13).
+이 문서는 spec.md의 「2026-09-06 색 재결정」에 맞춰 다시 쓴 판본입니다.
+그 절 이전 판본의 설계는 커밋 `060504b`에 이미 구현돼 있으므로, 아래 세로 예산·여백·픽셀 값은 산술 예상이 아니라 그 구현에서 실측으로 확정된 값입니다.
+재결정이 다시 여는 것은 Memory 구성 색과 「리소스마다 고유 색조」 규칙 둘뿐이고, CPU 계열 색·코어 단계 색·그래프 표현·여백·문구는 재결정 대상이 아닙니다.
+
+읽은 입력 맥락 — `ROADMAP.md`의 `M2`·`M3`, `docs/product.md`의 「대시보드 > 공통 정보 구조·접근성」·「CPU > 기본 카드·상세 정보·TOP 5 정책」·「Network > 기본 카드」·「Disk > 기본 카드」·「최근 그래프와 데이터 보관」, `docs/design.md`의 「SwiftUI 레이아웃과 접근성 제약」과 「대시보드 본체의 세로 예산」, core-resource-monitoring `§5.6`, resource-visualization `§3`·`§5.5`·`§5.6`, detail-popover-readability `§5.1`, dashboard-visual-refinement `§3`·`§5.6`·`§5.10`과 그 feature의 design.md DP1–DP13.
 
 직전 feature에서 유지되는 결정은 DP1(`DashboardStyle` 자리)·DP2(타이포 네 역할)·DP3(카드 표면 테두리)·DP4(값 열)·DP5(바이트 서식)·DP10(상세 섹션 위계)·DP12(테스트 기준 갱신 원칙)입니다.
-되열리는 결정은 DP6(여백 단계가 만든 코어 상한)·DP8(두 색조 램프)·DP9(CPU 밴드 배치)·DP11(고정 크기)이며, spec.md §1이 지정한 세 자리와 일치합니다.
+되열리는 것은 spec.md §1이 지정한 세 자리(카드 높이 상한, 색조 수와 CPU 단계, 하위 행 네 경계)이며, 여기에 이 feature 자신의 `§5.4`가 재결정으로 한 번 더 되열렸습니다.
 
-### 코드에서 확인한 사실
+### 코드에서 확인한 사실 (현재 HEAD `060504b`)
 
-- CPU 카드의 그래프 슬롯은 값이 있을 때 `HistoryGraphView(...).frame(height: 60)`(`ResourceRunner/DashboardView.swift:156`), 없을 때 `GraphPlaceholderView`(`:707`)이며 자리표시도 `.frame(height: 60)`(`:717`)입니다. 두 경로가 `drawCPUGraphGridlines`(`:694`) 하나를 공유합니다.
-- 격자는 `HistoryGraphGridline.baselineValues = [25, 50, 75]`(`ResourceRunner/DashboardPresentation.swift:401`) 뿐이고, 자리표시 레이어 목록은 `placeholderDrawOrder = [.gridlines]`(`:419`)입니다. 세로 눈금도 영역 경계도 그리는 자리가 없습니다.
-- 가로축은 `HistoryPoint.normalizedXPosition`(`:381`)이 그리는 시점 기준 10분 창을 0…1로 정규화합니다. 창 길이·눈금·라벨을 화면에 내놓는 자리는 없습니다.
-- 밴드 스타일은 `fillOpacity(for:)` 0.55/0.20(`DashboardView.swift:594`)과 `boundaryStyle(for:)` 점선 `[3, 2]`/실선(`:585`)이고, 선 두께는 1.0pt(`:579`)로 다운샘플 버킷 최소 간격 4pt(`DashboardPresentation.swift:311`)의 절반보다 작아야 한다는 근거가 주석에 있습니다.
-- 코어 막대는 트랙 `quaternaryLabelColor`·채움 `secondaryLabelColor`(`ResourceRunner/DashboardColorPalette.swift:40-41`)로 무채색이고, 채움 높이만 값을 나릅니다(`DashboardView.swift:1244`의 `fillHeight`).
-- 팔레트는 두 색조 × 두 단계 구조(`DashboardColorPalette.swift:18-27`)이며 CPU는 색조 A, Memory는 App·Wired에 A, Compressed·Cached에 B를 씁니다. production 소비자는 `DashboardView.swift` 하나입니다.
-- 하위 프로세스 네 경계는 `withinChildRow = 2`·`betweenChildren = 10`(`DashboardPresentation.swift:528`)·`parentToFirstChild = 18`(`:531`)·`lastChildToNextApplication = 26`(`:539`)이고, `afterLastChild`는 목록 행 간격을 뺀 유도값(`:542`)입니다. `childIndent`·`childValueIndent`도 유도식(`:519`, `:522`)이라 가로 정렬은 값이 아니라 관계로 닫혀 있습니다.
-- 순위 안내 문구는 `ApplicationRankingSampling.topApplicationsCaption(count:)`(`ResourceRunner/ApplicationRanking.swift:109`)이 만들고, 카드는 정원 5, Memory 상세 증가량 순위는 정원 20으로 같은 함수를 씁니다. 카드에서는 `CardRankingSlotView`의 마지막 줄(`DashboardView.swift:785-787`)이고 접근성 이름에도 그대로 들어갑니다(`DashboardPresentation.swift:432`, `:1088`).
-- 카드 접근성 이름은 그래프를 「User와 System 두 계열 중첩 그래프, 기준선 25%·50%·75%」로만 서술합니다(`DashboardPresentation.swift:451-461`). 시간 창은 어디에도 없습니다.
-- 카드는 `.accessibilityElement(children: .ignore)`로 닫혀 있어(`DashboardView.swift:36-38`, `:52-54`) 카드 안에 새 텍스트를 두어도 접근성 계층에는 새 노드가 생기지 않습니다. 화면에 더한 정보는 카드 이름에 함께 넣어야 도달합니다.
-- 상세 팝업에는 그래프가 없습니다. `CPUDetailView`(`DashboardView.swift:981`)는 요약 / 코어 격자 / Load Average / 앱 목록 네 섹션뿐이라 그래프 높이 변경이 상세 세로 예산에 닿지 않습니다.
+- 그래프 판은 `HistoryGraphLayout`(`ResourceRunner/DashboardPresentation.swift:397-402`)이 소유합니다 — `plotHeight = 100`, `axisSpacing = DashboardStyle.Spacing.labelToContent`, `axisLabelHeight = 13`, `slotHeight = 117`.
+- 격자는 `HistoryGraphGridline`(`:408-427`)이 가로 기준선 `[25, 50, 75]`와 시간 창을 다섯 등분하는 세로 눈금(`verticalDivisionCount = 5`), 선 두께 1을 함께 소유합니다.
+- `CPUCoreUsageStep.boundaries`(`:432-444`)가 `HistoryGraphGridline.baselineValues`를 그대로 가리키고, `step(for:)`가 정수 비교 최대 세 번으로 `RampStep` 넷 중 하나를 고릅니다.
+- `HistoryGraphTimeAxis`(`:448-483`)가 축 양끝 라벨·수집 진행 문구·미수집 정규화 폭을 내놓고, 미수집 폭은 **가장 이른 표본 시각** 하나만 봅니다(중간 공백은 대상이 아님).
+- 하위 프로세스 네 경계는 `ApplicationProcessRowLayout`(`:651-668`)에서 `withinChildRow(2)`, `betweenChildren(2+4=6)`, `parentToFirstChild(2+8=10)`, `lastChildToNextApplication(2+12=14)`으로 유도되고 `afterLastChild = 14 − 2 = 12`입니다. 리터럴이 아니라 `DashboardStyle.Spacing`(2 / 4 / 8 / 16, `DashboardStyle.swift:65-70`)에서 나옵니다.
+- 카드 순위 머리글은 `ApplicationRankingSampling.topApplicationsHeading`(`ResourceRunner/ApplicationRanking.swift:113-117`)의 「앱 TOP 5 · 시스템 프로세스 제외」이고, 상세용 긴 캡션 `topApplicationsCaption(count:)`(`:106-111`)는 그대로 남아 있습니다.
+- 본체 고정 높이는 `DashboardView.bodyHeight = 508`(`ResourceRunner/DashboardView.swift:70`), 상세는 `400 × 480`(`:90-91`)입니다.
+- 팔레트(`ResourceRunner/DashboardColorPalette.swift`)는 **리소스별 한 색조 × 네 단계** 구조입니다 — `cpuRamp`(`:25-30`)와 `memoryRamp`(`:31-36`), 그리고 네 단계를 뜻하는 `RampStep`. `cpuUser = cpu(.step3)`·`cpuSystem = cpu(.step1)`(`:39-41`), `cpuCoreFill(_:)`(`:54`)은 CPU 램프를 그대로 돌려주고, `memoryComposition(_:)`(`:60`)이 App→Cached를 주황 램프 step1→step4에 배정합니다. `memory(_ step:)`(`:69`)도 공개돼 있습니다.
+- 팔레트의 production 소비자는 `DashboardView.swift` 하나입니다 — CPU 밴드·스와치(`:299-300`, `:600-601`), 격자·테두리·눈금·빗금(`:708`, `:720`, `:731`, `:769`), 코어 칸(`:1333`, `:1336`), Memory 구성 바·도넛·범례(`:460`, `:493`, `:500`, `:1462`, `:1477`, `:1509`).
+- 밴드 채움은 아래 0.60 / 위 0.15(`DashboardView.swift:591-596`), 경계선은 아래 점선 `[3, 2]` / 위 실선이고 선 두께는 1.0pt(`:576-586`)입니다.
+- Memory 범례는 수집 상태와 무관하게 네 이름을 항상 그립니다(`DashboardView.swift:446-455`), 상세 도넛 범례도 같은 이름을 씁니다.
 
-### 직전 feature에서 확정된 수치 (이 설계의 산술 기준)
+### 확정된 수치 (이 설계의 산술 기준)
 
 - 줄 높이 실측 — `.caption`·`.caption2` 13.0, `.title2.weight(.semibold)` 21.0.
-- CPU 카드 231.0 = 16(안쪽 여백 8×2) + 51(제목 13 + 2 + 초점 21 + 2 + 계열 13) + 8 + 60(그래프) + 8 + 88(순위).
-- 순위 묶음 88.0 = 6줄 × 13 + 5 × 2(정원 5줄 + 안내 한 줄).
-- Memory 카드 169.0 = 16 + 21(제목·초점 줄) + 8 + 28(Pressure 13 + 2 + 범례 13) + 8 + 88.
-- 본체 콘텐츠 산술 448 = 32(`.padding()`) + 231 + 16 + 169, XCUITest 실측 팝오버 473 → `bodyHeight = 447`(`DashboardView.swift:73`). 산술과 실측의 차는 1pt입니다.
+- 그래프 묶음 `S = 117` = 판 100 + `labelToContent` 4 + 축 라벨 줄 13.
+- 순위 묶음 90 = 머리글 13 + `labelToContent` 4 + 5줄 73.
+- CPU 카드 **290** = 16(안쪽 여백 8×2) + 51(제목 13 + 2 + 초점 21 + 2 + 계열 13) + 8 + 117 + 8 + 90.
+- Memory 카드 **171** = 16 + 21 + 8 + 28(Pressure 13 + 2 + 범례 13) + 8 + 90.
+- 본체 콘텐츠 산술 509 = 32(`.padding()`) + 290 + 16 + 171, XCUITest 실측 팝오버 **534** → `bodyHeight = 508`. 산술과 실측의 차는 직전 feature와 같은 1pt입니다.
 - 상세 400×480, 14코어 격자 아래끝 166, 첫 화면 무스크롤 상한 56코어.
-- 화면 `visibleFrame` 높이 1084pt, `NSPopover` chrome 26pt.
+- 기준 기기 `NSScreen` frame 1728×1117 · `visibleFrame` 1728×1084, `NSPopover` chrome 26pt.
 
 ### 색 검증 (검증기를 직접 돌린 결과)
 
-sRGB↔CIELAB 변환, WCAG 명도대비, LCh 게이머트 탐색을 구현한 스크립트를 실제로 실행했습니다.
-현재 팔레트 여덟 색의 L\*·C\*·h°·배경 대비가 직전 feature design.md의 표와 소수점까지 일치하는 것을 먼저 확인해 검증기가 같은 기준을 재현한다는 것을 잡았습니다(예: 라이트 `#165698` L\* 36.2 / C\* 42.0 / h 277.9 / 대비 6.31).
-배경은 spec.md §1의 근사(라이트 `#ECECEC` L\* 93.4, 다크 `#2E2E2E` L\* 18.9)를 그대로 썼습니다.
+sRGB 선형화, WCAG 명도대비, CIELAB `L*`·`C*`·`h°`, HSB 색상환 거리, 알파 합성 후 `L*`를 구현한 스크립트를 실행했습니다.
+배경은 spec.md §1의 근사(라이트 `#ECECEC` `L*` 93.4, 다크 `#2E2E2E` `L*` 18.9)를 그대로 썼습니다.
+검증기가 같은 기준을 재현하는지는 현재 CPU 램프 여덟 색을 먼저 돌려 확인했습니다 — 라이트 `#003a6c` `L*` 24.0 / 대비 9.76부터 `#4d87d9` `L*` 56.0 / 대비 3.07까지가 코드 주석·직전 판본의 표와 소수점까지 일치합니다.
+되돌릴 Memory 여덟 값과 CPU 밴드 합성 결과는 §5 DP7·DP8에 표로 둡니다.
 Machado 색맹 시뮬레이션과 CIEDE2000 인접쌍 판정은 이번 feature의 제약이 아니므로(spec.md §3) 돌리지 않았고, 어떤 결정의 근거로도 쓰지 않았습니다.
-새 램프와 밴드 합성 측정값은 §5 DP6·DP7·DP8에 표로 둡니다.
 
 ### 기존 테스트가 잠그고 있는 것
 
-- `ResourceRunnerTests/DashboardCardLayoutTests.swift` — 카드 높이 기준값 CPU 231.0 / Memory 169.0(`:16-17`)과 변경 전 상한 243.0 / 181.0(`:18-19`), 픽셀 영역 리터럴 `cpuPlaceholderGraph` y 65..<129(`:160`)·`cpuPlaceholderSummary` y 45..<60(`:159`)·`cpuFirstRankingIcon` y 136..<148(`:162`), 카드 안쪽 채움 잉크 0과 테두리 잉크 > 0(`:875-876`), 스와치 색조 일치·밝기 방향(`:885-887`), 그래프 자리표시에 채도 0.35 초과 픽셀 0(`:938-941`).
-- `ResourceRunnerTests/ApplicationProcessRowLayoutTests.swift` — 네 경계 측정값 2 / 10 / 18 / 26(`:285-288`), 네 값이 모두 다르고 층을 넘을수록 넓어짐(`:293-297`), 펼침 증가 `70 + (n−1) × 38`(`:305`), 접힘 행 24.0과 `afterLastChild == 24`(`:310-313`), `childIndent`·`childValueIndent` 유도식(`:235-238`).
-- `ResourceRunnerTests/CPUCoreGridVerticalBudgetTests.swift` — 14코어 격자 아래끝 == 166(`:150`), 56코어 == 446(`:167`), 57·65·80·128코어는 480 초과(`:171-179`), 좁힌 폭 353에서 칸이 화면 수치를 담음.
-- `ResourceRunnerTests/CPUCoreUsageGridTests.swift` — 칸 안 잉크 띠 세 개와 순서, 격자 높이 공식, 트랙·채움의 알파 비교(`:97-98`)로 채움이 트랙보다 진하다는 판정.
-- `ResourceRunnerTests/DetailPopoverValuelessStateTests.swift` — 상세 프레임 400×480(`:403-404`), `DetailPopoverNewDisplayElement` 9개 전수(`:446-447`), 코어 칸 기준 조립이 `cpuCoreTrack`·`cpuCoreFill`을 직접 씁니다(`:131`, `:135`).
-- `ResourceRunnerTests/ApplicationRankingTests.swift:324-334` — 안내 문구 「시스템 프로세스는 TOP 5에 포함되지 않습니다」·「… TOP 20 …」 리터럴.
-- `ResourceRunnerTests/DashboardPresentationTests.swift:584`, `:1013` — 카드 접근성 이름이 안내 문구를 포함. `:965-966` — 상세 증가량 순위 캡션이 카드 문구와 다름.
-- `ResourceRunnerUITests/ResourceRunnerUITests.swift:28`, `:35` — 본체 팝오버 프레임 473pt(수집 중·정상 두 상태).
-- `ResourceRunnerUITests/DashboardDetailPopoverUITests.swift:24` — 상세 크기 400×480 복제 리터럴.
-- `ResourceRunnerUITests/DashboardCPUCardUITests.swift:45` — 카드 접근성 이름에 안내 문구 포함.
+- `ResourceRunnerTests/DashboardColorPaletteTests.swift` — ① CPU·Memory 두 램프 열여섯 색의 배경 대비 ≥ 3, 대비 단조 감소, 램프 안 색조 거리 < 0.04, 라이트 `L*` 오름·다크 `L*` 내림(`:76-95`) ② CPU와 Memory의 색조 거리 > 0.1(`:97-104`) ③ Memory 네 카테고리가 램프 네 단계와 같고 `L*`가 넷 다 다름(`:106-121`) ④ `cpuUser == cpu(.step3)`·`cpuSystem == cpu(.step1)`·`cpuCoreFill(step) == cpu(step)`(`:123-139`) ⑤ 밴드 합성 `ΔL*` > 10.5와 채움 밀도 차 0.45(`:141-158`).
+- `ResourceRunnerTests/DashboardCardLayoutTests.swift` — 카드 높이 기준값 290 / 171, 변경 전 값 231 / 상한 181, M3 예산 상한 334(`:14-20`), 픽셀 영역 리터럴 `cpuPlaceholderSummary` y 45..<60 · `cpuPlaceholderGraph` y 65..<169 · `cpuFirstRankingIcon` y 210..<222(`:160-166`), 카드 안쪽 채움 잉크 0과 테두리 잉크 > 0, CPU 두 스와치의 색조 일치와 램프 단계 배정(`:897-908`), Memory 범례 폭 조립이 `memoryComposition(_:)`을 직접 씀(`:291-300`).
+- `ResourceRunnerTests/MemoryCompositionTests.swift:101-116` — 범례 항목 순서가 바 구간 순서와 같고 각 스와치 뒤에 그 항목 이름이 붙는다는 것. 색 비의존 relief가 여기서 잠깁니다.
+- `ResourceRunnerTests/CPUCoreUsageGridTests.swift` — `RampStep`가 넷(`:346`), 단계 경계 앞뒤에서 채움 색이 갈림(`:376-380`), 칸 안 잉크 띠 세 개와 격자 높이 공식.
+- `ResourceRunnerTests/ApplicationProcessRowLayoutTests.swift` — 네 경계 2 / 6 / 10 / 14, 네 값이 모두 다르고 층을 넘을수록 넓어짐, 펼침 증가 `50 + (n−1) × 34`, `afterLastChild == 12`.
+- `ResourceRunnerTests/CPUCoreGridVerticalBudgetTests.swift` — 14코어 격자 아래끝 166, 56코어 446, 57코어 이상 480 초과.
+- `ResourceRunnerTests/DetailPopoverValuelessStateTests.swift` — 상세 프레임 400×480, `DetailPopoverNewDisplayElement` 전수, 코어 칸 기준 조립이 `cpuCoreTrack`·`cpuCoreFill(_:)`을 직접 씀(`:131`, `:135`).
+- `ResourceRunnerUITests/ResourceRunnerUITests.swift:28`, `:35` — 본체 팝오버 534pt(수집 중·정상 두 상태).
+- `ResourceRunnerUITests/DashboardDetailPopoverUITests.swift:24` — 상세 400×480.
 - `ResourceRunnerUITests/CPUCoreAccessibilityUITests.swift:35-46` — 코어 칸 라벨 `"코어 N"`, 값 `^[0-9]+%$`, 하위 요소 0.
 
 ### 의존 탐색 흔적 (§4의 근거)
 
-- `drawCPUGraphGridlines` 호출부는 `HistoryGraphView.body`(`DashboardView.swift:669`)와 `GraphPlaceholderView.body`(`:712`) 둘뿐이므로, 이 함수 옆에 그리기 경로를 더하면 값 있음·없음 두 상태가 자동으로 같은 그림을 얻습니다.
-- `HistoryGraphGridline.baselineValues` 소비자는 위 그리기 함수(`:695`)와 카드 접근성 이름(`DashboardPresentation.swift:456`), 그리고 테스트입니다. 값을 늘리면 접근성 문구가 함께 바뀝니다.
-- `DashboardColorPalette` production 소비자는 `DashboardView.swift` 하나이고, 테스트에서는 `CPUCoreUsageGridTests`·`DetailPopoverValuelessStateTests`·`DashboardCardLayoutTests`가 상수를 직접 참조합니다.
-- `topApplicationsCaption(count:)` 소비자는 `CPUCardPresentation.topApplicationsCaption`(`DashboardPresentation.swift:234`), `MemoryCardPresentation.topApplicationsCaption`(`:999`), Memory 상세의 `recentIncreaseRankingCaption`(`:1043`)·`applicationsCaption`(`:1048`)입니다. 카드용 문구만 바꾸려면 별도 진입점이 필요합니다.
-- `ApplicationProcessRowLayout`의 네 경계 소비자는 `ApplicationProcessGroupRow`(`DashboardView.swift:1513`, `:1539-1540`)와 `ApplicationProcessGroupListView.rowSpacing`뿐입니다.
-- `CPUCoreUsageCellView`의 채움 색 소비자는 그 뷰 하나(`DashboardView.swift:1218`)입니다.
+- `DashboardColorPalette`를 참조하는 production 파일은 `DashboardView.swift` 하나이고, 테스트에서는 `DashboardColorPaletteTests`·`DashboardCardLayoutTests`·`CPUCoreUsageGridTests`·`DetailPopoverValuelessStateTests`가 상수를 직접 씁니다.
+- 그중 **Memory 색을 실제로 읽는 자리**는 production의 구성 바·도넛·두 범례(`DashboardView.swift:460`, `:500`, `:1477`, `:1509`)와, 테스트에서는 `DashboardColorPaletteTests`의 ①②③, `DashboardCardLayoutTests`의 범례 폭 조립뿐입니다. 범례 폭 조립은 색을 폭 계산에만 쓰므로 값이 바뀌어도 결과가 달라지지 않습니다.
+- `memory(_ step:)`를 부르는 production 자리는 없고 `DashboardColorPaletteTests`만 씁니다 — 진입점을 지워도 production 조립에 닿지 않습니다.
+- `MemoryCompositionCategory`(`DashboardPresentation.swift:803-815`)의 `allCases` 순서가 바 구간 순서이자 범례 순서이고, 바·범례·도넛이 모두 같은 배열을 순회합니다. 색 배정이 카테고리 하나를 진입점으로 받는 한 세 자리가 갈릴 경로가 없습니다.
+- `HistoryGraphGridline.baselineValues` 소비자는 그래프 그리기, 카드 접근성 이름, `CPUCoreUsageStep.boundaries`입니다.
 
 ### 추정으로 남는 것
 
-- 새 본체 콘텐츠 높이 509pt는 위 줄 높이 실측에서 유도한 산술값입니다. 직전 feature에서 산술 448이 실측 447로 나왔으므로 1pt 안쪽의 오차가 예상되며, §5 DP11의 절차로 실측해 확정합니다.
-- 메뉴바 팝오버가 화면 아래끝에 남기는 여백은 실측하지 않았습니다. `visibleFrame` 1084pt를 상한으로 두고 계산했으며, 아래 여백이 있더라도 §5 DP1의 여유 133pt 안에서 흡수됩니다.
-- 팝오버 표면은 반투명 재질이라 실제 합성 배경은 뒤 화면에 따라 달라집니다. spec.md §1이 정한 근사 안에서는 새 램프 열여섯 색이 모두 3:1을 통과합니다.
-- 다른 크기의 화면(13인치 노트북급 `visibleFrame` 약 860~920pt)에서 M3 네 카드가 한 열로 들어가는지는 이 설계가 보증하지 않습니다. 그 자리는 §5 DP1이 M3의 결정으로 넘깁니다.
-- 「그래프가 면으로 보인다」·「색감이 돌아왔다」는 지각 판정이라 실측이 아니라 화면 확인의 몫입니다.
+- 팝오버 표면은 반투명 재질이라 실제 합성 배경은 뒤 화면에 따라 달라집니다. spec.md §1이 정한 근사 안에서의 결과만 확인했습니다.
+- 메뉴바 팝오버가 화면 아래끝에 남기는 여백은 실측하지 않았습니다. `visibleFrame` 1084pt를 상한으로 두고 계산했으며, 아래 여백이 있더라도 DP1의 여유 133pt 안에서 흡수됩니다.
+- 기준 기기보다 작은 화면(13인치급 `visibleFrame` 약 860~920pt)에서 M3 네 카드가 한 열로 들어가는지는 이 설계가 보증하지 않습니다. 그 자리는 DP1이 M3의 의무로 넘깁니다.
+- 「Memory 색이 착수 전으로 돌아왔다」는 지각 판정이라 실측이 아니라 화면 확인의 몫입니다.
 
 ## 1. 구조
 
 새 모듈이나 레이어를 만들지 않습니다.
-표시 계층 안에서 순수 계산 경계를 셋 더하고, 색 경계 하나의 내부 모양을 바꿉니다.
+표시 계층 안에서 순수 계산 경계 셋을 두고, 색 경계 하나의 내부 모양을 정합니다.
 뷰 트리 모양(본체 → 두 `Button` → 카드 뷰 → 자식 팝오버 → 상세 뷰)과 수집·조립 경로는 그대로입니다.
 
 ### 그래프 판 경계 — `HistoryGraphLayout`
 
-그래프가 차지하는 판의 높이를 뷰 밖 상수로 꺼냅니다.
-지금은 `60`이 값 있음 경로(`DashboardView.swift:156`)와 자리표시 경로(`:717`) 두 자리에 리터럴로 복제돼 있어, 한쪽만 고치면 상태 전이에서 카드 높이가 갈립니다.
+그래프 판의 높이와 축 라벨 줄까지 포함한 슬롯 높이를 뷰 밖 상수 하나에 모읍니다.
+값 있음 경로와 자리표시 경로가 같은 상수를 참조하므로, 한쪽만 고쳐 상태 전이에서 카드 높이가 갈리는 경로가 없습니다(`SPEC §5.1`, `SPEC §5.8`).
 이 저장소가 이미 쓰는 관례(`CPUCoreGridLayout`·`ApplicationProcessRowLayout`처럼 뷰 밖 순수 상수 + 그 상수를 직접 단언하는 단위 테스트)를 그대로 따릅니다.
-판 높이와 축 라벨 줄 사이 간격이 이 자리에 모이고, 두 그리기 경로가 같은 값을 참조합니다(`SPEC §5.1`, `SPEC §5.8`).
 
-### 격자·눈금·영역 경계 — `HistoryGraphGridline`의 확장
+### 격자·눈금·영역 경계 — `HistoryGraphGridline`
 
-가로 기준선만 있던 자리에 세로 시간 눈금과 판 테두리를 더합니다.
-셋 다 「값이 아니라 눈금」이라는 같은 성질을 가지므로 같은 자리에 둡니다 — 값이 없는 자리표시에서도 그려도 되는 것이 이 성질입니다(`SPEC §5.13`).
-자리표시 레이어 목록(`placeholderDrawOrder`)과 값 있음 레이어 목록(`HistoryGraphView.drawOrder`)이 각각 이 자리의 요소를 순회하므로, 자리표시에서 요소를 빼는 변경은 배열 단언에서 잡힙니다.
+가로 기준선, 세로 시간 눈금, 판 테두리를 한 자리에 둡니다.
+셋 다 「값이 아니라 눈금」이라는 같은 성질을 갖고, 그 성질이 곧 「값이 없는 자리표시에서도 그려도 된다」의 근거입니다(`SPEC §5.13`).
+자리표시 레이어 목록과 값 있음 레이어 목록이 각각 이 자리의 요소를 순회하므로, 한쪽에서 요소가 빠지면 배열 단언에서 잡힙니다.
 
 ### 시간 축 경계 — `HistoryGraphTimeAxis`
 
-창의 길이와 「어디부터가 수집된 구간인지」를 문자열과 비율로 내놓는 순수 계산 자리를 새로 둡니다(`SPEC §5.2`).
-입력은 그래프 점 목록과 그리는 시점의 시각, 시간 창 길이이고, 출력은 축 양끝 라벨·수집 진행 문구·미수집 구간의 정규화 비율입니다.
-뷰가 이 계산을 직접 하지 않게 두는 이유는 「값을 지어내지 않는다」(spec.md §3)가 이 자리의 판정에 걸리기 때문입니다 — 표본이 없는 구간을 0으로 그리는지 아닌지가 여기서 갈리므로 단위 테스트가 직접 잡아야 합니다.
-
-### 색 경계 — `DashboardColorPalette`의 리소스별 램프
-
-자리는 그대로 두고 내부 모양을 바꿉니다.
-지금의 「두 색조 × 두 단계」를 **리소스별 한 색조 × 네 단계**로 재구성합니다(`SPEC §5.4`).
-색조는 리소스가 소유하고(CPU·Memory, 그리고 M3의 Network·Disk), 단계는 그 리소스 안에서 「배경에서 얼마나 떨어져 있는가」의 순서입니다 — step 1이 배경 대비가 가장 크고 step 4가 가장 작습니다.
-라이트·다크는 각각 확정한 값이며 한쪽에서 반전으로 유도하지 않습니다(현재 주석 `DashboardColorPalette.swift:14-15`의 근거를 유지).
-`cpuGridline`·`cpuCoreTrack`·`memoryCompositionTrack`은 구분 대상이 아닌 배경 대비 요소라는 기존 이유가 그대로여서 시스템 색으로 남고, `cpuCoreFill`만 무채색 상수에서 단계 함수로 바뀝니다.
+창의 길이와 「어디부터가 수집된 구간인지」를 문자열과 비율로 내놓는 순수 계산 자리입니다(`SPEC §5.2`).
+뷰가 이 계산을 직접 하지 않는 이유는 「값을 지어내지 않는다」(spec.md §3)가 이 자리의 판정에 걸리기 때문입니다 — 표본이 없는 구간을 0으로 그리는지 아닌지가 여기서 갈리므로 단위 테스트가 직접 잡아야 합니다.
 
 ### 코어 사용률 단계 경계 — `CPUCoreUsageStep`
 
-사용률을 유한한 단계로 옮기는 순수 함수를 둡니다(`SPEC §5.4`).
-단계 경계는 새 리터럴이 아니라 `HistoryGraphGridline.baselineValues`에서 유도합니다 — 카드 그래프의 기준선과 코어 막대의 단계 경계가 같은 값을 가리키면 두 표현이 같은 눈금을 쓴다는 것이 코드 구조에서 드러납니다.
+사용률을 유한한 단계로 옮기는 순수 함수입니다(`SPEC §5.4`).
+단계 경계는 새 리터럴이 아니라 `HistoryGraphGridline.baselineValues`에서 유도합니다 — 카드 그래프의 기준선과 코어 막대의 단계 경계가 같은 값을 가리키면 두 표현이 같은 눈금을 쓴다는 사실이 코드 구조에 남습니다.
 
-### 카드 조립의 변경
+### 색 경계 — `DashboardColorPalette`의 두 집합
 
-- CPU 카드의 그래프 묶음이 「판 + 축 라벨 줄」 두 요소가 됩니다. 값 있음·없음 두 경로가 같은 조립을 씁니다(`SPEC §5.8`).
-- 순위 묶음의 안내 줄이 목록 아래 캡션에서 목록 위 머리글로 옮겨갑니다. 줄 수와 정원은 그대로입니다(`SPEC §5.7`).
-- 상세의 코어 칸은 채움 색만 단계 함수에서 가져옵니다. 칸 안 세 줄 조립과 접근성 계약은 그대로입니다(`SPEC §5.9`).
-- 하위 프로세스 행은 네 경계 상수의 값만 바뀌고 조립은 그대로입니다(`SPEC §5.6`).
+자리는 그대로 두고 내부를 **두 개의 독립한 색 집합**으로 나눕니다(`SPEC §5.4`).
+
+- **CPU 램프** — 한 색조(파랑) 네 단계이며 단계 번호가 배경 대비 순서입니다. CPU 두 밴드와 요약 줄 스와치, 코어 막대 채움이 이 집합에서 색을 고릅니다.
+- **Memory 구성 집합** — 두 색조(파랑·주황) 각 두 단계이며, 네 구간이 카테고리로 직접 배정됩니다. 단계의 뜻이 CPU 램프와 다르므로(DP7) 같은 단계 타입을 공유하지 않습니다.
+
+두 집합은 서로의 값을 참조하지 않습니다.
+색조가 겹치는 것은 허용되며 실격 사유가 아닙니다(DP6).
+`cpuGridline`·`cpuCoreTrack`·`memoryCompositionTrack`은 구분 대상이 아닌 배경 대비 요소이므로 시스템 색으로 남습니다.
+
+### 카드 조립
+
+- CPU 카드의 그래프 묶음은 「판 + 축 라벨 줄」 두 요소이고, 값 있음·없음 두 경로가 같은 조립을 씁니다(`SPEC §5.8`).
+- 순위 묶음의 안내는 목록 아래 캡션이 아니라 목록 위 머리글입니다. 정원 줄 수는 그대로입니다(`SPEC §5.7`).
+- 상세의 코어 칸은 채움 색만 단계 함수에서 가져오고, 칸 안 세 줄 조립과 접근성 계약은 그대로입니다(`SPEC §5.9`).
+- 하위 프로세스 행은 네 경계 상수의 유도식만 정해지고 조립은 그대로입니다(`SPEC §5.6`).
 
 ## 2. 데이터 흐름
 
@@ -126,17 +129,18 @@ Machado 색맹 시뮬레이션과 CIEDE2000 인접쌍 판정은 이번 feature�
 
 `MonitoringScheduler` tick → `ApplicationCoordinator` → `DashboardPresentationStore.updateCPUCard`·`updateMemoryCard` → `ResourceCardState<Presentation>` → `CPUCardView`·`MemoryCardView`(그리고 선택된 카드의 자식 팝오버 → `CPUDetailView`·`MemoryDetailView`).
 
-바뀌는 지점은 마지막 한 칸, **표시 값이 화면 그림과 문자열이 되는 자리**뿐입니다.
+이 feature가 닿는 곳은 마지막 한 칸, **표시 값이 화면 그림과 문자열이 되는 자리**뿐입니다.
 
-1. `CPUCardPresentation.graphPoints`는 지금과 같습니다 — 10분 창 안의 표본만 담고, 창 밖으로 밀려난 점은 조립 단계에서 이미 잘려 있습니다(`DashboardPresentation.swift:271`).
-2. `HistoryGraphView`가 그리는 시점의 시각을 `TimelineView`에서 받아, 지금처럼 `HistoryPoint.normalizedXPosition`으로 가로 좌표를 만듭니다. 여기에 `HistoryGraphTimeAxis`가 같은 시각과 첫 표본 시각을 받아 미수집 구간 비율과 축 문자열을 만듭니다.
-3. `Canvas`는 `HistoryGraphView.drawOrder`를 순회해 격자·세로 눈금 → 미수집 구간 → 두 밴드 채움 → 두 밴드 경계선 → 판 테두리 순으로 그립니다. 판 테두리를 마지막에 두는 이유는 값이 100%에 닿는 구간에서 밴드 채움이 위 변을 덮지 않게 하기 위함입니다(`SPEC §5.13`).
-4. 값이 없으면 `GraphPlaceholderView`가 `placeholderDrawOrder`를 순회해 격자·세로 눈금 → 미수집 구간(창 전체) → 판 테두리를 같은 높이·같은 좌표에 그립니다. 점도 선도 그리지 않습니다(`SPEC §5.2`, `SPEC §5.8`, `SPEC §5.13`).
-5. 코어 칸은 `CPUCoreUsageStep.step(for:)`이 고른 단계를 `DashboardColorPalette`의 CPU 램프에서 색으로 바꿔 채움에 씁니다. tick마다 하는 일은 정수 비교 세 번과 이미 확정된 상수 선택뿐입니다(`SPEC §5.11`).
-6. 색의 라이트·다크 선택은 지금처럼 `NSColor(name:)` 클로저 안에서 AppKit이 appearance를 판정해 결정하므로 갱신 주기와 무관합니다.
+1. `CPUCardPresentation.graphPoints`는 10분 창 안의 표본만 담고, 창 밖으로 밀려난 점은 조립 단계에서 이미 잘려 있습니다.
+2. `HistoryGraphView`가 그리는 시점의 시각을 `TimelineView`에서 받아 `HistoryPoint.normalizedXPosition`으로 가로 좌표를 만듭니다. `HistoryGraphTimeAxis`가 같은 시각과 첫 표본 시각을 받아 미수집 구간 비율과 축 문자열을 만듭니다.
+3. `Canvas`는 격자·세로 눈금 → 미수집 구간 → 두 밴드 채움 → 두 밴드 경계선 → 판 테두리 순으로 그립니다. 판 테두리가 마지막인 이유는 값이 100%에 닿는 구간에서 밴드 채움이 위 변을 덮지 않게 하기 위함입니다(`SPEC §5.13`).
+4. 값이 없으면 자리표시가 격자·세로 눈금 → 미수집 구간(창 전체) → 판 테두리를 같은 높이·같은 좌표에 그립니다. 점도 선도 그리지 않습니다(`SPEC §5.2`, `SPEC §5.8`, `SPEC §5.13`).
+5. 코어 칸은 `CPUCoreUsageStep.step(for:)`이 고른 단계를 CPU 램프에서 색으로 바꿔 채움에 씁니다. tick마다 하는 일은 정수 비교와 이미 확정된 상수 선택뿐입니다(`SPEC §5.11`).
+6. Memory 구성 바·도넛·두 범례는 `MemoryCompositionCategory` 하나를 색 진입점에 넘겨 색을 받습니다. 세 자리가 같은 `allCases` 순서를 순회하므로 구간 순서와 범례 순서가 갈릴 경로가 없습니다(`SPEC §5.4`).
+7. 색의 라이트·다크 선택은 `NSColor(name:)` 클로저 안에서 AppKit이 appearance를 판정해 결정하므로 갱신 주기와 무관합니다.
 
 상태 전이는 그대로입니다 — `collecting` / `normal` / `failure(lastKnown)` / `stopped(lastKnown)` 넷과 `DashboardSelection`의 `none` / `cpu` / `memory` 셋.
-네 상태가 같은 슬롯 집합을 그린다는 계약도 그대로이며, 그래프 슬롯이 「판 + 축 라벨 줄」로 두 요소가 되는 것이 네 상태에 똑같이 적용됩니다(`SPEC §5.8`).
+네 상태가 같은 슬롯 집합을 그린다는 계약도 그대로이고, 그래프 슬롯이 「판 + 축 라벨 줄」 두 요소인 것이 네 상태에 똑같이 적용됩니다(`SPEC §5.8`).
 축 라벨 줄의 가운데 슬롯(수집 진행 문구)은 창이 다 찬 뒤 문자열이 비지만 줄 자체는 남습니다 — 같은 높이의 자리표시로 채워 상태·시간 경과에 따라 카드 높이가 갈리지 않습니다.
 
 미수집 구간의 판정 경로는 하나입니다.
@@ -147,54 +151,58 @@ Machado 색맹 시뮬레이션과 CIEDE2000 인접쌍 판정은 이번 feature�
 
 경계를 가로지르는 계약만 둡니다.
 
-- **`HistoryGraphLayout`** — 그래프 판 높이와 판·축 라벨 줄 사이 간격을 `CGFloat`로 내놓습니다. `CPUCardView`의 값 있음 경로, `GraphPlaceholderView`, 그리고 카드 높이를 재는 단위 테스트가 소비합니다.
-- **`HistoryGraphGridline`** — 기존 `baselineValues`·`yPosition(forValue:height:)`를 유지하고, 창을 등분하는 세로 눈금의 정규화 x 위치 목록과 판 테두리 레이어를 더합니다. `placeholderDrawOrder`에 미수집 구간과 판 테두리가 더해집니다.
-- **`HistoryGraphTimeAxis`** — 점 목록·현재 시각·시간 창을 받아 `(창 시작 라벨, 현재 라벨, 수집 진행 문구, 미수집 구간 비율)`을 내놓습니다. 진행 문구는 창이 다 차면 없음이고, 비율은 0…1입니다.
-- **`CPUCoreUsageStep`** — 사용률(`Double`)을 받아 유한한 단계를 돌려주는 순수 함수와, 그 단계 집합·경계값을 내놓습니다. 경계값은 `HistoryGraphGridline.baselineValues`에서 유도합니다.
-- **`DashboardColorPalette`** — 슬롯 이름이 리소스별 램프 구조를 드러내는 형태로 바뀝니다. `memoryComposition(_:)`처럼 카테고리를 받는 진입점은 유지해 `MemoryCompositionCategory`와의 계약이 그대로이고, 코어 채움은 단계를 받는 진입점이 새로 생깁니다. M3의 Network·Disk는 같은 램프 생성 규칙에 색조 각도만 더해 확장합니다(`SPEC §5.4`).
-- **`HistoryGraphView.fillOpacity(for:)`·`boundaryStyle(for:)`** — signature는 그대로, 돌려주는 값이 바뀝니다(§5 DP7).
-- **`ApplicationRankingSampling`** — 기존 `topApplicationsCaption(count:)`는 그대로 두고(상세 증가량 순위·앱 목록이 계속 씁니다), 카드용 짧은 머리글 문구를 만드는 진입점을 더합니다(`SPEC §5.7`).
-- **`ApplicationProcessRowLayout`** — 네 경계 상수의 이름과 소비 지점은 그대로이고 값만 바뀝니다. 값은 리터럴이 아니라 `DashboardStyle.Spacing`의 두 단계에서 유도합니다(`SPEC §5.6`).
-- **접근성 계약** — 아래는 변경 전과 같은 범위로 유지합니다(`SPEC §5.9`).
+- **`HistoryGraphLayout`** — 판 높이·축 간격·축 라벨 줄 높이·슬롯 높이를 `CGFloat`로 내놓습니다. 값 있음 경로, 자리표시 경로, 카드 높이를 재는 단위 테스트가 소비합니다.
+- **`HistoryGraphGridline`** — 가로 기준선 값, 세로 눈금의 정규화 x 위치, 선 두께, 값→세로 좌표 변환을 내놓습니다. 자리표시 레이어 목록에 미수집 구간과 판 테두리가 함께 듭니다.
+- **`HistoryGraphTimeAxis`** — 점 목록·현재 시각·시간 창을 받아 `(창 시작 라벨, 현재 라벨, 수집 진행 문구, 미수집 구간 비율)`을 내놓습니다. 진행 문구는 창이 다 차면 비고, 비율은 0…1입니다.
+- **`CPUCoreUsageStep`** — 사용률을 받아 CPU 램프의 단계를 돌려주는 순수 함수와 그 경계값입니다. 경계값은 `HistoryGraphGridline.baselineValues`에서 유도합니다.
+- **`DashboardColorPalette`** — 두 진입점 계열로 나뉩니다(`SPEC §5.4`).
+  CPU 쪽은 단계를 받는 `cpu(_:)`·`cpuCoreFill(_:)`과 그 위에서 유도되는 `cpuUser`·`cpuSystem`이고, 단계 타입 `RampStep`는 CPU 램프 전용입니다.
+  Memory 쪽은 `memoryComposition(_ category:)` 하나만 공개하고, 단계를 밖으로 내놓는 `memory(_ step:)`는 두지 않습니다 — Memory 두 단계의 뜻이 `RampStep`의 뜻과 다르기 때문입니다(DP7).
+  트랙·격자 색은 지금처럼 시스템 색 상수입니다.
+- **`HistoryGraphView.fillOpacity(for:)`·`boundaryStyle(for:)`** — 아래 0.60 / 위 0.15, 아래 점선 `[3, 2]` / 위 실선입니다(DP8).
+- **`ApplicationRankingSampling`** — 상세용 `topApplicationsCaption(count:)`와 카드용 `topApplicationsHeading`을 각각 둡니다(`SPEC §5.7`).
+- **`ApplicationProcessRowLayout`** — 네 경계는 리터럴이 아니라 `withinChildRow + labelToContent × k`(k = 0…3)로 유도되고, `afterLastChild`는 목록 행 간격을 뺀 몫입니다(`SPEC §5.6`).
+- **접근성 계약** — 아래를 변경 전과 같은 범위로 유지합니다(`SPEC §5.9`).
   카드의 `.ignore` + `.accessibilityLabel` + `.isButton` + `CPUCard`·`MemoryCard` 식별자,
   코어 칸의 `.ignore` + `.isStaticText` + `"코어 N"` 라벨 + `"N%"` 값 + `CPUCore-N` 식별자,
   하위 프로세스 행의 `AppRow-<앱 키>` 식별자와 그 아래 정확히 두 개의 `StaticText`,
   상세 콘텐츠의 `DashboardDetail` 식별자, 본체의 `DashboardContainer` 식별자.
-  카드 접근성 이름에는 시간 창 길이와 수집 진행이 더해집니다 — 화면에 새로 생긴 정보를 접근성 계층에서도 도달하게 하는 것이며, 기존 항목은 하나도 빠지지 않습니다.
+  카드 접근성 이름에는 시간 창 길이와 수집 진행이 함께 들어갑니다 — 화면에만 생긴 정보를 접근성 계층에서도 도달하게 하는 것이며, 기존 항목은 하나도 빠지지 않습니다.
 
 ## 4. 영향 범위
 
-### 고치는 production 파일
+### 표시 계층 production 파일
 
-- `ResourceRunner/DashboardView.swift` — 그래프 슬롯 조립(판 + 축 라벨 줄), `HistoryGraphView.drawOrder`와 그리기 경로(세로 눈금·미수집 구간·판 테두리), `fillOpacity`·`boundaryStyle`의 값, `GraphPlaceholderView`, `CPUCoreUsageCellView`의 채움 색, `CardRankingSlotView`의 안내 줄 위치와 역할.
-- `ResourceRunner/DashboardPresentation.swift` — `HistoryGraphLayout`·`HistoryGraphTimeAxis`·`CPUCoreUsageStep` 신설, `HistoryGraphGridline` 확장, `ApplicationProcessRowLayout`의 네 경계 유도식, `cpuAccessibilityMetricsLabel`에 시간 창·수집 진행 추가, 카드 안내 문구 진입점 교체.
-- `ResourceRunner/DashboardColorPalette.swift` — 리소스별 네 단계 램프와 라이트·다크 각 열여섯 hex, 코어 채움 진입점.
-- `ResourceRunner/ApplicationRanking.swift` — 카드용 짧은 머리글 문구를 만드는 순수 함수 추가.
+- `ResourceRunner/DashboardView.swift` — 그래프 슬롯 조립(판 + 축 라벨 줄), 그리기 레이어 순서와 세로 눈금·미수집 빗금·판 테두리, 밴드 채움 밀도, 자리표시 경로, 코어 칸 채움 색, 순위 머리글 자리.
+- `ResourceRunner/DashboardPresentation.swift` — `HistoryGraphLayout`·`HistoryGraphTimeAxis`·`CPUCoreUsageStep`, `HistoryGraphGridline`의 세로 눈금, `ApplicationProcessRowLayout`의 네 경계 유도식, 카드 접근성 이름의 시간 창·수집 진행, 카드 머리글 문구 소비.
+- `ResourceRunner/DashboardColorPalette.swift` — CPU 램프 여덟 값과 Memory 구성 집합 여덟 값, 두 계열의 진입점.
+- `ResourceRunner/ApplicationRanking.swift` — 카드용 짧은 머리글 문구.
 
 `ResourceRunner/DashboardStyle.swift`는 건드리지 않습니다 — 타이포 역할 넷과 여백 단계 넷을 그대로 쓰고 새 역할·새 단계를 만들지 않습니다.
-`ResourceRunner/` 아래 나머지 파일(수집·일정·집계·생명주기·메뉴바)도 그대로입니다.
 표시 값의 정의·계산·수집 주기·이력 링 용량이 그대로이므로 `SystemMetrics`·`CPUSystemMetricsCollector`·`MemorySystemMetricsCollector`·`ProcessSurveyCollector`·`MonitoringSampleStore`·`ProcessHistoryStore`·`ApplicationCoordinator`·`StatusBarController`에는 변경이 없습니다.
-
 새 파일을 만드는 경우 `.xcodeproj` 수정은 필요하지 않습니다 — 이 프로젝트는 `PBXFileSystemSynchronizedRootGroup`을 씁니다.
+
+### 2026-09-06 색 재결정이 다시 건드리는 자리
+
+위 목록 중 재결정으로 값이 다시 움직이는 자리는 **둘뿐**입니다.
+탐색으로 확인한 결과(§근거 > 의존 탐색 흔적) Memory 색을 읽는 자리가 그만큼으로 닫혀 있기 때문입니다.
+
+- `ResourceRunner/DashboardColorPalette.swift` — Memory 구성 집합의 여덟 값과 그 진입점. CPU 램프·트랙·격자 상수는 그대로입니다.
+- `ResourceRunnerTests/DashboardColorPaletteTests.swift` — 램프 형태를 전제한 단언 셋(§근거 ①②③). 갱신 방향은 DP13에 둡니다.
+
+production 소비 지점(`DashboardView.swift`의 구성 바·도넛·두 범례)은 카테고리를 넘겨 색을 받는 형태가 그대로이므로 조립 변경이 없습니다.
 
 ### 기준을 갱신할 테스트
 
 `§근거 > 기존 테스트가 잠그고 있는 것`에서 확인한 자리입니다.
-갱신 원칙은 §5 DP12에 두고, 단언을 지우거나 완화하지 않습니다.
+갱신 원칙은 DP13에 두고, 요구가 남아 있는 단언은 지우거나 완화하지 않습니다.
 
-- `ResourceRunnerTests/DashboardCardLayoutTests.swift` — 카드 높이 기준값(CPU 231 → 재실측값, Memory 169 → 재실측값), 변경 전 상한 243/181을 **하한** 단언으로 뒤집기(`SPEC §5.1`이 「커진다」를 요구), 픽셀 영역 리터럴(그래프 슬롯이 길어져 그 아래 순위 영역의 y가 밀림), 스와치 단언(밝기 방향 → 램프 단계 차), 그래프 자리표시의 채도 판정(미수집 빗금이 무채색이라 그대로 통과해야 함).
-- `ResourceRunnerTests/ApplicationProcessRowLayoutTests.swift` — 네 경계 측정값과 펼침 증가 공식이 새 값을 따라갑니다. 네 값이 서로 다르고 층을 넘을수록 넓어진다는 단언(`:293-297`)은 그대로 유지하고, 「변경 전보다 줄었다」는 상한 단언을 더합니다.
-- `ResourceRunnerTests/CPUCoreUsageGridTests.swift` — 트랙·채움의 알파 비교(`:97-98`)가 채움이 유채색 상수가 되면서 판정 근거를 바꿔야 합니다. 칸 안 잉크 띠 세 개와 격자 높이 공식은 상수에서 유도되므로 그대로 통과합니다. 사용률에 따라 채움 색이 갈린다는 단언을 새로 더합니다.
-- `ResourceRunnerTests/CPUCoreGridVerticalBudgetTests.swift` — 상세에는 그래프가 없어 기준값 166·446·56이 그대로 성립해야 합니다. 하위 행 경계가 줄어드는 것도 격자 아래 영역이라 이 값들에 닿지 않습니다(`SPEC §5.12`).
-- `ResourceRunnerTests/DetailPopoverValuelessStateTests.swift` — 상세 프레임 400×480은 §5 DP11의 절차로 재확인해 같은 값으로 남습니다. 코어 칸 기준 조립(`:131`, `:135`)이 새 채움 진입점을 쓰도록 따라갑니다. `DetailPopoverNewDisplayElement` 9개 전수는 이번 feature가 상세에 표시 요소를 더하지 않으므로 그대로입니다.
-- `ResourceRunnerTests/ApplicationRankingTests.swift` — 기존 캡션 문구 단언은 그대로 두고(상세가 계속 씁니다), 카드용 머리글 문구 단언을 더합니다.
-- `ResourceRunnerTests/DashboardPresentationTests.swift` — 카드 접근성 이름이 시간 창·수집 진행을 포함하고 안내 문구가 머리글 문구로 바뀝니다. 단축키 포함 단언과 기준선 문구는 그대로 유지돼야 합니다.
-- `ResourceRunnerUITests/ResourceRunnerUITests.swift:28`, `:35` — 본체 팝오버 프레임 473을 §5 DP11의 재실측값으로 갱신합니다. 두 상태가 같은 값이어야 한다는 단언은 그대로입니다.
-- `ResourceRunnerUITests/DashboardCPUCardUITests.swift:45` — 카드 접근성 이름의 안내 문구가 머리글 문구로 바뀝니다.
-- `ResourceRunnerUITests/DashboardDetailPopoverUITests.swift:24` — 상세 크기 리터럴은 재확인 결과가 같으면 그대로입니다.
-- `ResourceRunnerUITests/CPUCoreAccessibilityUITests.swift`·`DashboardProcessListDisplayUITests.swift`·`DashboardDetailExpansionUITests.swift`·`DashboardCardSelectionUITests.swift` — 접근성 계약을 그대로 유지하므로 단언 변경이 없어야 합니다. 코어 칸에 색 단계를 넣어도 하위 요소가 0인지, 하위 행의 `StaticText`가 두 개인지가 이 스위트로 확인됩니다.
-
-새로 필요한 단위 테스트 자리는 `HistoryGraphTimeAxis`(미수집 비율·문구), `HistoryGraphGridline`의 세로 눈금·자리표시 레이어 목록, `CPUCoreUsageStep`(경계값과 단계 수), 램프 색의 배경 대비입니다.
+- `DashboardColorPaletteTests` — CPU 램프 단언은 그대로 두고, Memory를 램프로 보는 단언을 두 색조 집합 단언으로 다시 씁니다. 색조 거리 단언은 그 요구가 spec.md §3에서 철회돼 대상을 잃습니다(DP13).
+- `DashboardCardLayoutTests` — 카드 높이 290 / 171, M3 상한 334, 픽셀 영역 리터럴, CPU 스와치 단언이 모두 그대로 성립해야 합니다. Memory 색이 바뀌어도 이 스위트의 판정은 폭·픽셀·CPU 램프만 보므로 값에 닿지 않습니다.
+- `MemoryCompositionTests` — 범례 이름이 스와치마다 붙는다는 단언이 relief 조건의 잠금이므로 그대로 유지합니다(`SPEC §5.4`).
+- `CPUCoreUsageGridTests`·`DetailPopoverValuelessStateTests`·`CPUCoreGridVerticalBudgetTests` — CPU 램프와 상세 조립만 보므로 변경이 없어야 합니다(`SPEC §5.12`).
+- `ApplicationProcessRowLayoutTests`·`ApplicationRankingTests`·`DashboardPresentationTests` — 여백·문구·접근성 이름 기준이 그대로입니다(`SPEC §5.6`, `SPEC §5.7`, `SPEC §5.9`).
+- `ResourceRunnerUITests`·`DashboardDetailPopoverUITests`·`DashboardCPUCardUITests`·`CPUCoreAccessibilityUITests` — 본체 534, 상세 400×480, 접근성 계약이 그대로입니다(`SPEC §5.8`, `SPEC §5.9`).
 
 ### 하위 호환·마이그레이션
 
@@ -208,17 +216,14 @@ Machado 색맹 시뮬레이션과 CIEDE2000 인접쌍 판정은 이번 feature�
 이것이 이 설계를 막을 수 있는 가장 큰 위험입니다.
 spec.md §3은 카드와 본체가 커지는 것을 허용하되 「M3에서 카드가 넷이 된 상태의 세로 예산을 함께 계산해 화면 안에 들어가는 것이 확인되어야」 한다고 요구하고, `SPEC §5.3`이 그 계산 근거를 완료 조건으로 둡니다.
 
-카드 높이 산술은 직전 feature의 줄 높이 실측에서 그대로 이어집니다.
-그래프 묶음 높이를 `S`라 하면 CPU 카드는 `16 + 51 + 8 + S + 8 + 90 = 173 + S`이고(순위 묶음이 88에서 90으로 바뀌는 근거는 DP10), Memory 카드는 `16 + 21 + 8 + 28 + 8 + 90 = 171`입니다.
+그래프 묶음 높이를 `S`라 하면 CPU 카드는 `16 + 51 + 8 + S + 8 + 90 = 173 + S`이고, Memory 카드는 `16 + 21 + 8 + 28 + 8 + 90 = 171`입니다.
 본체 콘텐츠는 `32 + 카드 높이 합 + 16 × (카드 수 − 1)`이고, 팝오버 프레임은 거기에 `NSPopover` chrome 26pt를 더한 값입니다.
 기준 기기의 `visibleFrame` 높이는 1084pt이므로 콘텐츠 상한은 1058pt입니다.
 
 M3 카드 넷의 구성에 두 모델이 있습니다.
 
-- 모델 1 — `docs/product.md`의 카드 항목을 그대로 옮긴다. Network 카드는 다운로드·업로드 속도(초점 줄), 활성 인터페이스와 종류(보조 줄), 그래프이고 Disk 카드는 읽기·쓰기 속도, 볼륨 용량·여유(보조 줄), 그래프입니다. 프로세스별 순위는 두 카드 모두 1.0 범위에서 제외돼 있으므로 순위 묶음이 없습니다. 카드 높이는 `16 + 51 + 8 + S = 75 + S`입니다.
+- 모델 1 — `docs/product.md`의 카드 항목을 그대로 옮긴다. Network·Disk 카드는 초점 줄·보조 줄·그래프이고, 프로세스별 순위는 두 카드 모두 1.0 범위에서 제외돼 있으므로 순위 묶음이 없습니다. 카드 높이는 `75 + S`입니다.
 - 모델 2 — Network·Disk가 CPU와 완전히 같은 구조를 쓴다고 가정한다. 존재하지 않는 순위 묶음 90pt까지 잡아 두는 상한 점검용 모델이고, 카드 높이는 `173 + S`입니다.
-
-두 모델의 세로 합계와 역산입니다.
 
 | 모델 | 콘텐츠 = | S = 117일 때 콘텐츠 / 프레임 | 프레임 ≤ 1084를 만족하는 S |
 | --- | --- | ---: | ---: |
@@ -230,22 +235,19 @@ M3 카드 넷의 구성에 두 모델이 있습니다.
 근거 셋입니다.
 
 - `docs/product.md`가 Network 상세에서 「프로세스별 네트워크 사용량 … 은 1.0 범위에서 제외합니다」라고 못 박았고 Disk의 프로세스별 I/O도 상세의 **후보**로만 적혀 있습니다. 모델 2는 제품 문서가 없다고 적어 둔 자리를 있다고 가정하는 것이라, 그 가정으로 그래프 높이를 79pt로 눌러 두면 근거 없는 제약이 됩니다.
-- 모델 2는 그래프 높이와 무관하게 이미 실용 한계에 있습니다. 그래프를 지금 값 60pt(`S = 60`)로 되돌려도 콘텐츠 950 / 프레임 976으로 기준 기기 높이의 90%를 먹고, 카드 사이 간격을 16에서 8로 줄여도(−24) 초과가 해소되지 않습니다. 즉 모델 2가 성립하지 않는 원인은 그래프 높이가 아니라 「순위 묶음 90pt를 카드 넷이 각각 갖는다」이고, 그 자리는 M3가 정합니다.
-- 모델 1에서도 M3 프레임은 951pt로 기준 기기 높이의 88%이고, **기준 기기보다 작은 화면에서는 들어가지 않습니다.**
-  coordinator가 `NSScreen`으로 다시 확인한 기준 기기는 frame 1728×1117 · `visibleFrame` 1728×1084(메뉴바 등 33pt)입니다.
-  네 카드가 같은 그래프 높이를 쓴다는 전제에서 화면별 판 상한은 16인치 144pt · 14인치 98pt · 13인치 89pt · 구형 13인치 74pt로 계산됩니다(뒤 두 값은 공개 해상도에서 유도한 추정).
-  즉 판 100pt는 16인치 전용이고, 13인치까지 맞추려면 판이 74pt까지 내려가 비 3.14:1이 되어 이 feature가 풀려는 문제가 거의 남습니다.
+- 모델 2는 그래프 높이와 무관하게 이미 실용 한계에 있습니다. 그래프를 착수 전 값 60pt로 되돌려도 콘텐츠 950 / 프레임 976으로 기준 기기 높이의 90%를 먹고, 카드 사이 간격을 16에서 8로 줄여도(−24) 초과가 해소되지 않습니다. 모델 2가 성립하지 않는 원인은 그래프 높이가 아니라 「순위 묶음 90pt를 카드 넷이 각각 갖는다」이고, 그 자리는 M3가 정합니다.
+- 모델 1에서도 M3 프레임은 951pt로 기준 기기 높이의 88%이고, **기준 기기보다 작은 화면에서는 들어가지 않습니다.** 네 카드가 같은 그래프 높이를 쓴다는 전제에서 화면별 판 상한은 16인치 144pt · 14인치 98pt · 13인치 89pt · 구형 13인치 74pt로 계산됩니다(뒤 두 값은 공개 해상도에서 유도한 추정).
 
 **이 갈림은 2026-09-06에 사용자 결정으로 닫혔습니다** — 1.0 배포 범위를 유지하면서 판 100pt를 확정하고,
-카드가 넷이 되는 시점에 본체 배치 구조를 바꾸는 것(세로 스크롤·아코디언·2열 배치 중 하나)을 **M3의 의무로 지금 확정합니다.**
+카드가 넷이 되는 시점에 본체 배치 구조를 바꾸는 것(세로 스크롤·아코디언·2열 배치 중 하나)을 **M3의 의무로 확정합니다.**
 그 확정은 이 문서 안에만 두지 않고 `ROADMAP.md` M3 완성 결과·전환 기준과 `docs/design.md` 「대시보드 본체의 세로 예산」에 함께 기록했습니다.
 
 카드마다 그래프 높이를 다르게 두어(예: Network·Disk만 판 60pt) 높이를 맞추는 방식은 **채택하지 않습니다.**
 `ROADMAP.md` M3 전환 기준의 「네 카드의 구조, 단위와 상호작용이 일관됩니다」와 충돌하기 때문입니다.
-초기 검토에서 이 방식을 레버로 적었던 것은 그 기준을 빠뜨린 판단이었고, 여기서 철회합니다.
 
-이 feature 자신의 결과는 `S = 117`에서 본체 콘텐츠 산술 509pt(= `32 + 290 + 16 + 171`), 팝오버 프레임 예상 535pt입니다.
-현재 447 / 473에서 62pt 커지며, 기준 기기 높이의 49%입니다.
+이 feature 자신의 결과는 `S = 117`에서 본체 콘텐츠 실측 508pt(산술 509), 팝오버 프레임 534pt입니다.
+착수 전 447 / 473에서 61pt 커졌고, 기준 기기 높이의 49%입니다.
+M3 모델 1의 925 / 951도 같은 1pt 차를 감안한 값이며, 여유는 133pt입니다(`SPEC §5.3`).
 
 ### DP2. 그래프 판의 높이와 가로세로 비를 얼마로 확정하는가
 
@@ -254,48 +256,39 @@ M3 카드 넷의 구성에 두 모델이 있습니다.
 
 - 옵션 A — 판 76pt(슬롯 93). 비 3.05:1. 대가: 3.9:1에서 3.05:1은 「가로에 눌린 띠」라는 인상을 벗기에 얕고, 1%p가 0.76pt라 1pt 선 두께 안에 여전히 묻힌다.
 - 옵션 B — 판 79pt(슬롯 96). 비 2.94:1. 모델 2 예산의 상한값이다. 대가: A와 같은 이유에 더해, 존재하지 않을 자리를 가정한 예산이 표현을 정하게 된다.
-- 옵션 C — 판 100pt(슬롯 117). 비 2.32:1. 대가: 모델 2 예산을 55pt 초과한다. M3가 Network·Disk에 순위 묶음을 두기로 하면 그때 배치를 다시 정해야 한다.
-- 옵션 D — 판 144pt(슬롯 161). 모델 1 예산의 상한. 비 1.61:1. 대가: 본체 팝오버가 기준 기기에서 579pt가 되고 M3에서 1084pt 상한에 정확히 닿아 여유가 0이 된다.
+- 옵션 C — 판 100pt(슬롯 117). 비 2.32:1. 대가: 모델 2 예산을 55pt 초과한다.
+- 옵션 D — 판 144pt(슬롯 161). 모델 1 예산의 상한. 비 1.61:1. 대가: M3에서 1084pt 상한에 정확히 닿아 여유가 0이 된다.
 
 **채택: C(판 100pt, 슬롯 117pt).**
 
-근거입니다.
-
-- 100pt에서 사용률 1%p가 정확히 1pt로 매핑됩니다. 지금은 60pt라 1pt 선 두께가 1.67%p를 덮어 인접 표본의 오르내림이 선 안에 묻힙니다. 100pt에서는 1%p 차이가 선 두께만큼 벌어져 화면에서 구분됩니다 — spec.md §1이 지적한 「60pt 높이에 1pt 선이라 값의 오르내림이 뭉갠다」에 직접 닿는 값입니다.
-- 기준선 25·50·75%의 간격이 25pt가 되어 값의 높이를 어림하는 눈금 구실을 실제로 합니다(`docs/product.md` 「값의 높이를 어림할 수 있는 기준선」). 지금은 15pt입니다.
+- 100pt에서 사용률 1%p가 정확히 1pt로 매핑됩니다. 착수 전 60pt에서는 1pt 선 두께가 1.67%p를 덮어 인접 표본의 오르내림이 선 안에 묻혔습니다 — spec.md §1이 지적한 「60pt 높이에 1pt 선이라 값의 오르내림이 뭉갠다」에 직접 닿는 값입니다.
+- 기준선 25·50·75%의 간격이 25pt가 되어 값의 높이를 어림하는 눈금 구실을 실제로 합니다(`docs/product.md` 「값의 높이를 어림할 수 있는 기준선」). 착수 전에는 15pt였습니다.
 - 비 2.32:1은 3.9:1의 60% 수준이라 「띠」가 아니라 「면」으로 읽히는 범위에 듭니다.
-- 모델 1 예산에서 M3 프레임 951pt, 여유 133pt가 남습니다 — 카드가 넷이 된 상태의 세로 합계가 화면 안에 든다는 계산 근거가 DP1에 남습니다(`SPEC §5.3`).
+- 모델 1 예산에서 M3 프레임 951pt, 여유 133pt가 남습니다(`SPEC §5.3`).
 
-선 두께는 1.0pt를 유지합니다.
-spec.md §1이 「선 두께·불투명도만 올려 가독성을 얻는 방향」을 이미 접었고, 두께는 다운샘플 버킷 최소 간격 4pt의 절반보다 확실히 작아야 인접 버킷 선분이 뭉개지지 않는다는 기존 근거(`DashboardView.swift:577-579`)가 그대로입니다.
+선 두께는 1.0pt입니다.
+spec.md §1이 「선 두께·불투명도만 올려 가독성을 얻는 방향」을 이미 접었고, 두께는 다운샘플 버킷 최소 간격 4pt의 절반보다 확실히 작아야 인접 버킷 선분이 뭉개지지 않는다는 기존 근거가 그대로입니다.
 다운샘플 버킷 수도 그대로입니다 — 판이 높아져도 폭이 232pt로 같아 버킷 58개, 버킷당 약 10.3초입니다.
 
-슬롯 117pt의 구성은 판 100 + `DashboardStyle.Spacing.labelToContent`(4) + 축 라벨 줄 13입니다.
-새 여백 단계를 만들지 않고, 「라벨과 그 대상 사이」를 맡는 4pt 단계를 그대로 씁니다.
+슬롯 117pt의 구성은 판 100 + `DashboardStyle.Spacing.labelToContent`(4) + 축 라벨 줄 13이며, 새 여백 단계를 만들지 않습니다.
 
 ### DP3. 그래프 영역의 경계를 무엇으로 표시하는가
 
 `SPEC §5.13`은 값이 0에 가까울 때와 100%에 가까울 때가 같은 면 안의 아래쪽·위쪽으로 읽히고, 그 경계가 자리표시 상태에서도 같은 자리에 같은 크기로 나타날 것을 요구합니다.
-지금 그래프 영역을 화면에 표시하는 요소는 격자 세 줄뿐입니다.
 
-- 옵션 A — `HistoryGraphGridline.baselineValues`에 0과 100을 더한다. 대가: 다섯 줄이 같은 색·같은 두께라 「영역의 경계」가 아니라 기준선이 둘 늘어난 것으로 읽힌다. 그리고 이 배열은 카드 접근성 이름의 「기준선 25%·50%·75%」를 만드는 출처(`DashboardPresentation.swift:456`)라, 0%·100%가 기준선으로 낭독되어 뜻이 흐려진다.
-- 옵션 B — 판에 옅은 채움을 깔아 면으로 만든다. 대가: 직전 feature DP3이 「불투명 회색 채움이 없다」를 카드 표면의 조건으로 확정했고 `DashboardCardLayoutTests`가 그것을 픽셀로 지킨다. 카드 안에 다시 채운 면을 두면 그 결정을 표현만 바꿔 되돌리는 것이 된다.
+- 옵션 A — `baselineValues`에 0과 100을 더한다. 대가: 다섯 줄이 같은 색·같은 두께라 「영역의 경계」가 아니라 기준선이 둘 늘어난 것으로 읽힌다. 이 배열은 카드 접근성 이름의 「기준선 25%·50%·75%」를 만드는 출처라, 0%·100%가 기준선으로 낭독되어 뜻이 흐려진다.
+- 옵션 B — 판에 옅은 채움을 깔아 면으로 만든다. 대가: 직전 feature DP3이 「불투명 회색 채움이 없다」를 카드 표면의 조건으로 확정했고 `DashboardCardLayoutTests`가 그것을 픽셀로 지킨다.
 - 옵션 C — 판 둘레에 1pt 닫힌 사각 테두리를 그린다. 위·아래 변이 100%·0%이고 좌우 변이 창의 양끝이다. 대가: 격자와 같은 색을 쓰면 위 변이 「100% 기준선」처럼 보일 수 있다.
 
 **채택: C.**
 닫힌 사각형은 세 개의 가로선과 형태가 달라 사람이 면의 테두리로 읽습니다 — 색이나 두께를 갈라 구분하지 않아도 형태만으로 구분되므로, 격자 색과 기준선 값을 건드리지 않고 `SPEC §5.13`을 만족합니다.
-격자 색을 옅게 낮춰 테두리를 도드라지게 하는 변형은 접지 않고 접습니다 — 그러면 `docs/product.md`가 요구하는 「값의 높이를 어림할 수 있는 기준선」이 함께 약해집니다.
+격자 색을 옅게 낮춰 테두리를 도드라지게 하는 변형은 접습니다 — 그러면 `docs/product.md`가 요구하는 「값의 높이를 어림할 수 있는 기준선」이 함께 약해집니다.
 
-테두리 색은 격자와 같은 `DashboardColorPalette.cpuGridline`(시스템 구분선 색)입니다.
-「구분 대상이 아닌 배경 대비 요소는 시스템 색을 쓴다」는 기존 이유(`DashboardColorPalette.swift:33-35`)가 테두리에도 그대로 적용됩니다.
-
-그리기 순서는 판 테두리를 **맨 마지막**에 둡니다.
-값이 100%에 닿는 구간에서 밴드 채움이 위 변을 덮으면 그 구간에서만 경계가 사라지기 때문입니다.
-격자는 지금처럼 맨 처음이라 반투명 밴드를 통해 비칩니다(resource-visualization `SPEC §5.6`의 기존 근거 유지).
-
-자리표시와의 공유는 기존 수단을 그대로 씁니다.
-`drawCPUGraphGridlines` 옆에 테두리를 그리는 함수를 두고, 값 있음 경로의 `drawOrder`와 자리표시의 `placeholderDrawOrder`가 각각 그 레이어를 담습니다.
-두 경로 모두 `HistoryGraphLayout`의 같은 판 높이를 쓰므로 자리와 크기가 어긋날 수 없습니다(`SPEC §5.8`).
+테두리 색은 격자와 같은 시스템 구분선 색입니다.
+「구분 대상이 아닌 배경 대비 요소는 시스템 색을 쓴다」는 기존 이유가 테두리에도 그대로 적용됩니다.
+그리기 순서는 판 테두리를 **맨 마지막**에 둡니다 — 값이 100%에 닿는 구간에서 밴드 채움이 위 변을 덮으면 그 구간에서만 경계가 사라지기 때문입니다.
+격자는 맨 처음이라 반투명 밴드를 통해 비칩니다(resource-visualization `§5.6`의 기존 근거 유지).
+두 그리기 경로가 `HistoryGraphLayout`의 같은 판 높이를 쓰므로 자리표시와 값 있음 상태에서 자리와 크기가 어긋날 수 없습니다(`SPEC §5.8`).
 
 ### DP4. 시간 축과 눈금을 어떤 형태로 두는가
 
@@ -304,12 +297,12 @@ spec.md §1이 「선 두께·불투명도만 올려 가독성을 얻는 방향�
 - 옵션 A — 축 라벨 줄 없이 세로 눈금만 넣는다. 대가: 눈금 간격이 몇 분인지 화면에 없어 창의 길이를 알 수 없다.
 - 옵션 B — 판 안쪽 아래에 라벨을 겹쳐 그린다. 대가: 값이 낮은 구간에서 밴드와 겹쳐 둘 다 읽기 어려워지고, 겹침을 피하려고 라벨을 흐리게 하면 대비가 떨어진다.
 - 옵션 C — 판 아래에 라벨 줄 하나를 두고, 판 안에는 창을 등분하는 세로 눈금을 넣는다.
-- 옵션 D — 창 길이를 카드 제목 줄 오른쪽 빈 폭에 둔다. 대가: 「CPU」 제목 옆의 문구가 그래프의 축이라는 것이 화면에서 이어지지 않고, Memory 카드에는 같은 자리가 없어(제목 줄을 초점 수치와 구성 바가 다 씁니다) M3에서 카드마다 규칙이 갈린다.
+- 옵션 D — 창 길이를 카드 제목 줄 오른쪽 빈 폭에 둔다. 대가: 「CPU」 제목 옆의 문구가 그래프의 축이라는 것이 화면에서 이어지지 않고, Memory 카드에는 같은 자리가 없어 M3에서 카드마다 규칙이 갈린다.
 
 **채택: C.**
 
-- 축 라벨 줄은 판 아래 `labelToContent`(4pt) 간격에 놓고, 글꼴은 `DashboardStyle.TypographyRole.label`(11pt, `.secondary`)을 그대로 씁니다. 새 타이포 역할을 만들지 않습니다.
-- 줄은 세 슬롯입니다 — 왼쪽 「10분 전」, 가운데 수집 진행 문구, 오른쪽 「지금」. 세 슬롯의 실측 폭 합은 약 178pt로 판 폭 232pt 안에 듭니다(`.caption` 기준 한글·숫자 폭 실측에서 유도).
+- 축 라벨 줄은 판 아래 `labelToContent`(4pt) 간격에 놓고, 글꼴은 `DashboardStyle.TypographyRole.label`을 그대로 씁니다. 새 타이포 역할을 만들지 않습니다.
+- 줄은 세 슬롯입니다 — 왼쪽 「10분 전」, 가운데 수집 진행 문구, 오른쪽 「지금」.
 - 세로 눈금은 창을 다섯 등분하는 네 줄입니다. 10분 창에서 2분 간격이고, 232pt에서 46.4pt마다 한 줄이라 촘촘해지지 않습니다. 등분 수를 고정하고 간격을 창 길이에서 유도하므로, M4가 창을 1분·5분으로 바꿔도 같은 규칙이 그대로 성립합니다.
 - 눈금 색·두께는 가로 기준선과 같고 그리기 순서도 같은 레이어입니다. 둘 다 값이 아니라 눈금이므로 자리표시에서도 함께 그립니다.
 
@@ -320,7 +313,7 @@ spec.md §1이 「선 두께·불투명도만 올려 가독성을 얻는 방향�
 
 `SPEC §5.2`는 창의 대부분이 비어 있을 때 그 구간이 값 0이 아니라 아직 수집되지 않은 구간으로 구분될 것을 요구하고, spec.md §3이 값을 지어내는 것을 금지합니다.
 
-- 옵션 A — 지금처럼 아무것도 그리지 않는다. 대가: 사용자가 실제로 「어디서부터 시작인지 모르겠다」고 지적한 상태 그대로다.
+- 옵션 A — 아무것도 그리지 않는다. 대가: 사용자가 실제로 「어디서부터 시작인지 모르겠다」고 지적한 상태 그대로다.
 - 옵션 B — 수집 시작 지점에 세로 구분선 하나를 긋는다. 대가: 세로 시간 눈금과 같은 모양이라 눈금 중 하나로 읽힌다.
 - 옵션 C — 미수집 구간을 반투명 무채색 면으로 덮는다. 대가: 면은 「값이 있는 영역」의 인상을 주고, DP3에서 채움을 접은 것과 같은 이유로 판 안에 또 하나의 면이 생긴다.
 - 옵션 D — 미수집 구간에 옅은 무채색 대각 빗금을 깔고, 축 라벨 줄 가운데 슬롯에 수집 진행 문구를 둔다.
@@ -330,7 +323,7 @@ spec.md §1이 「선 두께·불투명도만 올려 가독성을 얻는 방향�
 - 빗금은 값이 아니라 「이 구간에는 표본이 없다」는 배경 처리입니다. 점도 선도 그리지 않으므로 값을 지어내지 않습니다.
 - 빗금은 색이 아니라 **패턴**이라, 색을 지운 화면에서도 미수집 구간이 그대로 구분됩니다(spec.md §3의 색 비의존).
 - 문구 형태는 `docs/product.md` 「최근 그래프와 데이터 보관」이 이미 적어 둔 「데이터 수집 중 · 00:42 / 10:00」을 따릅니다. 제품 문서가 정한 표기를 새로 만들지 않습니다.
-- 값이 하나도 없는 자리표시 상태에서는 창 전체가 미수집이므로 판 전체에 빗금이 깔립니다. 「같은 높이의 자리표시로 채운다」(`docs/product.md`)가 이 표현으로 그대로 성립하고, 자리표시 픽셀 판정(채도 0.35 초과 픽셀 0)도 빗금이 무채색이라 통과합니다.
+- 값이 하나도 없는 자리표시 상태에서는 창 전체가 미수집이므로 판 전체에 빗금이 깔립니다. 「같은 높이의 자리표시로 채운다」가 이 표현으로 그대로 성립하고, 자리표시 픽셀 판정(채도 0.35 초과 픽셀 0)도 빗금이 무채색이라 통과합니다.
 
 판정 범위를 좁게 못 박습니다.
 미수집 구간은 **창 왼쪽 끝부터 첫 표본 시각까지**이고, 중지·실패로 생긴 중간 공백은 대상이 아닙니다.
@@ -339,119 +332,128 @@ spec.md §1이 「선 두께·불투명도만 올려 가독성을 얻는 방향�
 부하는 상시가 아닙니다.
 빗금은 미수집 구간이 남아 있는 동안(앱을 켠 뒤 최대 10분)만 그려지고, 창이 차면 그리는 선분이 0개가 됩니다(`SPEC §5.11`).
 
-### DP6. 리소스별 색조 집합과 그 안의 단계를 무엇으로 확정하는가
+### DP6. 무엇이 색 구분을 책임지는 단위인가
 
-spec.md §3이 정한 규칙 — 리소스마다 고유 색조, M3에서 Network·Disk가 같은 규칙으로 확장, 라이트·다크 각각 확정, 배경 대비 3:1, 색만으로 정보를 전달하지 않음.
-색맹 시뮬레이션과 인접쌍 ΔE는 제약이 아니므로 어느 값도 그 기준으로 고르지 않았습니다.
+이 결정이 2026-09-06 색 재결정으로 다시 열린 자리입니다.
+직전 판본은 「리소스마다 고유 색조 하나」를 규칙으로 삼았고, spec.md §3이 그 규칙을 철회했습니다 —
+카드 구분은 제목·아이콘·배치가 맡고, 색은 한 카드 안에서만 계열·구간·단계를 가릅니다.
+남는 질문은 「그럼 무엇이 규칙으로 남고, M3에서 Network·Disk 색은 무엇을 근거로 정하는가」입니다.
 
-램프의 모양에서 선택이 갈립니다.
-
-- 옵션 A — 리소스마다 색조를 주되 단계 수는 자리마다 따로 정한다(CPU 2단계, Memory 4단계, 코어 막대 별도). 대가: 같은 색조 안에 서로 다른 계단이 셋 생겨 어느 색이 어느 뜻인지 규칙이 없어지고, M3 확장 규칙도 「리소스마다 알아서」가 된다.
-- 옵션 B — 리소스마다 색조 하나 × **네 단계** 램프를 두고, 모든 자리가 그 램프의 단계를 골라 쓴다. 대가: 네 단계를 다 쓰지 않는 리소스에서도 네 값을 확정해야 하고, 라이트에서 통과 가능한 명도 구간을 넷으로 나누므로 인접 계단이 좁아진다.
-- 옵션 C — 리소스마다 색조 하나 × 두 단계를 두고, 네 구간이 필요한 Memory만 두 색조를 쓴다. 대가: Memory가 두 색조를 가지면 「리소스마다 고유 색조」가 Memory에서만 깨지고, M3에서 색조가 여섯이 된다.
+- 옵션 A — 「리소스마다 고유 색조」를 유지한다. 대가: 사용자가 고른 Memory 값(App·Wired가 파랑)이 CPU 파랑과 같은 색조라 규칙과 양립하지 않는다. 규칙을 지키려면 사용자가 고른 값을 버려야 하고, spec.md §3이 이미 철회한 규칙이다. 채택할 수 없습니다.
+- 옵션 B — **표시 자리(카드 안의 역할)가 자기 색 집합을 소유하고, 집합 사이의 색조 중복은 실격 사유가 아니다.** 대가: 「어느 카드의 색인가」를 색으로 판정하는 수단이 사라지고, 팔레트가 전역 일관성을 보증하지 않는다.
+- 옵션 C — 앱 전역이 하나의 색조 사다리(색조 A·B)를 공유하고 모든 자리가 그 안에서 골라 쓴다. 커밋 `8f79d15`의 구조가 이것이었다. 대가: 한 자리의 색을 바꾸면 그 색조를 쓰는 다른 자리가 함께 움직인다.
 
 **채택: B.**
-네 단계가 필요한 최대 자리는 Memory 구성 네 구간과 코어 막대 단계입니다(DP8).
-그 최대치를 램프의 단계 수로 삼으면 모든 자리가 하나의 집합에서 색을 고르고, M3의 Network·Disk는 색조 각도만 더해 같은 생성 규칙으로 확장됩니다.
 
-**단계의 뜻**: step 1이 배경 대비가 가장 크고 step 4가 가장 작습니다.
-라이트에서는 step 1이 가장 어둡고 다크에서는 가장 밝습니다 — 두 모드에서 「step 번호가 낮을수록 도드라진다」가 같은 뜻을 갖게 하기 위함입니다.
-이 규칙이 있어야 코어 막대의 「사용률이 높을수록 진하다」가 모드에 따라 뒤집히지 않습니다(DP8).
+근거 셋입니다.
 
-**확정한 값** (검증기 실행 결과, 배경은 spec.md §1의 근사, 채도 상한 C\* 48)
+- spec.md §3이 「카드를 색조로 가르지 않습니다」와 「리소스별 색조를 미리 예약해 두지 않습니다」를 제약으로 못 박았습니다. B는 그 제약을 그대로 옮긴 것이고, 옵션 A는 그 제약과 정면으로 부딪힙니다.
+- 옵션 C의 결합이 실제로 사고를 냈습니다. `8f79d15`에서 CPU와 Memory가 공유 색조 A를 나눠 쓰고 있었고, `060504b`에서 CPU를 네 단계 램프로 옮기자 그 색조를 함께 쓰던 Memory 네 구간이 끌려 나갔습니다. 이번 재결정이 「Memory만 되돌린다」인데, 공유 사다리 구조에서는 그 되돌림이 CPU까지 건드리지 않고는 표현되지 않습니다. 자리마다 집합을 닫아 두면 한 카드의 색 결정이 다른 카드에 새지 않습니다.
+- 카드 판별은 색이 아니라 이미 다른 수단이 맡고 있습니다 — 제목(「CPU」·「Memory」), 카드 접근성 이름, 본체 안 배치 순서, 상세 팝오버의 앵커 위치입니다. 색조를 카드 판별에 쓰지 않아도 잃는 판별 수단이 없습니다.
 
-라이트 (`#ECECEC`, L\* 93.4 — 3:1 통과선은 L\* ≤ 56.7)
+**남는 규칙 셋** — 색 집합은 이제 다음만 책임집니다.
 
-| 리소스 · 색조 | step 1 | step 2 | step 3 | step 4 |
-| --- | --- | --- | --- | --- |
-| CPU · 파랑 h 277.9 | `#003a6c` L\* 24.0 / 9.76 | `#005396` L\* 34.8 / 6.64 | `#256cbb` L\* 45.2 / 4.51 | `#4d87d9` L\* 56.0 / 3.07 |
-| Memory · 주황 h 55.3 | `#612800` L\* 23.9 / 9.81 | `#843e10` L\* 34.8 / 6.64 | `#a35729` L\* 45.3 / 4.50 | `#c27242` L\* 56.0 / 3.08 |
-| (M3 예약) Network · 청록 h 165.0 | `#00422f` L\* 24.0 / 9.77 | `#005e43` L\* 34.8 / 6.63 | `#007a59` L\* 45.1 / 4.53 | `#009970` L\* 56.0 / 3.07 |
-| (M3 예약) Disk · 자주 h 320.0 | `#572168` L\* 24.0 / 9.75 | `#723b83` L\* 34.7 / 6.66 | `#8e559f` L\* 45.3 / 4.50 | `#ac70bc` L\* 56.1 / 3.07 |
+1. 한 집합 안에서 그 집합이 가르는 갈래끼리 구분된다(CPU 두 밴드, Memory 네 구간, 코어 네 단계).
+2. 집합의 모든 색이 배경 대비 3:1을 통과한다(`SPEC §5.5`).
+3. 각 갈래가 색 외 수단으로도 구분된다 — 계열 이름과 채움 밀도·경계선 모양(CPU), 범례 이름과 구간 순서(Memory), 채움 높이와 칸 안 수치(코어).
 
-다크 (`#2E2E2E`, L\* 18.9 — 3:1 통과선은 L\* ≥ 49.7)
+**M3 확장 근거** — Network·Disk에는 색조를 예약하지 않습니다.
+직전 판본이 예약해 두었던 청록(h 165)·자주(h 320) 값은 여기서 철회합니다.
+두 카드의 색은 그 카드가 확정될 때 ① 그 카드 안에서 몇 갈래를 갈라야 하는가 ② 배경 대비 3:1 ③ 색 외 구분 수단이 있는가, 이 셋만으로 정합니다.
+그때 파랑이나 주황을 다시 쓰는 것도 허용되며, 「CPU·Memory가 이미 쓰는 색조」라는 것은 실격 사유가 아닙니다.
 
-| 리소스 · 색조 | step 1 | step 2 | step 3 | step 4 |
-| --- | --- | --- | --- | --- |
-| CPU · 파랑 | `#cbdaff` L\* 87.0 / 9.71 | `#95b9ff` L\* 75.0 / 6.89 | `#6399ed` L\* 63.0 / 4.73 | `#3c7acb` L\* 50.9 / 3.13 |
-| Memory · 주황 | `#ffd0b7` L\* 86.9 / 9.67 | `#fba471` L\* 75.0 / 6.89 | `#d78453` L\* 63.0 / 4.73 | `#b36536` L\* 50.9 / 3.12 |
-| (M3 예약) Network · 청록 | `#72f1c1` L\* 87.2 / 9.74 | `#4ccea0` L\* 75.0 / 6.88 | `#1ead81` L\* 63.1 / 4.75 | `#008b65` L\* 51.2 / 3.16 |
-| (M3 예약) Disk · 자주 | `#f5ccff` L\* 86.9 / 9.68 | `#e1a2f2` L\* 75.0 / 6.89 | `#bf82d0` L\* 63.0 / 4.73 | `#9e63af` L\* 51.0 / 3.14 |
+### DP7. Memory 구성 네 구간의 색을 코드에서 어떤 형태로 두는가
 
-열여섯 색이 모두 3:1을 통과하므로 relief 조건(스와치 옆 이름을 통과 조건으로 거는 것)에 기대는 자리가 없습니다(`SPEC §5.5`).
-relief에 해당하는 표시(범례 이름, 계열 이름)는 그대로 유지합니다 — 통과 조건이어서가 아니라 spec.md §3의 색 비의존이 상시로 요구하는 수단이기 때문입니다.
+되돌릴 여덟 값은 사용자 결정으로 정해져 있습니다(spec.md §1의 상태 B, 커밋 `8f79d15`).
+갈리는 것은 그 값을 팔레트에서 무엇으로 표현하느냐입니다.
 
-**슬롯 배정** (`SPEC §5.4`)
+**확정 값과 검증 결과** (검증기 실행, 배경은 spec.md §1의 근사)
 
-- CPU 그래프 아래 밴드(User) = 파랑 step 3, 위 밴드(System) = 파랑 step 1. 요약 줄 스와치는 지금처럼 밴드와 같은 유도 함수를 씁니다.
-- CPU 코어 막대 채움 = 파랑 네 단계(DP8). 트랙은 무채색 시스템 색 그대로입니다.
-- Memory 구성 App → Wired → Compressed → Cached = 주황 step 1 → 2 → 3 → 4.
-- CPU와 Memory가 서로 다른 색조를 가지므로, 카드에서는 그래프 밴드(파랑)와 구성 누적 바(주황)가, 상세에서는 코어 격자(파랑)와 도넛(주황)이 색으로 갈립니다.
+| 구간 | 라이트 | 라이트 `L*` / 대비 | 다크 | 다크 `L*` / 대비 |
+| --- | --- | ---: | --- | ---: |
+| App | `#165698` | 36.2 / 6.31 | `#5287d5` | 56.0 / 3.74 |
+| Wired | `#4b82d0` | 54.0 / 3.29 | `#a1bbf5` | 75.9 / 7.08 |
+| Compressed | `#83441d` | 36.1 / 6.33 | `#c07345` | 56.0 / 3.74 |
+| Cached | `#ba6e41` | 54.0 / 3.29 | `#ecae8c` | 76.1 / 7.11 |
 
-Memory 네 구간을 단조 램프로 배치하는 것은 직전 feature의 「진함 → 밝음 번갈아」를 뒤집는 결정입니다.
-번갈아 배치에서는 App과 Compressed의 L\*가 같아 회색조에서 서로 구분되지 않았지만, 단조 램프에서는 네 구간의 L\*가 모두 갈립니다(라이트 인접 계단 10.9 / 10.5 / 10.7, 다크 11.9 / 12.0 / 12.1).
-색을 지운 화면에서 구간 경계뿐 아니라 어느 구간인지까지 순서와 명도로 좁혀지므로 색 비의존이 약해지지 않고 강해집니다.
+- 배경 대비 최솟값은 라이트 3.29 · 다크 3.74로 여덟 색 모두 3:1을 통과합니다. relief 조건에 기대는 구간이 없습니다(`SPEC §5.5`).
+- 색조는 App·Wired가 `h` 277.9(파랑), Compressed·Cached가 `h` 55.2~55.5(주황)로 두 갈래입니다.
+- 표시 순서(App → Wired → Compressed → Cached)의 인접 `ΔL*`는 라이트 17.9 / 18.0 / 17.9, 다크 19.9 / 19.9 / 20.1입니다 — **바 위에서 이웃한 두 구간의 경계는 회색조에서도 갈립니다.**
+- 다만 네 값을 명도로 줄 세우면 App≈Compressed(`ΔL*` 라이트 0.1 · 다크 0.0), Wired≈Cached(0.0 · 0.2)로 두 쌍이 붙습니다 — 회색조만으로는 **어느 구간인지**를 좁힐 수 없고, 그 자리는 스와치 옆 범례 이름이 맡습니다. spec.md §3이 명시적으로 허용한 상태입니다(`SPEC §5.4`).
 
-대가를 하나 적어 둡니다.
-다크 모드에서 App 구간이 램프의 가장 밝은 단계(`#ffd0b7`)가 되어, 사용량이 큰 기기에서 밝은 블록이 넓게 깔립니다.
-모드마다 순서를 뒤집어 이 인상을 피하는 대안은 접었습니다 — 그러면 「step 번호 = 도드라짐」 규칙이 모드에 따라 뒤집혀 코어 막대의 「사용률이 높을수록 진하다」가 다크에서 반대로 읽힙니다.
+- 옵션 A — Memory 전용 색 집합을 따로 둔다. 두 색조 각 두 단계이고, 공개 진입점은 카테고리를 받는 `memoryComposition(_:)` 하나다. 대가: 팔레트 안에 서로 다른 모양의 집합이 둘 생겨, 「단계」라는 말이 두 자리에서 다른 뜻을 갖는다.
+- 옵션 B — CPU 램프의 단계를 재사용한다. 대가: **성립하지 않습니다.** 되돌릴 파랑 두 값 `#165698`(`L*` 36.2) · `#4b82d0`(`L*` 54.0)은 현재 CPU 램프의 네 값 `#003a6c` · `#005396` · `#256cbb` · `#4d87d9`(`L*` 24.0 / 34.8 / 45.2 / 56.0) 어디에도 없고, 다크도 마찬가지입니다. 재사용하려면 CPU 램프를 바꿔야 하는데 CPU 색은 재결정 대상이 아닙니다.
+- 옵션 C — `8f79d15`처럼 공유 색조 A·B를 두고 CPU와 Memory가 나눠 쓴다. 대가: 지금의 CPU 램프가 그 색조 A의 두 단계와 값이 다르므로 공유가 이름뿐인 허구가 되고, DP6이 접은 결합이 이름만 남아 되살아난다.
 
-### DP7. 새 램프에서 CPU 밴드의 색 외 구분 수단이 계속 성립하는가
+**채택: A.**
+
+- 옵션 B는 코드에서 확인한 사실로 배제됩니다. 옵션 C는 공유할 실체가 이미 없습니다.
+- 두 집합의 「단계」가 실제로 다른 뜻을 갖는다는 것이 A를 고르는 결정적 이유입니다.
+  CPU 램프의 단계 번호는 **배경 대비 순서**입니다 — 라이트에서 step 1이 가장 어둡고 다크에서는 가장 밝아, 절대 명도가 모드에 따라 뒤집힙니다. 코어 막대의 「사용률이 높을수록 도드라진다」가 두 모드에서 같은 뜻을 갖게 하는 규칙입니다(DP9).
+  Memory 두 단계는 **절대 명도 순서**입니다 — App·Compressed가 라이트(36)와 다크(56) 양쪽에서 짝보다 어둡고, 그래서 라이트에서는 대비가 큰 쪽이지만 다크에서는 대비가 작은 쪽입니다.
+  두 뜻을 한 타입에 담으면 「step 1」이 자리마다 반대를 뜻하게 되므로, `RampStep`는 CPU 전용으로 두고 Memory는 카테고리를 직접 받는 진입점만 공개합니다.
+- 공개 진입점을 `memoryComposition(_:)` 하나로 좁히면 구성 바·도넛·카드 범례·상세 범례 네 자리가 모두 같은 배정을 지나가고, 배정이 갈릴 경로가 없습니다. 지금도 없는 `memory(_ step:)`의 production 소비자를 앞으로도 만들지 않는다는 뜻이기도 합니다.
+
+**배정** — App = 파랑 어두운 단계, Wired = 파랑 밝은 단계, Compressed = 주황 어두운 단계, Cached = 주황 밝은 단계입니다.
+이 배정이 표시 순서에서 진함·밝음을 번갈아 만들고, 그 덕분에 위에서 잰 인접 `ΔL*` 18~20이 나옵니다.
+단조 램프(App → Cached로 갈수록 밝아짐)로 바꾸면 네 명도가 모두 갈리지만 그것은 재결정이 접은 상태 A이므로 채택하지 않습니다.
+
+**Memory 색이 CPU 계열과 색조를 나눠 쓰는 것은 실격 사유가 아닙니다**(spec.md §3).
+카드에서 그래프 밴드(파랑)와 구성 누적 바(파랑 둘 + 주황 둘)가 같은 색조를 일부 공유하지만, 두 카드는 제목·아이콘·배치로 갈리고 각 집합은 자기 안에서 구분을 책임집니다(DP6).
+
+### DP8. CPU 밴드의 색 외 구분 수단이 성립하는가
 
 CPU 두 계열은 같은 색조의 두 단계이므로, 색을 지운 화면에서 두 밴드가 갈리는 것은 채움 밀도와 경계선 모양, 그리고 합성 밝기 차가 맡습니다.
 반투명 밴드는 팝오버 표면에 각각 합성되므로 합성 결과가 갈려야 합니다.
 
-검증기로 합성 밝기(합성 후 L\*)를 쟀습니다.
+검증기로 합성 후 `L*`를 쟀습니다(배경은 spec.md §1의 근사).
 
-| 배치 | 라이트 밴드 ΔL\* | 다크 밴드 ΔL\* | 채움 밀도 차 |
+| 배치 | 라이트 밴드 `ΔL*` | 다크 밴드 `ΔL*` | 채움 밀도 차 |
 | --- | ---: | ---: | ---: |
-| 현재 구현(아래 step2 0.55 / 위 step1 0.20) | 10.5 | 25.1 | 0.35 |
+| 착수 전(아래 step2 0.55 / 위 step1 0.20) | 10.5 | 25.1 | 0.35 |
 | 아래 step4 0.55 / 위 step2 0.20 | 9.1 | 5.5 | 0.35 |
 | 아래 step3 0.55 / 위 step1 0.20 | 13.5 | 9.8 | 0.35 |
-| 아래 step3 0.60 / 위 step1 0.20 | 15.9 | 12.0 | 0.40 |
 | **아래 step3 0.60 / 위 step1 0.15** | **19.3** | **15.6** | **0.45** |
 
-- 옵션 A — 현재 값(0.55 / 0.20)을 유지하고 단계만 새 램프에서 고른다. 대가: 어느 조합을 골라도 한쪽 모드가 10 아래로 떨어지거나(step4 / step2에서 다크 5.5), 다크가 현재보다 크게 나빠진다(step3 / step1에서 9.8).
+- 옵션 A — 밀도를 착수 전 값(0.55 / 0.20)으로 두고 단계만 고른다. 대가: 어느 조합을 골라도 한쪽 모드가 10 아래로 떨어지거나(step4 / step2에서 다크 5.5), 다크가 착수 전보다 크게 나빠진다(step3 / step1에서 9.8).
 - 옵션 B — 밀도를 0.60 / 0.15로 벌리고 아래 step 3 · 위 step 1을 쓴다. 대가: 위 밴드의 채움이 0.15로 옅어져 System 구간이 넓을 때도 면이 흐릿하다.
 
 **채택: B.**
-두 모드의 **최솟값**이 개선되는 유일한 조합입니다 — 현재 구현은 라이트 10.5 / 다크 25.1로 최솟값이 10.5인데, 채택안은 19.3 / 15.6으로 최솟값이 15.6입니다.
+두 모드의 **최솟값**이 개선되는 유일한 조합입니다 — 착수 전은 라이트 10.5 / 다크 25.1로 최솟값이 10.5인데, 채택안은 19.3 / 15.6으로 최솟값이 15.6입니다.
 채움 밀도 차도 0.35에서 0.45로 벌어져 색 외 구분 수단 자체가 강해집니다.
 위 밴드가 옅어지는 대가는 경계선이 받습니다 — 전체 사용률을 나르는 위 경계선은 실선이고 step 1이라 배경 대비가 라이트 9.76 / 다크 9.71로 램프에서 가장 높습니다.
 아래 경계선은 점선 `[3, 2]`이고 step 3이라 4.51 / 4.73으로 3:1을 넘습니다.
+격자는 두 밴드 아래에 깔려 반투명 채움을 통해 비치므로, 기준선을 보이게 하는 resource-visualization `§5.6`의 조건이 그대로 성립합니다.
 
-격자 비침도 함께 쟀습니다.
-격자선이 밴드 안에서 남기는 L\* 차이는 라이트에서 아래 3.47 · 위 7.11, 다크에서 아래 4.27 · 위 9.77이고, 현재 구현은 각각 3.85 · 6.71 / 4.76 · 9.35입니다.
-아래 밴드에서 0.4 남짓 줄고 위 밴드에서 그만큼 늘어 사실상 같은 수준이므로, 격자를 밴드 아래에 깔아 기준선을 보이게 하는 resource-visualization `SPEC §5.6`의 조건이 그대로 성립합니다.
-
-Memory와 CPU가 단계를 다르게 쓰는 이유를 못 박습니다 — Memory의 제약은 줄지어 붙은 **불투명** 구간의 인접 경계이고, CPU의 제약은 같은 표면에 각각 합성되는 **반투명** 밴드입니다.
+Memory와 CPU가 색을 다른 형태로 쓰는 이유를 못 박습니다 — Memory의 제약은 줄지어 붙은 **불투명** 구간의 인접 경계이고, CPU의 제약은 같은 표면에 각각 합성되는 **반투명** 밴드입니다.
 같은 배치를 강제하면 위 표의 둘째 줄처럼 한쪽이 무너집니다.
+DP6이 집합을 자리별로 닫아 둔 것이 이 차이를 표현할 수 있게 하는 구조적 조건입니다.
 
-### DP8. 코어 막대의 사용률 단계를 몇 개로, 어디를 경계로 두는가
+### DP9. 코어 막대의 사용률 단계를 몇 개로, 어디를 경계로 두는가
 
 spec.md §3이 요구하는 것 — 유한한 집합, tick마다 보간하지 않음, 각 단계는 미리 확정된 상수, 상태 신호로 읽히지 않음, 각 단계 3:1 통과, 색이 채움 높이·수치가 나르는 정보를 대체하지 않음.
 
 단계 수를 늘릴수록 통과 가능한 명도 구간이 좁아집니다.
-채택한 램프 범위는 라이트 L\* 24.0–56.0(폭 32.0), 다크 L\* 51.0–87.0(폭 36.0)이고, n단계의 인접 계단은 다음과 같습니다.
+CPU 램프 범위는 라이트 `L*` 24.0–56.0(폭 32.0), 다크 `L*` 50.9–87.0(폭 36.1)이고, n단계의 인접 계단은 다음과 같습니다.
 
-| 단계 수 n | 라이트 인접 ΔL\* | 다크 인접 ΔL\* |
+| 단계 수 n | 라이트 인접 `ΔL*` | 다크 인접 `ΔL*` |
 | ---: | ---: | ---: |
-| 2 | 32.0 | 36.0 |
-| 3 | 16.0 | 18.0 |
+| 2 | 32.0 | 36.1 |
+| 3 | 16.0 | 18.1 |
 | 4 | 10.7 | 12.0 |
 | 5 | 8.0 | 9.0 |
 | 6 | 6.4 | 7.2 |
 
-이 저장소가 「색을 지운 화면에서 구분된다」로 이미 받아들인 최소 계단은 합성 밴드 ΔL\* 9.0(직전 feature가 재던 현재 구현 값)이고 채택값이 10.2였습니다.
-n = 5부터는 라이트 계단이 8.0으로 그 아래로 내려갑니다.
+이 저장소가 「색을 지운 화면에서 구분된다」로 이미 받아들인 최소 계단은 합성 밴드 `ΔL*` 9.0 남짓이고, n = 5부터는 라이트 계단이 8.0으로 그 아래로 내려갑니다.
 
-- 옵션 A — 3단계, 경계 33·67%. 대가: 계단은 넉넉하지만(16.0 / 18.0) 경계값이 그래프 기준선 25·50·75와 어긋나 카드와 상세가 서로 다른 눈금을 쓴다.
+- 옵션 A — 3단계, 경계 33·67%. 대가: 계단은 넉넉하지만 경계값이 그래프 기준선 25·50·75와 어긋나 카드와 상세가 서로 다른 눈금을 쓴다.
 - 옵션 B — 4단계, 경계 25·50·75%. 대가: 인접 계단이 라이트 10.7로 최소 기준을 겨우 넘는다.
 - 옵션 C — 5단계 이상. 대가: 라이트 계단 8.0 이하로 인접 단계가 서로 다른 단계로 읽히지 않는다.
 
 **채택: B.**
 경계값은 새 리터럴이 아니라 `HistoryGraphGridline.baselineValues`에서 유도합니다 — 카드 그래프의 기준선과 코어 막대의 단계 경계가 같은 값을 가리키므로, 두 표현이 같은 눈금을 쓴다는 사실이 코드 구조에 남고 한쪽만 바뀌는 변경이 생기지 않습니다.
 배정은 사용률 75% 이상 = step 1, 50–75% = step 2, 25–50% = step 3, 25% 미만 = step 4입니다.
+CPU 램프의 단계 번호가 두 모드에서 배경 대비 순서라는 규칙(DP7) 덕분에, 「사용률이 높을수록 도드라진다」가 라이트·다크에서 뒤집히지 않습니다.
 
 상태 신호로 읽히지 않는 근거입니다.
 단계 색은 CPU 색조 하나 안의 명도 램프이고 색조가 바뀌지 않습니다.
@@ -460,62 +462,62 @@ n = 5부터는 라이트 계단이 8.0으로 그 아래로 내려갑니다.
 
 색이 정보를 대체하지 않는 근거입니다.
 단계는 사용률에서 유도되고 채움 높이도 같은 사용률에서 나오므로, 색은 채움 높이가 이미 나르는 정보를 겹쳐 싣는 수단입니다.
-색을 지우면 채움 높이와 칸 안 수치가 그대로 남아 코어 사이 높낮이 비교가 지금과 같은 정도로 성립합니다(`SPEC §5.4`).
-트랙은 무채색(`quaternaryLabelColor`)을 유지해 채움과 트랙의 경계가 색이 아니라 명도로도 갈립니다.
+색을 지우면 채움 높이와 칸 안 수치가 그대로 남아 코어 사이 높낮이 비교가 착수 전과 같은 정도로 성립합니다(`SPEC §5.4`).
+트랙은 무채색을 유지해 채움과 트랙의 경계가 색이 아니라 명도로도 갈립니다.
 
 자체 부하는 늘지 않습니다.
 tick마다 칸 하나가 하는 일은 정수 비교 최대 세 번과 이미 확정된 상수 선택뿐이고, 색 보간도 새 이미지 생성도 없습니다(`SPEC §5.11`).
 
-### DP9. 하위 프로세스 행의 네 경계를 얼마로 줄이는가
+### DP10. 하위 프로세스 행의 네 경계를 얼마로 줄이는가
 
 `SPEC §5.6`은 하위 행 묶음이 차지하는 세로가 줄고, 부모–첫 하위·하위끼리·마지막 하위–다음 앱 세 경계가 여전히 서로 같은 간격으로 보이지 않을 것을 요구합니다.
-현재 값은 2 / 10 / 18 / 26pt이고 `2 + 8k` 등차입니다.
+착수 전 값은 2 / 10 / 18 / 26pt이고 `2 + 8k` 등차였습니다.
 
 - 옵션 A — 2 / 8 / 12 / 16. 대가: 등차가 아니라 경계 사이 비율이 1 : 1.5 : 2로 좁아지고, 세 경계가 8·12·16으로 붙어 구분이 약해진다.
-- 옵션 B — 2 / 6 / 10 / 14(`2 + 4k` 등차). 대가: 경계 사이 절대 차이가 8pt에서 4pt로 줄어 세 경계의 구분이 현재보다 얕아진다.
-- 옵션 C — 2 / 6 / 12 / 18. 대가: 등차가 아니어서 유도식으로 표현되지 않고, 마지막 경계가 18로 남아 절감이 작다(하위 3개에서 −22pt).
+- 옵션 B — 2 / 6 / 10 / 14(`2 + 4k` 등차). 대가: 경계 사이 절대 차이가 8pt에서 4pt로 줄어 세 경계의 구분이 착수 전보다 얕아진다.
+- 옵션 C — 2 / 6 / 12 / 18. 대가: 등차가 아니어서 유도식으로 표현되지 않고, 마지막 경계가 18로 남아 절감이 작다.
 
-**채택: B.**
+**채택: B(2 / 6 / 10 / 14).**
 `2 + 8k`의 공차를 여백 단계 집합 안에서 한 칸 낮춘 `2 + 4k`입니다 — 공차가 `DashboardStyle.Spacing.betweenGroups`(8)에서 `labelToContent`(4)로 내려간 것이고, 새 단계를 만들지 않습니다.
 네 값은 `withinChildRow + labelToContent × k`(k = 0…3)로 유도하므로 리터럴이 사라지고, 여백 단계가 바뀌면 네 경계가 함께 따라갑니다.
 
-세 경계가 서로 같아 보이지 않는다는 것은 비율로 유지됩니다 — 6 : 10 : 14는 1 : 1.67 : 2.33이고 현재 10 : 18 : 26은 1 : 1.8 : 2.6입니다.
+세 경계가 서로 같아 보이지 않는다는 것은 비율로 유지됩니다 — 6 : 10 : 14는 1 : 1.67 : 2.33이고 착수 전 10 : 18 : 26은 1 : 1.8 : 2.6입니다.
 가장 작은 차이인 6과 10도 67% 차이라 층을 넘는 경계가 더 넓다는 것이 읽힙니다.
-detail-popover-readability `SPEC §5.1`이 요구하는 것은 이 관계이고 픽셀 값 자체가 아닙니다.
+detail-popover-readability `§5.1`이 요구하는 것은 이 관계이고 픽셀 값 자체가 아닙니다.
 
 절감량입니다.
-펼침 증가분은 지금 `70 + (n − 1) × 38`이고, 새 값에서는 `50 + (n − 1) × 34`입니다.
+펼침 증가분은 착수 전 `70 + (n − 1) × 38`이고 새 값에서는 `50 + (n − 1) × 34`입니다.
 증가 단위 34 = 두 줄 26 + 줄 사이 2 + 하위끼리 6이고, 기저 50 = 부모–첫 하위 10 + 두 줄 26 + 펼친 내용 아래 여백 12(= 14 − 목록 행 간격 2)입니다.
 하위 3개에서 146 → 118(−28, −19%), 하위 5개에서 222 → 186(−36)입니다.
 
-가로 들여쓰기는 건드리지 않습니다 — `childIndent`·`childValueIndent`는 이미 유도식이고 이번 결정이 그 유도에 쓰이는 값을 바꾸지 않습니다.
+가로 들여쓰기는 건드리지 않습니다 — `childIndent`·`childValueIndent`는 이미 유도식이고 이 결정이 그 유도에 쓰이는 값을 바꾸지 않습니다.
 
-### DP10. 카드 순위 자리의 시스템 프로세스 안내를 어떻게 줄이는가
+### DP11. 카드 순위 자리의 시스템 프로세스 안내를 어떻게 줄이는가
 
 `SPEC §5.7`은 안내가 한 줄을 통째로 차지하지 않으면서, 시스템 프로세스가 순위에 포함되지 않는다는 사실을 카드에서 확인할 수 있을 것을 요구합니다.
 core-resource-monitoring `§5.6`의 「카드에서 확인되며」가 계속 성립해야 합니다.
 
 - 옵션 A — 문구만 짧게 줄인다. 대가: 짧아져도 여전히 안내 전용 줄 하나를 차지하므로 요구를 만족하지 않는다.
 - 옵션 B — 줄을 지우고 사실을 카드 접근성 이름에만 남긴다. 대가: 화면에서 확인할 수 없게 되어 「카드에서 확인된다」가 화면 사용자에게 성립하지 않는다.
-- 옵션 C — 카드 제목 줄 오른쪽 빈 폭에 붙인다. 대가: CPU 카드는 제목 줄에 폭이 남지만 Memory 카드는 초점 수치와 구성 누적 바가 그 줄을 다 쓴다(실패 상태 최악 입력에서 바에 30pt만 남습니다). 두 카드가 같은 규칙을 쓸 수 없고 M3에서 규칙이 더 갈린다.
+- 옵션 C — 카드 제목 줄 오른쪽 빈 폭에 붙인다. 대가: CPU 카드는 제목 줄에 폭이 남지만 Memory 카드는 초점 수치와 구성 누적 바가 그 줄을 다 쓴다. 두 카드가 같은 규칙을 쓸 수 없고 M3에서 규칙이 더 갈린다.
 - 옵션 D — 안내 줄을 순위 목록의 **머리글**로 바꾸고 목록 위로 옮긴다. 문구는 정원과 제외 사실을 함께 담도록 줄인다.
 
 **채택: D.**
-문구는 `앱 TOP <정원> · 시스템 프로세스 제외`이고, 역할은 `DashboardStyle.TypographyRole.heading`(11pt semibold, `.secondary`), 머리글과 목록 사이 간격은 `labelToContent`(4pt)입니다.
+문구는 「앱 TOP 5 · 시스템 프로세스 제외」이고, 역할은 `DashboardStyle.TypographyRole.heading`, 머리글과 목록 사이 간격은 `labelToContent`(4pt)입니다.
 그 줄은 이제 안내가 아니라 목록의 이름표이고, 제외 사실은 그 이름표의 한 조각으로만 남습니다 — 「안내가 한 줄을 통째로 차지한다」가 해소되고, 문구가 화면에 그대로 있으므로 core-resource-monitoring `§5.6`도 성립합니다.
-상세의 앱 목록이 이미 정렬 기준 머리글을 목록 위에 두고 있으므로(`ApplicationProcessGroupListView`), 카드와 상세가 같은 형태를 갖게 됩니다.
+상세의 앱 목록이 이미 정렬 기준 머리글을 목록 위에 두고 있으므로, 카드와 상세가 같은 형태를 갖습니다.
 
-문구 진입점은 새로 만듭니다.
-기존 `ApplicationRankingSampling.topApplicationsCaption(count:)`는 Memory 상세의 증가량 순위(정원 20)와 앱 목록이 계속 쓰므로 그대로 두고, 카드용 짧은 머리글 함수를 더합니다.
+문구 진입점은 둘로 나눕니다.
+상세의 증가량 순위(정원 20)와 앱 목록은 긴 캡션을 계속 쓰고, 카드는 짧은 머리글을 씁니다.
 두 문구가 갈리는 근거는 폭입니다 — 카드 콘텐츠 폭은 232pt이고 상세 목록 안쪽은 360pt입니다.
-카드 접근성 이름의 안내 문구도 머리글 문구로 바뀝니다(`SPEC §5.9` — 같은 사실이 같은 범위로 계속 도달합니다).
+카드 접근성 이름의 안내 문구도 머리글 문구를 씁니다(`SPEC §5.9` — 같은 사실이 같은 범위로 계속 도달합니다).
 
 세로 예산에서 이 결정은 **2pt를 씁니다**.
-지금 순위 묶음은 6줄 × 13 + 5 × 2 = 88pt이고, 머리글로 옮기면 머리글 13 + `labelToContent` 4 + 5줄 73 = 90pt입니다.
+착수 전 순위 묶음은 6줄 × 13 + 5 × 2 = 88pt이고, 머리글로 옮기면 머리글 13 + `labelToContent` 4 + 5줄 73 = 90pt입니다.
 머리글과 내용 사이를 2pt로 두면 88pt로 같아지지만, 그러면 머리글이 목록의 한 줄과 같은 위계로 읽혀 직전 feature DP10이 확정한 「머리글과 내용 사이는 4pt」 규칙이 이 자리에서만 깨집니다.
 2pt를 쓰는 쪽을 택하고 DP1의 예산 계산에 그대로 반영했습니다.
 
-### DP11. 고정 크기를 어떻게 다시 확정하는가
+### DP12. 고정 크기를 어떻게 확정하는가
 
 `SPEC §5.8`은 카드와 팝오버가 커진 상태에서 상태 전이·상세 열고 닫기·앱 행 펼치고 접기에 크기와 위치가 변하지 않을 것을 요구합니다.
 spec.md §3은 상세 팝업의 고정 크기 값을 새 표현에 맞춰 다시 확정할 수 있다고 열어 두었습니다.
@@ -525,20 +527,20 @@ spec.md §3은 상세 팝업의 고정 크기 값을 새 표현에 맞춰 다시
 
 **채택: B.**
 
-본체 높이 —
+본체 높이의 절차와 결과입니다.
+
 1. 본체 `.frame(height:)`를 임시로 걷는다.
-2. XCUITest로 팝오버를 열어 `app.popovers.element.frame.size.height`를 읽는다. 앱 시작 직후 수집 중 상태와 첫 수집이 도착한 정상 상태 **둘 다** 잰다(두 값이 갈리면 슬롯 고정이 깨진 것이다).
+2. XCUITest로 팝오버를 열어 `app.popovers.element.frame.size.height`를 읽는다. 앱 시작 직후 수집 중 상태와 첫 수집이 도착한 정상 상태 **둘 다** 잰다 — 두 값이 갈리면 슬롯 고정이 깨진 것이다.
 3. 읽은 값에서 26pt를 빼 `bodyHeight`로 넣고, 제약을 되건 뒤 팝오버 프레임이 다시 같은 값으로 나오는지 확인한다.
 
-산술 예상은 콘텐츠 509pt(= `32 + 290(CPU) + 16 + 171(Memory)`), 팝오버 프레임 535pt입니다.
-직전 feature에서 산술 448이 실측 447로 나왔으므로 1pt 안쪽의 차가 예상되며, 어긋나면 실측을 따릅니다.
-수집 중 상태에서도 축 라벨 줄과 그래프 판이 같은 높이를 차지해야 하므로 두 상태의 값이 같아야 합니다.
+두 상태 모두 534pt로 같았고, `bodyHeight`는 508pt로 확정됐습니다.
+산술 예상 509와 1pt 차이이며, 직전 feature에서 산술 448이 실측 447로 나온 것과 같은 방향·같은 크기입니다.
 
-상세 크기 — 400×480을 같은 절차로 **재확인**합니다.
-상세에는 그래프가 없어 이번 변경이 세로를 늘리는 자리가 없고, 하위 행 네 경계는 오히려 줄어들며, 14코어 격자 아래끝 166pt와 첫 화면 무스크롤 상한 56코어가 그대로입니다(`SPEC §5.12`).
-따라서 폭·높이를 바꿀 근거가 없고, 단위 테스트로 가장 넓은 행의 이상적 폭이 콘텐츠 폭 368pt 안에 드는지와 격자 아래끝이 480pt 안에 드는지 확인한 뒤, XCUITest로 네 상태·펼침 전후·스크롤 전후의 `DashboardDetail` 프레임이 400×480인지 재확인합니다.
+상세 크기는 400×480을 같은 절차로 **재확인**했고 값이 바뀌지 않았습니다.
+상세에는 그래프가 없어 이번 변경이 세로를 늘리는 자리가 없고, 하위 행 네 경계는 오히려 줄어들며, 14코어 격자 아래끝 166pt와 첫 화면 무스크롤 상한 56코어가 그대로이기 때문입니다(`SPEC §5.12`).
+확인 수단은 단위 테스트(가장 넓은 행의 이상적 폭이 콘텐츠 폭 368pt 안, 격자 아래끝이 480pt 안)와 XCUITest(네 상태·펼침 전후·스크롤 전후의 `DashboardDetail` 프레임)입니다.
 
-### DP12. 픽셀·기준값 단언 테스트의 기준을 어떤 원칙으로 갱신하는가
+### DP13. 픽셀·기준값 단언 테스트의 기준을 어떤 원칙으로 갱신하는가
 
 - 옵션 A — 깨지는 단언을 지우거나 완화한다. 대가: `SPEC §5.1`·`§5.6`·`§5.8`·`§5.12`를 지키는 수단이 없어진다. 채택하지 않습니다.
 - 옵션 B — 리터럴을 새 숫자로 갈아 끼운다. 대가: 어떤 단언이 요구사항이고 어떤 단언이 우연한 스냅샷인지 구분이 남지 않는다.
@@ -547,44 +549,39 @@ spec.md §3은 상세 팝업의 고정 크기 값을 새 표현에 맞춰 다시
 **채택: C.**
 
 - **유도형** — 순수 레이아웃 상수나 기준 조립의 측정값과 견줍니다. 리터럴을 쓰지 않습니다. 그래프 슬롯 높이(판 + 간격 + 라벨 줄), 하위 행 네 경계(`withinChildRow + labelToContent × k`), 코어 단계 경계(`HistoryGraphGridline.baselineValues`), 값 열 폭, 격자 높이 공식이 여기에 듭니다.
-- **불변형** — 숫자와 무관하게 성립해야 하는 관계입니다. 「여섯 상태에서 카드 높이가 하나」, 「그래프 판 높이 > 변경 전 60pt」와 「가로세로 비 < 3.9:1」(`SPEC §5.1`), 「하위 행 네 경계가 모두 다르고 층을 넘을수록 넓어진다」와 「펼침 증가분 < 변경 전」(`SPEC §5.6`), 「값 있음·없음 두 경로의 그래프 슬롯 높이가 같다」(`SPEC §5.8`), 「램프 열여섯 색이 모두 배경 대비 3:1 이상」(`SPEC §5.5`), 「두 스와치의 색조가 같고 램프 단계가 다르다」, 「사용률이 다른 두 코어 칸의 채움 색이 단계가 갈리는 구간에서 다르다」(`SPEC §5.4`)가 여기에 듭니다.
-- **기준값형** — 숫자 자체가 요구사항인 자리만 리터럴로 둡니다. DP11의 절차로 실측한 본체 높이와 팝오버 프레임, 상세 크기 400×480, 재실측한 카드 높이, 14코어 격자 아래끝 166이 여기에 듭니다.
+- **불변형** — 숫자와 무관하게 성립해야 하는 관계입니다. 「여섯 상태에서 카드 높이가 하나」, 「그래프 판 높이 > 착수 전 60pt」와 「가로세로 비 < 3.9:1」(`SPEC §5.1`), 「하위 행 네 경계가 모두 다르고 층을 넘을수록 넓어진다」와 「펼침 증가분 < 착수 전」(`SPEC §5.6`), 「값 있음·없음 두 경로의 그래프 슬롯 높이가 같다」(`SPEC §5.8`), 「팔레트의 모든 색이 배경 대비 3:1 이상」(`SPEC §5.5`), 「사용률이 다른 두 코어 칸의 채움 색이 단계가 갈리는 구간에서 다르다」(`SPEC §5.4`)가 여기에 듭니다.
+- **기준값형** — 숫자 자체가 요구사항인 자리만 리터럴로 둡니다. 본체 508 / 팝오버 534, 상세 400×480, 카드 높이 290 / 171, M3 예산에서 나온 CPU 카드 상한 334, 14코어 격자 아래끝 166이 여기에 듭니다.
 
-기준값이 어떻게 움직이는지 미리 못 박습니다.
+색 재결정이 팔레트 단언에 미치는 영향을 자리별로 못 박습니다.
 
-- 카드 높이 — CPU 231 → 290 예상(재실측 확정), Memory 169 → 171 예상. 두 값 모두 DP11 절차의 조립 실측으로 확정합니다.
-- 변경 전 상한 243 / 181은 **지우지 않고 방향을 뒤집습니다**. `SPEC §5.1`이 「그래프 높이가 커진다」를 요구하므로, 상한 단언을 「변경 전 카드 높이 231 / 169보다 크거나 같다」는 하한 단언으로 다시 씁니다. 상한이 사라지면 카드가 무한정 커지는 변경을 잡을 것이 없어지므로, DP1이 계산한 M3 예산에서 나온 새 상한을 함께 둡니다.
-- 본체 팝오버 473 → 재실측값(예상 535).
-- 코어 상한 56과 14코어 격자 아래끝 166 — **움직이지 않습니다.** 상세에는 그래프가 없고 코어 격자 위의 조립(상단 여백 16 + 요약 13 + 섹션 간격 16 + 머리글 13 + 머리글 간격 4)이 그대로이기 때문입니다. 그래프 높이 변경이 이 값을 건드리지 않는다는 것 자체가 `SPEC §5.12`의 회귀 방지 단언입니다.
-- 하위 행 네 경계 2 / 10 / 18 / 26 → 2 / 6 / 10 / 14, 펼침 증가 `70 + 38(n−1)` → `50 + 34(n−1)`, `afterLastChild` 24 → 12.
-- 카드 픽셀 영역 리터럴 — 그래프 슬롯이 60에서 117로 길어져 그 아래 순위 영역의 y가 57pt 밀립니다. 이 리터럴이 조용히 다른 영역을 보게 되는 것이 이 자리의 알려진 취약점이므로, 새 조립에서 다시 계산하고 각 영역이 무엇을 보는지 주석으로 남깁니다.
-- 스와치 색조·밝기 단언 — 「아래가 위보다 밝다」는 라이트에서만 성립합니다(다크에서는 step 1이 가장 밝습니다). 「색조가 같고 램프 단계가 다르다」는 모드에 무관한 형태로 다시 씁니다.
-- 코어 트랙·채움 알파 비교 — 채움이 유채색 상수가 되므로 알파가 아니라 「채움이 트랙보다 배경 대비가 크다」로 판정 대상을 바꿉니다.
+- CPU 램프를 보는 단언(열여섯 색 중 CPU 여덟, 램프 안 색조 일치, 대비 단조, 라이트 `L*` 오름·다크 `L*` 내림, `cpuUser`·`cpuSystem`·`cpuCoreFill`의 단계 배정, 밴드 합성 `ΔL*` > 10.5와 밀도 차 0.45)은 **그대로 둡니다.** CPU 색이 재결정 대상이 아니므로 이 단언들이 잠그는 요구가 그대로 남아 있습니다.
+- Memory를 램프로 보는 단언(램프 안 색조 일치, `L*` 단조, 「네 카테고리 색 == 램프 네 단계」, 「네 `L*`가 모두 다름」)은 잠그던 요구가 바뀌었으므로 **새 요구를 잠그는 형태로 다시 씁니다.** 「네 색이 두 색조로 갈리고 각 색조 안에서 앞 단계가 더 어둡다」, 「네 색 모두 배경 대비 3:1 이상」, 「표시 순서에서 이웃한 두 구간의 `L*`가 서로 다르다」가 새 형태입니다. 마지막 항목이 회색조 구분의 최소선을 계속 잠급니다.
+- CPU와 Memory의 색조 거리 > 0.1 단언은 **대상을 잃습니다.** 이 단언이 잠그던 요구(「리소스마다 고유 색조」)를 spec.md §3이 철회했기 때문이며, 옵션 A의 「요구가 남아 있는데 단언만 지운다」와는 다른 자리입니다. 그 자리를 메우는 것은 위 두 항목 — 각 집합이 자기 안에서 구분을 책임진다는 단언들입니다(DP6).
+- Memory 범례 이름이 스와치마다 붙는다는 단언(`MemoryCompositionTests`)은 **강화된 의미로 유지합니다.** 네 구간이 회색조에서 두 쌍으로 붙는 상태를 spec.md §3이 허용하는 조건이 바로 이 이름이므로, 이 단언이 relief의 잠금 장치입니다.
+- `RampStep`가 넷이라는 단언(`CPUCoreUsageGridTests`)은 그대로입니다 — 이 타입은 CPU 램프와 코어 단계 전용으로 남습니다.
 
-단언이 대상을 잃는 경우는 없습니다.
-안내 문구 리터럴은 상세가 계속 쓰므로 그대로 남고, 카드용 머리글 문구 단언이 더해집니다.
 
-### DP13. 접근성 도달 범위·동작 줄이기·자체 부하가 새 표현에서 성립하는 근거
+### DP14. 접근성 도달 범위·동작 줄이기·자체 부하가 새 표현에서 성립하는 근거
 
 **접근성 (`SPEC §5.9`)** — 도달 경로를 바꾸지 않고 범위를 좁히지 않습니다.
 
 - 카드는 `.accessibilityElement(children: .ignore)` + `.accessibilityLabel` + `.isButton` 조합을 유지합니다. 카드 안에 축 라벨 줄과 순위 머리글이 생겨도 접근성 계층에는 새 노드가 만들어지지 않습니다.
-- 그 대신 카드 이름에 시간 창 길이와 수집 진행을 더합니다. 화면에 새로 생긴 정보를 접근성 계층에서도 도달하게 하는 것이며, 기존 항목(초점 수치·상태·두 계열·기준선·순위 안내·단축키)은 하나도 빠지지 않습니다.
-- 코어 칸은 `.ignore` + `.isStaticText` + 이름/값 분리를 유지합니다. 채움 색이 단계로 갈려도 칸의 접근성 값은 지금과 같은 `CPUCoreUsageFormatting.accessibilityValue`이고, 단계는 그 값에서 유도되는 표현이라 새로 실을 정보가 없습니다. 하위 요소 0개와 `CPUCore-N` 식별자가 그대로입니다.
-- 하위 프로세스 행은 `AppRow-<앱 키>` 아래 두 `StaticText`와 이름 줄의 소속 앱 접두를 유지합니다. 이번 변경은 여백 값만 건드립니다.
+- 그 대신 카드 이름에 시간 창 길이와 수집 진행을 더합니다. 기존 항목(초점 수치·상태·두 계열·기준선·순위 안내·단축키)은 하나도 빠지지 않습니다.
+- 코어 칸은 `.ignore` + `.isStaticText` + 이름/값 분리를 유지합니다. 채움 색이 단계로 갈려도 칸의 접근성 값은 같은 서식 함수의 결과이고, 단계는 그 값에서 유도되는 표현이라 새로 실을 정보가 없습니다. 하위 요소 0개와 `CPUCore-N` 식별자가 그대로입니다.
+- Memory 색이 바뀌어도 접근성 계층에는 닿지 않습니다 — 구성 구간의 이름과 수치는 범례와 상세 범례 행이 나르고, 색은 그 위에 얹히는 보조 수단입니다.
+- 하위 프로세스 행은 `AppRow-<앱 키>` 아래 두 `StaticText`와 이름 줄의 소속 앱 접두를 유지합니다. 이 결정은 여백 값만 건드립니다.
 - 미수집 구간의 빗금과 판 테두리는 `Canvas` 안의 그림이라 접근성 노드를 만들지 않습니다. 그 정보는 카드 이름의 수집 진행 문구가 나릅니다.
 
 **동작 줄이기 (`SPEC §5.10`)** — 새 표현이 애니메이션을 전제하지 않습니다.
-더하는 것은 세로 눈금 네 줄, 판 테두리 한 겹, 미수집 빗금, 축 라벨 줄 하나, 새 색 열여섯 개, 조정된 여백입니다. 모두 정적입니다.
-`withAnimation`·`transition`·암시적 애니메이션을 새로 걸지 않습니다.
-기존 `TimelineView(.periodic(from:by:))`(`DashboardView.swift:610`)는 그래프 가로축을 시계에 맞추는 재그리기이지 애니메이션이 아니며, 수집 진행 문구가 그 주기에 맞춰 갱신되는 것도 카드의 다른 수치와 같은 성질입니다.
-따라서 동작 줄이기·애니메이션 끄기에서 같은 정보가 그대로 전달됩니다.
+더하는 것은 세로 눈금 네 줄, 판 테두리 한 겹, 미수집 빗금, 축 라벨 줄 하나, 새 색 상수, 조정된 여백입니다.
+모두 정적이며 `withAnimation`·`transition`·암시적 애니메이션을 새로 걸지 않습니다.
+기존 `TimelineView(.periodic(from:by:))`는 그래프 가로축을 시계에 맞추는 재그리기이지 애니메이션이 아니며, 수집 진행 문구가 그 주기에 맞춰 갱신되는 것도 카드의 다른 수치와 같은 성질입니다.
 
 **자체 CPU 부하 (`SPEC §5.11`)** — 갱신 주기마다 늘어나는 일이 상시가 아닙니다.
 
 - 늘어나는 일: 세로 눈금 4선분, 판 테두리 1경로, 축 라벨 세 문자열(그중 매 tick 바뀌는 것은 진행 문구 하나), 코어 칸당 정수 비교 최대 3회와 상수 선택.
 - 미수집 빗금은 앱을 켠 뒤 창이 찰 때까지(최대 10분) 그려지고 그 뒤에는 선분 0개가 됩니다. 그려지는 동안에도 판 폭 232 · 높이 100에 간격 8pt 대각선이면 약 41선분입니다.
-- 줄어드는 일은 없고, 새 타이머·새 관찰자·새 이미지 생성도 없습니다. 색은 지금처럼 `NSColor(name:)` 클로저 안에서 appearance가 바뀔 때만 해석되므로 tick과 무관합니다.
+- 새 타이머·새 관찰자·새 이미지 생성이 없고, 색은 `NSColor(name:)` 클로저 안에서 appearance가 바뀔 때만 해석되므로 tick과 무관합니다. Memory 색을 바꾸는 것은 상수 값 교체라 이 성질에 닿지 않습니다.
 - 다운샘플 버킷 수는 판 **폭**에서 나오고 폭이 232pt로 그대로이므로, 판이 높아져도 그리는 선분 수가 늘지 않습니다.
 - 검증은 직전 feature와 같은 절차 — 팝오버를 열어 둔 채 앱 자신의 CPU 사용량을 관찰해 변경 전과 견주는 것입니다.
 

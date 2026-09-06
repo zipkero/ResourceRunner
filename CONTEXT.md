@@ -1,24 +1,27 @@
 # Context
 
-저장: 2026-09-06 12:14 +09:00
+저장: 2026-09-07 06:49 +09:00
 
 ## 현재 목표
 
-대시보드 그래프를 눈으로 따라갈 수 있게 키우고(판 60 → 100pt, 영역 경계와 시간 축 추가), 리소스당 고유 색조로 색감을 되돌린다.
-사용자가 완성된 화면을 직접 보고 지적한 다섯 건(그래프 가독성, 색감 없음, 코어 격자 무채색, 상세 하위 행 간격 과다, TOP 5 안내 문구)이 범위다.
+`20260906-001-graph-legibility-and-color`의 색 재결정을 코드까지 반영한다.
+Memory 구성 네 구간을 이 feature 착수 전 상태(두 색조 각 두 단계, 파랑 둘·주황 둘)로 되돌리고,
+그에 맞춰 초기화된 Task 여덟을 현재 spec·design 기준으로 다시 검증받는다.
 
 ## 현재 상태
 
-`20260906-001-graph-legibility-and-color`의 SPEC·DESIGN이 닫히고 IMPLEMENT 체크리스트(Task 8개)까지 작성됐다.
-Task는 하나도 시작하지 않았다.
+Task 여덟이 구현·verify 승인까지 끝나 커밋 `060504b`에 들어 있다.
+그 뒤 사용자가 완성된 화면을 보고 **Memory 구성 색만** 착수 전이 낫다고 지적해, 오늘 SPEC·DESIGN·IMPLEMENT를 차례로 재작성했다.
+`/spec-init` §재작성 시 하위 승인 상태 초기화에 따라 README의 DESIGN·IMPLEMENT와 Task 여덟 체크박스가 전부 `[ ]`로 되돌아갔고,
+그 뒤 DESIGN만 다시 `[x]`가 됐다. 코드는 아직 한 줄도 고치지 않았다.
 
-앞 feature `20260903-001-dashboard-visual-refinement`는 task-001~007이 verify 승인까지 끝났고 task-008(동작 줄이기·자체 부하 확인)만 남아 있다.
-그 task-008은 이번 feature가 색·크기 결정을 되열었으므로 이번 feature가 끝난 뒤에 하는 것이 맞다.
+실제로 코드가 바뀌어야 하는 자리는 `task-003`(Memory 팔레트) 하나이고, 나머지 일곱은 무변경 확인 Task다.
+다만 `implement` skill은 위에서부터 첫 미완료 Task를 잡으므로 다음 차례는 `task-001`이다.
 
-마지막 검증: 앞 feature task-007 재판정에서 단위 `ResourceRunnerTests` 434개와 UI 스위트 넷 15개가 실패 0으로 통과했다.
-이번 feature의 코드 변경은 아직 없다.
+마지막 검증: `060504b` 시점 전체 스킴에서 단위 `ResourceRunnerTests` 455개와 UI 열 스위트가 실패 0으로 통과했다.
+재작성 이후로는 테스트를 돌린 적이 없다.
 
-branch `main`, 기준 HEAD `cccca76`. 앞 feature의 코드·문서 변경이 전부 미커밋 상태로 작업 트리에 남아 있다.
+branch `main`, 기준 HEAD `060504b`(아직 푸시하지 않음). 미커밋 변경은 오늘 재작성한 feature 문서 넷뿐이다.
 
 ## 현재 작업 문서
 
@@ -27,43 +30,48 @@ branch `main`, 기준 HEAD `cccca76`. 앞 feature의 코드·문서 변경이 �
 
 ## 확정된 결정
 
-- 그래프 판을 60 → 100pt로 키우고 시간 축·눈금을 둔다. 카드와 팝오버가 커지는 것을 허용한다 — [spec.md §5.1](./features/20260906-001-graph-legibility-and-color/spec.md), [design.md DP2](./features/20260906-001-graph-legibility-and-color/design.md)
-- 색은 리소스당 고유 색조 한 개 × 네 단계로 되돌린다. CPU 파랑 h278 · Memory 주황 h55, Network 청록 h165 · Disk 자주 h320은 M3 예약 — [design.md DP6](./features/20260906-001-graph-legibility-and-color/design.md)
-- 코어 막대는 사용률에 따라 유한한 네 단계 색을 쓰고 경계는 25/50/75%를 그래프 기준선 배열에서 유도한다. 매 tick 색 보간은 금지 — [spec.md §3](./features/20260906-001-graph-legibility-and-color/spec.md), [design.md DP8](./features/20260906-001-graph-legibility-and-color/design.md)
-- 색 검증 기준을 배경 대비 3:1과 「색만으로 구분하지 않는다」 원칙으로 줄이고, Machado 색맹 시뮬레이션과 인접쌍 ΔE ≥ 8은 제약에서 뺀다. 공개 배포를 확정하면 M5 접근성 관문에서 한 번 수행한다 — [spec.md §3](./features/20260906-001-graph-legibility-and-color/spec.md)
-- 카드가 넷이 되는 M3에서 본체 배치 구조를 바꾼다(세로 스크롤·아코디언·2열 배치 중 하나). 카드마다 그래프 높이를 달리해 높이를 맞추는 방식은 「네 카드의 구조가 일관됩니다」와 충돌하므로 쓰지 않는다 — [ROADMAP.md M3](./ROADMAP.md), [docs/design.md 「대시보드 본체의 세로 예산」](./docs/design.md), [design.md DP1](./features/20260906-001-graph-legibility-and-color/design.md)
-- 테스트는 Task마다 전체 스킴을 돌리지 않고 단위 전체 + 그 Task가 건드리는 UI 스위트만 돌린다. 전체 스킴은 feature 마지막 Task에서 한 번 — [implement.md 각 Task 확인 항목](./features/20260906-001-graph-legibility-and-color/implement.md)
+- Memory 구성 네 구간을 커밋 `8f79d15`의 값으로 되돌린다 — 라이트 App `#165698` · Wired `#4b82d0` · Compressed `#83441d` · Cached `#ba6e41`,
+  다크 App `#5287d5` · Wired `#a1bbf5` · Compressed `#c07345` · Cached `#ecae8c` — [spec.md §1 「2026-09-06 색 재결정」](./features/20260906-001-graph-legibility-and-color/spec.md), [design.md DP7](./features/20260906-001-graph-legibility-and-color/design.md)
+- 「리소스마다 고유 색조」 규칙을 철회한다. 카드 구분은 제목·아이콘·배치가 맡고, 색은 한 카드 안에서만 계열·구간·단계를 가른다.
+  집합 사이 색조 중복은 실격 사유가 아니다 — [spec.md §3](./features/20260906-001-graph-legibility-and-color/spec.md), [design.md DP6](./features/20260906-001-graph-legibility-and-color/design.md)
+- M3의 Network·Disk 색조 예약(청록 h165 · 자주 h320)을 철회한다. 두 카드의 색은 카드 확정 시점에 갈래 수·대비 3:1·색 외 구분 수단 셋으로 정한다 — [design.md DP6](./features/20260906-001-graph-legibility-and-color/design.md)
+- Memory 색 집합은 CPU 램프와 별개로 두고 공개 진입점은 `memoryComposition(_:)` 하나만 남긴다.
+  두 집합의 「단계」가 서로 다른 뜻이므로 `RampStep`은 CPU 전용이다 — [design.md DP7](./features/20260906-001-graph-legibility-and-color/design.md)
+- CPU 계열 색·코어 단계 색·그래프 표현·여백·문구는 재결정 대상이 아니며 `060504b` 그대로 둔다 — [spec.md §1 「2026-09-06 색 재결정」](./features/20260906-001-graph-legibility-and-color/spec.md)
+- 회색조에서 Memory 네 구간이 두 쌍(App≈Compressed, Wired≈Cached)으로 붙는 것을 허용하고, 범례 이름이 색 비의존 구분 수단을 맡는다.
+  표시 순서에서 이웃한 두 구간의 `L*`는 갈린다(라이트 17.9 / 18.0 / 17.9, 다크 19.9 / 19.9 / 20.1) — [spec.md §3·§5.4](./features/20260906-001-graph-legibility-and-color/spec.md), [design.md DP7](./features/20260906-001-graph-legibility-and-color/design.md)
+- 시각 항목의 수동 확인은 Codex 워커가 아니라 coordinator가 스크린샷·실측으로 수행한다.
+  이번 판본에서 수동 확인이 남은 Task는 `task-003` 하나다 — [implement.md task-003 확인 필드](./features/20260906-001-graph-legibility-and-color/implement.md)
 
 ## 미확정 판단
 
-없음
+- `task-001`에서 「그래프가 띠가 아니라 면으로 읽히는지」 수동 확인을 뺀 것이 맞는지.
+  앞 판본은 그것을 「비율·픽셀 단언으로 대체되지 않는 잔여 판단」으로 두었고, 실제로 앞 라운드 verify가 그 근거 부재로 reject한 적이 있다.
+  이번 판본은 판 높이 > 60pt · 가로세로 비 < 3.9 : 1 단언으로 대체했다.
+  main이 그대로 두기로 판단해 사용자에게 알렸으나 아직 답을 받지 못했다 — [implement.md task-001 확인 필드](./features/20260906-001-graph-legibility-and-color/implement.md)
 
 ## 다음 작업
 
-- 작업: `20260906-001-graph-legibility-and-color`의 `task-001`(그래프 판을 키우고 영역 경계와 시간 축을 둔다)을 구현하고 verify를 받는다.
+- 작업: `20260906-001-graph-legibility-and-color`의 `task-001`(그래프 판을 키우고 영역 경계와 시간 축을 둔다)을 현재 기준으로 확인하고 verify를 받는다.
+  코드가 이미 그 목적을 만족하면 고치지 않고 그 사실을 보고한다.
 - 완료 기준: implement.md task-001의 `검증 조건`이 성립하고 독립 verify가 approved를 내며, main이 그 Task 체크박스를 `[x]`로 넘긴 상태.
 
 ## 먼저 읽을 파일
 
-- [features/20260906-001-graph-legibility-and-color/spec.md](./features/20260906-001-graph-legibility-and-color/spec.md)
-- [features/20260906-001-graph-legibility-and-color/design.md](./features/20260906-001-graph-legibility-and-color/design.md)
-- [features/20260906-001-graph-legibility-and-color/implement.md](./features/20260906-001-graph-legibility-and-color/implement.md)
-- [docs/design.md](./docs/design.md) — 변경한 파일(「대시보드 본체의 세로 예산」 절 신설)
-- [ROADMAP.md](./ROADMAP.md) — 변경한 파일(M3 완성 결과·전환 기준에 배치 구조 항목 추가)
-- 앞 feature가 남긴 미커밋 코드 변경(전부 변경한 파일):
-  `ResourceRunner/DashboardStyle.swift`(신규), `ResourceRunner/DashboardView.swift`,
-  `ResourceRunner/DashboardPresentation.swift`, `ResourceRunner/DashboardColorPalette.swift`,
-  `ResourceRunner/ApplicationRanking.swift`,
-  `ResourceRunnerTests/DashboardValueColumnTests.swift`(신규), `ResourceRunnerTests/DashboardCardLayoutTests.swift`,
-  `ResourceRunnerTests/DashboardPresentationTests.swift`, `ResourceRunnerTests/DetailPopoverValuelessStateTests.swift`,
-  `ResourceRunnerTests/ApplicationProcessRowLayoutTests.swift`, `ResourceRunnerTests/ApplicationRankingTests.swift`,
-  `ResourceRunnerTests/ApplicationRowIconTests.swift`, `ResourceRunnerTests/CPUCoreGridVerticalBudgetTests.swift`,
-  `ResourceRunnerTests/CPUCoreUsageGridTests.swift`, `ResourceRunnerTests/MemoryCompositionDetailTests.swift`,
-  `ResourceRunnerUITests/ResourceRunnerUITests.swift`, `ResourceRunnerUITests/DashboardCardSelectionUITests.swift`,
-  `ResourceRunnerUITests/DashboardDetailPopoverUITests.swift`
+- [features/20260906-001-graph-legibility-and-color/spec.md](./features/20260906-001-graph-legibility-and-color/spec.md) — 변경한 파일(§1 재결정 절 신설, §2·§3·§4·§5.4 갱신)
+- [features/20260906-001-graph-legibility-and-color/design.md](./features/20260906-001-graph-legibility-and-color/design.md) — 변경한 파일(전문 재작성, DP 14개)
+- [features/20260906-001-graph-legibility-and-color/implement.md](./features/20260906-001-graph-legibility-and-color/implement.md) — 변경한 파일(전문 재작성, Task 8개 전부 `[ ]`)
+- [features/20260906-001-graph-legibility-and-color/README.md](./features/20260906-001-graph-legibility-and-color/README.md) — 변경한 파일(요약·상태판·작업 히스토리)
+- [ResourceRunner/DashboardColorPalette.swift](./ResourceRunner/DashboardColorPalette.swift) — `task-003`이 고칠 자리. 현재는 Memory가 주황 한 색조 네 단계다
+- `~/.claude/skills/implement/SKILL.md` §컨텍스트 로딩 — 상위 문서 재작성으로 초기화된 Task를 어떻게 다루는지
 
 ## 문서 반영 필요
 
-- `docs/product.md` 「대시보드 > 공통 정보 구조」의 「대시보드 상단에는 전체 시스템 상태와 그래프 시간 범위를 표시합니다」가 현재 구현과 어긋난다.
-  앞 feature `20260903-001-dashboard-visual-refinement`가 최상단 제목 줄을 없앴고 그 spec §1이 이 갱신을 예고했으나 아직 반영되지 않았다.
-- `docs/product.md` 「CPU > 기본 카드」와 「Memory > 기본 카드」에 이번 feature가 더하는 표시(그래프 시간 축·눈금, 미수집 구간 표시, 코어 막대의 사용률 단계 색)가 아직 없다.
+- `docs/product.md:107` 「대시보드 상단에는 전체 시스템 상태와 그래프 시간 범위를 표시합니다」가 현재 구현과 어긋난다.
+  `20260903-001-dashboard-visual-refinement`가 최상단 제목 줄을 없앴고 그 spec §1이 갱신을 예고했으나 아직 반영되지 않았다.
+- `docs/product.md` 「CPU > 기본 카드」(`:142-147`)에 이번 feature가 더한 표시가 없다 — 그래프 시간 축·눈금, 미수집 구간 빗금과 진행 문구,
+  순위 머리글 「앱 TOP 5 · 시스템 프로세스 제외」.
+- `docs/product.md:163` 「논리 코어별 사용률」에 사용률 단계 색 설명이 없다.
+- `docs/product.md` 「Memory > 기본 카드」에 순위 머리글이 없다.
+- 위 넷은 IMPLEMENT가 다시 닫힐 때 `skills/verify/SKILL.md` §verify 후처리의 낡은 문서 보고로 한 번 더 올라온다.
+  `docs/design.md`와 `ROADMAP.md`는 갱신 대상이 아니다 — 전자의 세로 예산 수치는 실측과 일치하고, 후자는 M2 전환 기준에 캐릭터 애니메이션이 남아 미충족이다.

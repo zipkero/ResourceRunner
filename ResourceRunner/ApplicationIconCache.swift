@@ -89,7 +89,11 @@ final class ApplicationIconCache: ApplicationIconProviding {
     }
 
     /// production 로더. 앱 키는 번들 경로나 실행 파일 경로(`ApplicationIdentityResolver`)이므로,
-    /// 시스템에 묻기 전에 그 경로가 실제로 있는지 먼저 확인합니다.
+    /// 번들 경로일 때만 시스템에 묻고, 그 경우에도 경로가 실제로 있는지 먼저 확인합니다.
+    ///
+    /// 번들이 아닌 실행 파일을 시스템에 물으면 경로가 있는 한 유닉스 실행 파일용 기본 문서 그림이 돌아옵니다.
+    /// 그것을 앱 아이콘 자리에 넣으면 그 프로세스의 아이콘인 것처럼 읽히므로, 번들이 아닌 키는 묻지 않고
+    /// 중립 기호 자리로 보냅니다.
     ///
     /// 확인이 없으면 「아이콘을 얻지 못한 행」이 화면에 아예 나타나지 않습니다 —
     /// `icon(forFile:)`는 없는 경로에도 일반 문서 아이콘을 돌려주고 `nil`을 내지 않는 것이 이 프로젝트의
@@ -100,9 +104,13 @@ final class ApplicationIconCache: ApplicationIconProviding {
     /// 확인 비용은 키마다 한 번뿐입니다 — 아이콘을 얻지 못한 결과도 캐시에 남으므로(ANALYSIS §5 DP11)
     /// 같은 키가 갱신 주기마다 다시 파일 시스템을 두드리지 않습니다.
     static func loadSystemIcon(for key: ApplicationKey) -> NSImage? {
+        guard key.value.hasSuffix(bundleSuffix) else { return nil }
         guard FileManager.default.fileExists(atPath: key.value) else { return nil }
         return NSWorkspace.shared.icon(forFile: key.value)
     }
+
+    /// `ApplicationIdentityResolver.deriveIdentity`가 번들을 찾았을 때만 키가 이 접미사로 끝납니다.
+    private static let bundleSuffix = ".app"
 
     /// 캐시에 담기 전에 표시 크기로 한 번 축소합니다.
     /// 시스템 아이콘 원본은 여러 해상도 표현을 함께 물고 있어 상한만큼 들고 있으면 메모리가 예측되지 않습니다

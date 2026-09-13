@@ -10,6 +10,8 @@ import Testing
 
 private struct PaletteLabColor {
     let lightness: Double
+    /// CIELAB 채도. 가라앉은 톤과 떠오르는 톤을 밝기가 아니라 이 값으로 가릅니다.
+    let chroma: Double
 }
 
 private func resolvedSRGB(_ color: Color, appearanceName: NSAppearance.Name) throws -> NSColor {
@@ -50,8 +52,15 @@ private func labColor(_ color: NSColor) -> PaletteLabColor {
     let red = linearized(color.redComponent)
     let green = linearized(color.greenComponent)
     let blue = linearized(color.blueComponent)
+    let x = (0.4124564 * red + 0.3575761 * green + 0.1804375 * blue) / 0.9504559
     let y = (0.2126729 * red + 0.7151522 * green + 0.0721750 * blue) / 1.0
-    return PaletteLabColor(lightness: 116 * xyzComponent(y) - 16)
+    let z = (0.0193339 * red + 0.1191920 * green + 0.9503041 * blue) / 1.0890578
+    let aStar = 500 * (xyzComponent(x) - xyzComponent(y))
+    let bStar = 200 * (xyzComponent(y) - xyzComponent(z))
+    return PaletteLabColor(
+        lightness: 116 * xyzComponent(y) - 16,
+        chroma: (aStar * aStar + bStar * bStar).squareRoot()
+    )
 }
 
 private func composited(_ foreground: NSColor, opacity: Double, over background: NSColor) -> NSColor {
@@ -66,87 +75,146 @@ private func composited(_ foreground: NSColor, opacity: Double, over background:
 @Suite("대시보드 리소스 색 램프")
 @MainActor
 struct DashboardColorPaletteTests {
-    private let appearances: [(name: NSAppearance.Name, backgroundHex: UInt32)] = [
-        (.aqua, 0xececec),
-        (.darkAqua, 0x2e2e2e),
-    ]
+    private let appearanceNames: [NSAppearance.Name] = [.aqua, .darkAqua]
+
+    /// 대비를 재는 기준면은 근사값이 아니라 그 색이 실제로 놓이는 면(카드 면)입니다.
+    /// production 팔레트에서 직접 풀어 쓰므로 면 값이 바뀌면 아래 대비 단언이 모두 그 자리에서 함께 움직입니다.
+    private func cardSurface(_ appearanceName: NSAppearance.Name) throws -> NSColor {
+        try resolvedSRGB(DashboardColorPalette.cardSurface, appearanceName: appearanceName)
+    }
+
+    @Test func popoverBackgroundAndCardSurfaceLiftTheCardInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let background = try resolvedSRGB(DashboardColorPalette.popoverBackground, appearanceName: appearanceName)
+            let surface = try cardSurface(appearanceName)
+
+            #expect(background != surface, "\(appearanceName.rawValue) 팝오버 바탕과 카드 면이 같은 색입니다")
+            #expect(
+                labColor(surface).lightness > labColor(background).lightness,
+                "\(appearanceName.rawValue) 카드 면 L* \(labColor(surface).lightness)가 바탕 \(labColor(background).lightness)보다 밝지 않습니다"
+            )
+        }
+    }
 
     @Test func allSixteenColorsMeetContrastAndKeepTheSameStepMeaning() throws {
-        for appearance in appearances {
-            let background = NSColor(rgbHexForTest: appearance.backgroundHex)
+        for appearanceName in appearanceNames {
+            let background = try cardSurface(appearanceName)
 
-            for ramp in [DashboardColorPalette.cpu, DashboardColorPalette.memory] {
-                let colors = try DashboardColorPalette.RampStep.allCases.map {
-                    try resolvedSRGB(ramp($0), appearanceName: appearance.name)
-                }
-                let contrasts = colors.map { contrastRatio($0, background) }
-                let lightnesses = colors.map { labColor($0).lightness }
+            let colors = try DashboardColorPalette.RampStep.allCases.map {
+                try resolvedSRGB(DashboardColorPalette.cpu($0), appearanceName: appearanceName)
+            }
+            let contrasts = colors.map { contrastRatio($0, background) }
+            let lightnesses = colors.map { labColor($0).lightness }
 
-                #expect(contrasts.allSatisfy { $0 >= 3 })
-                #expect(zip(contrasts, contrasts.dropFirst()).allSatisfy { $0.0 > $0.1 })
-                #expect(colors.dropFirst().allSatisfy { hueDistance(colors[0], $0) < 0.04 })
-                if appearance.name == .aqua {
-                    #expect(zip(lightnesses, lightnesses.dropFirst()).allSatisfy { $0.0 < $0.1 })
-                } else {
-                    #expect(zip(lightnesses, lightnesses.dropFirst()).allSatisfy { $0.0 > $0.1 })
-                }
+            #expect(contrasts.allSatisfy { $0 >= 3 })
+            #expect(zip(contrasts, contrasts.dropFirst()).allSatisfy { $0.0 > $0.1 })
+            #expect(colors.dropFirst().allSatisfy { hueDistance(colors[0], $0) < 0.04 })
+            if appearanceName == .aqua {
+                #expect(zip(lightnesses, lightnesses.dropFirst()).allSatisfy { $0.0 < $0.1 })
+            } else {
+                #expect(zip(lightnesses, lightnesses.dropFirst()).allSatisfy { $0.0 > $0.1 })
             }
         }
     }
 
-    @Test func cpuAndMemoryKeepDistinctResourceHues() throws {
-        for appearance in appearances {
-            let cpu = try resolvedSRGB(DashboardColorPalette.cpu(.step2), appearanceName: appearance.name)
-            let memory = try resolvedSRGB(DashboardColorPalette.memory(.step2), appearanceName: appearance.name)
+    @Test func memoryCategoriesSplitIntoTwoHuesWithTheDarkerCategoryFirst() throws {
+        #expect(MemoryCompositionCategory.allCases == [.app, .wired, .compressed, .cached])
+        for appearanceName in appearanceNames {
+            let colors = try memoryCategoryColors(appearanceName: appearanceName)
+            let lightnesses = colors.map { labColor($0).lightness }
 
-            #expect(hueDistance(cpu, memory) > 0.1)
+            #expect(hueDistance(colors[0], colors[1]) < 0.04)
+            #expect(hueDistance(colors[2], colors[3]) < 0.04)
+            #expect(hueDistance(colors[0], colors[2]) > 0.1)
+            #expect(lightnesses[0] < lightnesses[1])
+            #expect(lightnesses[2] < lightnesses[3])
         }
     }
 
-    @Test func memoryCategoriesUseAllFourStepsInOrder() throws {
-        for appearance in appearances {
-            let categories = MemoryCompositionCategory.allCases
-            let categoryColors = try categories.map {
-                try resolvedSRGB(DashboardColorPalette.memoryComposition($0), appearanceName: appearance.name)
-            }
-            let rampColors = try DashboardColorPalette.RampStep.allCases.map {
-                try resolvedSRGB(DashboardColorPalette.memory($0), appearanceName: appearance.name)
-            }
+    @Test func memoryCategoryColorsMeetBackgroundContrastInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let background = try cardSurface(appearanceName)
+            let contrasts = try memoryCategoryColors(appearanceName: appearanceName)
+                .map { contrastRatio($0, background) }
 
-            #expect(categories == [.app, .wired, .compressed, .cached])
-            #expect(categoryColors == rampColors)
-            let lightnesses = categoryColors.map { labColor($0).lightness }
-            #expect(Set(lightnesses.map { ($0 * 10).rounded() }).count == 4)
+            #expect(contrasts.allSatisfy { $0 >= 3 }, "\(appearanceName.rawValue) 대비가 \(contrasts)입니다")
         }
     }
 
-    @Test func cpuBandsAndCoreEntryUseTheCPUResourceRamp() throws {
-        for appearance in appearances {
-            let user = try resolvedSRGB(DashboardColorPalette.cpuUser, appearanceName: appearance.name)
-            let system = try resolvedSRGB(DashboardColorPalette.cpuSystem, appearanceName: appearance.name)
-            let step3 = try resolvedSRGB(DashboardColorPalette.cpu(.step3), appearanceName: appearance.name)
-            let step1 = try resolvedSRGB(DashboardColorPalette.cpu(.step1), appearanceName: appearance.name)
+    @Test func adjacentMemoryCategoriesDifferInLightness() throws {
+        for appearanceName in appearanceNames {
+            let lightnesses = try memoryCategoryColors(appearanceName: appearanceName)
+                .map { labColor($0).lightness }
+
+            #expect(
+                zip(lightnesses, lightnesses.dropFirst()).allSatisfy { abs($0.0 - $0.1) > 1 },
+                "\(appearanceName.rawValue) L*가 \(lightnesses)입니다"
+            )
+        }
+    }
+
+    @Test func cpuBandsUseTheCPUResourceRamp() throws {
+        for appearanceName in appearanceNames {
+            let user = try resolvedSRGB(DashboardColorPalette.cpuUser, appearanceName: appearanceName)
+            let system = try resolvedSRGB(DashboardColorPalette.cpuSystem, appearanceName: appearanceName)
+            let step3 = try resolvedSRGB(DashboardColorPalette.cpu(.step3), appearanceName: appearanceName)
+            let step1 = try resolvedSRGB(DashboardColorPalette.cpu(.step1), appearanceName: appearanceName)
 
             #expect(user == step3)
             #expect(system == step1)
-            for step in DashboardColorPalette.RampStep.allCases {
-                let core = try resolvedSRGB(DashboardColorPalette.cpuCoreFill(step), appearanceName: appearance.name)
-                let cpu = try resolvedSRGB(DashboardColorPalette.cpu(step), appearanceName: appearance.name)
-                #expect(core == cpu)
-            }
+        }
+    }
+
+    @Test func coreFillColorsMeetCardSurfaceContrastInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let surface = try cardSurface(appearanceName)
+            let contrasts = try coreFillColors(appearanceName: appearanceName)
+                .map { contrastRatio($0, surface) }
+
+            #expect(contrasts.allSatisfy { $0 >= 3 }, "\(appearanceName.rawValue) 대비가 \(contrasts)입니다")
+        }
+    }
+
+    @Test func busyCoreFillSplitsFromTheOtherTwoInHue() throws {
+        for appearanceName in appearanceNames {
+            let colors = try coreFillColors(appearanceName: appearanceName)
+
+            #expect(hueDistance(colors[0], colors[1]) < 0.04)
+            #expect(hueDistance(colors[0], colors[2]) > 0.1)
+            #expect(hueDistance(colors[1], colors[2]) > 0.1)
+        }
+    }
+
+    @Test func quietAndElevatedCoreFillsAreLessSaturatedThanBusy() throws {
+        for appearanceName in appearanceNames {
+            let chromas = try coreFillColors(appearanceName: appearanceName)
+                .map { labColor($0).chroma }
+
+            #expect(
+                chromas[0] < chromas[2] && chromas[1] < chromas[2],
+                "\(appearanceName.rawValue) C*가 \(chromas)입니다"
+            )
+        }
+    }
+
+    /// 코어 채움 세 값을 `quiet` · `elevated` · `busy` 순으로 돌려줍니다.
+    /// 단계 넷 중 `.step3`·`.step4`가 같은 값이므로 단계가 아니라 색 셋으로 셉니다.
+    private func coreFillColors(appearanceName: NSAppearance.Name) throws -> [NSColor] {
+        try [DashboardColorPalette.RampStep.step4, .step2, .step1].map {
+            try resolvedSRGB(DashboardColorPalette.cpuCoreFill($0), appearanceName: appearanceName)
         }
     }
 
     @Test func cpuBandCompositeLightnessDifferenceImprovesInBothAppearances() throws {
-        for appearance in appearances {
-            let background = NSColor(rgbHexForTest: appearance.backgroundHex)
-            let user = try resolvedSRGB(DashboardColorPalette.cpuUser, appearanceName: appearance.name)
-            let system = try resolvedSRGB(DashboardColorPalette.cpuSystem, appearanceName: appearance.name)
+        for appearanceName in appearanceNames {
+            let background = try cardSurface(appearanceName)
+            let user = try resolvedSRGB(DashboardColorPalette.cpuUser, appearanceName: appearanceName)
+            let system = try resolvedSRGB(DashboardColorPalette.cpuSystem, appearanceName: appearanceName)
             let userComposite = composited(user, opacity: HistoryGraphView.fillOpacity(for: .lower), over: background)
             let systemComposite = composited(system, opacity: HistoryGraphView.fillOpacity(for: .upper), over: background)
             let difference = abs(labColor(userComposite).lightness - labColor(systemComposite).lightness)
 
-            #expect(difference > 10.5, "\(appearance.name.rawValue) 합성 후 ΔL*가 \(difference)입니다")
+            #expect(difference > 10.5, "\(appearanceName.rawValue) 합성 후 ΔL*가 \(difference)입니다")
         }
         #expect(
             abs(
@@ -156,15 +224,10 @@ struct DashboardColorPaletteTests {
             ) < 0.000_001
         )
     }
-}
 
-private extension NSColor {
-    convenience init(rgbHexForTest hex: UInt32) {
-        self.init(
-            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
-            alpha: 1
-        )
+    private func memoryCategoryColors(appearanceName: NSAppearance.Name) throws -> [NSColor] {
+        try MemoryCompositionCategory.allCases.map {
+            try resolvedSRGB(DashboardColorPalette.memoryComposition($0), appearanceName: appearanceName)
+        }
     }
 }

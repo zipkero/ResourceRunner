@@ -110,9 +110,13 @@ nonisolated enum ApplicationRankingSampling {
         "시스템 프로세스는 TOP \(count)에 포함되지 않습니다"
     }
 
-    /// 카드 순위 목록의 짧은 머리글을 만드는 순수 함수. 카드 정원과 시스템 프로세스 제외 사실을
-    /// 한 이름표에 담아, 정원이 바뀌면 문구의 숫자도 함께 따라가게 합니다.
-    static func cardTopApplicationsHeading(count: Int) -> String {
+    /// 카드 순위 목록의 화면 머리글. 목록의 이름표만 담고 정원 숫자도 제외 규칙도 담지 않습니다.
+    static let cardTopApplicationsHeading = "상위 앱"
+
+    /// 카드 순위 목록의 접근성용 문구를 만드는 순수 함수. 카드는 하위 요소를 무시해 접근성 이름이
+    /// 순위 목록에 닿는 유일한 경로이므로, 화면 머리글과 달리 정원과 제외 사실을 그대로 담습니다.
+    /// 화면 머리글과 같은 문자열을 나눠 쓰면 한쪽을 줄일 때 다른 쪽 정보도 함께 사라집니다.
+    static func cardTopApplicationsAccessibilityText(count: Int) -> String {
         "앱 TOP \(count) · 시스템 프로세스 제외"
     }
 

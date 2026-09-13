@@ -224,14 +224,17 @@ nonisolated struct CPUCardDetail: Sendable, Equatable {
     let applications: [ApplicationProcessGroup]
     /// `applications` 목록의 머리글. 어떤 지표의 순위이고 정원이 얼마인지 알립니다(ANALYSIS §5 DP1, DP2).
     let applicationsHeading: String
+    /// `applications` 목록 머리글 아래 안내 줄. 정원을 뷰가 고르지 않도록 조립 시점에 만들어 둡니다.
+    let applicationsExclusionNote: String
 }
 
 extension CPUCardPresentation {
-    /// TOP 5 목록과 시스템 프로세스 제외 사실을 함께 나타내는 카드 머리글.
-    /// Hover나 색상이 아니라 항상 보이는 문구이며 카드 접근성 이름에도 포함됩니다.
-    /// 카드 정원(`ApplicationRankingSampling.cardDisplayCount`)에서 문구를 만들어, 정원 숫자가
-    /// 이 문자열 밖에 따로 남지 않게 합니다.
-    static let topApplicationsHeading = ApplicationRankingSampling.cardTopApplicationsHeading(
+    /// 카드 순위 목록의 화면 머리글. 목록의 이름표만 보여주고 정원과 제외 사실은 접근성 문구가 맡습니다.
+    static let topApplicationsHeading = ApplicationRankingSampling.cardTopApplicationsHeading
+
+    /// 카드 접근성 이름에 들어가는 순위 안내. 카드 정원(`ApplicationRankingSampling.cardDisplayCount`)에서
+    /// 문구를 만들어, 정원 숫자가 이 문자열 밖에 따로 남지 않게 합니다.
+    static let topApplicationsAccessibilityText = ApplicationRankingSampling.cardTopApplicationsAccessibilityText(
         count: ApplicationRankingSampling.cardDisplayCount
     )
 
@@ -287,6 +290,9 @@ extension CPUCardPresentation {
                 applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .cpuUsage),
                 applicationsHeading: ApplicationRankingSampling.applicationListHeading(
                     metricLabel: "CPU 사용량 순위, 합계 내림차순",
+                    count: ApplicationRankingSampling.detailCount
+                ),
+                applicationsExclusionNote: ApplicationRankingSampling.topApplicationsCaption(
                     count: ApplicationRankingSampling.detailCount
                 )
             )
@@ -397,28 +403,23 @@ extension HistoryPoint {
 nonisolated enum HistoryGraphLayout {
     static let plotHeight: CGFloat = 100
     static let axisSpacing = DashboardStyle.Spacing.labelToContent
-    static let axisLabelHeight: CGFloat = 13
+    static let axisLabelHeight: CGFloat = 14
     static let slotHeight = plotHeight + axisSpacing + axisLabelHeight
 }
 
-/// CPU 그래프에 깔리는 기준선 격자. 값 25·50·75%에 가로선을 두어 세로 범위(0~100%)를 네 등분하고,
-/// 시간 창을 다섯 등분하는 네 세로선으로 가로 범위를 표시합니다.
+/// CPU 그래프의 기준선. 눈금 값 집합과 화면에 실제로 긋는 기준선을 나눠 갖습니다 —
+/// 눈금 값 집합은 `CPUCoreUsageStep`의 단계 경계 출처이고, 화면에는 그 가운데 값 하나만 그립니다.
 /// `HistoryGraphView`와 값이 없는 자리표시(`GraphPlaceholderView`)가 같은 값·같은 변환을 써서
-/// 같은 높이에 같은 격자를 그립니다.
+/// 같은 높이에 같은 선을 그립니다.
 nonisolated enum HistoryGraphGridline {
-    /// 기준선 값(사용률 %). 순서는 그리기에 영향을 주지 않지만, 낮은 값부터 둡니다.
+    /// 눈금 값(사용률 %). 순서는 그리기에 영향을 주지 않지만, 낮은 값부터 둡니다.
     static let baselineValues: [Double] = [25, 50, 75]
-    static let verticalDivisionCount = 5
+
+    /// 화면에 그리는 기준선 값. 눈금 값 집합의 가운데 값 하나를 유도해 쓰므로,
+    /// 눈금 값 집합이 바뀌면 그리는 선도 함께 따라갑니다.
+    static let drawnBaselineValues: [Double] = [baselineValues[baselineValues.count / 2]]
+
     static let lineWidth: CGFloat = 1
-
-    /// 시간 창의 길이가 달라져도 같은 수의 등분선을 돌려줍니다.
-    static func verticalTickNormalizedXPositions(timeRange: Duration = HistoryCapacity.defaultTimeRange) -> [Double] {
-        let duration = timeRange.secondsAsDouble
-        guard duration > 0 else { return [] }
-
-        let interval = duration / Double(verticalDivisionCount)
-        return (1..<verticalDivisionCount).map { Double($0) * interval / duration }
-    }
 
     /// 기준선 값을 그래프 높이 안의 세로 좌표로 바꿉니다. 0%가 그래프 바닥(`height`), 100%가 그래프 천장(0)입니다.
     /// `HistoryGraphView`가 점 값을 좌표로 옮길 때 쓰는 변환과 같은 식이라, 격자와 밴드가 같은 기준을 씁니다.
@@ -511,14 +512,12 @@ nonisolated struct HistoryGraphTimeAxis: Sendable, Equatable {
 extension HistoryGraphGridline {
     /// 값 없는 자리표시(`GraphPlaceholderView`)가 그리는 레이어 목록. 값 있는 경로의
     /// `HistoryGraphView.drawOrder`와 같은 방식으로 뷰 밖 상수에 둬, 자리표시 `Canvas`가 이 배열을
-    /// 그대로 순회해 그리게 합니다 — 격자나 마지막 판 테두리를 빼거나 순서를 바꾸는 변경을 단위 테스트로 잡습니다.
+    /// 그대로 순회해 그리게 합니다 — 레이어를 빼거나 순서를 바꾸는 변경을 단위 테스트로 잡습니다.
     enum PlaceholderLayer: Equatable {
         case gridlines
-        case uncollectedRegion
-        case graphBorder
     }
 
-    static let placeholderDrawOrder: [PlaceholderLayer] = [.gridlines, .uncollectedRegion, .graphBorder]
+    static let placeholderDrawOrder: [PlaceholderLayer] = [.gridlines]
 }
 
 extension ResourceCardState where Presentation == CPUCardPresentation {
@@ -534,7 +533,7 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
             let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints, currentTimestamp: timestamp)
             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
                 + "\(timeAxis.accessibilityLabel), "
-                + CPUCardPresentation.topApplicationsHeading
+                + CPUCardPresentation.topApplicationsAccessibilityText
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
@@ -578,7 +577,7 @@ extension CPUCardPresentation {
         let overall = Int(overallUsage.rounded())
         let user = Int(userRatio.rounded())
         let system = Int(systemRatio.rounded())
-        let baselines = HistoryGraphGridline.baselineValues
+        let baselines = HistoryGraphGridline.drawnBaselineValues
             .map { "\(Int($0.rounded()))%" }
             .joined(separator: "·")
         return "전체 사용률 \(overall)%, User \(user)%, System \(system)%, "
@@ -597,7 +596,7 @@ nonisolated enum CPUCoreGridLayout {
 
     /// 칸 막대의 트랙 높이. 값과 무관하게 고정이라 값이 0이든 100이든 칸 높이가 같고,
     /// 값이 바뀌어도 격자와 그 아래 내용이 밀리지 않습니다(DESIGN §5 DP2).
-    static let barHeight: CGFloat = 18
+    static let barHeight: CGFloat = 20
 
     /// 칸 사이 가로·세로 간격. 상세 안쪽의 같은 위계 간격 단계에서 유도합니다.
     static let cellSpacing = DashboardStyle.Spacing.betweenGroups
@@ -685,8 +684,11 @@ enum DetailPopoverNewDisplayElement: String, CaseIterable, Sendable {
 /// 코어 격자가 화면에 내놓는 문자열. 뷰가 문자열을 직접 조립하지 않게 모아 둡니다.
 nonisolated enum CPUCoreUsageFormatting {
     /// 칸에 보이는 코어 번호. 접근성 이름도 이 문자열을 포함해 화면 번호와 갈리지 않게 합니다.
+    /// 화면과 접근성 이름에 쓰는 코어 번호. 배열 첨자는 0부터지만 사람이 세는 번호는 1부터이므로
+    /// 여기서 한 번만 옮깁니다. 식별자(`cellAccessibilityIdentifier`)는 첨자 그대로 두어
+    /// 테스트가 코어 칸을 배열 순서로 지목할 수 있게 남깁니다.
     static func coreNumberText(coreIndex: Int) -> String {
-        String(coreIndex)
+        String(coreIndex + 1)
     }
 
     /// 칸에 보이는 정수 퍼센트. 코어 사용률 표현이 문자열 한 줄이던 때의 반올림 규칙을 그대로 씁니다 —
@@ -1055,6 +1057,8 @@ nonisolated struct MemoryCardDetail: Sendable, Equatable {
     let applications: [ApplicationProcessGroup]
     /// `applications` 목록의 머리글. 「현재 사용량」 순위임과 정원을 알립니다(ANALYSIS §5 DP1, DP2).
     let applicationsHeading: String
+    /// `applications` 목록 머리글 아래 안내 줄. 정원을 뷰가 고르지 않도록 조립 시점에 만들어 둡니다.
+    let applicationsExclusionNote: String
 }
 
 extension MemoryCardDetail {
@@ -1121,8 +1125,11 @@ extension MemoryCardPresentation {
 }
 
 extension MemoryCardPresentation {
-    /// TOP 5 목록과 시스템 프로세스 제외 사실을 함께 나타내는 머리글. CPU 카드와 같은 문구를 공유합니다.
+    /// 카드 순위 목록의 화면 머리글. CPU 카드와 같은 문구를 공유합니다.
     static let topApplicationsHeading = CPUCardPresentation.topApplicationsHeading
+
+    /// 카드 접근성 이름에 들어가는 순위 안내. CPU 카드와 같은 문구를 공유합니다.
+    static let topApplicationsAccessibilityText = CPUCardPresentation.topApplicationsAccessibilityText
 
     /// Memory 카드를 선택·복귀하는 키보드 단축키의 실제 키. CPU 카드와 다른 단축키를 씁니다(ANALYSIS §5 DP15).
     static let selectionShortcutKey: Character = "2"
@@ -1173,6 +1180,9 @@ extension MemoryCardPresentation {
                 applicationsHeading: ApplicationRankingSampling.applicationListHeading(
                     metricLabel: "현재 사용량 순위, Memory 사용량 합계 내림차순",
                     count: ApplicationRankingSampling.detailCount
+                ),
+                applicationsExclusionNote: ApplicationRankingSampling.topApplicationsCaption(
+                    count: ApplicationRankingSampling.detailCount
                 )
             )
         )
@@ -1211,7 +1221,7 @@ extension ResourceCardState where Presentation == MemoryCardPresentation {
             return "Memory 카드, 수집 중, \(shortcut)"
         case .normal(let presentation, _):
             return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel), "
-                + MemoryCardPresentation.topApplicationsHeading
+                + MemoryCardPresentation.topApplicationsAccessibilityText
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {

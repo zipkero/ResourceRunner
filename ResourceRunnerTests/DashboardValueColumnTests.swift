@@ -59,12 +59,16 @@ private struct ValueColumnInkAnchors: Equatable {
     let unitLeading: Int
 }
 
-/// 행 오른쪽 끝에 놓인 고정 폭 두 열을 직접 렌더해 숫자 잉크의 오른쪽 끝과 단위 잉크의 시작을 잽니다.
+/// 고정 폭 두 열을 직접 렌더해 숫자 잉크의 오른쪽 끝과 단위 잉크의 시작을 잽니다.
+/// `trailingInset`은 값 열 오른쪽에 남는 폭입니다 — 값 열을 행 오른쪽 끝에 붙이지 않는 조립(상세 범례)에서
+/// 0으로 두면 잉크가 없는 자리를 재게 되어 두 앵커를 못 찾습니다.
 private func valueColumnInkAnchors(
     in bitmap: NSBitmapImageRep,
-    kind: DashboardValueColumn.Kind
+    kind: DashboardValueColumn.Kind,
+    trailingInset: Int = 0
 ) -> ValueColumnInkAnchors? {
-    let boundary = bitmap.pixelsWide - Int(kind.unitWidth)
+    let valueTrailing = bitmap.pixelsWide - trailingInset
+    let boundary = valueTrailing - Int(kind.unitWidth)
     let numberStart = boundary - Int(kind.numberWidth)
     let inked: (Int, Range<Int>) -> Bool = { x, yRange in
         yRange.contains { y in
@@ -74,7 +78,7 @@ private func valueColumnInkAnchors(
     let yRange = 0..<bitmap.pixelsHigh
     guard
         let numberTrailing = (numberStart..<boundary).reversed().first(where: { inked($0, yRange) }),
-        let unitLeading = (boundary..<bitmap.pixelsWide).first(where: { inked($0, yRange) })
+        let unitLeading = (boundary..<valueTrailing).first(where: { inked($0, yRange) })
     else { return nil }
     return ValueColumnInkAnchors(numberTrailing: numberTrailing, unitLeading: unitLeading)
 }
@@ -197,11 +201,15 @@ struct DashboardValueColumnAlignmentTests {
         _ rows: [AnyView],
         width: CGFloat,
         kind: DashboardValueColumn.Kind,
+        trailingInset: Int = 0,
         sourceLocation: SourceLocation = #_sourceLocation
     ) throws {
         let anchors = try rows.map { row in
             let bitmap = try #require(renderedValueColumnBitmap(row, width: width), sourceLocation: sourceLocation)
-            return try #require(valueColumnInkAnchors(in: bitmap, kind: kind), sourceLocation: sourceLocation)
+            return try #require(
+                valueColumnInkAnchors(in: bitmap, kind: kind, trailingInset: trailingInset),
+                sourceLocation: sourceLocation
+            )
         }
         #expect(
             Set(anchors.map(\.numberTrailing)).count == 1,
@@ -267,7 +275,16 @@ struct DashboardValueColumnAlignmentTests {
             centerValue: "",
             accessibilityLabel: ""
         )
-        try expectSameAnchors(rows.map { AnyView(donut.legendRow($0)) }, width: 212, kind: .bytes)
+        // 범례 행은 값 열 오른쪽에 남는 폭을 두므로, 첫 행 하나에서 잰 그 폭을 네 행에 똑같이 적용합니다 —
+        // 행마다 다시 재면 이름 열이 풀려 값 열이 밀린 것까지 흡수해 버립니다.
+        let width: CGFloat = 212
+        let trailingInset = Int((width - measuredValueColumnWidth(donut.legendRow(rows[0]))).rounded(.down))
+        try expectSameAnchors(
+            rows.map { AnyView(donut.legendRow($0)) },
+            width: width,
+            kind: .bytes,
+            trailingInset: trailingInset
+        )
     }
 
     @Test("상세 증가량 순위 행의 숫자 오른쪽 끝과 단위 시작이 같다")

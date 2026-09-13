@@ -25,14 +25,14 @@ final class ResourceRunnerUITests: XCTestCase {
             "첫 높이를 읽기 전에 CPU 카드가 수집 중 상태여야 합니다."
         )
         let collectingHeight = app.popovers.firstMatch.frame.height
-        XCTAssertEqual(collectingHeight, 534, "수집 중 본체 팝오버가 재실측 기준 534pt와 다릅니다.")
+        XCTAssertEqual(collectingHeight, 627, "수집 중 본체 팝오버가 재실측 기준 627pt와 다릅니다.")
         let normal = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "label CONTAINS %@", "전체 사용률"),
             object: cpuCard
         )
         XCTAssertEqual(XCTWaiter.wait(for: [normal], timeout: 5), .completed)
         let normalHeight = app.popovers.firstMatch.frame.height
-        XCTAssertEqual(normalHeight, 534, "정상 상태 본체 팝오버가 재실측 기준 534pt와 다릅니다.")
+        XCTAssertEqual(normalHeight, 627, "정상 상태 본체 팝오버가 재실측 기준 627pt와 다릅니다.")
         XCTAssertEqual(collectingHeight, normalHeight)
     }
 

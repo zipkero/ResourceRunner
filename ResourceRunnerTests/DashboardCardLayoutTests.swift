@@ -13,11 +13,33 @@ import Testing
 private let baseInstant = ContinuousClock().now
 
 private enum CardHeightBaseline {
-    static let cpu: CGFloat = 290
-    static let memory: CGFloat = 171
+    static let cpu: CGFloat = 329
+    static let memory: CGFloat = 224
     static let previousCPUHeight: CGFloat = 231
-    static let cpuM3BudgetUpperBound: CGFloat = 334
-    static let previousMemoryUpperBound: CGFloat = 181
+}
+
+/// 카드 넷을 한 열로 쌓은 본체의 세로 예산(DESIGN §5 DP12 모델 1)입니다.
+/// 카드 높이는 실측값을 받고 나머지는 그 모델이 고정한 값만 두어, 예산 상한을 새 리터럴로 박지 않습니다.
+private enum M3VerticalBudget {
+    /// 본체 바깥 여백 위·아래 합.
+    static let bodyPadding: CGFloat = 32
+    /// 카드 넷 사이의 간격 셋.
+    static let cardGaps = 3 * DashboardView.cardSpacing
+    /// Network·Disk 카드에서 그래프 묶음을 뺀 고정분(안쪽 여백 32 + 제목 묶음 62).
+    static let networkDiskFixedHeight: CGFloat = 94
+    /// `NSPopover`가 콘텐츠 밖에 더하는 chrome.
+    static let popoverChrome: CGFloat = 26
+    /// 기준 기기의 `visibleFrame` 높이.
+    static let referenceDeviceHeight: CGFloat = 1084
+
+    static func contentHeight(cpuCardHeight: CGFloat, memoryCardHeight: CGFloat) -> CGFloat {
+        let networkDiskHeight = networkDiskFixedHeight + HistoryGraphLayout.slotHeight
+        return bodyPadding + cardGaps + cpuCardHeight + memoryCardHeight + 2 * networkDiskHeight
+    }
+
+    static func frameHeight(cpuCardHeight: CGFloat, memoryCardHeight: CGFloat) -> CGFloat {
+        contentHeight(cpuCardHeight: cpuCardHeight, memoryCardHeight: memoryCardHeight) + popoverChrome
+    }
 }
 
 private func cpuMetrics(userRatio: Double = 30, systemRatio: Double = 12) -> CPUSystemMetrics {
@@ -158,16 +180,48 @@ private struct CardPixelRegion {
     let y: Range<Int>
 
     // 값 없음 요약 줄의 두 계열 스와치와 라벨 영역입니다.
-    static let cpuPlaceholderSummary = CardPixelRegion(x: 0..<248, y: 45..<60)
+    // 안쪽 여백 8 + 머리글 13 + 2 + 초점 줄 31 + 2 = 56에서 시작해 요약 줄 15pt를 덮습니다.
+    static let cpuPlaceholderSummary = CardPixelRegion(x: 0..<248, y: 55..<72)
     // 값 없음 그래프의 100pt 판과 둘레 경계를 포함하는 영역입니다.
-    static let cpuPlaceholderGraph = CardPixelRegion(x: 0..<248, y: 65..<169)
-    static let memoryPlaceholderTrack = CardPixelRegion(x: 210..<238, y: 15..<23)
-    // 117pt 그래프 슬롯 아래 첫 순위 행의 아이콘 영역입니다.
-    static let cpuFirstRankingIcon = CardPixelRegion(x: 8..<20, y: 210..<222)
+    // 제목 묶음 아래 구역 간격 16을 지나 8 + 63 + 16 = 87에서 시작해 187에서 끝납니다.
+    static let cpuPlaceholderGraph = CardPixelRegion(x: 0..<248, y: 85..<189)
+    // 제목 묶음의 초점 줄(8 + 13 + 2 = 23에서 시작하는 31pt) 안에 세로 가운데로 놓인 8pt 트랙 영역입니다.
+    static let memoryPlaceholderTrack = CardPixelRegion(x: 210..<238, y: 34..<43)
+    // 118pt 그래프 슬롯과 구역 간격 16, 순위 머리글 13 + 4를 지난 첫 순위 행(87 + 118 + 16 + 13 + 4 = 238)의 아이콘 영역입니다.
+    static let cpuFirstRankingIcon = CardPixelRegion(x: 8..<20, y: 238..<252)
 }
 
-/// 투명 배경과 구분되는 잉크 픽셀을 고릅니다. 1/255보다 낮은 렌더 반올림은 투명으로 취급합니다.
-private let visibleInk: (NSColor) -> Bool = { $0.alphaComponent > 1.0 / 255.0 }
+/// 카드 면 위에 실제로 그려진 잉크 픽셀을 고릅니다. 1/255보다 낮은 렌더 반올림은 투명으로 취급합니다.
+/// 카드가 불투명 면을 깔므로 면 색 자체는 잉크에서 뺍니다 — 빼지 않으면 슬롯마다 「잉크 > 0」을 보는 단언이
+/// 요소가 사라져도 면 픽셀만으로 통과합니다.
+private let visibleInk: (NSColor) -> Bool = { pixel in
+    pixel.alphaComponent > 1.0 / 255.0 && !isCardSurfaceColor(pixel)
+}
+
+/// 인자는 `pixelCount`가 이미 sRGB로 변환해 넘깁니다.
+private func isCardSurfaceColor(_ pixel: NSColor) -> Bool {
+    guard pixel.alphaComponent > 0.99 else { return false }
+    return RenderedCardSurface.candidates.contains { surface in
+        abs(pixel.redComponent - surface.redComponent) < 0.004
+            && abs(pixel.greenComponent - surface.greenComponent) < 0.004
+            && abs(pixel.blueComponent - surface.blueComponent) < 0.004
+    }
+}
+
+private enum RenderedCardSurface {
+    /// 라이트·다크 두 면 값을 모두 풀어 둡니다. 하나만 두면 이 값이 처음 만들어지는 시점의 그리기 appearance에
+    /// 따라 기준이 달라져, 다른 테스트가 appearance를 바꾼 사이에 초기화되면 잉크 판정이 조용히 뒤집힙니다.
+    /// 픽셀마다 `NSColor(_:)`를 다시 만들면 잉크 세기가 렌더보다 오래 걸리므로 한 번만 풀어 둡니다.
+    nonisolated(unsafe) static let candidates: [NSColor] = [NSAppearance.Name.aqua, .darkAqua]
+        .compactMap { name in
+            guard let appearance = NSAppearance(named: name) else { return nil }
+            var resolved: NSColor?
+            appearance.performAsCurrentDrawingAppearance {
+                resolved = NSColor(DashboardStyle.CardSurface.fillColor).usingColorSpace(.sRGB)
+            }
+            return resolved
+        }
+}
 
 private func circularHueDistance(_ lhs: CGFloat, _ rhs: CGFloat) -> CGFloat {
     let distance = abs(lhs - rhs)
@@ -429,32 +483,22 @@ private func pixelCount(
     }
 }
 
-/// 실제 카드 렌더에서 테두리 자리와 내용이 닿지 않는 안쪽 여백의 잉크 수를 각각 셉니다.
-/// 위·아래 직선 구간은 `strokeBorder`가 남긴 선을, 왼쪽 안쪽 여백은 채움이 사라졌는지를 봅니다.
-private func cardSurfaceInkCounts(in renderedPixels: Data) -> (border: Int, interior: Int)? {
+/// 카드 안쪽 여백 띠에서 카드 면 색으로 칠해진 픽셀 수. 면이 실제로 깔렸는지를 봅니다.
+/// 내용 시작선 바로 왼쪽 1pt는 스와치·글자 가장자리의 안티에일리어싱이 번지는 자리라 빼고 봅니다.
+private func cardSurfaceFillPixelCount(in renderedPixels: Data) -> Int? {
     guard let bitmap = NSBitmapImageRep(data: renderedPixels) else { return nil }
 
     let width = bitmap.pixelsWide
     let height = bitmap.pixelsHigh
     let cornerInset = Int(DashboardStyle.CardSurface.cornerRadius) + 2
-    let borderDepth = max(1, Int(ceil(DashboardStyle.CardSurface.borderWidth)))
     guard width > cornerInset * 2, height > cornerInset * 2 else { return nil }
 
-    let topBorder = CardPixelRegion(x: cornerInset..<(width - cornerInset), y: 0..<borderDepth)
-    let bottomBorder = CardPixelRegion(
-        x: cornerInset..<(width - cornerInset),
-        y: (height - borderDepth)..<height
-    )
     let interiorPadding = CardPixelRegion(
-        x: (borderDepth + 2)..<Int(DashboardStyle.CardSurface.contentPadding),
+        x: 2..<(Int(DashboardStyle.CardSurface.contentPadding) - 1),
         y: cornerInset..<(height - cornerInset)
     )
 
-    return (
-        border: pixelCount(in: renderedPixels, region: topBorder, matching: visibleInk)
-            + pixelCount(in: renderedPixels, region: bottomBorder, matching: visibleInk),
-        interior: pixelCount(in: renderedPixels, region: interiorPadding, matching: visibleInk)
-    )
+    return pixelCount(in: renderedPixels, region: interiorPadding, matching: isCardSurfaceColor)
 }
 
 private func differingPixelCount(
@@ -614,11 +658,10 @@ struct DashboardCardHeightTests {
     /// 범례를 두 줄로 만드는 mutation은 이 높이 단언으로 잡히지 않습니다 —
     /// 범례가 축소 없이 한 줄에 들어가는 크기라 줄 수 상한을 2로 바꿔도 줄바꿈 자체가 일어나지 않습니다(실측 확인).
     /// 그 자리는 `maximumLineCountIsOne()`이 맡습니다.
-    @Test func memoryCardHeightMatchesRefinedAssemblyBaselineAndPreviousUpperBound() {
+    @Test func memoryCardHeightMatchesRefinedAssemblyBaseline() {
         let height = measuredHeight(memoryCardView(.normal(memoryPresentation(topApplicationsCount: 0), timestamp: baseInstant)))
 
         #expect(height == CardHeightBaseline.memory, "Memory 카드 높이가 새 조립 실측값 \(CardHeightBaseline.memory)에서 \(height)로 달라졌습니다")
-        #expect(height <= CardHeightBaseline.previousMemoryUpperBound, "Memory 카드 높이 \(height)가 변경 전 상한 \(CardHeightBaseline.previousMemoryUpperBound)를 넘습니다")
     }
 
     /// 병합 줄과 구성 범례 줄은 폭이 모자라도 줄바꿈 대신 끝에서 잘려야 합니다(ANALYSIS §5 DP4, SPEC §5.8).
@@ -692,8 +735,6 @@ struct DashboardCardHeightTests {
         #expect(cpuHeight == CardHeightBaseline.cpu, "CPU 카드 높이가 새 조립 실측값 \(CardHeightBaseline.cpu)에서 \(cpuHeight)로 달라졌습니다")
         #expect(memoryHeight == CardHeightBaseline.memory, "Memory 카드 높이가 새 조립 실측값 \(CardHeightBaseline.memory)에서 \(memoryHeight)로 달라졌습니다")
         #expect(cpuHeight >= CardHeightBaseline.previousCPUHeight, "CPU 카드 높이 \(cpuHeight)가 변경 전 높이 \(CardHeightBaseline.previousCPUHeight)보다 작습니다")
-        #expect(cpuHeight <= CardHeightBaseline.cpuM3BudgetUpperBound, "CPU 카드 높이 \(cpuHeight)가 M3 세로 예산 상한 \(CardHeightBaseline.cpuM3BudgetUpperBound)를 넘습니다")
-        #expect(memoryHeight <= CardHeightBaseline.previousMemoryUpperBound, "Memory 카드 높이 \(memoryHeight)가 변경 전 상한 \(CardHeightBaseline.previousMemoryUpperBound)를 넘습니다")
     }
 
     /// 새 표시 요소가 모두 있는 정상 상태와 값이 없는 세 상태, 캐시를 쓰는 실패·중지 상태가
@@ -714,7 +755,6 @@ struct DashboardCardHeightTests {
 
         #expect(cpuHeights.allSatisfy { $0 == CardHeightBaseline.cpu }, "CPU 카드 상태별 높이가 새 조립 실측값 \(CardHeightBaseline.cpu)과 다릅니다: \(cpuHeights)")
         #expect(cpuHeights.allSatisfy { $0 >= CardHeightBaseline.previousCPUHeight }, "CPU 카드 상태별 높이가 변경 전 높이 \(CardHeightBaseline.previousCPUHeight)보다 작습니다: \(cpuHeights)")
-        #expect(cpuHeights.allSatisfy { $0 <= CardHeightBaseline.cpuM3BudgetUpperBound }, "CPU 카드 상태별 높이가 M3 세로 예산 상한 \(CardHeightBaseline.cpuM3BudgetUpperBound)를 넘습니다: \(cpuHeights)")
 
         let memoryPresentation = memoryPresentationWithLongestPressureSwapLine()
         let memoryLastKnown = LastKnownCardValue(presentation: memoryPresentation, timestamp: baseInstant)
@@ -730,7 +770,6 @@ struct DashboardCardHeightTests {
         let memoryHeights = memoryStates.map { measuredHeight(memoryCardView($0, iconProvider: memoryProvider)) }
 
         #expect(memoryHeights.allSatisfy { $0 == CardHeightBaseline.memory }, "Memory 카드 상태별 높이가 새 조립 실측값 \(CardHeightBaseline.memory)과 다릅니다: \(memoryHeights)")
-        #expect(memoryHeights.allSatisfy { $0 <= CardHeightBaseline.previousMemoryUpperBound }, "Memory 카드 상태별 높이가 변경 전 상한 \(CardHeightBaseline.previousMemoryUpperBound)를 넘습니다: \(memoryHeights)")
     }
 }
 
@@ -764,6 +803,36 @@ struct DashboardStyleTests {
         #expect(DashboardStyle.CardSurface.contentPadding == DashboardStyle.Spacing.betweenGroups)
         #expect(DashboardView.cardSpacing == DashboardStyle.Spacing.betweenSections)
         #expect(DashboardView.cardSpacing == 16)
+        #expect(CPUCardView.sectionSpacing == DashboardStyle.Spacing.betweenSections)
+        #expect(MemoryCardView.sectionSpacing == DashboardStyle.Spacing.betweenSections)
+        #expect(
+            CPUCardView.sectionSpacing > DashboardStyle.Spacing.betweenGroups,
+            "카드 안 구역 간격 \(CPUCardView.sectionSpacing)이 착수 전 \(DashboardStyle.Spacing.betweenGroups)pt보다 크지 않습니다"
+        )
+        #expect(MemoryCardView.sectionSpacing > DashboardStyle.Spacing.betweenGroups)
+    }
+
+    /// `SPEC §5.9`의 「같은 구역 머리글 방식」은 조립 관례가 아니라 한 자리를 참조하는 값으로 성립해야 합니다.
+    @Test func sectionHeadingRuleIsSharedByTheCardAndBothDetails() {
+        let headingToContent = DashboardStyle.Section.headingToContent
+        #expect(CardRankingSlotView.headingSpacing == headingToContent)
+        #expect(CPUCoreUsageGridView.headingSpacing == headingToContent)
+        #expect(MemoryDetailView.recentIncreaseHeadingSpacing == headingToContent)
+        #expect(ApplicationProcessGroupListView.headingSpacing == headingToContent)
+
+        let betweenSections = DashboardStyle.Section.betweenSections
+        #expect(CPUCardView.sectionSpacing == betweenSections)
+        #expect(MemoryCardView.sectionSpacing == betweenSections)
+        #expect(CPUDetailView.sectionSpacing == betweenSections)
+        #expect(MemoryDetailView.sectionSpacing == betweenSections)
+        #expect(betweenSections > headingToContent)
+
+        let headingRole = DashboardStyle.Section.headingRole
+        #expect(headingRole.font == DashboardStyle.TypographyRole.heading.font)
+        #expect(headingRole.pointSize == DashboardStyle.TypographyRole.heading.pointSize)
+        #expect(headingRole.weight == .semibold)
+        #expect(headingRole.foregroundRole == .secondary)
+        #expect(headingRole.pointSize != DashboardStyle.TypographyRole.value.pointSize)
     }
 
     @Test func cardRankingHeadingFitsTheCardContentWidth() {
@@ -777,10 +846,11 @@ struct DashboardStyleTests {
 
     @Test func cardSurfaceConstantsKeepTheApprovedSlot() {
         #expect(DashboardStyle.CardSurface.cornerRadius == 8)
-        #expect(DashboardStyle.CardSurface.borderWidth == 1)
+        #expect(DashboardStyle.CardSurface.contentPadding == 8)
     }
 
-    /// 카드 표면을 바꿔도 배경 수정자는 레이아웃에 참여하지 않아 현재 카드 높이와 예산 경계를 지켜야 합니다.
+    /// 카드 표면을 테두리에서 면으로 바꿔도 배경 수정자는 레이아웃에 참여하지 않아
+    /// 현재 카드 높이와 예산 경계를 그대로 지켜야 합니다.
     @Test func borderOnlySurfaceKeepsPreSurfaceChangeCardHeights() {
         let provider = allIconsProvider(count: 5)
         let cpuHeight = measuredHeight(
@@ -790,11 +860,9 @@ struct DashboardStyleTests {
             memoryCardView(.normal(memoryPresentation(topApplicationsCount: 5), timestamp: baseInstant), iconProvider: provider)
         )
 
-        #expect(cpuHeight == CardHeightBaseline.cpu, "테두리 표면 적용 뒤 CPU 카드 높이 \(cpuHeight)가 적용 전 \(CardHeightBaseline.cpu)와 다릅니다")
-        #expect(memoryHeight == CardHeightBaseline.memory, "테두리 표면 적용 뒤 Memory 카드 높이 \(memoryHeight)가 적용 전 \(CardHeightBaseline.memory)와 다릅니다")
+        #expect(cpuHeight == CardHeightBaseline.cpu, "카드 면 적용 뒤 CPU 카드 높이 \(cpuHeight)가 적용 전 \(CardHeightBaseline.cpu)와 다릅니다")
+        #expect(memoryHeight == CardHeightBaseline.memory, "카드 면 적용 뒤 Memory 카드 높이 \(memoryHeight)가 적용 전 \(CardHeightBaseline.memory)와 다릅니다")
         #expect(cpuHeight >= CardHeightBaseline.previousCPUHeight)
-        #expect(cpuHeight <= CardHeightBaseline.cpuM3BudgetUpperBound)
-        #expect(memoryHeight <= CardHeightBaseline.previousMemoryUpperBound)
     }
 
     @Test func focusRoleIsTallerThanEveryOtherCardTypographyRole() {
@@ -810,13 +878,83 @@ struct DashboardStyleTests {
         #expect(otherRoleHeights.allSatisfy { focusHeight > $0 }, "초점 역할 줄 높이 \(focusHeight)가 다른 카드 역할보다 크지 않습니다: \(otherRoleHeights)")
     }
 
-    @Test func headingRoleUsesBodySizeWithDistinctWeightAndForeground() {
+    /// 네 역할이 크기로 갈리고, 그 위에 heading이 굵기·전경으로도 value와 갈리는지 함께 잠급니다.
+    @Test func fourRolesUseDistinctPointSizesAndHeadingKeepsItsEmphasis() {
+        let roles = [
+            DashboardStyle.TypographyRole.focus,
+            DashboardStyle.TypographyRole.value,
+            DashboardStyle.TypographyRole.label,
+            DashboardStyle.TypographyRole.heading
+        ]
+        let pointSizes = roles.map(\.pointSize)
+
+        #expect(Set(pointSizes).count == roles.count, "네 역할의 pointSize가 서로 다르지 않습니다: \(pointSizes)")
+
         let heading = DashboardStyle.TypographyRole.heading
         let value = DashboardStyle.TypographyRole.value
-
-        #expect(heading.pointSize == value.pointSize)
         #expect(heading.weight != value.weight)
         #expect(heading.foregroundRole != value.foregroundRole)
+    }
+
+    /// 선언한 `pointSize`가 그 글꼴의 실제 pt와 어긋나면 위 크기 단언이 거짓을 지키게 됩니다.
+    /// 역할이 어느 의미 글꼴을 가리키는지는 `Font` 값에서 읽을 수 없어, 여기서 짝을 명시하고 실측 pt와 견줍니다.
+    @Test func everyRolePointSizeMatchesTheMeasuredSystemFont() {
+        let pairs: [(name: String, typography: DashboardStyle.Typography, textStyle: NSFont.TextStyle)] = [
+            ("focus", DashboardStyle.TypographyRole.focus, .largeTitle),
+            ("value", DashboardStyle.TypographyRole.value, .callout),
+            ("label", DashboardStyle.TypographyRole.label, .subheadline),
+            ("heading", DashboardStyle.TypographyRole.heading, .caption1)
+        ]
+
+        for pair in pairs {
+            let measured = NSFont.preferredFont(forTextStyle: pair.textStyle).pointSize
+            #expect(
+                pair.typography.pointSize == measured,
+                "\(pair.name) 역할의 선언 pointSize \(pair.typography.pointSize)가 실측 pt \(measured)와 다릅니다"
+            )
+        }
+    }
+
+    /// 초점 값이 본문 값의 두 배 이상이라는 것이 pt로 재든 렌더 줄 높이로 재든 성립해야 합니다.
+    @Test func focusRoleIsAtLeastTwiceTheBodyValueInPointSizeAndLineHeight() {
+        let focus = DashboardStyle.TypographyRole.focus
+        let value = DashboardStyle.TypographyRole.value
+
+        #expect(focus.pointSize >= 2 * value.pointSize, "초점 pt \(focus.pointSize)가 본문 값 pt \(value.pointSize)의 두 배에 못 미칩니다")
+
+        let focusLineHeight = measuredHeight(Text("0").dashboardTypography(focus))
+        let valueLineHeight = measuredHeight(Text("0").dashboardTypography(value))
+        #expect(
+            focusLineHeight >= 2 * valueLineHeight,
+            "초점 렌더 줄 높이 \(focusLineHeight)가 본문 값 \(valueLineHeight)의 두 배에 못 미칩니다"
+        )
+    }
+
+    /// 축 라벨 줄 높이는 라벨 역할의 실측 줄 높이에서 나와야 합니다 — 슬롯 높이는 그 값에서 다시 유도됩니다.
+    @Test func graphAxisLabelHeightFollowsTheLabelRoleLineHeight() {
+        let labelLineHeight = measuredHeight(Text("0").dashboardTypography(DashboardStyle.TypographyRole.label))
+
+        #expect(
+            HistoryGraphLayout.axisLabelHeight == labelLineHeight,
+            "축 라벨 줄 높이 \(HistoryGraphLayout.axisLabelHeight)가 라벨 역할 실측 줄 높이 \(labelLineHeight)와 다릅니다"
+        )
+    }
+
+    /// 카드 넷을 쌓은 M3 세로 예산이 기준 기기 안에 들어야 합니다(DESIGN §5 DP12 모델 1).
+    @Test func fourCardVerticalBudgetFitsTheReferenceDevice() {
+        let provider = allIconsProvider(count: 5)
+        let cpuHeight = measuredHeight(
+            cpuCardView(.normal(cpuPresentation(topApplicationsCount: 5), timestamp: baseInstant), iconProvider: provider)
+        )
+        let memoryHeight = measuredHeight(
+            memoryCardView(.normal(memoryPresentation(topApplicationsCount: 5), timestamp: baseInstant), iconProvider: provider)
+        )
+        let frameHeight = M3VerticalBudget.frameHeight(cpuCardHeight: cpuHeight, memoryCardHeight: memoryHeight)
+
+        #expect(
+            frameHeight <= M3VerticalBudget.referenceDeviceHeight,
+            "카드 넷 프레임 \(frameHeight)가 기준 기기 \(M3VerticalBudget.referenceDeviceHeight)를 넘습니다"
+        )
     }
 
     @Test func headingWeightDoesNotChangeTheIdealWidthOfSectionTitles() {
@@ -828,8 +966,10 @@ struct DashboardStyleTests {
         ]
 
         for heading in headings {
+            // 라벨 역할은 heading보다 한 계단 큰 글꼴이라 폭 차이가 굵기에서 왔는지 크기에서 왔는지 갈리지 않습니다.
+            // 비교 대상을 heading과 같은 pt의 보통 굵기로 두어, 재는 것이 굵기 하나만 되게 합니다.
             let regularWidth = measuredIdealWidth(
-                Text(heading).dashboardTypography(DashboardStyle.TypographyRole.label)
+                Text(heading).font(.caption).foregroundColor(.secondary)
             )
             let emphasizedWidth = measuredIdealWidth(
                 Text(heading).dashboardTypography(DashboardStyle.TypographyRole.heading)
@@ -877,9 +1017,9 @@ struct DashboardStyleTests {
 @MainActor
 struct DashboardCardPlaceholderRenderingTests {
 
-    /// task-004 검증 조건: 카드 안쪽의 빈 여백에는 불투명 채움 픽셀이 하나도 없고,
-    /// 같은 렌더의 위·아래 테두리 자리에는 구획을 만드는 잉크가 있어야 합니다.
-    @Test func cardSurfacesRenderOnlyBorderInkWithoutOpaqueInteriorFill() throws {
+    /// 카드 경계를 만드는 수단이 선이 아니라 면인지 봅니다 — 카드 안쪽이 면 색으로 실제로 칠해지고,
+    /// 그 면이 팝오버 바탕과 갈려야 테두리 없이도 카드 경계가 화면에서 읽힙니다.
+    @Test func cardSurfacesFillTheirInteriorWithASurfaceDistinctFromThePopoverBackground() throws {
         let cards: [(String, Data?)] = [
             ("CPU", renderedPixels(cpuCardView(.collecting))),
             ("Memory", renderedPixels(memoryCardView(.collecting)))
@@ -887,11 +1027,14 @@ struct DashboardCardPlaceholderRenderingTests {
 
         for (name, pixels) in cards {
             let rendered = try #require(pixels, "\(name) 카드 렌더를 만들지 못했습니다")
-            let counts = try #require(cardSurfaceInkCounts(in: rendered), "\(name) 카드 표면 픽셀을 읽지 못했습니다")
+            let fill = try #require(cardSurfaceFillPixelCount(in: rendered), "\(name) 카드 표면 픽셀을 읽지 못했습니다")
 
-            #expect(counts.interior == 0, "\(name) 카드 안쪽 빈 여백에 채움 잉크가 \(counts.interior)픽셀 남았습니다")
-            #expect(counts.border > 0, "\(name) 카드 테두리 자리에 잉크가 없습니다")
+            #expect(fill > 0, "\(name) 카드 안쪽에 면 색으로 칠해진 픽셀이 없습니다")
         }
+
+        let surface = try #require(NSColor(DashboardStyle.CardSurface.fillColor).usingColorSpace(.sRGB))
+        let background = try #require(NSColor(DashboardColorPalette.popoverBackground).usingColorSpace(.sRGB))
+        #expect(surface != background, "카드 면과 팝오버 바탕이 같은 색이라 카드 경계가 면으로 갈리지 않습니다")
     }
 
     /// CPU 두 스와치는 같은 색조의 서로 다른 램프 단계여야 합니다.

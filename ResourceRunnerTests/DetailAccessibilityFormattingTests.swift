@@ -15,7 +15,7 @@ struct CPUCoreUsageAccessibilityFormattingTests {
         let coreIndex = 13
         let usage = 12.5
 
-        #expect(CPUCoreUsageFormatting.accessibilityLabel(coreIndex: coreIndex) == "코어 13")
+        #expect(CPUCoreUsageFormatting.accessibilityLabel(coreIndex: coreIndex) == "코어 14")
         #expect(
             CPUCoreUsageFormatting.accessibilityLabel(coreIndex: coreIndex)
                 == "코어 \(CPUCoreUsageFormatting.coreNumberText(coreIndex: coreIndex))"

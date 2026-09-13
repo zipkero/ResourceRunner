@@ -146,7 +146,7 @@ struct CPUCoreGridVerticalBudgetTests {
     func gridFitsTheFirstScreenOnTheReferenceDevice() throws {
         let bottom = try gridBottomFromPopupTop(coreCount: 14)
 
-        #expect(bottom == 166, "코어 14개의 격자 아래끝이 \(bottom)pt로 166pt와 다릅니다")
+        #expect(bottom == 176, "코어 14개의 격자 아래끝이 \(bottom)pt로 176pt와 다릅니다")
         #expect(bottom <= popupHeight, "코어 14개의 격자 아래끝 \(bottom)pt가 팝업 높이 \(popupHeight)pt를 넘습니다")
     }
 
@@ -164,7 +164,7 @@ struct CPUCoreGridVerticalBudgetTests {
     func fiftySixCoresIsTheLastCountThatFits() throws {
         let bottom = try gridBottomFromPopupTop(coreCount: 56)
 
-        #expect(bottom == 446, "코어 56개의 격자 아래끝이 \(bottom)pt로 446pt와 다릅니다")
+        #expect(bottom == 476, "코어 56개의 격자 아래끝이 \(bottom)pt로 476pt와 다릅니다")
     }
 
     @Test("코어 57개 이상에서는 격자 아래끝이 첫 화면을 벗어난다", arguments: [57, 65, 80, 128])

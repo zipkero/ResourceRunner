@@ -338,9 +338,27 @@ struct ApplicationRankingCaptionTests {
 
 struct CardTopApplicationsHeadingTests {
 
-    @Test func headingEmbedsTheGivenCountExactly() {
-        #expect(ApplicationRankingSampling.cardTopApplicationsHeading(count: 5) == "앱 TOP 5 · 시스템 프로세스 제외")
-        #expect(ApplicationRankingSampling.cardTopApplicationsHeading(count: 12) == "앱 TOP 12 · 시스템 프로세스 제외")
+    /// 접근성용 문구는 화면 머리글이 짧아진 뒤에도 정원과 제외 사실에 닿는 유일한 경로이므로,
+    /// 인자를 무시하고 고정 문자열을 돌려주는 mutation이 잡히도록 직접 문자열 비교로 고정합니다.
+    @Test func accessibilityTextEmbedsTheGivenCountAndStatesTheExclusion() {
+        #expect(
+            ApplicationRankingSampling.cardTopApplicationsAccessibilityText(count: 5)
+                == "앱 TOP 5 · 시스템 프로세스 제외"
+        )
+        #expect(
+            ApplicationRankingSampling.cardTopApplicationsAccessibilityText(count: 12)
+                == "앱 TOP 12 · 시스템 프로세스 제외"
+        )
+    }
+
+    /// 화면 머리글은 목록의 이름표만 담습니다. 접근성용 문구를 화면 머리글에 되돌리면 이 단언이 실패합니다.
+    @Test func screenHeadingCarriesNeitherTheGantryNumberNorTheExclusionRule() {
+        let heading = ApplicationRankingSampling.cardTopApplicationsHeading
+
+        #expect(heading == "상위 앱")
+        #expect(!heading.contains("\(ApplicationRankingSampling.cardDisplayCount)"))
+        #expect(!heading.contains("시스템 프로세스"))
+        #expect(heading.rangeOfCharacter(from: .decimalDigits) == nil)
     }
 }
 

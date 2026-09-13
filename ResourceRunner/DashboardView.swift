@@ -60,16 +60,17 @@ struct DashboardView: View {
         }
         .padding()
         .frame(width: 280, height: DashboardView.bodyHeight, alignment: .topLeading)
+        .background(DashboardColorPalette.popoverBackground)
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("DashboardContainer")
     }
 
-    /// 높이 제약을 걷고 수집 중·정상 상태를 각각 재었을 때 팝오버 프레임은 모두 534pt였습니다.
+    /// 높이 제약을 걷고 수집 중·정상 상태를 각각 재었을 때 팝오버 프레임은 모두 627pt였습니다.
     /// `NSPopover` chrome 26pt를 뺀 콘텐츠 높이로 고정해 상태 전이에도 프레임이 흔들리지 않게 합니다.
-    fileprivate static let bodyHeight: CGFloat = 508
+    fileprivate static let bodyHeight: CGFloat = 601
 
-    /// 두 카드가 회색 블록 없이 테두리만으로도 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
+    /// 두 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
     static let cardSpacing = DashboardStyle.Spacing.betweenSections
 
     /// CPU 카드 선택·복귀 단축키의 실제 키. `CPUCardPresentation.selectionShortcutKey`에서 유도되어
@@ -83,7 +84,7 @@ struct DashboardView: View {
     /// 카드를 오가거나 프로세스 수·값이 바뀌어도 팝업 프레임이 흔들리지 않고, 넘치는 내용은 내부
     /// `ScrollView`에서만 스크롤됩니다.
     /// 새 상세 조립에서 후보 400×480을 다시 확정했습니다. 단위 테스트로 콘텐츠 폭 368pt 안에 CPU 앱 행,
-    /// Memory 도넛·범례 행과 코어 격자의 이상적 폭이 들고, 14코어 격자 아래끝 166pt가 높이 480pt 안에
+    /// Memory 도넛·범례 행과 코어 격자의 이상적 폭이 들고, 14코어 격자 아래끝 176pt가 높이 480pt 안에
     /// 드는지 먼저 확인한 뒤 XCUITest에서 네 상태와 앱 행 펼침·접힘, 스크롤 전후의 `DashboardDetail`
     /// 프레임이 400×480으로 고정되는지 재확인했습니다. 두 상세는 실행 중인 모든 프로세스를 나열하므로
     /// 넘치는 세로 내용은 기존처럼 이 고정 프레임 안의 단일 `ScrollView`가 맡습니다.
@@ -131,6 +132,9 @@ struct CPUCardView: View {
     /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
     let iconProvider: any ApplicationIconProviding
 
+    /// 카드 안 구역(제목 묶음·그래프 묶음·순위 묶음) 사이 간격. 상세 화면의 구역 사이와 같은 단계를 씁니다.
+    static let sectionSpacing = DashboardStyle.Section.betweenSections
+
     /// 이 카드가 보여줄 수 있는 값. `normal`은 이번 tick 값, `failure`·`stopped`는 마지막 성공 값을 담고,
     /// 성공 이력이 없는 `collecting`과 실패·중지는 `nil`입니다(`ResourceCardState.lastKnownValue`).
     /// 캐시된 값이 있는 슬롯에는 자리표시가 들어가지 않고 그 값이 그대로 보입니다(SPEC §5.9, §5 DP17).
@@ -139,7 +143,7 @@ struct CPUCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DashboardStyle.Spacing.betweenGroups) {
+        VStack(alignment: .leading, spacing: Self.sectionSpacing) {
             VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
                 Text("CPU")
                     .dashboardTypography(DashboardStyle.TypographyRole.heading)
@@ -156,10 +160,7 @@ struct CPUCardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
-                .strokeBorder(
-                    DashboardStyle.CardSurface.borderColor,
-                    lineWidth: DashboardStyle.CardSurface.borderWidth
-                )
+                .fill(DashboardStyle.CardSurface.fillColor)
         )
         .contentShape(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius))
     }
@@ -225,14 +226,10 @@ struct CPUCardView: View {
             if let presentation = cached {
                 HStack(spacing: CPUSeriesPlaceholderLayout.spacing) {
                     CPUSeriesSwatchView(band: .lower)
-                    Text("User ").dashboardTypography(DashboardStyle.TypographyRole.label)
-                        + Text("\(Int(presentation.userRatio.rounded()))%")
-                            .dashboardTypography(DashboardStyle.TypographyRole.value)
+                    CPUSeriesRatioView(label: "User", ratio: presentation.userRatio)
                     Text("·").dashboardTypography(DashboardStyle.TypographyRole.label)
                     CPUSeriesSwatchView(band: .upper)
-                    Text("System ").dashboardTypography(DashboardStyle.TypographyRole.label)
-                        + Text("\(Int(presentation.systemRatio.rounded()))%")
-                            .dashboardTypography(DashboardStyle.TypographyRole.value)
+                    CPUSeriesRatioView(label: "System", ratio: presentation.systemRatio)
                 }
             } else {
                 HStack(spacing: CPUSeriesPlaceholderLayout.spacing) {
@@ -279,6 +276,29 @@ enum CPUSeriesPlaceholderLayout {
 /// 크기는 그 줄의 텍스트 높이를 넘지 않도록 `.caption` 줄 높이보다 작은 고정 값으로 둡니다.
 // `private`가 아닌 것은 task-011 테스트가 값 없음 요약 줄의 기준 폭을 조립할 때 이 뷰를 그대로 쓰기 때문입니다 —
 // 테스트가 같은 크기의 대역 뷰를 따로 만들면 스와치 크기 변경이 기준 폭에 반영되지 않습니다.
+/// 요약 줄의 「이름 + 비율」 조각. 비율 숫자에 두 자리 기준 고정 폭을 주어,
+/// 값이 한 자리와 두 자리를 오갈 때 뒤따르는 구분자와 System 조각이 밀리지 않게 합니다.
+/// 자릿수가 고정되지 않으면 `monospacedDigit()`만으로는 줄이 흔들립니다.
+struct CPUSeriesRatioView: View {
+    let label: String
+    let ratio: Double
+
+    /// 두 자리 정수 + `%`가 들어가는 폭. 사용률은 0…100이라 세 자리는 100 하나뿐이고,
+    /// 그 값은 자리를 넘겨 그려도 줄 전체가 밀리지 않습니다.
+    static let numberWidth: CGFloat = 26
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Text("\(label) ").dashboardTypography(DashboardStyle.TypographyRole.label)
+            Text("\(Int(ratio.rounded()))%")
+                .dashboardTypography(DashboardStyle.TypographyRole.value)
+                .frame(width: Self.numberWidth, alignment: .leading)
+        }
+        .lineLimit(1)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct CPUSeriesSwatchView: View {
     let band: HistoryGraphView.BandRole
 
@@ -315,14 +335,22 @@ struct MemoryCardView: View {
     /// CPU 카드와 같은 이유로 전달만 받습니다.
     let iconProvider: any ApplicationIconProviding
 
+    /// CPU 카드의 같은 상수와 같은 뜻입니다.
+    static let sectionSpacing = DashboardStyle.Section.betweenSections
+
     /// CPU 카드의 `cached`와 같은 뜻입니다 — 캐시된 값이 있는 슬롯에는 자리표시가 들어가지 않습니다.
     private var cached: MemoryCardPresentation? {
         state.lastKnownValue?.presentation
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DashboardStyle.Spacing.betweenGroups) {
-            titleLine
+        VStack(alignment: .leading, spacing: Self.sectionSpacing) {
+            VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
+                Text("Memory")
+                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
+
+                titleLine
+            }
 
             VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
                 pressureSwapLine
@@ -335,10 +363,7 @@ struct MemoryCardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
-                .strokeBorder(
-                    DashboardStyle.CardSurface.borderColor,
-                    lineWidth: DashboardStyle.CardSurface.borderWidth
-                )
+                .fill(DashboardStyle.CardSurface.fillColor)
         )
         .contentShape(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius))
     }
@@ -366,7 +391,8 @@ struct MemoryCardView: View {
         }
     }
 
-    /// 카드 이름은 머리글, 상태 접두는 라벨, 사용 중/전체 값은 초점 역할로 한 줄 안에 이어 붙입니다.
+    /// 상태 접두는 라벨, 사용 중 값은 초점 역할로 한 줄 안에 이어 붙입니다.
+    /// 전체 용량은 견주는 대상이라 본문 값 역할이고, 초점 역할로 두면 최악 입력에서 줄이 카드 콘텐츠 폭을 넘습니다.
     /// CPU 카드와 같이 숨긴 초점 역할 한 글자가 값 없는 상태의 줄 높이를 보존합니다.
     var focusLine: some View {
         ZStack(alignment: .leading) {
@@ -379,28 +405,26 @@ struct MemoryCardView: View {
     }
 
     private var focusLineText: Text {
-        let heading = Text("Memory ").dashboardTypography(DashboardStyle.TypographyRole.heading)
         switch state {
         case .collecting:
-            return heading + Text("수집 중").dashboardTypography(DashboardStyle.TypographyRole.label)
+            return Text("수집 중").dashboardTypography(DashboardStyle.TypographyRole.label)
         case .normal(let presentation, _):
-            return heading
-                + Text("\(DashboardValueColumn.byteText(presentation.usedBytes)) / \(DashboardValueColumn.byteText(presentation.totalPhysicalBytes))")
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
+            return Text(DashboardValueColumn.byteText(presentation.usedBytes))
+                .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                + Text(" / \(DashboardValueColumn.byteText(presentation.totalPhysicalBytes))")
+                    .dashboardTypography(DashboardStyle.TypographyRole.value)
         case .failure(let lastKnown):
             guard let lastKnown else {
-                return heading + Text("수집 실패").dashboardTypography(DashboardStyle.TypographyRole.label)
+                return Text("수집 실패").dashboardTypography(DashboardStyle.TypographyRole.label)
             }
-            return heading
-                + Text("수집 실패 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
+            return Text("수집 실패 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
                 + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
                     .dashboardTypography(DashboardStyle.TypographyRole.focus)
         case .stopped(let lastKnown):
             guard let lastKnown else {
-                return heading + Text("수집 중지").dashboardTypography(DashboardStyle.TypographyRole.label)
+                return Text("수집 중지").dashboardTypography(DashboardStyle.TypographyRole.label)
             }
-            return heading
-                + Text("수집 중지 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
+            return Text("수집 중지 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
                 + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
                     .dashboardTypography(DashboardStyle.TypographyRole.focus)
         }
@@ -547,26 +571,22 @@ struct HistoryGraphView: View {
         case upper
     }
 
-    /// `Canvas`가 그리는 것과 순서. 격자가 맨 먼저(가장 뒤)에 오고, 두 밴드 채움·경계선 뒤에 판 테두리가 옵니다.
-    /// 격자를 먼저 그려야 반투명 밴드 사이로 비치고 테두리를 마지막에 그려야 100% 구간에서도 위 변이 남습니다.
+    /// `Canvas`가 그리는 것과 순서. 기준선이 맨 먼저(가장 뒤)에 오고 두 밴드 채움·경계선이 그 위에 얹힙니다.
+    /// 기준선을 먼저 그려야 반투명 밴드 사이로 비칩니다.
     /// `body`가 이 배열을 그대로 순회해 그리므로, 이 배열 자체가 실제 그리기 순서입니다 —
     /// 순서를 검증하는 단위 테스트는 `Canvas` 내부가 아니라 이 배열을 단언합니다.
     enum DrawLayer: Equatable {
         case gridlines
-        case uncollectedRegion
         case bandFill(BandRole)
         case bandBoundary(BandRole)
-        case graphBorder
     }
 
     static let drawOrder: [DrawLayer] = [
         .gridlines,
-        .uncollectedRegion,
         .bandFill(.lower),
         .bandFill(.upper),
         .bandBoundary(.lower),
-        .bandBoundary(.upper),
-        .graphBorder
+        .bandBoundary(.upper)
     ]
 
     let currentTimestamp: ContinuousClock.Instant
@@ -663,16 +683,6 @@ struct HistoryGraphView: View {
                         switch layer {
                         case .gridlines:
                             drawCPUGraphGridlines(in: &context, size: size)
-                        case .uncollectedRegion:
-                            let timeAxis = HistoryGraphTimeAxis.make(
-                                points: points,
-                                currentTimestamp: currentTimestamp
-                            )
-                            drawCPUUncollectedRegion(
-                                in: &context,
-                                size: size,
-                                normalizedWidth: timeAxis.uncollectedNormalizedWidth
-                            )
                         case .bandFill(let band):
                             for segment in segments {
                                 let path = band == .lower ? lowerFillPath(for: segment) : upperFillPath(for: segment)
@@ -684,8 +694,6 @@ struct HistoryGraphView: View {
                                 guard let path = boundaryPath(for: segment, band: band) else { continue }
                                 context.stroke(path, with: .color(Self.color(for: band)), style: Self.boundaryStyle(for: band))
                             }
-                        case .graphBorder:
-                            drawCPUGraphBorder(in: &context, size: size)
                         }
                     }
                 }
@@ -694,11 +702,11 @@ struct HistoryGraphView: View {
     }
 }
 
-/// `HistoryGraphView`와 값 없음 자리표시(`GraphPlaceholderView`)가 같은 격자를 그리도록 공유하는 그리기 함수입니다
-/// (SPEC §5.8, ANALYSIS §5 DP14). 기준선 값과 좌표 변환은 `HistoryGraphGridline`(뷰 밖 순수 함수)에서 가져오고,
+/// `HistoryGraphView`와 값 없음 자리표시(`GraphPlaceholderView`)가 같은 기준선을 그리도록 공유하는 그리기 함수입니다.
+/// 그리는 기준선 값과 좌표 변환은 `HistoryGraphGridline`(뷰 밖 순수 함수)에서 가져오고,
 /// 여기서는 그 결과를 좌표로 옮겨 선을 긋는 일만 합니다.
 private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSize) {
-    for value in HistoryGraphGridline.baselineValues {
+    for value in HistoryGraphGridline.drawnBaselineValues {
         let y = CGFloat(HistoryGraphGridline.yPosition(forValue: value, height: Double(size.height)))
         var path = Path()
         path.move(to: CGPoint(x: 0, y: y))
@@ -708,68 +716,6 @@ private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSi
             with: .color(DashboardColorPalette.cpuGridline),
             lineWidth: HistoryGraphGridline.lineWidth
         )
-    }
-
-    for normalizedX in HistoryGraphGridline.verticalTickNormalizedXPositions() {
-        let x = size.width * CGFloat(normalizedX)
-        var path = Path()
-        path.move(to: CGPoint(x: x, y: 0))
-        path.addLine(to: CGPoint(x: x, y: size.height))
-        context.stroke(
-            path,
-            with: .color(DashboardColorPalette.cpuGridline),
-            lineWidth: HistoryGraphGridline.lineWidth
-        )
-    }
-}
-
-private func drawCPUGraphBorder(in context: inout GraphicsContext, size: CGSize) {
-    let halfLineWidth = HistoryGraphGridline.lineWidth / 2
-    let bounds = CGRect(origin: .zero, size: size).insetBy(dx: halfLineWidth, dy: halfLineWidth)
-    context.stroke(
-        Path(bounds),
-        with: .color(DashboardColorPalette.cpuGridline),
-        lineWidth: HistoryGraphGridline.lineWidth
-    )
-}
-
-nonisolated enum CPUUncollectedRegionHatch {
-    static let spacing: CGFloat = 8
-
-    static func lineSegmentCount(size: CGSize, normalizedWidth: Double) -> Int {
-        let width = size.width * CGFloat(min(1, max(0, normalizedWidth)))
-        guard width > 0, size.height > 0 else { return 0 }
-        return Int(((width + size.height) / spacing).rounded(.down)) + 1
-    }
-}
-
-private func drawCPUUncollectedRegion(
-    in context: inout GraphicsContext,
-    size: CGSize,
-    normalizedWidth: Double
-) {
-    let width = size.width * CGFloat(min(1, max(0, normalizedWidth)))
-    let lineSegmentCount = CPUUncollectedRegionHatch.lineSegmentCount(
-        size: size,
-        normalizedWidth: normalizedWidth
-    )
-    guard lineSegmentCount > 0 else { return }
-
-    let bounds = CGRect(x: 0, y: 0, width: width, height: size.height)
-    context.drawLayer { hatchContext in
-        hatchContext.clip(to: Path(bounds))
-
-        for index in 0..<lineSegmentCount {
-            let startX = -size.height + CGFloat(index) * CPUUncollectedRegionHatch.spacing
-            var path = Path()
-            path.move(to: CGPoint(x: startX, y: size.height))
-            path.addLine(to: CGPoint(x: startX + size.height, y: 0))
-            hatchContext.stroke(
-                path,
-                with: .color(DashboardColorPalette.cpuGridline.opacity(0.55)),
-                lineWidth: HistoryGraphGridline.lineWidth
-            )
-        }
     }
 }
 
@@ -815,8 +761,8 @@ private struct HistoryGraphSlotView: View {
     }
 }
 
-/// 그래프 자리의 자리표시(task-015). 값이 없는 상태에도 같은 격자와 판 테두리를 그립니다.
-/// 둘은 값이 아니라 눈금과 영역 경계라 그려도 되지만, 점이나 값 선은 그리지 않습니다.
+/// 그래프 자리의 자리표시. 값이 없는 상태에도 값 있음 경로와 같은 기준선 하나를 같은 좌표에 그립니다.
+/// 기준선은 값이 아니라 눈금이라 그려도 되지만, 점이나 값 선은 그리지 않습니다.
 private struct GraphPlaceholderView: View {
     var body: some View {
         Canvas { context, size in
@@ -824,10 +770,6 @@ private struct GraphPlaceholderView: View {
                 switch layer {
                 case .gridlines:
                     drawCPUGraphGridlines(in: &context, size: size)
-                case .uncollectedRegion:
-                    drawCPUUncollectedRegion(in: &context, size: size, normalizedWidth: 1)
-                case .graphBorder:
-                    drawCPUGraphBorder(in: &context, size: size)
                 }
             }
         }
@@ -887,7 +829,7 @@ struct CardRankingSlotView: View {
 
     private static let capacity = ApplicationRankingSampling.cardDisplayCount
     /// 머리글과 순위 목록 사이 간격.
-    static let headingSpacing = DashboardStyle.Spacing.labelToContent
+    static let headingSpacing = DashboardStyle.Section.headingToContent
     /// 아이콘 자리와 이름 사이 간격.
     static let iconSpacing = DashboardStyle.Spacing.labelToContent
 
@@ -897,7 +839,7 @@ struct CardRankingSlotView: View {
         let iconKeys = ApplicationRowIconLayout.cardRowIconKeys(entries: entries, failed: failed, capacity: Self.capacity)
         VStack(alignment: .leading, spacing: Self.headingSpacing) {
             Text(heading)
-                .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                .dashboardTypography(DashboardStyle.Section.headingRole)
 
             VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
                 ForEach(Array(iconKeys.enumerated()), id: \.offset) { index, iconKey in
@@ -910,16 +852,24 @@ struct CardRankingSlotView: View {
     // `private`가 아닌 것은 task-011 테스트가 정원의 **줄마다** 아이콘 자리가 남아 있는지 한 줄씩 재기
     // 때문입니다 — 슬롯 전체의 이상적 폭은 가장 넓은 한 줄만 드러내 일부 줄의 자리 손실을 가립니다.
     func row(at index: Int, iconKey: ApplicationKey?) -> some View {
-        HStack(spacing: Self.iconSpacing) {
-            ForEach(CardRankingRowLayout.elements, id: \.self) { element in
-                switch element {
-                case .icon:
-                    ApplicationRowIconView(
-                        content: ApplicationRowIconLayout.content(for: iconKey, from: iconProvider),
-                        pointSize: ApplicationRowIconLayout.cardPointSize
-                    )
-                case .content:
-                    rowContent(at: index)
+        // 값 열이 없는 줄(자리표시·조사 실패 안내)은 라벨 역할 줄 높이만 차지해 값이 있는 줄보다 낮아집니다.
+        // 숨긴 본문 값 한 글자가 모든 줄의 높이를 맡아, 줄마다 높이가 갈려 카드 높이가 상태에 따라 달라지는 것을 막습니다.
+        ZStack(alignment: .leading) {
+            Text(" ")
+                .dashboardTypography(DashboardStyle.TypographyRole.value)
+                .hidden()
+
+            HStack(spacing: Self.iconSpacing) {
+                ForEach(CardRankingRowLayout.elements, id: \.self) { element in
+                    switch element {
+                    case .icon:
+                        ApplicationRowIconView(
+                            content: ApplicationRowIconLayout.content(for: iconKey, from: iconProvider),
+                            pointSize: ApplicationRowIconLayout.cardPointSize
+                        )
+                    case .content:
+                        rowContent(at: index)
+                    }
                 }
             }
         }
@@ -1008,8 +958,7 @@ struct TopApplicationsView: View {
             }
 
             Text(caption)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .dashboardTypography(DashboardStyle.TypographyRole.label)
         }
     }
 
@@ -1024,7 +973,7 @@ struct TopApplicationsView: View {
             Spacer()
             DashboardAlignedValueView(value: value(entry))
         }
-        .font(.caption)
+        .dashboardTypography(DashboardStyle.TypographyRole.label)
     }
 }
 
@@ -1054,6 +1003,7 @@ struct CPUDetailPopoverContent: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .background(DashboardColorPalette.cardSurface)
         .accessibilityIdentifier("DashboardDetail")
     }
 
@@ -1064,8 +1014,7 @@ struct CPUDetailPopoverContent: View {
             CPUDetailView(presentation: presentation, iconProvider: iconProvider)
         } else {
             Text("아직 CPU 값이 수집되지 않았습니다.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .dashboardTypography(DashboardStyle.TypographyRole.label)
         }
     }
 }
@@ -1083,14 +1032,14 @@ struct MemoryDetailPopoverContent: View {
                     MemoryDetailView(presentation: presentation, iconProvider: iconProvider)
                 } else {
                     Text("아직 Memory 값이 수집되지 않았습니다.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .dashboardTypography(DashboardStyle.TypographyRole.label)
                 }
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .background(DashboardColorPalette.cardSurface)
         .accessibilityIdentifier("DashboardDetail")
     }
 }
@@ -1151,7 +1100,7 @@ struct CPUDetailView: View {
                     switch element {
                     case .heading:
                         Text(CPUCoreUsageFormatting.headingText(coreCount: presentation.detail.coreUsages.count))
-                            .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                            .dashboardTypography(DashboardStyle.Section.headingRole)
                     case .grid:
                         CPUCoreUsageGridView(usages: presentation.detail.coreUsages)
                     }
@@ -1164,8 +1113,11 @@ struct CPUDetailView: View {
         CPUCoreUsageSection(presentation: presentation)
     }
 
+    /// 상세 구역 사이 간격. 카드와 같은 자리를 참조해 두 화면의 구역이 같은 간격으로 갈립니다.
+    static let sectionSpacing = DashboardStyle.Section.betweenSections
+
     var body: some View {
-        VStack(alignment: .leading, spacing: DashboardStyle.Spacing.betweenSections) {
+        VStack(alignment: .leading, spacing: Self.sectionSpacing) {
             ForEach(AssemblyElement.allCases, id: \.self) { element in
                 switch element {
                 case .summary:
@@ -1182,6 +1134,7 @@ struct CPUDetailView: View {
                     ApplicationProcessGroupListView(
                         groups: presentation.detail.applications,
                         sortDescription: presentation.detail.applicationsHeading,
+                        exclusionNote: presentation.detail.applicationsExclusionNote,
                         // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
                         groupValue: ApplicationProcessValueFormatting.cpuGroupValueText,
                         iconProvider: iconProvider,
@@ -1223,7 +1176,7 @@ struct CPUCoreUsageGridView: View {
     static let assembly = AssemblyElement.allCases
 
     /// 격자 머리글과 격자 사이 간격. 머리글이 격자에 딸린 이름으로 읽히도록 섹션 간격보다 좁습니다.
-    static let headingSpacing = DashboardStyle.Spacing.labelToContent
+    static let headingSpacing = DashboardStyle.Section.headingToContent
 
     var body: some View {
         let rows = CPUCoreGridLayout.rows(coreCount: usages.count)
@@ -1317,7 +1270,7 @@ struct CPUCoreUsageCellView: View {
     /// 칸의 `body`가 실제로 순회하는 조립 항목입니다.
     static let assembly = AssemblyElement.allCases
 
-    /// 칸 안 세 줄 사이 간격. 칸 높이(18 + 2 + 13 + 2 + 13 = 48pt)가 이 값에서 나옵니다.
+    /// 칸 안 세 줄 사이 간격. 칸 높이(막대 20 + 2 + 값 줄 15 + 2 + 코어 번호 13 = 52pt)가 이 값에서 나옵니다.
     static let rowSpacing = DashboardStyle.Spacing.withinGroup
     static let cornerRadius: CGFloat = 2
 
@@ -1346,8 +1299,7 @@ struct CPUCoreUsageCellView: View {
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 case .coreNumber:
                     Text(CPUCoreUsageFormatting.coreNumberText(coreIndex: coreIndex))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
                 }
             }
         }
@@ -1375,10 +1327,15 @@ struct MemoryDetailView: View {
     let presentation: MemoryCardPresentation
     let iconProvider: any ApplicationIconProviding
 
+    /// 상세 구역 사이 간격. CPU 상세·두 카드와 같은 자리를 참조합니다.
+    static let sectionSpacing = DashboardStyle.Section.betweenSections
+    /// 증가량 순위 구역의 머리글과 목록 사이 간격.
+    static let recentIncreaseHeadingSpacing = DashboardStyle.Section.headingToContent
+
     var body: some View {
         let detail = presentation.detail
         let summary = presentation.compositionDetailSummary
-        VStack(alignment: .leading, spacing: DashboardStyle.Spacing.betweenSections) {
+        VStack(alignment: .leading, spacing: Self.sectionSpacing) {
             MemoryCompositionDonutView(
                 layout: presentation.compositionDonutLayout,
                 legendRows: MemoryCompositionDetailLegendFormatting.rows(bytes: detail.compositionBytes),
@@ -1404,9 +1361,9 @@ struct MemoryDetailView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: DashboardStyle.Spacing.labelToContent) {
+            VStack(alignment: .leading, spacing: Self.recentIncreaseHeadingSpacing) {
                 Text("최근 10분 증가량 순위")
-                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                    .dashboardTypography(DashboardStyle.Section.headingRole)
                 // 증가량은 음수일 수 있으므로 `TopApplicationsView`가 기본 카드에 쓰는 `UInt64` 변환 경로를
                 // 그대로 재사용하지 않고, 부호를 보존하는 별도 포맷을 씁니다.
                 // 이 목록만 상세 정원(20)까지 받으므로 카드 정원 문구와 다른 문구가 필요합니다 — 정원을
@@ -1422,6 +1379,7 @@ struct MemoryDetailView: View {
             ApplicationProcessGroupListView(
                 groups: detail.applications,
                 sortDescription: detail.applicationsHeading,
+                exclusionNote: detail.applicationsExclusionNote,
                 // Memory는 항상 값이 있지만(SPEC §5.6과 달리 기준점이 필요 없음), nil 안전 경로는
                 // `ApplicationProcessValueFormatting`(단위 테스트 대상)을 CPU와 공유합니다.
                 groupValue: ApplicationProcessValueFormatting.memoryGroupValueText,
@@ -1444,6 +1402,11 @@ struct MemoryCompositionDonutView: View {
     /// 범례에 남는 폭을 상세 후보 크기에서 유도해 재는 task-007 테스트와 공유합니다.
     static let diameter: CGFloat = 140
     private static let lineWidth: CGFloat = 18
+
+    /// 범례 이름 열의 폭. 네 구간 이름(App / Wired / Compressed / Cached)을 `label` 역할로 실측한
+    /// 이상적 폭의 최댓값이며, 이보다 좁히면 가장 긴 이름이 잘리거나 접혀 네 행의 값 열이 어긋납니다.
+    /// 이름이 바뀌거나 늘면 다시 재야 하고, 단위 테스트가 네 이름을 다시 재서 이 폭 안에 드는지 확인합니다.
+    static let legendNameWidth: CGFloat = 67
 
     var body: some View {
         HStack(alignment: .center, spacing: DashboardStyle.Spacing.betweenSections) {
@@ -1482,10 +1445,9 @@ struct MemoryCompositionDonutView: View {
 
                 VStack(spacing: DashboardStyle.Spacing.withinGroup) {
                     Text(centerLabel)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .dashboardTypography(DashboardStyle.TypographyRole.label)
                     Text(centerValue)
-                        .font(.caption.bold())
+                        .dashboardTypography(DashboardStyle.TypographyRole.value)
                 }
             }
             .frame(width: Self.diameter, height: Self.diameter)
@@ -1508,10 +1470,11 @@ struct MemoryCompositionDonutView: View {
             Image(systemName: "square.fill")
                 .foregroundStyle(DashboardColorPalette.memoryComposition(row.category))
             Text(row.label)
-            Spacer(minLength: 8)
+                .frame(width: Self.legendNameWidth, alignment: .leading)
             DashboardAlignedValueView(value: row.value)
+            Spacer(minLength: 0)
         }
-        .font(.caption)
+        .dashboardTypography(DashboardStyle.TypographyRole.label)
     }
 }
 
@@ -1538,12 +1501,16 @@ struct ApplicationProcessGroupListView: View {
     let groups: [ApplicationProcessGroup]
     /// 목록이 어떤 값으로, 어떤 방향으로 정렬됐는지 알리는 머리글.
     let sortDescription: String
+    /// 머리글 바로 아래 줄에 붙는 안내. 시스템 프로세스가 순위에서 빠진다는 사실을 두 상세 모두에서 알립니다.
+    let exclusionNote: String
     /// 앱 행에 표시할 그룹 합계 값의 서식. `nil`(값을 만들지 못한 그룹)을 0으로 지어내지 않습니다(SPEC §5.6).
     let groupValue: (Double?) -> DashboardValueColumn.Value
     let iconProvider: any ApplicationIconProviding
     let valueText: (ApplicationProcessDetail) -> String
 
-    static let headingSpacing = DashboardStyle.Spacing.labelToContent
+    static let headingSpacing = DashboardStyle.Section.headingToContent
+    /// 머리글과 안내 줄 사이 간격. 두 줄이 하나의 머리글 묶음으로 읽히도록 머리글과 내용 사이보다 좁습니다.
+    static let noteSpacing = DashboardStyle.Spacing.withinGroup
     static let rowSpacing = DashboardStyle.Spacing.withinGroup
     static let contentLeadingPadding = DashboardStyle.Spacing.betweenGroups
 
@@ -1561,8 +1528,12 @@ struct ApplicationProcessGroupListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Self.headingSpacing) {
-            Text(sortDescription)
-                .dashboardTypography(DashboardStyle.TypographyRole.heading)
+            VStack(alignment: .leading, spacing: Self.noteSpacing) {
+                Text(sortDescription)
+                    .dashboardTypography(DashboardStyle.Section.headingRole)
+                Text(exclusionNote)
+                    .dashboardTypography(DashboardStyle.TypographyRole.label)
+            }
 
             VStack(alignment: .leading, spacing: Self.rowSpacing) {
                 ForEach(displayedGroups, id: \.key) { group in
@@ -1652,7 +1623,7 @@ struct ApplicationProcessGroupRow: View {
                             }
                         }
                     }
-                    .font(.caption2)
+                    .dashboardTypography(DashboardStyle.TypographyRole.label)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1673,7 +1644,7 @@ struct ApplicationProcessGroupRow: View {
             .contentShape(Rectangle())
             .onTapGesture { isExpanded.toggle() }
         }
-        .font(.caption)
+        .dashboardTypography(DashboardStyle.TypographyRole.label)
         // 목록이 매 tick 다시 정렬되므로, 화면 위치가 아니라 앱 키로 특정 행을 계속 가리킬 수 있도록
         // 안정적인 식별자를 붙입니다(XCUITest가 재정렬 사이에도 같은 행을 추적하는 데 씁니다).
         .accessibilityIdentifier("AppRow-\(group.key.value)")

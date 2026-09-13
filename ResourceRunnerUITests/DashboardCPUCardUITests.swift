@@ -39,7 +39,7 @@ final class DashboardCPUCardUITests: XCTestCase {
         XCTAssertNotNil(label.range(of: #"User [0-9]+%"#, options: .regularExpression), "CPU User 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertNotNil(label.range(of: #"System [0-9]+%"#, options: .regularExpression), "CPU System 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("두 계열 중첩 그래프"), "CPU 그래프의 중첩 관계가 접근성 이름에 없습니다. 실제 값: \(label)")
-        XCTAssertTrue(label.contains("기준선 25%·50%·75%"), "CPU 기준선 값이 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertTrue(label.contains("기준선 50%"), "CPU 기준선 값이 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("최근 10분 그래프"), "CPU 그래프의 시간 창이 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertNotNil(
             label.range(of: #"데이터 수집 중 · [0-9]{2}:[0-9]{2} / 10:00"#, options: .regularExpression),

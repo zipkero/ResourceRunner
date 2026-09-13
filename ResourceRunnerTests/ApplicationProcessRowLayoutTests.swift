@@ -157,7 +157,9 @@ private func collapsedRow(formatting: DetailValueFormatting = .cpu) -> some View
 }
 
 @MainActor
-private func textLine(_ text: String) -> some View { Text(text).font(.caption2) }
+private func textLine(_ text: String) -> some View {
+    Text(text).dashboardTypography(DashboardStyle.TypographyRole.label)
+}
 
 @MainActor
 private func leadingSideBearing(_ view: some View) -> Int? {
@@ -214,7 +216,7 @@ struct ApplicationProcessRowIndentTests {
     fileprivate func childLinesHaveDistinctSemanticStarts(formatting: DetailValueFormatting) throws {
         let probe = try #require(ExpandedRowProbe(childCount: 3, formatting: formatting))
         let process = childProcess(index: 0)
-        let parentBearing = try #require(leadingSideBearing(Text(parentDisplayName).font(.caption)))
+        let parentBearing = try #require(leadingSideBearing(Text(parentDisplayName).dashboardTypography(DashboardStyle.TypographyRole.label)))
         let nameBearing = try #require(leadingSideBearing(textLine(childName(process))))
         let valueBearing = try #require(leadingSideBearing(textLine(formatting.valueText(process))))
         let parentStart = probe.parentNameInkX - parentBearing
@@ -228,7 +230,7 @@ struct ApplicationProcessRowIndentTests {
     @Test("시작선은 아이콘 크기와 라벨 간격에서 유도된다")
     func startsAreDerivedFromTheParentLabelGeometry() throws {
         let probe = try #require(ExpandedRowProbe(childCount: 1, formatting: .cpu))
-        let parentBearing = try #require(leadingSideBearing(Text(parentDisplayName).font(.caption)))
+        let parentBearing = try #require(leadingSideBearing(Text(parentDisplayName).dashboardTypography(DashboardStyle.TypographyRole.label)))
         let parentStart = probe.parentNameInkX - parentBearing
         #expect(CGFloat(parentStart - probe.iconEndX) == ApplicationProcessRowLayout.labelIconSpacing)
         #expect(ApplicationProcessRowLayout.labelIconSpacing == DashboardStyle.Spacing.labelToContent)
@@ -252,7 +254,11 @@ struct ApplicationProcessRowSpacingTests {
     private func list(groupCount: Int) -> some View {
         ApplicationProcessGroupListView(
             groups: (0..<groupCount).map { fixtureGroup(childCount: 3, keySuffix: "-\($0)") },
-            sortDescription: "CPU 사용률 순", groupValue: DetailValueFormatting.cpu.groupValueText,
+            sortDescription: "CPU 사용률 순",
+            exclusionNote: ApplicationRankingSampling.topApplicationsCaption(
+                count: ApplicationRankingSampling.detailCount
+            ),
+            groupValue: DetailValueFormatting.cpu.groupValueText,
             iconProvider: iconProvider(), valueText: DetailValueFormatting.cpu.valueText
         )
     }
@@ -300,11 +306,11 @@ struct ApplicationProcessRowSpacingTests {
         #expect(measured.top < measured.bottom)
     }
 
-    @Test("하위가 1·2·3개일 때 접힘 대비 50pt에서 34pt씩 늘어나며 변경 전보다 작다", arguments: [1, 2, 3], DetailValueFormatting.allCases)
+    @Test("하위가 1·2·3개일 때 접힘 대비 52pt에서 36pt씩 늘어나며 변경 전보다 작다", arguments: [1, 2, 3], DetailValueFormatting.allCases)
     fileprivate func expandedHeightFollowsTheFourBoundaries(childCount: Int, formatting: DetailValueFormatting) {
         let growth = measuredHeight(expandedRow(childCount: childCount, formatting: formatting))
             - measuredHeight(collapsedRow(formatting: formatting))
-        let expectedGrowth = 50 + CGFloat(childCount - 1) * 34
+        let expectedGrowth = 52 + CGFloat(childCount - 1) * 36
         let previousGrowth = 70 + CGFloat(childCount - 1) * 38
         #expect(growth == expectedGrowth)
         #expect(growth < previousGrowth)
@@ -348,7 +354,7 @@ struct ApplicationProcessRowWidthTests {
             Spacer()
             Text(value)
         }
-        .font(.caption2)
+        .dashboardTypography(DashboardStyle.TypographyRole.label)
         .padding(.leading, ApplicationProcessRowLayout.childIndent)
         #expect(measuredIdealWidth(oneLine) > applicationListInnerWidth)
     }
@@ -364,7 +370,7 @@ struct DetailViewsShareTheApplicationRowTests {
             - measuredHeight(collapsedRow(formatting: formatting))
         #expect(probe.nameInkX.count == 2)
         #expect(probe.valueInkX.count == 2)
-        #expect(growth == 50 + CGFloat(2 - 1) * 34)
+        #expect(growth == 52 + CGFloat(2 - 1) * 36)
     }
 }
 

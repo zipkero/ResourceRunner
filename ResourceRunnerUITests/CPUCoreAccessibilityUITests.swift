@@ -32,7 +32,7 @@ final class CPUCoreAccessibilityUITests: XCTestCase {
 
         let coreCell = app.popovers.descendants(matching: .any).matching(identifier: "CPUCore-0").firstMatch
         XCTAssertTrue(coreCell.waitForExistence(timeout: 2), "CPUCore-0 접근성 요소를 찾지 못했습니다.")
-        XCTAssertEqual(coreCell.label, "코어 0")
+        XCTAssertEqual(coreCell.label, "코어 1")
         XCTAssertNotNil(
             (coreCell.value as? String)?.range(of: #"^[0-9]+%$"#, options: .regularExpression),
             "코어 칸 값이 정수 퍼센트가 아닙니다. 실제 값: \(String(describing: coreCell.value))"

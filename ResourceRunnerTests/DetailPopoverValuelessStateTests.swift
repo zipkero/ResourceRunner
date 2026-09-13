@@ -146,8 +146,7 @@ private struct ReferenceCoreCell: View {
             }
             if omission != .coreNumber {
                 Text(CPUCoreUsageFormatting.coreNumberText(coreIndex: 0))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
             }
         }
         .frame(maxWidth: .infinity)
@@ -182,7 +181,7 @@ private struct ReferenceApplicationRow: View {
                         Text(ApplicationProcessValueFormatting.cpuProcessValueText(process))
                             .padding(.leading, omission == .valueIndent ? 0 : ApplicationProcessRowLayout.childValueIndent)
                     }
-                    .font(.caption2)
+                    .dashboardTypography(DashboardStyle.TypographyRole.label)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -199,7 +198,7 @@ private struct ReferenceApplicationRow: View {
                 DashboardAlignedValueView(value: ApplicationProcessValueFormatting.cpuGroupValueText(group.sortValue))
             }
         }
-        .font(.caption)
+        .dashboardTypography(DashboardStyle.TypographyRole.label)
     }
 }
 
@@ -289,12 +288,12 @@ private struct CPUValuelessReference: View {
     var body: some View {
         ScrollView {
             Text("아직 CPU 값이 수집되지 않았습니다.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .dashboardTypography(DashboardStyle.TypographyRole.label)
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .background(DashboardColorPalette.cardSurface)
     }
 }
 
@@ -318,6 +317,7 @@ private struct CPUDetailWithoutGridHeading: View {
             ApplicationProcessGroupListView(
                 groups: presentation.detail.applications,
                 sortDescription: presentation.detail.applicationsHeading,
+                exclusionNote: presentation.detail.applicationsExclusionNote,
                 groupValue: ApplicationProcessValueFormatting.cpuGroupValueText,
                 iconProvider: StubApplicationIconProvider(),
                 valueText: ApplicationProcessValueFormatting.cpuProcessValueText

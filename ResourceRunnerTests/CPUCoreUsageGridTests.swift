@@ -369,19 +369,30 @@ struct CPUCoreUsageGridRenderTests {
         }
     }
 
-    @Test("단계가 갈리는 두 코어 사용률은 서로 다른 채움 색을 쓴다")
-    func usagesInDifferentStepsUseDifferentFillColors() throws {
-        let boundary = try #require(CPUCoreUsageStep.boundaries.first)
-        let lower = try #require(
-            NSColor(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: boundary.nextDown)))
-                .usingColorSpace(.sRGB)
-        )
-        let upper = try #require(
-            NSColor(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: boundary)))
-                .usingColorSpace(.sRGB)
-        )
+    @Test("색이 갈리는 두 경계 앞뒤에서 채움 색이 다르고 나머지 한 경계에서는 같다")
+    func fillColorsSplitAtTheUpperTwoBoundariesOnly() throws {
+        func fill(_ usage: Double) throws -> NSColor {
+            try #require(
+                NSColor(DashboardColorPalette.cpuCoreFill(CPUCoreUsageStep.step(for: usage)))
+                    .usingColorSpace(.sRGB)
+            )
+        }
 
-        #expect(lower != upper)
+        let boundaries = CPUCoreUsageStep.boundaries
+        try #require(boundaries.count == 3)
+
+        for boundary in boundaries.dropFirst() {
+            #expect(
+                try fill(boundary.nextDown) != fill(boundary),
+                "사용률 \(boundary) 경계 앞뒤의 채움 색이 같습니다"
+            )
+        }
+
+        let lowestBoundary = boundaries[0]
+        #expect(
+            try fill(lowestBoundary.nextDown) == fill(lowestBoundary),
+            "사용률 \(lowestBoundary) 경계 앞뒤의 채움 색이 갈립니다 — 50% 미만은 한 톤으로 가라앉아야 합니다"
+        )
     }
 
     @Test("칸의 채움 높이가 그 코어의 값을 따라 커진다")

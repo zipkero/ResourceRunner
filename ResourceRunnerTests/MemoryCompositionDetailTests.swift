@@ -5,6 +5,7 @@
 //  task-008 검증 조건: Memory 상세 도넛 각도, 수치 범례, 구성 합계와 「사용 중」 분리를 덮습니다.
 //
 
+import SwiftUI
 import Testing
 @testable import ResourceRunner
 
@@ -128,5 +129,76 @@ struct MemoryCompositionDetailSummaryTests {
         #expect(summary.usedLine.label == "사용 중")
         #expect(summary.usedLine.bytes == 15 * detailGibibyte)
         #expect(summary.donutCenter != summary.usedLine)
+    }
+}
+
+@MainActor
+private func legendIdealWidth(_ view: some View) -> CGFloat {
+    NSHostingController(rootView: view.fixedSize(horizontal: true, vertical: false))
+        .sizeThatFits(in: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
+        .width
+}
+
+@MainActor
+private func legendDonut(rows: [MemoryCompositionDetailLegendRow]) -> MemoryCompositionDonutView {
+    MemoryCompositionDonutView(
+        layout: MemoryCompositionDonutLayout(segments: []),
+        legendRows: rows,
+        centerLabel: "",
+        centerValue: "",
+        accessibilityLabel: ""
+    )
+}
+
+@Suite("Memory 상세 범례 정렬")
+@MainActor
+struct MemoryCompositionDetailLegendAlignmentTests {
+
+    /// 이름 열 폭이 네 구간 이름을 담는지 이름을 다시 재서 확인합니다.
+    /// 이름이 길어지거나 라벨 역할 글꼴이 커지면 이 단언이 먼저 실패해 열 폭을 다시 재게 합니다.
+    @Test("네 구간 이름의 이상적 폭 최댓값이 이름 열 폭 안에 든다")
+    func widestCategoryNameFitsTheNameColumn() {
+        let measured = MemoryCompositionCategory.allCases.map { category in
+            (
+                name: category.label,
+                width: legendIdealWidth(
+                    Text(category.label).dashboardTypography(DashboardStyle.TypographyRole.label)
+                )
+            )
+        }
+
+        guard let widest = measured.max(by: { $0.width < $1.width }) else {
+            Issue.record("구간 이름 후보가 비었습니다")
+            return
+        }
+
+        #expect(
+            widest.width <= MemoryCompositionDonutView.legendNameWidth,
+            "가장 넓은 이름 \(widest.name)의 이상적 폭 \(widest.width)이 이름 열 \(MemoryCompositionDonutView.legendNameWidth)을 넘습니다"
+        )
+    }
+
+    /// 이름 열이 고정돼 네 행의 값 열이 같은 가로 위치에서 시작합니다.
+    /// 이름 열 폭을 걷고 `Spacer`로 이름과 값을 양끝에 벌리면 행마다 값 시작 x가 갈려 실패합니다.
+    @Test("네 범례 행의 값 열 시작 x가 서로 같다")
+    func everyLegendRowStartsItsValueColumnAtTheSameX() {
+        let rows = MemoryCompositionDetailLegendFormatting.rows(bytes: detailCompositionBytes())
+        let donut = legendDonut(rows: rows)
+
+        let valueStarts = rows.map { row in
+            legendIdealWidth(donut.legendRow(row))
+                - legendIdealWidth(DashboardAlignedValueView(value: row.value))
+        }
+
+        guard let first = valueStarts.first else {
+            Issue.record("범례 행이 비었습니다")
+            return
+        }
+        for (row, start) in zip(rows, valueStarts) {
+            #expect(
+                abs(start - first) < 0.5,
+                "\(row.label) 행의 값 열 시작 x \(start)이 첫 행의 \(first)과 다릅니다"
+            )
+        }
     }
 }

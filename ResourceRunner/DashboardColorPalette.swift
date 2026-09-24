@@ -46,6 +46,12 @@ enum DashboardColorPalette {
     /// 이 값을 바꾸면 나머지 색의 대비를 모두 다시 검증해야 합니다.
     static let cardSurface = dynamicColor(light: 0xffffff, dark: 0x2e2e2e)
 
+    /// 대시보드 그래프 판 면. 판 틀 전체에 깔려 100%·0%와 시간 창 양끝을 면의 가장자리로 보여 줍니다.
+    /// 두 모드 모두 `L*`로 팝오버 바탕과 카드 면의 가운데에 둔 무채색이라, 판은 카드에 한 단 들어간 자리로 읽히고
+    /// 카드가 바탕 위로 떠오르는 경계가 여전히 가장 강한 면 경계로 남습니다.
+    /// 판 위의 밴드와 기준선은 이 면 위에서 대비를 검증했으므로 이 값을 바꾸면 그 대비를 다시 검증해야 합니다.
+    static let graphPlotSurface = dynamicColor(light: 0xf5f5f5, dark: 0x262626)
+
     /// CPU 그래프 기준선 격자 색(task-005). 계열 색과 달리 다른 색과 구분할 필요가 없는 배경 대비 요소라
     /// 색맹 시뮬레이션 대상이 아니며, 시스템이 라이트·다크에 맞춰 이미 조정하는 구분선 색을 그대로 씁니다.
     static let cpuGridline = Color(NSColor.separatorColor)

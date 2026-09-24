@@ -83,6 +83,18 @@ struct DashboardColorPaletteTests {
         try resolvedSRGB(DashboardColorPalette.cardSurface, appearanceName: appearanceName)
     }
 
+    /// 그래프 판 위 요소(두 밴드·기준선)가 실제로 놓이는 기준면입니다.
+    /// 요약 줄 스와치는 카드 면 위에 남으므로 두 밴드 색은 카드 면과 판 면 두 기준면을 모두 지킵니다.
+    private func plotSurface(_ appearanceName: NSAppearance.Name) throws -> NSColor {
+        try resolvedSRGB(DashboardColorPalette.graphPlotSurface, appearanceName: appearanceName)
+    }
+
+    /// 기준선은 반투명 시스템 구분선 색이라, 테스트 안 리터럴이 아니라 appearance별로 푼 값의 알파를 그대로 아래 면에 합성합니다.
+    private func gridlineComposite(over surface: NSColor, appearanceName: NSAppearance.Name) throws -> NSColor {
+        let gridline = try resolvedSRGB(DashboardColorPalette.cpuGridline, appearanceName: appearanceName)
+        return composited(gridline, opacity: Double(gridline.alphaComponent), over: surface)
+    }
+
     @Test func popoverBackgroundAndCardSurfaceLiftTheCardInBothAppearances() throws {
         for appearanceName in appearanceNames {
             let background = try resolvedSRGB(DashboardColorPalette.popoverBackground, appearanceName: appearanceName)
@@ -205,9 +217,100 @@ struct DashboardColorPaletteTests {
         }
     }
 
+    @Test func graphPlotSurfaceSitsBetweenPopoverBackgroundAndCardSurfaceInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let background = try resolvedSRGB(DashboardColorPalette.popoverBackground, appearanceName: appearanceName)
+            let plot = try plotSurface(appearanceName)
+            let card = try cardSurface(appearanceName)
+            let backgroundLightness = labColor(background).lightness
+            let plotLightness = labColor(plot).lightness
+            let cardLightness = labColor(card).lightness
+
+            #expect(plot != card, "\(appearanceName.rawValue) 판 면과 카드 면이 같은 색입니다")
+            #expect(
+                backgroundLightness < plotLightness && plotLightness < cardLightness,
+                "\(appearanceName.rawValue) L*가 바탕 \(backgroundLightness) · 판 면 \(plotLightness) · 카드 \(cardLightness)입니다"
+            )
+            #expect(
+                cardLightness - plotLightness < cardLightness - backgroundLightness,
+                "\(appearanceName.rawValue) 판–카드 ΔL* \(cardLightness - plotLightness)가 바탕–카드 ΔL* \(cardLightness - backgroundLightness)보다 작지 않습니다"
+            )
+        }
+    }
+
+    @Test func graphPlotSurfaceIsAchromaticInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let plot = try plotSurface(appearanceName)
+
+            #expect(
+                plot.redComponent == plot.greenComponent && plot.greenComponent == plot.blueComponent,
+                "\(appearanceName.rawValue) 판 면 성분이 R \(plot.redComponent) · G \(plot.greenComponent) · B \(plot.blueComponent)입니다"
+            )
+        }
+    }
+
+    @Test func cpuBandColorsMeetGraphPlotSurfaceContrastInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let plot = try plotSurface(appearanceName)
+            let contrasts = try [DashboardColorPalette.cpuUser, DashboardColorPalette.cpuSystem].map {
+                contrastRatio(try resolvedSRGB($0, appearanceName: appearanceName), plot)
+            }
+
+            #expect(contrasts.allSatisfy { $0 >= 3 }, "\(appearanceName.rawValue) 판 면 대비가 \(contrasts)입니다")
+        }
+    }
+
+    @Test func gridlineOnGraphPlotSurfaceStaysAsVisibleAsOnCardSurface() throws {
+        for appearanceName in appearanceNames {
+            let card = try cardSurface(appearanceName)
+            let plot = try plotSurface(appearanceName)
+            let onCard = try gridlineComposite(over: card, appearanceName: appearanceName)
+            let onPlot = try gridlineComposite(over: plot, appearanceName: appearanceName)
+            let cardContrast = contrastRatio(onCard, card)
+            let plotContrast = contrastRatio(onPlot, plot)
+            let cardDifference = abs(labColor(onCard).lightness - labColor(card).lightness)
+            let plotDifference = abs(labColor(onPlot).lightness - labColor(plot).lightness)
+
+            #expect(
+                abs(plotContrast - cardContrast) < 0.01,
+                "\(appearanceName.rawValue) 기준선 대비비가 카드 면 \(cardContrast) → 판 면 \(plotContrast)입니다"
+            )
+            #expect(
+                cardDifference - plotDifference < 1,
+                "\(appearanceName.rawValue) 기준선 ΔL*가 카드 면 \(cardDifference) → 판 면 \(plotDifference)입니다"
+            )
+        }
+    }
+
+    /// 판 위 요소의 세기가 `밴드 > 기준선 > 판 가장자리` 순서라, 판 면이 데이터보다 먼저 눈에 들어오지 않습니다.
+    @Test func graphPlotEdgeIsWeakerThanGridlineAndUpperBandFill() throws {
+        for appearanceName in appearanceNames {
+            let card = try cardSurface(appearanceName)
+            let plot = try plotSurface(appearanceName)
+            let system = try resolvedSRGB(DashboardColorPalette.cpuSystem, appearanceName: appearanceName)
+            let plotLightness = labColor(plot).lightness
+            let edgeDifference = abs(labColor(card).lightness - plotLightness)
+            let gridlineDifference = abs(
+                labColor(try gridlineComposite(over: plot, appearanceName: appearanceName)).lightness - plotLightness
+            )
+            let upperFill = composited(system, opacity: HistoryGraphView.fillOpacity(for: .upper), over: plot)
+            let upperFillDifference = abs(labColor(upperFill).lightness - plotLightness)
+
+            #expect(
+                edgeDifference < gridlineDifference,
+                "\(appearanceName.rawValue) 판 가장자리 ΔL* \(edgeDifference)가 기준선 ΔL* \(gridlineDifference)보다 작지 않습니다"
+            )
+            #expect(
+                edgeDifference < upperFillDifference,
+                "\(appearanceName.rawValue) 판 가장자리 ΔL* \(edgeDifference)가 위 밴드 채움 ΔL* \(upperFillDifference)보다 작지 않습니다"
+            )
+        }
+    }
+
+    /// 두 밴드가 실제로 놓이는 면은 판 면이므로 합성 기준면도 판 면입니다.
     @Test func cpuBandCompositeLightnessDifferenceImprovesInBothAppearances() throws {
         for appearanceName in appearanceNames {
-            let background = try cardSurface(appearanceName)
+            let background = try plotSurface(appearanceName)
             let user = try resolvedSRGB(DashboardColorPalette.cpuUser, appearanceName: appearanceName)
             let system = try resolvedSRGB(DashboardColorPalette.cpuSystem, appearanceName: appearanceName)
             let userComposite = composited(user, opacity: HistoryGraphView.fillOpacity(for: .lower), over: background)

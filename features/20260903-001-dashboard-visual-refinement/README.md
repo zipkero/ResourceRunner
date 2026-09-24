@@ -9,7 +9,7 @@ CPU·Memory 카드와 두 상세 팝업이 같은 값을 그리는 시각 규칙
 
 - [x] SPEC
 - [x] DESIGN
-- [ ] IMPLEMENT
+- [x] IMPLEMENT
 
 ## 문서
 
@@ -28,3 +28,4 @@ CPU·Memory 카드와 두 상세 팝업이 같은 값을 그리는 시각 규칙
 - 2026-09-05: IMPLEMENT 체크리스트 작성
 - 2026-09-05: DESIGN DP4의 하위 프로세스 들여쓰기 서술을 정정 — 닫힌 것은 유도식이 만드는 관계이고 34/50은 파생값이므로,
   DP6의 `labelIconSpacing` 4가 32/48로 옮겨도 관계와 기존 단언이 그대로 성립함을 명시
+- 2026-09-24: IMPLEMENT 완료

@@ -112,8 +112,8 @@ final class ApplicationCoordinator {
         statusBarController.output = self
 
 #if DEBUG
-        // 실제 Collector가 없는 M1에서 사람이 다섯 상태 전환을 직접 확인할 수 있도록
-        // 우클릭 디버그 메뉴를 상태 입력에 연결합니다. Release 빌드에는 이 진입점이 없습니다.
+        // 상태 전환을 사람이 직접 확인할 수 있도록 우클릭 디버그 메뉴를 상태 입력에 연결합니다.
+        // Release 빌드에는 이 진입점이 없습니다.
         statusBarController.debugStateInjector = { [characterStateSource] state in
             characterStateSource.send(state)
         }

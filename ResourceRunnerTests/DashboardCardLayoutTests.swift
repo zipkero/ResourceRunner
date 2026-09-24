@@ -182,8 +182,8 @@ private struct CardPixelRegion {
     // 값 없음 요약 줄의 두 계열 스와치와 라벨 영역입니다.
     // 안쪽 여백 8 + 머리글 13 + 2 + 초점 줄 31 + 2 = 56에서 시작해 요약 줄 15pt를 덮습니다.
     static let cpuPlaceholderSummary = CardPixelRegion(x: 0..<248, y: 55..<72)
-    // 값 없음 그래프의 100pt 판과 둘레 경계를 포함하는 영역입니다.
-    // 제목 묶음 아래 구역 간격 16을 지나 8 + 63 + 16 = 87에서 시작해 187에서 끝납니다.
+    // 그래프 판 면(100pt 판 틀 전체)과 그 위아래 틀 밖 카드 면 2pt씩을 담는 영역입니다.
+    // 판은 제목 묶음 아래 구역 간격 16을 지나 8 + 63 + 16 = 87에서 시작해 187에서 끝납니다.
     static let cpuPlaceholderGraph = CardPixelRegion(x: 0..<248, y: 85..<189)
     // 제목 묶음의 초점 줄(8 + 13 + 2 = 23에서 시작하는 31pt) 안에 세로 가운데로 놓인 8pt 트랙 영역입니다.
     static let memoryPlaceholderTrack = CardPixelRegion(x: 210..<238, y: 34..<43)
@@ -192,35 +192,51 @@ private struct CardPixelRegion {
 }
 
 /// 카드 면 위에 실제로 그려진 잉크 픽셀을 고릅니다. 1/255보다 낮은 렌더 반올림은 투명으로 취급합니다.
-/// 카드가 불투명 면을 깔므로 면 색 자체는 잉크에서 뺍니다 — 빼지 않으면 슬롯마다 「잉크 > 0」을 보는 단언이
-/// 요소가 사라져도 면 픽셀만으로 통과합니다.
+/// 카드와 그래프 판이 각각 불투명 면을 깔므로 두 면 색 자체는 잉크에서 뺍니다 — 빼지 않으면 슬롯마다 「잉크 > 0」을 보는 단언이
+/// 요소가 사라져도 면 픽셀만으로 통과합니다. 「CPU 그래프 격자」 탐침은 판 면을 빼야 기준선 픽셀만 셉니다.
 private let visibleInk: (NSColor) -> Bool = { pixel in
-    pixel.alphaComponent > 1.0 / 255.0 && !isCardSurfaceColor(pixel)
+    pixel.alphaComponent > 1.0 / 255.0 && !isCardSurfaceColor(pixel) && !isGraphPlotSurfaceColor(pixel)
 }
 
 /// 인자는 `pixelCount`가 이미 sRGB로 변환해 넘깁니다.
 private func isCardSurfaceColor(_ pixel: NSColor) -> Bool {
+    isOpaqueColor(pixel, matchingAnyOf: RenderedCardSurface.candidates)
+}
+
+/// 인자는 `pixelCount`가 이미 sRGB로 변환해 넘깁니다.
+private func isGraphPlotSurfaceColor(_ pixel: NSColor) -> Bool {
+    isOpaqueColor(pixel, matchingAnyOf: RenderedGraphPlotSurface.candidates)
+}
+
+private func isOpaqueColor(_ pixel: NSColor, matchingAnyOf candidates: [NSColor]) -> Bool {
     guard pixel.alphaComponent > 0.99 else { return false }
-    return RenderedCardSurface.candidates.contains { surface in
+    return candidates.contains { surface in
         abs(pixel.redComponent - surface.redComponent) < 0.004
             && abs(pixel.greenComponent - surface.greenComponent) < 0.004
             && abs(pixel.blueComponent - surface.blueComponent) < 0.004
     }
 }
 
-private enum RenderedCardSurface {
-    /// 라이트·다크 두 면 값을 모두 풀어 둡니다. 하나만 두면 이 값이 처음 만들어지는 시점의 그리기 appearance에
-    /// 따라 기준이 달라져, 다른 테스트가 appearance를 바꾼 사이에 초기화되면 잉크 판정이 조용히 뒤집힙니다.
-    /// 픽셀마다 `NSColor(_:)`를 다시 만들면 잉크 세기가 렌더보다 오래 걸리므로 한 번만 풀어 둡니다.
-    nonisolated(unsafe) static let candidates: [NSColor] = [NSAppearance.Name.aqua, .darkAqua]
-        .compactMap { name in
-            guard let appearance = NSAppearance(named: name) else { return nil }
-            var resolved: NSColor?
-            appearance.performAsCurrentDrawingAppearance {
-                resolved = NSColor(DashboardStyle.CardSurface.fillColor).usingColorSpace(.sRGB)
-            }
-            return resolved
+/// 라이트·다크 두 면 값을 모두 풀어 둡니다. 하나만 두면 이 값이 처음 만들어지는 시점의 그리기 appearance에
+/// 따라 기준이 달라져, 다른 테스트가 appearance를 바꾼 사이에 초기화되면 잉크 판정이 조용히 뒤집힙니다.
+/// 픽셀마다 `NSColor(_:)`를 다시 만들면 잉크 세기가 렌더보다 오래 걸리므로 한 번만 풀어 둡니다.
+private func resolvedInBothAppearances(_ color: Color) -> [NSColor] {
+    [NSAppearance.Name.aqua, .darkAqua].compactMap { name in
+        guard let appearance = NSAppearance(named: name) else { return nil }
+        var resolved: NSColor?
+        appearance.performAsCurrentDrawingAppearance {
+            resolved = NSColor(color).usingColorSpace(.sRGB)
         }
+        return resolved
+    }
+}
+
+private enum RenderedCardSurface {
+    nonisolated(unsafe) static let candidates: [NSColor] = resolvedInBothAppearances(DashboardStyle.CardSurface.fillColor)
+}
+
+private enum RenderedGraphPlotSurface {
+    nonisolated(unsafe) static let candidates: [NSColor] = resolvedInBothAppearances(DashboardColorPalette.graphPlotSurface)
 }
 
 private func circularHueDistance(_ lhs: CGFloat, _ rhs: CGFloat) -> CGFloat {
@@ -475,12 +491,28 @@ private func pixelCount(
 
     return region.y.reduce(into: 0) { count, y in
         for x in region.x {
-            guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB) else { continue }
+            guard let color = renderedSRGBColor(in: bitmap, x: x, y: y) else { continue }
             if predicate(color) {
                 count += 1
             }
         }
     }
+}
+
+/// 렌더 비트맵의 한 픽셀을 sRGB 색으로 읽습니다.
+/// `colorAt`은 sRGB 비트맵의 성분 값을 Calibrated RGB 색으로 붙여 돌려주므로, 그대로 `usingColorSpace(.sRGB)`를 거치면
+/// 성분이 한 번 더 변환돼 중간 회색이 렌더 값과 달라집니다(판 면 `#f5f5f5`가 약 `#f7f7f7`로 읽힙니다).
+/// 흰색·검정은 변환 전후가 같아 카드 면만 보던 때에는 드러나지 않았고, 판 면을 후보와 견주려면 비트맵 자신의 색 공간으로 다시 읽어야 합니다.
+private func renderedSRGBColor(in bitmap: NSBitmapImageRep, x: Int, y: Int) -> NSColor? {
+    guard let raw = bitmap.colorAt(x: x, y: y) else { return nil }
+    guard
+        bitmap.colorSpace.colorSpaceModel == .rgb,
+        let rgb = raw.usingType(.componentBased),
+        rgb.numberOfComponents == 4
+    else { return raw.usingColorSpace(.sRGB) }
+
+    var components: [CGFloat] = [rgb.redComponent, rgb.greenComponent, rgb.blueComponent, rgb.alphaComponent]
+    return NSColor(colorSpace: bitmap.colorSpace, components: &components, count: 4).usingColorSpace(.sRGB)
 }
 
 /// 카드 안쪽 여백 띠에서 카드 면 색으로 칠해진 픽셀 수. 면이 실제로 깔렸는지를 봅니다.
@@ -1221,6 +1253,174 @@ struct DashboardCardPlaceholderRenderingTests {
             differingPixelCount(between: redPixels, and: bluePixels, region: .cpuFirstRankingIcon) > 0,
             "CPU 카드 첫 순위 행의 아이콘 자리에 제공된 이미지가 실제로 그려지지 않았습니다"
         )
+    }
+}
+
+/// CPU 카드 렌더(scale 1, 카드 폭 248)에서 그래프 판 틀과 그 둘레의 픽셀 자리입니다.
+/// 판 틀은 카드 안쪽 여백 8만큼 들어간 x 8..<240, 제목 묶음과 구역 간격을 지난 y 87..<187입니다.
+private enum GraphPlotFrame {
+    static let x = Int(DashboardStyle.CardSurface.contentPadding)..<(248 - Int(DashboardStyle.CardSurface.contentPadding))
+    static let y = 87..<(87 + Int(HistoryGraphLayout.plotHeight))
+
+    /// 틀 바로 밖 위아래 두 줄씩과 좌우 한 칸씩. 판 면이 틀보다 넓게 번지면 여기서 카드 면이 아니게 됩니다.
+    static let outsideRows = [y.lowerBound - 2, y.lowerBound - 1, y.upperBound, y.upperBound + 1]
+    static let outsideColumns = [x.lowerBound - 1, x.upperBound]
+
+    /// 50% 기준선이 걸치는 판 안 줄. 1pt 선의 가운데가 정수 좌표에 놓여 위아래 두 줄에 나뉘어 그려집니다.
+    static let gridlineRows: Set<Int> = Set(HistoryGraphGridline.drawnBaselineValues.flatMap { value -> [Int] in
+        let center = HistoryGraphGridline.yPosition(forValue: value, height: Double(HistoryGraphLayout.plotHeight))
+        let halfWidth = Double(HistoryGraphGridline.lineWidth) / 2
+        return Array(Int((center - halfWidth).rounded(.down))..<Int((center + halfWidth).rounded(.up)))
+            .map { y.lowerBound + $0 }
+    })
+
+    /// 기준선 위쪽 절반. 밴드 윗끝이 기준선에 닿지 않는 입력에서는 데이터가 있는 구간에서도 판 면만 남는 자리입니다.
+    static let upperHalfRows = y.lowerBound..<(gridlineRows.min() ?? y.lowerBound)
+
+    static let corners = [
+        (x.lowerBound, y.lowerBound), (x.upperBound - 1, y.lowerBound),
+        (x.lowerBound, y.upperBound - 1), (x.upperBound - 1, y.upperBound - 1)
+    ]
+}
+
+/// 주어진 자리 중 조건을 만족하지 않는 픽셀 좌표. 실패 메시지에 앞의 몇 개를 보여 주려고 좌표째 돌려줍니다.
+private func pixelsFailing(
+    _ predicate: (NSColor) -> Bool,
+    in renderedPixels: Data,
+    at positions: [(x: Int, y: Int)]
+) -> [(x: Int, y: Int)] {
+    guard let bitmap = NSBitmapImageRep(data: renderedPixels) else { return positions }
+    return positions.filter { position in
+        guard let color = renderedSRGBColor(in: bitmap, x: position.x, y: position.y) else { return true }
+        return !predicate(color)
+    }
+}
+
+private func positions(x: Range<Int>, y: some Sequence<Int>, excludingRows excluded: Set<Int> = []) -> [(x: Int, y: Int)] {
+    y.filter { !excluded.contains($0) }.flatMap { row in x.map { (x: $0, y: row) } }
+}
+
+/// 판 틀 바로 밖 줄과 칸의 좌표. 줄은 좌우 한 칸씩 넓혀 틀 모서리 바깥까지 봅니다.
+private let graphPlotOutsidePositions: [(x: Int, y: Int)] =
+    positions(x: (GraphPlotFrame.x.lowerBound - 1)..<(GraphPlotFrame.x.upperBound + 1), y: GraphPlotFrame.outsideRows)
+    + GraphPlotFrame.outsideColumns.flatMap { column in
+        positions(x: column..<(column + 1), y: (GraphPlotFrame.y.lowerBound - 2)..<(GraphPlotFrame.y.upperBound + 2))
+    }
+
+private func describe(_ failing: [(x: Int, y: Int)]) -> String {
+    "\(failing.count)개, 예: \(failing.prefix(5).map { "(\($0.x), \($0.y))" }.joined(separator: " "))"
+}
+
+/// task-002 검증 조건: 그래프 판 틀 전체가 판 면으로 덮이고 틀 밖은 카드 면으로 남는지를 값 없음·값 있음 두 경로에서 렌더로 봅니다.
+/// 판 면은 레이어 배열이 아니라 판 틀의 배경이라(DESIGN §5 DP2) 순서·공유를 배열 단언으로 잡을 수 없어 픽셀로 확인합니다.
+@MainActor
+struct CPUGraphPlotSurfaceRenderingTests {
+
+    /// 창 끝에서 `span`초 전부터 지금까지 2초 간격으로 같은 낮은 부하(전체 7%, User 4%)를 쌓은 CPU 카드.
+    /// 밴드 윗끝 7%는 50% 기준선에 닿지 않아, 기준선 위쪽 절반에는 판 면만 남아야 합니다.
+    private func lowLoadCard(spanningLast span: Int) -> CPUCardView {
+        let now = ContinuousClock().now
+        let history = stride(from: -span, through: 0, by: 2).map { offset in
+            SystemMetricsHistoryPoint(
+                timestamp: now.advanced(by: .seconds(offset)),
+                overallCPUUsage: 7,
+                userRatio: 4,
+                swapUsedBytes: 0
+            )
+        }
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(userRatio: 4, systemRatio: 3),
+            history: history,
+            topApplications: rankingEntries(count: 3),
+            currentTimestamp: now
+        )
+        return cpuCardView(.normal(presentation, timestamp: now))
+    }
+
+    @Test func valuelessStatesCoverTheWholePlotFrameWithTheGraphPlotSurface() throws {
+        let states: [ResourceCardState<CPUCardPresentation>] = [
+            .collecting,
+            .failure(lastKnown: nil),
+            .stopped(lastKnown: nil)
+        ]
+
+        for state in states {
+            let pixels = try #require(renderedPixels(cpuCardView(state)))
+
+            let inside = pixelsFailing(
+                isGraphPlotSurfaceColor,
+                in: pixels,
+                at: positions(x: GraphPlotFrame.x, y: GraphPlotFrame.y, excludingRows: GraphPlotFrame.gridlineRows)
+            )
+            #expect(inside.isEmpty, "값 없음 CPU 카드(\(state))의 판 틀 안에 기준선 줄 밖인데 판 면이 아닌 픽셀이 있습니다 — \(describe(inside))")
+
+            let corners = pixelsFailing(isGraphPlotSurfaceColor, in: pixels, at: GraphPlotFrame.corners.map { (x: $0.0, y: $0.1) })
+            #expect(corners.isEmpty, "값 없음 CPU 카드(\(state))의 판 모서리가 판 면이 아니라 면이 각져 있지 않습니다 — \(describe(corners))")
+
+            let outside = pixelsFailing(isCardSurfaceColor, in: pixels, at: graphPlotOutsidePositions)
+            #expect(outside.isEmpty, "값 없음 CPU 카드(\(state))의 판 틀 바로 밖이 카드 면이 아닙니다 — \(describe(outside))")
+        }
+    }
+
+    /// 수집 초기처럼 데이터가 창의 오른쪽 끝에만 있어도 판 면은 창 전체를 덮고, 데이터 없는 구간이 자기 경계를 가진 면으로 갈리지 않습니다.
+    @Test func plotSurfaceCoversTheWholeWindowWhenDataFillsOnlyTheRightEnd() throws {
+        let dataSpan = 60
+        let pixels = try #require(renderedPixels(lowLoadCard(spanningLast: dataSpan)))
+
+        // 데이터 첫 점이 놓이는 x에서 안티에일리어싱 한 칸을 더 비켜 둡니다.
+        let windowSeconds = Double(HistoryCapacity.defaultTimeRange.components.seconds)
+        let dataStartOffset = Int(Double(GraphPlotFrame.x.count) * (1 - Double(dataSpan) / windowSeconds))
+        let emptyColumns = GraphPlotFrame.x.lowerBound..<(GraphPlotFrame.x.lowerBound + dataStartOffset - 2)
+        let dataColumns = (GraphPlotFrame.x.lowerBound + dataStartOffset + 1)..<GraphPlotFrame.x.upperBound
+
+        let emptyRegion = pixelsFailing(
+            isGraphPlotSurfaceColor,
+            in: pixels,
+            at: positions(x: emptyColumns, y: GraphPlotFrame.y, excludingRows: GraphPlotFrame.gridlineRows)
+        )
+        #expect(emptyRegion.isEmpty, "데이터 없는 왼쪽 구간에 기준선 줄 밖인데 판 면이 아닌 픽셀이 있습니다 — \(describe(emptyRegion))")
+
+        let upperHalf = pixelsFailing(
+            isGraphPlotSurfaceColor,
+            in: pixels,
+            at: positions(x: GraphPlotFrame.x, y: GraphPlotFrame.upperHalfRows)
+        )
+        #expect(upperHalf.isEmpty, "기준선 위쪽 절반에 판 면이 아닌 픽셀이 있습니다 — \(describe(upperHalf))")
+
+        let outside = pixelsFailing(isCardSurfaceColor, in: pixels, at: graphPlotOutsidePositions)
+        #expect(outside.isEmpty, "판 틀 바로 밖이 카드 면이 아닙니다 — \(describe(outside))")
+
+        // 입력이 실제로 밴드를 그렸고, 판 면을 잉크에서 뺀 뒤에도 기준선이 잉크로 남는지 봅니다.
+        let bandInk = pixelCount(
+            in: pixels,
+            region: CardPixelRegion(x: dataColumns, y: GraphPlotFrame.upperHalfRows.upperBound..<GraphPlotFrame.y.upperBound),
+            matching: visibleInk
+        )
+        #expect(bandInk > 0, "데이터 구간에 밴드 잉크가 없어 이 입력이 값 있음 경로를 그리지 않았습니다")
+
+        let gridlineInk = pixelCount(
+            in: pixels,
+            region: CardPixelRegion(x: emptyColumns, y: GraphPlotFrame.gridlineRows.min()!..<(GraphPlotFrame.gridlineRows.max()! + 1)),
+            matching: visibleInk
+        )
+        #expect(gridlineInk > 0, "판 면을 잉크에서 뺀 뒤 기준선이 잉크로 세어지지 않습니다")
+    }
+
+    /// 같은 낮은 부하로 창 전체를 채워도 기준선 위쪽 절반과 틀 밖이 같은 판 면·카드 면이라, 창이 다 찬 뒤와 수집 초기의 판 모양이 같습니다.
+    @Test func plotSurfaceKeepsTheSameShapeWhenDataFillsTheWholeWindow() throws {
+        // 창 왼쪽 끝을 넘는 점이 판 틀 밖으로 번지지 않게 창 길이보다 2초 짧게 채웁니다.
+        let span = Int(HistoryCapacity.defaultTimeRange.components.seconds) - 2
+        let pixels = try #require(renderedPixels(lowLoadCard(spanningLast: span)))
+
+        let upperHalf = pixelsFailing(
+            isGraphPlotSurfaceColor,
+            in: pixels,
+            at: positions(x: GraphPlotFrame.x, y: GraphPlotFrame.upperHalfRows)
+        )
+        #expect(upperHalf.isEmpty, "창을 다 채운 그래프의 기준선 위쪽 절반에 판 면이 아닌 픽셀이 있습니다 — \(describe(upperHalf))")
+
+        let outside = pixelsFailing(isCardSurfaceColor, in: pixels, at: graphPlotOutsidePositions)
+        #expect(outside.isEmpty, "창을 다 채운 그래프의 판 틀 바로 밖이 카드 면이 아닙니다 — \(describe(outside))")
     }
 }
 

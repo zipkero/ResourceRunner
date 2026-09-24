@@ -720,6 +720,7 @@ private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSi
 }
 
 /// 값 있음·없음 경로가 공유하는 그래프 판과 시간 축 줄입니다.
+/// 판 면은 두 경로를 고르는 판 틀에 배경으로 한 번만 깔아, 어느 경로든 같은 크기·같은 자리의 면 위에 그립니다.
 private struct HistoryGraphSlotView: View {
     let points: [HistoryPoint]?
 
@@ -740,6 +741,9 @@ private struct HistoryGraphSlotView: View {
                     }
                 }
                 .frame(height: HistoryGraphLayout.plotHeight)
+                // 판 틀의 네 변이 곧 100%·0%와 시간 창 양끝이라, 틀 전체를 각진 면으로 덮어 판의 범위를 면의 가장자리로 보입니다.
+                // `points`를 읽지 않아 수집되지 않은 구간도 같은 면이고, 윤곽선을 긋지 않아 판 위의 선은 기준선 하나로 남습니다.
+                .background(DashboardColorPalette.graphPlotSurface)
 
                 ZStack {
                     HStack(spacing: 0) {
@@ -761,7 +765,7 @@ private struct HistoryGraphSlotView: View {
     }
 }
 
-/// 그래프 자리의 자리표시. 값이 없는 상태에도 값 있음 경로와 같은 기준선 하나를 같은 좌표에 그립니다.
+/// 그래프 자리의 자리표시. 값이 없는 상태에도 값 있음 경로와 같은 판 면 위에 같은 기준선 하나를 같은 좌표에 그립니다.
 /// 기준선은 값이 아니라 눈금이라 그려도 되지만, 점이나 값 선은 그리지 않습니다.
 private struct GraphPlaceholderView: View {
     var body: some View {

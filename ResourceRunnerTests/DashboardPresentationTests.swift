@@ -24,12 +24,18 @@ private func cpuMetrics(overallUsage: Double = 42, userRatio: Double = 30, syste
     )
 }
 
-private func historyPoint(secondsFromBase: Double, overallCPUUsage: Double = 10, userRatio: Double = 0) -> SystemMetricsHistoryPoint {
+private func historyPoint(
+    secondsFromBase: Double,
+    overallCPUUsage: Double = 10,
+    userRatio: Double = 0,
+    collectionEpoch: Int = 0
+) -> SystemMetricsHistoryPoint {
     SystemMetricsHistoryPoint(
         timestamp: baseInstant.advanced(by: .seconds(secondsFromBase)),
         overallCPUUsage: overallCPUUsage,
         userRatio: userRatio,
-        swapUsedBytes: 0
+        swapUsedBytes: 0,
+        collectionEpoch: collectionEpoch
     )
 }
 
@@ -101,13 +107,27 @@ struct HistoryPointConnectedSegmentsTests {
 
     @Test func gapExactlyAtMaximumStaysConnected() {
         let points = [
-            HistoryPoint(timestamp: baseInstant, value: 10),
-            HistoryPoint(timestamp: baseInstant + HistoryPoint.maximumConnectedGap, value: 20),
+            HistoryPoint(timestamp: baseInstant, value: 10, collectionEpoch: 3),
+            HistoryPoint(timestamp: baseInstant + HistoryPoint.maximumConnectedGap, value: 20, collectionEpoch: 3),
         ]
 
         let segments = HistoryPoint.connectedSegments(from: points)
 
         #expect(segments.count == 1)
+    }
+
+    @Test func shortStopSplitsDifferentEpochsButNormalIntervalChangeStaysConnected() {
+        let points = [
+            HistoryPoint(timestamp: baseInstant, value: 10, collectionEpoch: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(5)), value: 20, collectionEpoch: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(6)), value: 30, collectionEpoch: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(11)), value: 40, collectionEpoch: 1),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(12)), value: 50, collectionEpoch: 1),
+        ]
+
+        let segments = HistoryPoint.connectedSegments(from: points)
+
+        #expect(segments == [Array(points[0...2]), Array(points[3...4])])
     }
 }
 
@@ -257,6 +277,24 @@ struct HistoryPointDownsamplingTests {
         #expect(result[0].allSatisfy { $0.timestamp <= segmentA.last!.timestamp })
         #expect(result[1].allSatisfy { $0.timestamp >= segmentB.first!.timestamp })
         #expect(!result[1].isEmpty)
+    }
+
+    @Test func differentEpochsNeverShareADownsamplingBucket() throws {
+        let points = [
+            HistoryPoint(timestamp: baseInstant, value: 0, collectionEpoch: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(1)), value: 100, collectionEpoch: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(2)), value: 10, collectionEpoch: 0),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(3)), value: 20, collectionEpoch: 1),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(4)), value: 21, collectionEpoch: 1),
+            HistoryPoint(timestamp: baseInstant.advanced(by: .seconds(5)), value: 22, collectionEpoch: 1),
+        ]
+
+        let segments = HistoryPoint.downsampledConnectedSegments(from: points, bucketCount: 1)
+
+        try #require(segments.count == 2)
+        #expect(segments[0].allSatisfy { $0.collectionEpoch == 0 })
+        #expect(segments[1].allSatisfy { $0.collectionEpoch == 1 })
+        #expect(segments[1].map(\.value) == [20, 22])
     }
 
     /// 결과 점 수는 버킷마다 최대 2점(min·max)이라는 상한을 넘지 않아야 합니다.
@@ -460,6 +498,25 @@ struct CPUCardPresentationAssembleTests {
         #expect(presentation.graphPoints.map(\.value) == [10, 20, 30])
         let segments = HistoryPoint.connectedSegments(from: presentation.graphPoints)
         #expect(segments.count == 2, "정상 간격 두 점과 큰 간격 뒤 점이 분리된 구간으로 나뉘어야 합니다.")
+    }
+
+    @Test func cpuCardAssemblyPreservesEpochAcrossShortStop() {
+        let history = [
+            historyPoint(secondsFromBase: 0, overallCPUUsage: 10, userRatio: 6, collectionEpoch: 0),
+            historyPoint(secondsFromBase: 5, overallCPUUsage: 20, userRatio: 12, collectionEpoch: 1),
+            historyPoint(secondsFromBase: 6, overallCPUUsage: 30, userRatio: 18, collectionEpoch: 1),
+        ]
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(),
+            history: history,
+            topApplications: [],
+            currentTimestamp: baseInstant.advanced(by: .seconds(6))
+        )
+
+        #expect(presentation.graphPoints.map(\.collectionEpoch) == [0, 1, 1])
+        #expect(presentation.graphPoints.map(\.value) == [10, 20, 30])
+        #expect(presentation.graphPoints.map(\.subValue) == [6, 12, 18])
+        #expect(HistoryPoint.connectedSegments(from: presentation.graphPoints).map(\.count) == [1, 2])
     }
 
     /// 10분을 넘는 이력: 창 밖의 오래된 점은 그래프에 포함되지 않습니다.
@@ -1337,6 +1394,78 @@ struct DashboardCardFailureIsolationTests {
 @MainActor
 struct DashboardCollectionStoppedTests {
 
+    @Test func shortStopKeepsCPUStoppedUntilSecondTickWhileMemoryResumesImmediately() {
+        let store = DashboardPresentationStore()
+        let initial = SystemMetricsDisplayValue(
+            latest: TimestampedSample(
+                timestamp: baseInstant,
+                value: SystemMetricsSample(
+                    cpu: .success(cpuMetrics(overallUsage: 42)),
+                    memory: .success(memoryMetricsForTests(usedBytes: 555))
+                ),
+                collectionEpoch: 0
+            ),
+            recentHistory: []
+        )
+        store.updateCPUCard(with: initial, topApplications: [], currentTimestamp: baseInstant)
+        store.updateMemoryCard(with: initial, topApplications: [], currentTimestamp: baseInstant)
+        store.selectCard(.cpu)
+        store.markCollectionStopped()
+
+        let firstResumeTime = baseInstant.advanced(by: .seconds(5))
+        let firstResume = SystemMetricsDisplayValue(
+            latest: TimestampedSample(
+                timestamp: firstResumeTime,
+                value: SystemMetricsSample(
+                    cpu: .success(nil),
+                    memory: .success(memoryMetricsForTests(usedBytes: 777))
+                ),
+                collectionEpoch: 1
+            ),
+            recentHistory: []
+        )
+        store.updateCPUCard(with: firstResume, topApplications: [], currentTimestamp: firstResumeTime)
+        store.updateMemoryCard(with: firstResume, topApplications: [], currentTimestamp: firstResumeTime)
+
+        guard case .stopped(let cpuLastKnown?) = store.cpuCard else {
+            Issue.record("짧은 중지 뒤 새 epoch의 기준점 tick에서 CPU 중지가 풀렸습니다.")
+            return
+        }
+        #expect(cpuLastKnown.presentation.overallUsage == 42)
+        #expect(cpuLastKnown.timestamp == baseInstant)
+        #expect(store.cpuCard.cpuAccessibilityLabel.contains("수집 중지"))
+        guard case .normal(let memoryPresentation, let memoryTimestamp) = store.memoryCard else {
+            Issue.record("Memory가 새 epoch 첫 tick에서 정상으로 돌아오지 않았습니다.")
+            return
+        }
+        #expect(memoryPresentation.usedBytes == 777)
+        #expect(memoryTimestamp == firstResumeTime)
+        #expect(store.selection == .cpu)
+
+        let secondResumeTime = baseInstant.advanced(by: .seconds(6))
+        let secondResume = SystemMetricsDisplayValue(
+            latest: TimestampedSample(
+                timestamp: secondResumeTime,
+                value: SystemMetricsSample(
+                    cpu: .success(cpuMetrics(overallUsage: 55)),
+                    memory: .success(memoryMetricsForTests(usedBytes: 888))
+                ),
+                collectionEpoch: 1
+            ),
+            recentHistory: []
+        )
+        store.updateCPUCard(with: secondResume, topApplications: [], currentTimestamp: secondResumeTime)
+        store.updateMemoryCard(with: secondResume, topApplications: [], currentTimestamp: secondResumeTime)
+
+        guard case .normal(let cpuPresentation, let cpuTimestamp) = store.cpuCard else {
+            Issue.record("같은 새 epoch의 유효 CPU tick에서 중지가 풀리지 않았습니다.")
+            return
+        }
+        #expect(cpuPresentation.overallUsage == 55)
+        #expect(cpuTimestamp == secondResumeTime)
+        #expect(store.selection == .cpu)
+    }
+
     @Test func markCollectionStoppedFreezesBothCardsWithLastKnownValues() {
         let store = DashboardPresentationStore()
         let successValue = SystemMetricsDisplayValue(
@@ -2023,29 +2152,41 @@ struct HistoryGraphTimeAxisTests {
 // MARK: - CPU 그래프 기준선·밴드 그리기 순서
 
 /// `HistoryGraphView.body`는 `drawOrder`를 그대로 순회해 그리므로, 이 배열이 실제 그리기 순서 그 자체입니다.
-/// 기준선이 밴드 채움·경계선보다 먼저(가장 뒤에) 와야 부하가 높아 밴드가 그 자리를 덮는 구간에서도
-/// 기준선이 반투명 밴드 아래로 비칩니다(SPEC §5.2, DESIGN §5 DP5).
-/// 순서를 밴드가 기준선보다 먼저 오도록 바꾸거나, 밴드 채움 불투명도를 1.0(불투명)으로 바꾸거나,
+/// 기준선이 두 밴드 채움 뒤·두 경계선 앞에 와야, 부하가 높아 밴드가 그 자리를 덮는 구간에서도
+/// 반투명 검정 기준선이 채움 위에서 채움을 한 단 어둡게 해 밴드 안에서 보이고,
+/// 값을 나타내는 두 경계선은 기준선에 덮이지 않습니다(SPEC §5.2, SPEC §5.4, DESIGN §5 DP10).
+/// 기준선을 다시 채움 아래로 내리거나 경계선 위로 올리거나, 기준선 항목을 늘리거나,
 /// 판 테두리·미수집 구간 레이어를 되살리면 아래 단언들이 실패해야 합니다.
 @MainActor
 struct HistoryGraphViewDrawOrderTests {
 
-    @Test func gridlinesAreDrawnBeforeBandFillsAndBoundaries() {
-        #expect(HistoryGraphView.drawOrder.first == .gridlines)
+    @Test func gridlinesAreDrawnAfterBandFillsAndBeforeBoundaries() throws {
+        let order = HistoryGraphView.drawOrder
+        #expect(order.filter { $0 == .gridlines }.count == 1)
+        let gridlineIndex = try #require(order.firstIndex(of: .gridlines))
+        let fillIndices = [HistoryGraphView.BandRole.lower, .upper].compactMap { order.firstIndex(of: .bandFill($0)) }
+        let boundaryIndices = [HistoryGraphView.BandRole.lower, .upper].compactMap { order.firstIndex(of: .bandBoundary($0)) }
+        #expect(fillIndices.count == 2)
+        #expect(boundaryIndices.count == 2)
+        #expect(fillIndices.allSatisfy { $0 < gridlineIndex })
+        #expect(boundaryIndices.allSatisfy { $0 > gridlineIndex })
     }
 
-    @Test func drawOrderIsGridlinesThenFillsAndBoundaries() {
+    @Test func drawOrderIsFillsThenGridlinesThenBoundaries() {
         #expect(HistoryGraphView.drawOrder == [
-            .gridlines,
             .bandFill(.lower),
             .bandFill(.upper),
+            .gridlines,
             .bandBoundary(.lower),
             .bandBoundary(.upper)
         ])
-        #expect(HistoryGraphView.drawOrder.first == .gridlines)
+        #expect(HistoryGraphView.drawOrder.count == 5)
+        #expect(HistoryGraphView.drawOrder.filter { $0 == .gridlines }.count == 1)
     }
 
-    @Test func bandFillOpacitiesAreTranslucentSoGridlinesShowThrough() {
+    /// 두 채움이 반투명이라 판 면이 채움 사이로 비치고, 그 위에 그은 기준선이 채움을 어둡게 한 자리가 밴드 안 눈금으로 읽힙니다.
+    /// 불투명 채움이면 판 면과 밴드의 합성 관계(DESIGN §5 DP10)가 무너집니다.
+    @Test func bandFillOpacitiesAreTranslucentSoThePlotSurfaceAndGridlineReadThroughBands() {
         #expect(HistoryGraphView.fillOpacity(for: .lower) == 0.60)
         #expect(HistoryGraphView.fillOpacity(for: .upper) == 0.15)
         #expect(HistoryGraphView.fillOpacity(for: .lower) < 1.0)
@@ -2074,10 +2215,10 @@ struct HistoryGraphGridlinePlaceholderDrawOrderTests {
 
     @Test func placeholderDrawOrderContainsOnlyGridlines() {
         #expect(HistoryGraphGridline.placeholderDrawOrder == [.gridlines])
-        // 값 있음 경로(`HistoryGraphView.drawOrder`)도 같은 기준선 레이어로 시작해,
-        // 두 경로가 같은 좌표에 같은 선 하나를 그립니다.
+        // 값 있음 경로(`HistoryGraphView.drawOrder`)도 같은 기준선 레이어를 정확히 하나 그려,
+        // 두 경로가 같은 그리기 함수로 같은 좌표에 같은 선 하나를 그립니다.
         #expect(HistoryGraphGridline.placeholderDrawOrder.first == .gridlines)
-        #expect(HistoryGraphView.drawOrder.first == .gridlines)
+        #expect(HistoryGraphView.drawOrder.filter { $0 == .gridlines }.count == 1)
         // 미수집 구간을 덮는 레이어가 두 목록 어디에도 없습니다 —
         // 위 두 배열 단언이 그 사실을 목록 전수로 잡습니다.
         #expect(HistoryGraphGridline.placeholderDrawOrder.count == 1)

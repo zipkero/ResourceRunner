@@ -89,10 +89,20 @@ struct DashboardColorPaletteTests {
         try resolvedSRGB(DashboardColorPalette.graphPlotSurface, appearanceName: appearanceName)
     }
 
-    /// 기준선은 반투명 시스템 구분선 색이라, 테스트 안 리터럴이 아니라 appearance별로 푼 값의 알파를 그대로 아래 면에 합성합니다.
+    /// 기준선은 반투명 색이라, 테스트 안 리터럴이 아니라 appearance별로 푼 값의 알파를 그대로 아래 면(판 면 또는 채움 합성색)에 합성합니다.
     private func gridlineComposite(over surface: NSColor, appearanceName: NSAppearance.Name) throws -> NSColor {
-        let gridline = try resolvedSRGB(DashboardColorPalette.cpuGridline, appearanceName: appearanceName)
+        let gridline = try resolvedSRGB(DashboardColorPalette.graphPlotGridline, appearanceName: appearanceName)
         return composited(gridline, opacity: Double(gridline.alphaComponent), over: surface)
+    }
+
+    /// 두 밴드 채움을 판 면에 합성한 색입니다. 채움 색과 불투명도를 production에서 가져와 값이 바뀌면 함께 움직입니다.
+    private func bandFillComposite(_ band: HistoryGraphView.BandRole, over surface: NSColor, appearanceName: NSAppearance.Name) throws -> NSColor {
+        let color = band == .lower ? DashboardColorPalette.cpuUser : DashboardColorPalette.cpuSystem
+        return composited(
+            try resolvedSRGB(color, appearanceName: appearanceName),
+            opacity: HistoryGraphView.fillOpacity(for: band),
+            over: surface
+        )
     }
 
     @Test func popoverBackgroundAndCardSurfaceLiftTheCardInBothAppearances() throws {
@@ -260,30 +270,79 @@ struct DashboardColorPaletteTests {
         }
     }
 
-    @Test func gridlineOnGraphPlotSurfaceStaysAsVisibleAsOnCardSurface() throws {
+    /// 기준선은 판 면 위에서 판 면보다 한 단 어두운 눈금이라, 식별 한계는 넘지만 판 가장자리 단차보다 약합니다.
+    @Test func graphPlotGridlineIsDarkerThanPlotSurfaceAndWeakerThanPlotEdge() throws {
         for appearanceName in appearanceNames {
             let card = try cardSurface(appearanceName)
             let plot = try plotSurface(appearanceName)
-            let onCard = try gridlineComposite(over: card, appearanceName: appearanceName)
-            let onPlot = try gridlineComposite(over: plot, appearanceName: appearanceName)
-            let cardContrast = contrastRatio(onCard, card)
-            let plotContrast = contrastRatio(onPlot, plot)
-            let cardDifference = abs(labColor(onCard).lightness - labColor(card).lightness)
-            let plotDifference = abs(labColor(onPlot).lightness - labColor(plot).lightness)
+            let plotLightness = labColor(plot).lightness
+            let onPlotLightness = labColor(try gridlineComposite(over: plot, appearanceName: appearanceName)).lightness
+            let gridlineDifference = plotLightness - onPlotLightness
+            let edgeDifference = labColor(card).lightness - plotLightness
 
             #expect(
-                abs(plotContrast - cardContrast) < 0.01,
-                "\(appearanceName.rawValue) 기준선 대비비가 카드 면 \(cardContrast) → 판 면 \(plotContrast)입니다"
+                onPlotLightness < plotLightness,
+                "\(appearanceName.rawValue) 판 면 위 기준선 L* \(onPlotLightness)가 판 면 \(plotLightness)보다 낮지 않습니다"
             )
             #expect(
-                cardDifference - plotDifference < 1,
-                "\(appearanceName.rawValue) 기준선 ΔL*가 카드 면 \(cardDifference) → 판 면 \(plotDifference)입니다"
+                2.3 < gridlineDifference && gridlineDifference < edgeDifference,
+                "\(appearanceName.rawValue) 판 면 위 기준선 ΔL* \(gridlineDifference)가 2.3과 판–카드 ΔL* \(edgeDifference) 사이가 아닙니다"
             )
         }
     }
 
-    /// 판 위 요소의 세기가 `밴드 > 기준선 > 판 가장자리` 순서라, 판 면이 데이터보다 먼저 눈에 들어오지 않습니다.
-    @Test func graphPlotEdgeIsWeakerThanGridlineAndUpperBandFill() throws {
+    /// 부하가 50%를 넘어 채움이 기준선 자리를 덮어도, 채움 위에 그린 기준선이 판 면 위만큼 가깝게 보이고
+    /// 채움 아래에 깔았을 때보다 잘 보이며, 그 자리 밴드 채움보다는 약합니다.
+    @Test func graphPlotGridlineStaysVisibleInsideBothBandFillsAndWeakerThanTheFill() throws {
+        for appearanceName in appearanceNames {
+            let plot = try plotSurface(appearanceName)
+            let plotLightness = labColor(plot).lightness
+            let onPlotDifference = plotLightness
+                - labColor(try gridlineComposite(over: plot, appearanceName: appearanceName)).lightness
+            let gridlineBelowFills = try gridlineComposite(over: plot, appearanceName: appearanceName)
+
+            for band in [HistoryGraphView.BandRole.lower, .upper] {
+                let fill = try bandFillComposite(band, over: plot, appearanceName: appearanceName)
+                let fillLightness = labColor(fill).lightness
+                let overFillDifference = abs(
+                    labColor(try gridlineComposite(over: fill, appearanceName: appearanceName)).lightness - fillLightness
+                )
+                let underFillDifference = abs(
+                    labColor(try bandFillComposite(band, over: gridlineBelowFills, appearanceName: appearanceName)).lightness
+                        - fillLightness
+                )
+                let fillDifference = abs(fillLightness - plotLightness)
+
+                #expect(
+                    overFillDifference >= onPlotDifference * 2 / 3,
+                    "\(appearanceName.rawValue) \(band) 채움 위 기준선 ΔL* \(overFillDifference)가 판 면 위 \(onPlotDifference)의 3분의 2보다 작습니다"
+                )
+                #expect(
+                    overFillDifference > underFillDifference,
+                    "\(appearanceName.rawValue) \(band) 채움 위 기준선 ΔL* \(overFillDifference)가 채움 아래 \(underFillDifference)보다 크지 않습니다"
+                )
+                #expect(
+                    overFillDifference < fillDifference,
+                    "\(appearanceName.rawValue) \(band) 채움 위 기준선 ΔL* \(overFillDifference)가 채움의 판 면 대비 ΔL* \(fillDifference)보다 작지 않습니다"
+                )
+            }
+        }
+    }
+
+    @Test func graphPlotGridlineIsAchromaticInBothAppearances() throws {
+        for appearanceName in appearanceNames {
+            let gridline = try resolvedSRGB(DashboardColorPalette.graphPlotGridline, appearanceName: appearanceName)
+
+            #expect(
+                gridline.redComponent == gridline.greenComponent && gridline.greenComponent == gridline.blueComponent,
+                "\(appearanceName.rawValue) 기준선 성분이 R \(gridline.redComponent) · G \(gridline.greenComponent) · B \(gridline.blueComponent)입니다"
+            )
+        }
+    }
+
+    /// 판 면 위 요소의 세기가 `밴드 > 판 가장자리 > 기준선` 순서라, 판 면이 데이터보다 먼저 눈에 들어오지 않고
+    /// 기준선은 판을 가르는 경계가 아니라 판 안의 눈금으로 남습니다.
+    @Test func gridlineIsWeakerThanGraphPlotEdgeWhichIsWeakerThanUpperBandFill() throws {
         for appearanceName in appearanceNames {
             let card = try cardSurface(appearanceName)
             let plot = try plotSurface(appearanceName)
@@ -297,8 +356,8 @@ struct DashboardColorPaletteTests {
             let upperFillDifference = abs(labColor(upperFill).lightness - plotLightness)
 
             #expect(
-                edgeDifference < gridlineDifference,
-                "\(appearanceName.rawValue) 판 가장자리 ΔL* \(edgeDifference)가 기준선 ΔL* \(gridlineDifference)보다 작지 않습니다"
+                gridlineDifference < edgeDifference,
+                "\(appearanceName.rawValue) 판 면 위 기준선 ΔL* \(gridlineDifference)가 판 가장자리 ΔL* \(edgeDifference)보다 작지 않습니다"
             )
             #expect(
                 edgeDifference < upperFillDifference,

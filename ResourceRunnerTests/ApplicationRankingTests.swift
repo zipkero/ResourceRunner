@@ -179,6 +179,84 @@ struct ApplicationRankingAveragingTests {
     }
 }
 
+// MARK: - 같은 정체성의 실행 경로 전환
+
+/// 조사 저장소의 경로 전환이 앱 순위와 상세 그룹까지 같은 tick에 전달되는지 확인합니다.
+struct ApplicationRankingExecutablePathTransitionTests {
+
+    @Test func sameIdentityMovesFromAOnlyToBWithFreshRankingHistory() async throws {
+        let history = ProcessHistoryStore()
+        let start = ContinuousClock().now
+        let pathA = "/Applications/Alpha.app/Contents/MacOS/Alpha"
+        let pathB = "/Applications/Bravo.app/Contents/MacOS/Bravo"
+        let identity = ProcessIdentity(pid: 101, startTime: 1_000)
+        var resolver = ApplicationIdentityResolver()
+
+        func append(_ offset: Int, path: String, cpuNanoseconds: UInt64, residentBytes: UInt64) async {
+            let process = ProcessSample(
+                identity: identity,
+                executablePath: path,
+                uid: 501,
+                parentPID: 1,
+                cpuTimeNanoseconds: cpuNanoseconds,
+                residentBytes: residentBytes,
+                isTranslated: false
+            )
+            await history.append(TimestampedSample(
+                timestamp: start.advanced(by: .seconds(offset)),
+                value: ProcessSurveySample(result: .success(ProcessSurveyReport(samples: [process], unreadableCount: 0)))
+            ))
+        }
+
+        func ranking(at offset: Int) async -> ApplicationRankingSample {
+            let input = await history.rankingInput()
+            let computed = ApplicationRanking.compute(
+                snapshots: input.snapshots,
+                currentTimestamp: start.advanced(by: .seconds(offset)),
+                unreadableCount: input.unreadableCount,
+                resolver: resolver
+            )
+            resolver = computed.resolver
+            return computed.sample
+        }
+
+        await append(0, path: pathA, cpuNanoseconds: 0, residentBytes: 1_000)
+        await append(10, path: pathA, cpuNanoseconds: 1_000_000_000, residentBytes: 2_000)
+        await append(20, path: pathA, cpuNanoseconds: 2_000_000_000, residentBytes: 3_000)
+        let before = await ranking(at: 20)
+        #expect(before.cpuUsage.map(\.key.value) == ["/Applications/Alpha.app"])
+        #expect(before.memoryUsage.first?.value == 2_000)
+        #expect(before.memoryIncrease.first?.value == 2_000)
+
+        // PID와 시작 시각은 그대로 두고 실행 이미지만 바꿉니다.
+        await append(30, path: pathB, cpuNanoseconds: 5_000_000_000, residentBytes: 10_000)
+        let firstB = await ranking(at: 30)
+        #expect(firstB.cpuUsage.isEmpty)
+        #expect(firstB.memoryUsage == [ApplicationRankingEntry(
+            key: ApplicationKey(value: "/Applications/Bravo.app"), displayName: "Bravo", value: 10_000
+        )])
+        #expect(firstB.memoryIncrease.first?.value == 0)
+        #expect(firstB.memoryIncrease.map(\.key.value) == ["/Applications/Bravo.app"])
+
+        await append(40, path: pathB, cpuNanoseconds: 7_000_000_000, residentBytes: 13_000)
+        let secondB = await ranking(at: 40)
+        #expect(secondB.cpuUsage.first?.key.value == "/Applications/Bravo.app")
+        #expect(secondB.cpuUsage.first?.displayName == "Bravo")
+        #expect(secondB.cpuUsage.first?.value == 20)
+        #expect(secondB.memoryUsage.first?.value == 11_500)
+        #expect(secondB.memoryIncrease.first?.value == 3_000)
+        #expect(secondB.memoryUsage.map(\.key.value) == ["/Applications/Bravo.app"])
+        #expect(secondB.memoryIncrease.map(\.key.value) == ["/Applications/Bravo.app"])
+
+        let input = await history.rankingInput()
+        let grouped = ApplicationRanking.groupByApplication(snapshots: input.snapshots, resolver: resolver)
+        #expect(grouped.groups.map(\.key.value) == ["/Applications/Bravo.app"])
+        #expect(grouped.groups.first?.displayName == "Bravo")
+        #expect(grouped.groups.first?.processes.first?.pid == identity.pid)
+        #expect(grouped.groups.first?.processes.first?.executableName == "Bravo")
+    }
+}
+
 // MARK: - 현재 사용량 순위와 증가량 순위의 분리
 
 /// task-006 검증 조건: 현재 사용량이 큰 앱과 증가량이 큰 앱을 다르게 구성한 입력에서

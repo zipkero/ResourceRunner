@@ -17,6 +17,7 @@ private final class CPUCollectorRecorder: @unchecked Sendable {
     private let lock = NSLock()
     private var outcomes: [Result<CPUSystemMetrics?, CollectorFailure>]
     private var observedTimestamps: [ContinuousClock.Instant] = []
+    private var observedResetCount = 0
 
     init(outcomes: [Result<CPUSystemMetrics?, CollectorFailure>]) {
         self.outcomes = outcomes
@@ -26,6 +27,18 @@ private final class CPUCollectorRecorder: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return observedTimestamps
+    }
+
+    var resetCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observedResetCount
+    }
+
+    func resetBaseline() {
+        lock.lock()
+        observedResetCount += 1
+        lock.unlock()
     }
 
     func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics? {
@@ -48,6 +61,10 @@ private final class CPUCollectorRecorder: @unchecked Sendable {
 private struct FakeCPUCollector: CPUSystemMetricsCollecting {
     let recorder: CPUCollectorRecorder
 
+    mutating func resetBaseline() {
+        recorder.resetBaseline()
+    }
+
     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics? {
         try recorder.collect(at: timestamp)
     }
@@ -56,6 +73,7 @@ private struct FakeCPUCollector: CPUSystemMetricsCollecting {
 private final class FakeMemoryCollector: MemorySystemMetricsCollecting, @unchecked Sendable {
     private let lock = NSLock()
     private var outcomes: [Result<MemorySystemMetrics, CollectorFailure>]
+    private var observedCollectCount = 0
 
     init(outcomes: [Result<MemorySystemMetrics, CollectorFailure>]) {
         self.outcomes = outcomes
@@ -63,6 +81,7 @@ private final class FakeMemoryCollector: MemorySystemMetricsCollecting, @uncheck
 
     func collect() throws(CollectorFailure) -> MemorySystemMetrics {
         lock.lock()
+        observedCollectCount += 1
         let outcome = outcomes.isEmpty ? nil : outcomes.removeFirst()
         lock.unlock()
 
@@ -75,12 +94,19 @@ private final class FakeMemoryCollector: MemorySystemMetricsCollecting, @uncheck
             throw CollectorFailure(metric: .memory, cause: .systemCall(name: "fake.exhausted", code: -1))
         }
     }
+
+    var collectCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return observedCollectCount
+    }
 }
 
 /// 전진하지 않는 고정 시각을 돌려주면서 읽은 횟수를 세는 `MonotonicClock`.
 /// 한 tick이 시각을 몇 번 읽는지 관찰하는 데 씁니다.
 private actor RecordingMonotonicClock: MonotonicClock {
     private let instant: ContinuousClock.Instant
+    private var queuedInstants: [ContinuousClock.Instant] = []
 
     /// 한 tick이 시각을 한 번만 읽는지 세기 위한 진단용 카운터입니다.
     private(set) var nowCallCount = 0
@@ -89,13 +115,43 @@ private actor RecordingMonotonicClock: MonotonicClock {
         self.instant = instant
     }
 
+    init(instants: [ContinuousClock.Instant]) {
+        self.instant = instants[0]
+        self.queuedInstants = instants
+    }
+
     func now() -> ContinuousClock.Instant {
         nowCallCount += 1
+        if !queuedInstants.isEmpty {
+            return queuedInstants.removeFirst()
+        }
         return instant
     }
 
     func sleep(until deadline: ContinuousClock.Instant) async throws {
         try Task.checkCancellation()
+    }
+}
+
+private final class SequenceCPUTickReader: CPUTickReading, @unchecked Sendable {
+    private let lock = NSLock()
+    private var snapshots: [[CPUCoreTicks]]
+
+    init(snapshots: [[CPUCoreTicks]]) {
+        self.snapshots = snapshots
+    }
+
+    func readCoreTicks() throws(CollectorFailure) -> [CPUCoreTicks] {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !snapshots.isEmpty else {
+            throw CollectorFailure(metric: .cpu, cause: .systemCall(name: "sequence.exhausted", code: -1))
+        }
+        return snapshots.removeFirst()
+    }
+
+    func readLoadAverage() throws(CollectorFailure) -> LoadAverage {
+        LoadAverage(oneMinute: 1, fiveMinutes: 1, fifteenMinutes: 1)
     }
 }
 
@@ -129,15 +185,17 @@ private func makeSource(
 ) -> (
     source: SystemMetricsSampleSource<FakeCPUCollector, FakeMemoryCollector, RecordingMonotonicClock>,
     cpuRecorder: CPUCollectorRecorder,
+    memoryCollector: FakeMemoryCollector,
     clock: RecordingMonotonicClock
 ) {
     let recorder = CPUCollectorRecorder(outcomes: cpuOutcomes)
+    let memoryCollector = FakeMemoryCollector(outcomes: memoryOutcomes)
     let source = SystemMetricsSampleSource(
         cpuCollector: FakeCPUCollector(recorder: recorder),
-        memoryCollector: FakeMemoryCollector(outcomes: memoryOutcomes),
+        memoryCollector: memoryCollector,
         clock: clock
     )
-    return (source, recorder, clock)
+    return (source, recorder, memoryCollector, clock)
 }
 
 // MARK: - 지표별 실패 격리
@@ -149,7 +207,7 @@ struct SystemMetricsSampleSourceTests {
     /// 이 테스트가 고정하는 것은 "한 지표의 실패가 같은 tick의 다른 지표 값을 함께 없애지 않는다"입니다.
     /// source가 실패를 던지도록 되돌리면 `sample()`이 값을 돌려주지 못해 이 테스트가 실패합니다.
     @Test func cpuFailureKeepsMemoryValueInTheSameSample() async {
-        let (source, _, _) = makeSource(
+        let (source, _, _, _) = makeSource(
             cpuOutcomes: [.failure(cpuFailure)],
             memoryOutcomes: [.success(memoryFixture)]
         )
@@ -161,7 +219,7 @@ struct SystemMetricsSampleSourceTests {
     }
 
     @Test func memoryFailureKeepsCPUValueInTheSameSample() async {
-        let (source, _, _) = makeSource(
+        let (source, _, _, _) = makeSource(
             cpuOutcomes: [.success(cpuFixture)],
             memoryOutcomes: [.failure(memoryFailure)]
         )
@@ -174,7 +232,7 @@ struct SystemMetricsSampleSourceTests {
 
     /// 두 지표가 모두 실패해도 샘플 자체는 만들어지고, 실패가 0 값으로 바뀌지 않습니다.
     @Test func bothFailuresAreCarriedAsFailuresWithoutThrowing() async {
-        let (source, _, _) = makeSource(
+        let (source, _, _, _) = makeSource(
             cpuOutcomes: [.failure(cpuFailure)],
             memoryOutcomes: [.failure(memoryFailure)]
         )
@@ -188,7 +246,7 @@ struct SystemMetricsSampleSourceTests {
     /// 값을 만들지 않은 CPU tick(첫 tick·허용 배수 초과)은 실패와 구분되고,
     /// 같은 tick의 Memory 값은 그대로 담깁니다.
     @Test func baselineOnlyCPUTickIsNotAFailure() async {
-        let (source, _, _) = makeSource(
+        let (source, _, _, _) = makeSource(
             cpuOutcomes: [.success(nil), .success(cpuFixture)],
             memoryOutcomes: [.success(memoryFixture), .success(memoryFixture)]
         )
@@ -206,7 +264,7 @@ struct SystemMetricsSampleSourceTests {
     @Test func oneTickReadsTheTimestampOnceAndSharesIt() async {
         let instant = ContinuousClock().now
         let clock = RecordingMonotonicClock(instant: instant)
-        let (source, recorder, _) = makeSource(
+        let (source, recorder, _, _) = makeSource(
             cpuOutcomes: [.success(cpuFixture)],
             memoryOutcomes: [.success(memoryFixture)],
             clock: clock
@@ -216,5 +274,49 @@ struct SystemMetricsSampleSourceTests {
 
         #expect(await clock.nowCallCount == 1)
         #expect(recorder.timestamps == [instant])
+    }
+
+    @Test func newerEpochResetsOnlyCPUBaselineAndOldEpochDoesNotCollect() async {
+        let (source, cpuRecorder, memoryCollector, clock) = makeSource(
+            cpuOutcomes: [.success(nil), .success(cpuFixture), .success(nil), .success(cpuFixture)],
+            memoryOutcomes: Array(repeating: .success(memoryFixture), count: 4)
+        )
+
+        #expect(await source.sample(collectionEpoch: 0)?.cpu == .success(nil))
+        #expect(await source.sample(collectionEpoch: 0)?.cpu == .success(cpuFixture))
+        #expect(await source.sample(collectionEpoch: 1)?.cpu == .success(nil))
+        #expect(cpuRecorder.resetCount == 1)
+        #expect(await source.sample(collectionEpoch: 0) == nil)
+        #expect(cpuRecorder.timestamps.count == 3)
+        #expect(memoryCollector.collectCount == 3)
+        #expect(await clock.nowCallCount == 3)
+        #expect(await source.sample(collectionEpoch: 1)?.cpu == .success(cpuFixture))
+        #expect(cpuRecorder.resetCount == 1)
+    }
+
+    @Test func sameEpochProducesUsageAcrossFiveToOneSecondIntervalChange() async {
+        let start = ContinuousClock().now
+        let clock = RecordingMonotonicClock(instants: [
+            start,
+            start.advanced(by: .seconds(5)),
+            start.advanced(by: .seconds(6)),
+        ])
+        let reader = SequenceCPUTickReader(snapshots: [
+            [CPUCoreTicks(user: 0, system: 0, idle: 0, nice: 0)],
+            [CPUCoreTicks(user: 20, system: 0, idle: 80, nice: 0)],
+            [CPUCoreTicks(user: 30, system: 0, idle: 170, nice: 0)],
+        ])
+        let source = SystemMetricsSampleSource(
+            cpuCollector: CPUSystemMetricsCollector(reader: reader),
+            memoryCollector: FakeMemoryCollector(outcomes: Array(repeating: .success(memoryFixture), count: 3)),
+            clock: clock
+        )
+
+        #expect(await source.sample(collectionEpoch: 0)?.cpu == .success(nil))
+        let fiveSecond = await source.sample(collectionEpoch: 0)
+        let oneSecond = await source.sample(collectionEpoch: 0)
+        #expect((try? fiveSecond?.cpu.get())?.overallUsage == 20)
+        #expect((try? oneSecond?.cpu.get())?.overallUsage == 10)
+        #expect(await clock.nowCallCount == 3)
     }
 }

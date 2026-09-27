@@ -91,6 +91,13 @@ final class MemoryScheduledSampleSource: ScheduledSampleSource, @unchecked Senda
     private let advanceClockBy: Duration?
     private let clock: ManualMonotonicClock?
     private(set) var callCount = 0
+    private var observedEpochs: [Int] = []
+
+    var epochs: [Int] {
+        lock.lock()
+        defer { lock.unlock() }
+        return observedEpochs
+    }
 
     init(outcomes: [Result<Int, Error>], advanceClockBy: Duration? = nil, clock: ManualMonotonicClock? = nil) {
         self.outcomes = outcomes
@@ -98,11 +105,12 @@ final class MemoryScheduledSampleSource: ScheduledSampleSource, @unchecked Senda
         self.clock = clock
     }
 
-    func sample() async throws -> Int {
+    func sample(collectionEpoch: Int) async throws -> Int? {
         try Task.checkCancellation()
 
         lock.lock()
         callCount += 1
+        observedEpochs.append(collectionEpoch)
         let outcome = outcomes.isEmpty ? nil : outcomes.removeFirst()
         lock.unlock()
 
@@ -112,6 +120,30 @@ final class MemoryScheduledSampleSource: ScheduledSampleSource, @unchecked Senda
 
         guard let outcome else { throw Failure.noMoreOutcomes }
         return try outcome.get()
+    }
+}
+
+/// 취소 뒤에도 첫 호출의 결과를 늦게 돌려줘 generation 폐기를 관찰합니다.
+private actor DelayedEpochSampleSource: ScheduledSampleSource {
+    private var firstContinuation: CheckedContinuation<Int?, Never>?
+    private(set) var epochs: [Int] = []
+    private(set) var firstCallFinished = false
+
+    func sample(collectionEpoch: Int) async -> Int? {
+        epochs.append(collectionEpoch)
+        if epochs.count == 1 {
+            let value = await withCheckedContinuation { continuation in
+                firstContinuation = continuation
+            }
+            firstCallFinished = true
+            return value
+        }
+        return 2
+    }
+
+    func finishFirstCall() {
+        firstContinuation?.resume(returning: 1)
+        firstContinuation = nil
     }
 }
 
@@ -129,6 +161,39 @@ actor MemorySampleSink<Value: Sendable>: MonitoringSampleSink {
 
     var values: [Value] {
         samples.map(\.value)
+    }
+}
+
+/// 실제 CPU 차분을 거치되 시스템 호출 없이 누적 tick을 일정하게 공급합니다.
+private final class RepeatedPauseCPUTickReader: CPUTickReading, @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+
+    func readCoreTicks() throws(CollectorFailure) -> [CPUCoreTicks] {
+        lock.lock()
+        count += 1
+        let current = count
+        lock.unlock()
+        return [CPUCoreTicks(user: UInt64(current * 20), system: 0, idle: UInt64(current * 80), nice: 0)]
+    }
+
+    func readLoadAverage() throws(CollectorFailure) -> LoadAverage {
+        LoadAverage(oneMinute: 0, fiveMinutes: 0, fifteenMinutes: 0)
+    }
+}
+
+private struct RepeatedPauseMemoryCollector: MemorySystemMetricsCollecting {
+    func collect() throws(CollectorFailure) -> MemorySystemMetrics {
+        MemorySystemMetrics(
+            totalPhysicalBytes: 16 * 1024 * 1024 * 1024,
+            usedBytes: 8 * 1024 * 1024 * 1024,
+            appBytes: 4 * 1024 * 1024 * 1024,
+            wiredBytes: 2 * 1024 * 1024 * 1024,
+            compressedBytes: 2 * 1024 * 1024 * 1024,
+            cachedBytes: 1024 * 1024 * 1024,
+            swapUsedBytes: 0,
+            pressureLevel: .normal
+        )
     }
 }
 
@@ -269,6 +334,87 @@ enum UnobservableSignal: CaseIterable, Sendable {
 /// 화면을 볼 수 없는 신호 각각에서 두 축의 누적 샘플 수가 늘지 않으며 재개가 놓친 실행을 따라잡지 않고,
 /// 한 축의 일정만 바뀌면 다른 축의 실행 중 작업이 취소되지 않는지 검증합니다.
 struct MonitoringLifecycleStoreTests {
+
+    /// 5초 중지는 CPU의 시간 간격 허용치 안에 있으므로 epoch 배선이 끊기면
+    /// 재개 첫 tick이 지난 원본을 차분하거나 그래프 점이 이전 구간과 이어집니다.
+    @Test func fiveShortPausesResetCPUAndSeparateHistoryAcrossBothSchedules() async {
+        let clock = ManualMonotonicClock()
+        let history = MonitoringSampleStore()
+        let source = SystemMetricsSampleSource(
+            cpuCollector: CPUSystemMetricsCollector(reader: RepeatedPauseCPUTickReader()),
+            memoryCollector: RepeatedPauseMemoryCollector(),
+            clock: clock
+        )
+        let systemScheduler = MonitoringScheduler(clock: clock, source: source, sink: history)
+        let processSink = MemorySampleSink<Int>()
+        let processScheduler = MonitoringScheduler(
+            clock: clock,
+            source: MemoryScheduledSampleSource(outcomes: (0...5).map { .success($0) }),
+            sink: processSink
+        )
+        let lifecycle = MonitoringLifecycleStore(
+            definition: .m2,
+            systemMetricsTarget: systemScheduler,
+            processSurveyTarget: processScheduler
+        )
+
+        await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: 0)))
+        var revision = 0
+        for epoch in 0...5 {
+            // 팝오버 닫힘·일반 전력: 시스템 2초, 프로세스 5초.
+            await clock.advance(by: .seconds(2))
+            await waitUntil { await history.snapshot().latest?.collectionEpoch == epoch }
+            let baseline = await history.snapshot()
+            #expect(baseline.latest?.collectionEpoch == epoch)
+            #expect(baseline.latest?.value.cpu == .success(nil))
+            #expect((try? baseline.latest?.value.memory.get())?.swapUsedBytes == 0)
+            #expect(baseline.recentHistory.count == epoch)
+
+            await clock.advance(by: .seconds(2))
+            await waitUntil { await history.snapshot().recentHistory.count == epoch + 1 }
+            let sampled = await history.snapshot()
+            #expect(sampled.recentHistory.count == epoch + 1)
+            #expect(sampled.recentHistory.last?.collectionEpoch == epoch)
+            #expect(sampled.recentHistory.last?.overallCPUUsage == 20)
+
+            await clock.advance(by: .seconds(1))
+            await waitUntil { await processSink.samples.count == epoch + 1 }
+            #expect(await processSink.samples.count == epoch + 1)
+
+            if epoch == 5 { break }
+            let beforePause = await history.snapshot()
+            let processCount = await processSink.samples.count
+            revision += 1
+            await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: revision, screenLockState: .locked)))
+            #expect(await systemScheduler.collectionEpoch == epoch + 1)
+            #expect(await processScheduler.collectionEpoch == epoch + 1)
+
+            // 같은 중지 상태의 추가 알림은 새 수집 구간을 만들지 않습니다.
+            revision += 1
+            await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: revision, displayAsleep: true)))
+            #expect(await systemScheduler.collectionEpoch == epoch + 1)
+            await clock.advance(by: .seconds(5))
+            for _ in 0..<200 { await Task.yield() }
+            let duringPause = await history.snapshot()
+            #expect(duringPause.latest?.timestamp == beforePause.latest?.timestamp)
+            #expect(duringPause.recentHistory == beforePause.recentHistory)
+            #expect(await processSink.samples.count == processCount)
+
+            revision += 1
+            await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: revision)))
+            #expect(await systemScheduler.collectionEpoch == epoch + 1)
+        }
+
+        let points = await history.snapshot().recentHistory.map {
+            HistoryPoint(timestamp: $0.timestamp, value: $0.overallCPUUsage, collectionEpoch: $0.collectionEpoch)
+        }
+        #expect(points.map(\.collectionEpoch) == Array(0...5))
+        #expect(await processSink.samples.map(\.collectionEpoch) == Array(0...5))
+        for (previous, current) in zip(points, points.dropFirst()) {
+            #expect(previous.timestamp.duration(to: current.timestamp) <= HistoryPoint.maximumConnectedGap)
+        }
+        #expect(HistoryPoint.connectedSegments(from: points).map(\.count) == Array(repeating: 1, count: 6))
+    }
 
     private func makeStore(
         definition: CollectionScheduleDefinition = .m2,
@@ -499,6 +645,80 @@ struct MonitoringLifecycleStoreTests {
 /// 0 샘플로 바뀌지 않음을 검증합니다.
 /// 주기 변경이 이력 용량을 건드리지 않는다는 것은 저장소 쪽 `MonitoringSampleStoreTests`가 고정합니다.
 struct MonitoringSchedulerTests {
+
+    @Test func collectionEpochAdvancesOnlyOnRunningToPausedTransition() async {
+        let scheduler = MonitoringScheduler(
+            clock: ManualMonotonicClock(),
+            source: MemoryScheduledSampleSource(outcomes: []),
+            sink: MemorySampleSink<Int>()
+        )
+
+        await scheduler.apply(.paused)
+        #expect(await scheduler.collectionEpoch == 0)
+        await scheduler.apply(.running(.seconds(5)))
+        await scheduler.apply(.running(.seconds(1)))
+        await scheduler.apply(.running(.seconds(1)))
+        #expect(await scheduler.collectionEpoch == 0)
+
+        await scheduler.apply(.paused)
+        #expect(await scheduler.collectionEpoch == 1)
+        await scheduler.apply(.paused)
+        #expect(await scheduler.collectionEpoch == 1)
+        await scheduler.apply(.running(.seconds(1)))
+        #expect(await scheduler.collectionEpoch == 1)
+        await scheduler.apply(.paused)
+        #expect(await scheduler.collectionEpoch == 2)
+    }
+
+    @Test func intervalChangeWithoutPauseKeepsSourceAndStoredEpoch() async {
+        let clock = ManualMonotonicClock()
+        let source = MemoryScheduledSampleSource(outcomes: [.success(1), .success(2)])
+        let sink = MemorySampleSink<Int>()
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
+
+        await scheduler.apply(.running(.seconds(5)))
+        await clock.advance(by: .seconds(5))
+        await waitUntil { await sink.samples.count == 1 }
+
+        await scheduler.apply(.running(.seconds(1)))
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await sink.samples.count == 2 }
+
+        #expect(await scheduler.collectionEpoch == 0)
+        #expect(source.epochs == [0, 0])
+        #expect(await sink.samples.map(\.collectionEpoch) == [0, 0])
+        #expect(await sink.values == [1, 2])
+    }
+
+    @Test func resumedSourceAndStoredSampleShareEpochAndOldGenerationIsDiscarded() async {
+        let clock = ManualMonotonicClock()
+        let source = DelayedEpochSampleSource()
+        let sink = MemorySampleSink<Int>()
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
+
+        await scheduler.apply(.running(.seconds(1)))
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await source.epochs.count == 1 }
+        #expect(await source.epochs == [0])
+
+        await scheduler.apply(.paused)
+        await scheduler.apply(.paused)
+        #expect(await scheduler.collectionEpoch == 1)
+        await clock.advance(by: .seconds(5))
+        #expect(await sink.samples.isEmpty)
+
+        await scheduler.apply(.running(.seconds(1)))
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await sink.samples.count == 1 }
+        #expect(await source.epochs == [0, 1])
+        #expect(await sink.samples.map(\.collectionEpoch) == [1])
+        #expect(await sink.values == [2])
+
+        await source.finishFirstCall()
+        await waitUntil { await source.firstCallFinished }
+        #expect(await sink.samples.map(\.collectionEpoch) == [1])
+        #expect(await sink.values == [2])
+    }
 
     @Test func runningScheduleAppendsOneSamplePerTickUsingAnchoredDeadline() async {
         let clock = ManualMonotonicClock()

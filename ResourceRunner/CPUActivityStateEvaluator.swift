@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// 전체 CPU 사용률·샘플 시각·직전 판정 상태를 받아 다음 표시 상태를 돌려주는 순수 계산.
+/// 전체 CPU 사용률·샘플 시각·수집 구간·직전 판정 상태를 받아 다음 표시 상태를 돌려주는 순수 계산.
 /// 상태를 갖지 않으므로 값 타입인 `State`에 필요한 모든 것을 담아 호출자가 다음 호출에 그대로 넘깁니다.
 /// ANALYSIS §2 「메뉴바 표시 상태 판정」, ANALYSIS §5 DP8을 그대로 구현합니다.
 nonisolated enum CPUActivityStateEvaluator {
@@ -24,8 +24,8 @@ nonisolated enum CPUActivityStateEvaluator {
     static let sustainedDuration: Duration = .seconds(60)
 
     /// 인접 샘플 간격이 이 값을 넘으면 지속 누적(후보 유지 시간·75% 연속 구간)을 끊고 이 샘플을 새 기준점으로 삼습니다.
-    /// 화면 잠금 같은 실제 중지 구간과 정상 수집 주기(가장 느린 5초)를 가르는 값이 이미 `SystemMetricsSampling.maximumTickGap`으로
-    /// 정해져 있으므로 같은 값을 재사용합니다.
+    /// 일반 지연과 정상 수집 주기(가장 느린 5초)를 가르는 값이 이미 `SystemMetricsSampling.maximumTickGap`으로
+    /// 정해져 있으므로 같은 값을 재사용합니다. 명시적 중지는 epoch로 따로 구분합니다.
     static var maximumSampleGap: Duration { SystemMetricsSampling.maximumTickGap }
 
     /// 지속 누적에 필요한 값만 담는 판정 상태. `displayedState`가 `CharacterStateSource`로 나가는 값입니다.
@@ -41,6 +41,8 @@ nonisolated enum CPUActivityStateEvaluator {
         let highStreakStart: ContinuousClock.Instant?
         /// 가장 최근에 실제로 판정을 진행한 샘플 시각. 다음 샘플과의 간격이 `maximumSampleGap`을 넘으면 지속을 끊습니다.
         let lastSampleTimestamp: ContinuousClock.Instant?
+        /// 가장 최근에 실제로 판정을 진행한 수집 구간. 구간이 바뀌면 표시 밴드만 이어집니다.
+        let lastCollectionEpoch: Int?
 
         /// `CharacterStateSource`의 기본 초기 상태(`low`)와 같은 자리에서 출발합니다.
         static let initial = State(
@@ -49,19 +51,19 @@ nonisolated enum CPUActivityStateEvaluator {
             pendingBand: nil,
             pendingSince: nil,
             highStreakStart: nil,
-            lastSampleTimestamp: nil
+            lastSampleTimestamp: nil,
+            lastCollectionEpoch: nil
         )
     }
 
     /// 한 tick의 사용률과 시각으로 다음 판정 상태를 계산합니다.
     /// 호출자는 CPU 지표가 실패했거나 값을 만들지 못한 tick(`.success(nil)`)에서는 이 함수를 호출하지 않고
     /// 직전 상태를 그대로 유지해야 합니다 — 판정할 사용률 자체가 없기 때문입니다.
-    static func evaluate(usage: Double, timestamp: ContinuousClock.Instant, state: State) -> State {
-        // 직전에 실제로 판정한 샘플과의 간격이 허용 범위를 넘으면 지속 누적을 끊습니다.
-        // 화면 잠금 같은 중지 구간을 사이에 둔 두 샘플이 하나의 지속으로 이어지지 않게 하기 위해서입니다.
+    static func evaluate(usage: Double, timestamp: ContinuousClock.Instant, state: State, collectionEpoch: Int = 0) -> State {
+        // 명시적 중지 경계이거나 직전 판정 샘플과의 간격이 허용 범위를 넘으면 지속 누적을 끊습니다.
         let continuous: Bool
         if let last = state.lastSampleTimestamp {
-            continuous = timestamp - last <= maximumSampleGap
+            continuous = state.lastCollectionEpoch == collectionEpoch && timestamp - last <= maximumSampleGap
         } else {
             continuous = false
         }
@@ -70,7 +72,8 @@ nonisolated enum CPUActivityStateEvaluator {
         var pendingSince = continuous ? state.pendingSince : nil
         var highStreakStart = continuous ? state.highStreakStart : nil
         var baseBand = state.baseBand
-        var displayedState = state.displayedState
+        // 장시간 고부하는 연속 구간의 부가 표시이므로 구간이 끊기면 기본 밴드로 돌아갑니다.
+        var displayedState = continuous ? state.displayedState : baseBand
 
         // 후보 밴드를 히스테리시스로 계산합니다. 기본 밴드와 같으면 후보 추적을 초기화합니다.
         let candidate = candidateBand(usage: usage, currentBase: baseBand)
@@ -114,7 +117,8 @@ nonisolated enum CPUActivityStateEvaluator {
             pendingBand: pendingBand,
             pendingSince: pendingSince,
             highStreakStart: highStreakStart,
-            lastSampleTimestamp: timestamp
+            lastSampleTimestamp: timestamp,
+            lastCollectionEpoch: collectionEpoch
         )
     }
 

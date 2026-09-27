@@ -32,8 +32,8 @@ nonisolated struct ProcessMemoryBaselinePoint: Sendable, Equatable {
 /// `ProcessHistoryStore` 밖으로는 `ProcessHistorySnapshot`으로만 노출됩니다.
 private struct ProcessHistoryEntry {
     var executablePath: String
-    /// 매 조사마다 이번 조사 값으로 갱신됩니다. `executablePath`와 같은 이유로 정체성이 아니라
-    /// 관찰마다 새로 반영되는 값입니다 — 실행 파일 자체가 바뀌는 일은 없지만 갱신 방식을 통일해 둡니다.
+    /// 매 조사마다 이번 조사 값으로 갱신됩니다. 같은 정체성에서 실행 이미지가 바뀌면
+    /// 경로와 함께 이 값도 새 실행 이미지의 조사 결과를 따릅니다.
     var isTranslated: Bool
     var cpuBaseline: ProcessCPUBaseline?
     var recentValues: CircularBuffer<ProcessRankingSample>
@@ -122,13 +122,19 @@ actor ProcessHistoryStore: MonitoringSampleSink {
         for process in report.samples {
             observed.insert(process.identity)
 
-            var entry = entries[process.identity] ?? ProcessHistoryEntry(
-                executablePath: process.executablePath,
-                isTranslated: process.isTranslated,
-                cpuBaseline: nil,
-                recentValues: CircularBuffer(capacity: ProcessHistorySampling.recentValueCount),
-                memoryBaselines: CircularBuffer(capacity: ProcessHistorySampling.memoryBaselineRingCapacity)
-            )
+            // 같은 정체성의 exec 이후에는 이전 실행 이미지의 CPU·순위·메모리 기준점을 잇지 않습니다.
+            var entry: ProcessHistoryEntry
+            if let existing = entries[process.identity], existing.executablePath == process.executablePath {
+                entry = existing
+            } else {
+                entry = ProcessHistoryEntry(
+                    executablePath: process.executablePath,
+                    isTranslated: process.isTranslated,
+                    cpuBaseline: nil,
+                    recentValues: CircularBuffer(capacity: ProcessHistorySampling.recentValueCount),
+                    memoryBaselines: CircularBuffer(capacity: ProcessHistorySampling.memoryBaselineRingCapacity)
+                )
+            }
             entry.executablePath = process.executablePath
             entry.isTranslated = process.isTranslated
 

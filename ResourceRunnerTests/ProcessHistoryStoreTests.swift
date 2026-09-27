@@ -81,6 +81,86 @@ struct ProcessHistoryIdentityBoundaryTests {
         #expect(await store.identityCount == 1)
     }
 
+    /// 같은 정체성의 실행 경로만 바뀌어도 이전 실행 이미지의 세 이력은 버리고,
+    /// 경로가 유지된 다른 정체성의 이력은 이어집니다.
+    @Test func executablePathChangeRestartsHistoryWhileUnchangedPathKeepsIt() async throws {
+        let store = ProcessHistoryStore()
+        let changingIdentity = ProcessIdentity(pid: 100, startTime: 1_000)
+        let stableIdentity = ProcessIdentity(pid: 200, startTime: 1_000)
+
+        for tick in 0..<4 {
+            let sample = processSample(
+                pid: 100,
+                startTime: 1_000,
+                cpuTimeNanoseconds: UInt64(tick) * 1_000_000_000,
+                residentBytes: UInt64(tick + 1) * 1_000
+            )
+            let control = processSample(
+                pid: 200,
+                startTime: 1_000,
+                cpuTimeNanoseconds: UInt64(tick) * 1_000_000_000,
+                residentBytes: UInt64(tick + 1) * 1_000
+            )
+            await store.append(TimestampedSample(
+                timestamp: baseInstant.advanced(by: .seconds(tick * 10)),
+                value: survey([sample, control])
+            ))
+        }
+
+        let before = try #require(await store.snapshot().first { $0.identity == changingIdentity })
+        #expect(before.recentValues.map(\.residentBytes) == [2_000, 3_000, 4_000])
+        #expect(before.memoryBaselines.map(\.residentBytes) == [1_000, 4_000])
+        #expect(before.recentValues.last?.cpuUsagePercent == 10)
+
+        let firstB = processSample(
+            pid: 100, startTime: 1_000, cpuTimeNanoseconds: 20_000_000_000,
+            residentBytes: 9_000, executablePath: "/bin/b"
+        )
+        let firstControl = processSample(
+            pid: 200, startTime: 1_000, cpuTimeNanoseconds: 4_000_000_000, residentBytes: 9_000
+        )
+        await store.append(TimestampedSample(
+            timestamp: baseInstant.advanced(by: .seconds(40)),
+            value: survey([firstB, firstControl])
+        ))
+
+        let afterFirstB = try #require(await store.snapshot().first { $0.identity == changingIdentity })
+        let afterFirstControl = try #require(await store.snapshot().first { $0.identity == stableIdentity })
+        #expect(await store.identityCount == 2)
+        #expect(afterFirstB.executablePath == "/bin/b")
+        #expect(afterFirstB.recentValues.count == 1)
+        #expect(afterFirstB.recentValues.first?.cpuUsagePercent == nil)
+        #expect(afterFirstB.recentValues.map(\.residentBytes) == [9_000])
+        #expect(afterFirstB.memoryBaselines.map(\.residentBytes) == [9_000])
+        #expect(afterFirstControl.recentValues.map(\.residentBytes) == [3_000, 4_000, 9_000])
+        #expect(afterFirstControl.recentValues.last?.cpuUsagePercent == 10)
+        #expect(afterFirstControl.memoryBaselines.map(\.residentBytes) == [1_000, 4_000])
+
+        let secondB = processSample(
+            pid: 100, startTime: 1_000, cpuTimeNanoseconds: 20_500_000_000,
+            residentBytes: 12_000, executablePath: "/bin/b"
+        )
+        let secondControl = processSample(
+            pid: 200, startTime: 1_000, cpuTimeNanoseconds: 4_500_000_000, residentBytes: 12_000
+        )
+        await store.append(TimestampedSample(
+            timestamp: baseInstant.advanced(by: .seconds(50)),
+            value: survey([secondB, secondControl])
+        ))
+
+        let afterSecondB = try #require(await store.snapshot().first { $0.identity == changingIdentity })
+        let afterSecondControl = try #require(await store.snapshot().first { $0.identity == stableIdentity })
+        #expect(afterSecondB.recentValues.map(\.residentBytes) == [9_000, 12_000])
+        #expect(afterSecondB.recentValues.map(\.cpuUsagePercent) == [nil, 5])
+        #expect(afterSecondB.memoryBaselines.map(\.residentBytes) == [9_000])
+        let currentMemory = try #require(afterSecondB.recentValues.last?.residentBytes)
+        let memoryBaseline = try #require(afterSecondB.memoryBaselines.first?.residentBytes)
+        #expect(currentMemory - memoryBaseline == 3_000)
+        #expect(afterSecondControl.recentValues.map(\.residentBytes) == [4_000, 9_000, 12_000])
+        #expect(afterSecondControl.recentValues.last?.cpuUsagePercent == 5)
+        #expect(afterSecondControl.memoryBaselines.map(\.residentBytes) == [1_000, 4_000])
+    }
+
     @Test func terminatedProcessIsRemovedAfterNextSurveyWithoutAffectingSurvivingIdentity() async {
         let store = ProcessHistoryStore()
         let terminating = processSample(pid: 100, cpuTimeNanoseconds: 1_000_000_000)

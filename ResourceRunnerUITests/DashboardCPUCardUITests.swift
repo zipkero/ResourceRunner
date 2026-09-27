@@ -22,20 +22,33 @@ final class DashboardCPUCardUITests: XCTestCase {
         let statusItem = app.statusItems.firstMatch
         XCTAssertTrue(statusItem.waitForExistence(timeout: 5), "메뉴바 항목이 나타나지 않았습니다.")
 
+        // 팝오버가 닫힌 수집 주기는 정상 2초·저전력 5초입니다. 두 경우 모두 첫 기준점과 다음 유효 tick 뒤에 엽니다.
+        Thread.sleep(forTimeInterval: 12)
+
         statusItem.click()
 
-        let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
-        XCTAssertTrue(cpuCard.waitForExistence(timeout: 5), "팝오버를 연 뒤 CPU 카드가 나타나지 않았습니다.")
-
-        // CPU Collector는 두 번째 tick부터 값을 만들므로, 앱 시작 직후 첫 조회에서는
-        // 카드가 "수집 중"일 수 있습니다. 값이 채워질 때까지 정상 수집 주기(최대 2초) 안에서 기다립니다.
+        let popover = app.popovers.firstMatch
+        XCTAssertTrue(popover.waitForExistence(timeout: 5), "메뉴바 항목을 누른 뒤 팝오버가 나타나지 않았습니다.")
+        // CPU 카드는 하위 Text를 하나의 Button 접근성 이름으로 묶으므로 첫 팝오버 AX 트리를 한 번에 보존합니다.
+        let firstPopoverAX = popover.debugDescription
+        let firstCPUButtonAX = firstPopoverAX.split(separator: "\n").first { $0.contains("identifier: 'CPUCard'") } ?? ""
+        XCTAssertFalse(firstCPUButtonAX.isEmpty, "첫 팝오버 AX 조회에 CPU 카드가 없습니다. AX: \(firstPopoverAX)")
+        XCTAssertTrue(firstCPUButtonAX.contains("전체 사용률"), "첫 팝오버 AX 조회에 CPU 값이 없습니다. AX: \(firstPopoverAX)")
         XCTAssertTrue(
-            waitUntilLabelContainsUsage(cpuCard, timeout: 5),
-            "CPU 카드가 5초 안에 수집 중 상태를 벗어나지 못했습니다. 실제 값: \(cpuCard.label)"
+            firstCPUButtonAX.contains("앱 TOP 5 · 시스템 프로세스 제외"),
+            "첫 팝오버 AX 조회에 TOP 5 안내 문구가 없습니다. AX: \(firstPopoverAX)"
         )
+        XCTAssertFalse(
+            firstCPUButtonAX.contains("label: 'CPU 카드, 수집 중,"),
+            "첫 팝오버 AX 조회에 로딩 상태가 남았습니다. AX: \(firstPopoverAX)"
+        )
+        let cpuCard = popover.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
+        XCTAssertTrue(cpuCard.exists, "팝오버 첫 조회에 CPU 카드가 없습니다.")
 
+        // 값을 기다리지 않고 첫 카드 AX 이름을 보존합니다. 이후 tick이 도착해도 이 판정은 바뀌지 않습니다.
         let label = cpuCard.label
         XCTAssertTrue(label.contains("전체 사용률"), "CPU 값 텍스트가 접근성 이름에 없습니다. 실제 값: \(label)")
+        XCTAssertFalse(label.hasPrefix("CPU 카드, 수집 중,"), "팝오버 첫 조회에 로딩 상태가 남았습니다. 실제 값: \(label)")
         XCTAssertNotNil(label.range(of: #"User [0-9]+%"#, options: .regularExpression), "CPU User 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertNotNil(label.range(of: #"System [0-9]+%"#, options: .regularExpression), "CPU System 수치가 접근성 이름에 없습니다. 실제 값: \(label)")
         XCTAssertTrue(label.contains("두 계열 중첩 그래프"), "CPU 그래프의 중첩 관계가 접근성 이름에 없습니다. 실제 값: \(label)")

@@ -8,8 +8,7 @@
 import Foundation
 
 /// 프로세스 Collector를 소유하고 한 번의 조사 결과를 반환하는 `ScheduledSampleSource`.
-/// Collector가 정체성별 실행 경로 캐시를 상태로 가진 값 타입이므로 actor로 두고
-/// `MonitoringScheduler`가 `await`로 호출합니다.
+/// Collector 조사를 순서대로 실행하도록 actor로 두고 `MonitoringScheduler`가 `await`로 호출합니다.
 ///
 /// 조사 자체의 실패는 던지지 않고 샘플 값으로 전달합니다.
 /// 한 조사에서 값을 얻지 못한 프로세스는 이미 `ProcessSurveyReport.unreadableCount`로 구분되므로,
@@ -28,5 +27,10 @@ actor ProcessSurveySampleSource<Collector: ProcessSurveyCollecting>: ScheduledSa
         } catch {
             return ProcessSurveySample(result: .failure(error))
         }
+    }
+
+    /// 프로세스 조사는 순간 조회이므로 구간 식별자를 계산에 사용하지 않습니다.
+    func sample(collectionEpoch: Int) -> ProcessSurveySample? {
+        sample()
     }
 }

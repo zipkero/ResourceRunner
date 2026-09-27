@@ -12,7 +12,7 @@ import OSLog
 /// 재개 첫 tick이 사용률을 만들지 않고 기준점만 갱신했는지를 실기기에서 읽기 위한 로그 경계.
 /// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
 /// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
-enum SystemMetricsSampleSourceDebugLog {
+nonisolated enum SystemMetricsSampleSourceDebugLog {
     static let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "SystemMetricsSampleSource")
 }
 #endif
@@ -30,6 +30,7 @@ actor SystemMetricsSampleSource<
     private var cpuCollector: CPUCollector
     private let memoryCollector: MemoryCollector
     private let clock: Clock
+    private var lastProcessedCollectionEpoch: Int?
 
 #if DEBUG
     /// 직전 tick의 시각. 기준점만 갱신한 tick에서 경과 시간을 함께 남기기 위한 관찰용 상태이며,
@@ -46,7 +47,30 @@ actor SystemMetricsSampleSource<
     /// 두 Collector를 한 번의 시각 읽기 아래에서 차례로 호출해 지표별 성공·실패를 담은 샘플 하나를 만듭니다.
     /// 시각을 지표마다 따로 읽지 않으므로 두 지표가 같은 시각을 공유합니다.
     func sample() async -> SystemMetricsSample {
+        // Scheduler의 epoch 전달이 배선되기 전 기존 호출 경로를 유지합니다.
+        // 시각 조회 중 epoch가 전진하면 지난 호출은 폐기되므로 현재 epoch로 다시 시도합니다.
+        while true {
+            if let sample = await sample(collectionEpoch: lastProcessedCollectionEpoch ?? 0) {
+                return sample
+            }
+        }
+    }
+
+    /// 새 수집 구간의 첫 tick은 CPU 기준점만 잡고, 지난 구간의 늦은 호출은 조회하지 않습니다.
+    func sample(collectionEpoch: Int) async -> SystemMetricsSample? {
+        guard collectionEpoch >= (lastProcessedCollectionEpoch ?? collectionEpoch) else { return nil }
         let timestamp = await clock.now()
+#if DEBUG
+        let debugPreviousCollectionEpoch = lastProcessedCollectionEpoch
+#endif
+        // clock suspension 동안 새 epoch가 처리됐을 수도 있으므로 조회 직전에 다시 판정합니다.
+        if let lastProcessedCollectionEpoch {
+            guard collectionEpoch >= lastProcessedCollectionEpoch else { return nil }
+            if collectionEpoch > lastProcessedCollectionEpoch {
+                cpuCollector.resetBaseline()
+            }
+        }
+        lastProcessedCollectionEpoch = collectionEpoch
 
         let cpu: Result<CPUSystemMetrics?, CollectorFailure>
         do {
@@ -65,14 +89,14 @@ actor SystemMetricsSampleSource<
 #if DEBUG
         let previousTimestamp = debugPreviousTimestamp
         debugPreviousTimestamp = timestamp
-        // 사용률을 만들지 못한 tick만 남깁니다. 중지에서 돌아온 첫 tick이 여기 해당하고,
-        // 그 경과 시간이 허용 간격을 넘었다는 사실까지 한 줄에서 확인할 수 있게 함께 적습니다.
+        // 기준점 전용 tick의 원인이 새 epoch인지 시각 간격인지 구분해 남깁니다.
         if case .success(.none) = cpu {
             let elapsed = previousTimestamp.map { String(describing: $0.duration(to: timestamp)) } ?? "none"
             let maximumTickGap = String(describing: SystemMetricsSampling.maximumTickGap)
+            let epochReset = debugPreviousCollectionEpoch.map { collectionEpoch > $0 } ?? false
             // 로그 호출 지연이 이 actor의 임계 구간을 늦추지 않도록 별도 Task로 분리합니다.
             Task.detached(priority: .utility) {
-                SystemMetricsSampleSourceDebugLog.logger.notice("baseline-only tick: no cpu usage produced elapsed=\(elapsed, privacy: .public) maximumTickGap=\(maximumTickGap, privacy: .public)")
+                SystemMetricsSampleSourceDebugLog.logger.notice("baseline-only tick: no cpu usage produced collectionEpoch=\(collectionEpoch, privacy: .public) epochReset=\(epochReset, privacy: .public) elapsed=\(elapsed, privacy: .public) maximumTickGap=\(maximumTickGap, privacy: .public)")
             }
         }
 #endif

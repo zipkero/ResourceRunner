@@ -1318,23 +1318,55 @@ struct CPUGraphPlotSurfaceRenderingTests {
 
     /// 창 끝에서 `span`초 전부터 지금까지 2초 간격으로 같은 낮은 부하(전체 7%, User 4%)를 쌓은 CPU 카드.
     /// 밴드 윗끝 7%는 50% 기준선에 닿지 않아, 기준선 위쪽 절반에는 판 면만 남아야 합니다.
-    private func lowLoadCard(spanningLast span: Int) -> CPUCardView {
+    ///
+    /// `assembledSecondsAgo`만큼 앞선 시각에 판을 조립하면, 그 시각 기준 창 안이던 가장 오래된 점이 그리는 시각 기준으로는
+    /// 창 시작을 막 벗어나 음수 x에 놓입니다 — tick 사이 1초마다 다시 그리는 실제 앱과 같은 조건입니다.
+    private func lowLoadCard(spanningLast span: Int, assembledSecondsAgo: Int = 0) -> CPUCardView {
+        steadyLoadCard(overall: 7, user: 4, spanningLast: span, assembledSecondsAgo: assembledSecondsAgo)
+    }
+
+    /// 창 끝에서 `span`초 전부터 지금까지 2초 간격으로 같은 부하(전체 `overall`%, User `user`%)를 쌓은 CPU 카드.
+    private func steadyLoadCard(overall: Double, user: Double, spanningLast span: Int, assembledSecondsAgo: Int = 0) -> CPUCardView {
         let now = ContinuousClock().now
+        let assembledAt = now.advanced(by: .seconds(-assembledSecondsAgo))
         let history = stride(from: -span, through: 0, by: 2).map { offset in
             SystemMetricsHistoryPoint(
                 timestamp: now.advanced(by: .seconds(offset)),
-                overallCPUUsage: 7,
-                userRatio: 4,
+                overallCPUUsage: overall,
+                userRatio: user,
                 swapUsedBytes: 0
             )
         }
         let presentation = CPUCardPresentation.assemble(
-            cpu: cpuMetrics(userRatio: 4, systemRatio: 3),
+            cpu: cpuMetrics(userRatio: user, systemRatio: overall - user),
             history: history,
             topApplications: rankingEntries(count: 3),
-            currentTimestamp: now
+            currentTimestamp: assembledAt
         )
-        return cpuCardView(.normal(presentation, timestamp: now))
+        return cpuCardView(.normal(presentation, timestamp: assembledAt))
+    }
+
+    /// 판 틀 안에서 값 `value`%가 놓이는 렌더 줄.
+    private func plotRow(forValue value: Double) -> Int {
+        GraphPlotFrame.y.lowerBound
+            + Int(HistoryGraphGridline.yPosition(forValue: value, height: Double(HistoryGraphLayout.plotHeight)).rounded(.down))
+    }
+
+    /// 기준선 줄의 각 픽셀이 같은 칸 열의 기준 줄 픽셀보다 어두운지 봅니다. 어긋난 좌표를 돌려줍니다.
+    /// 기준 줄은 기준선 줄과 경계선을 비켜 둔 자리라, 기준선이 없었다면 기준선 줄과 같은 색이었을 픽셀입니다.
+    private func gridlinePixelsNotDarker(
+        in pixels: Data,
+        columns: Range<Int>,
+        thanRows referenceRows: [Int]
+    ) throws -> [(x: Int, y: Int)] {
+        let bitmap = try #require(NSBitmapImageRep(data: pixels))
+        return positions(x: columns, y: GraphPlotFrame.gridlineRows.sorted()).filter { position in
+            guard let pixel = renderedSRGBColor(in: bitmap, x: position.x, y: position.y) else { return true }
+            return referenceRows.contains { row in
+                guard let reference = renderedSRGBColor(in: bitmap, x: position.x, y: row) else { return true }
+                return !(renderedLuminance(pixel) < renderedLuminance(reference))
+            }
+        }
     }
 
     @Test func valuelessStatesCoverTheWholePlotFrameWithTheGraphPlotSurface() throws {
@@ -1408,8 +1440,8 @@ struct CPUGraphPlotSurfaceRenderingTests {
 
     /// 같은 낮은 부하로 창 전체를 채워도 기준선 위쪽 절반과 틀 밖이 같은 판 면·카드 면이라, 창이 다 찬 뒤와 수집 초기의 판 모양이 같습니다.
     @Test func plotSurfaceKeepsTheSameShapeWhenDataFillsTheWholeWindow() throws {
-        // 창 왼쪽 끝을 넘는 점이 판 틀 밖으로 번지지 않게 창 길이보다 2초 짧게 채웁니다.
-        let span = Int(HistoryCapacity.defaultTimeRange.components.seconds) - 2
+        // 첫 점을 창 시작에 두어 창 양끝을 모두 채웁니다.
+        let span = Int(HistoryCapacity.defaultTimeRange.components.seconds)
         let pixels = try #require(renderedPixels(lowLoadCard(spanningLast: span)))
 
         let upperHalf = pixelsFailing(
@@ -1422,6 +1454,106 @@ struct CPUGraphPlotSurfaceRenderingTests {
         let outside = pixelsFailing(isCardSurfaceColor, in: pixels, at: graphPlotOutsidePositions)
         #expect(outside.isEmpty, "창을 다 채운 그래프의 판 틀 바로 밖이 카드 면이 아닙니다 — \(describe(outside))")
     }
+
+    /// 판을 5초 전에 조립해, 그때 창 시작 직후이던 점(−603초)이 그리는 시각에는 창 시작을 3초 벗어나 있는 입력입니다.
+    /// 틀 왼쪽 밖으로 밴드가 번지지 않고 카드 면이 남아야 하며, 틀 안 왼쪽 끝 칸까지는 밴드가 닿아 있어야 입력이 끝을 실제로 건드린 것입니다.
+    @Test func bandsJustOutsideTheWindowStartDoNotSpillPastThePlotFrame() throws {
+        let assembledSecondsAgo = 5
+        let span = Int(HistoryCapacity.defaultTimeRange.components.seconds) + assembledSecondsAgo - 2
+        let pixels = try #require(renderedPixels(lowLoadCard(spanningLast: span, assembledSecondsAgo: assembledSecondsAgo)))
+
+        let outside = pixelsFailing(isCardSurfaceColor, in: pixels, at: graphPlotOutsidePositions)
+        #expect(outside.isEmpty, "창 시작을 막 벗어난 점이 판 틀 바로 밖을 칠했습니다 — \(describe(outside))")
+
+        let leftEdgeInk = pixelCount(
+            in: pixels,
+            region: CardPixelRegion(
+                x: GraphPlotFrame.x.lowerBound..<(GraphPlotFrame.x.lowerBound + 1),
+                y: GraphPlotFrame.upperHalfRows.upperBound..<GraphPlotFrame.y.upperBound
+            ),
+            matching: visibleInk
+        )
+        #expect(leftEdgeInk > 0, "틀 안 왼쪽 끝 칸에 밴드 잉크가 없어 이 입력이 창 시작을 넘는 점을 그리지 않았습니다")
+
+        let upperHalf = pixelsFailing(
+            isGraphPlotSurfaceColor,
+            in: pixels,
+            at: positions(x: GraphPlotFrame.x, y: GraphPlotFrame.upperHalfRows)
+        )
+        #expect(upperHalf.isEmpty, "기준선 위쪽 절반에 판 면이 아닌 픽셀이 있습니다 — \(describe(upperHalf))")
+    }
+
+    /// 데이터가 없는 칸에서 기준선은 판 면보다 한 단 어두운 선이라, 카드 여백과 이어진 틈이 아니라 판 안의 눈금으로 보입니다(SPEC §5.2).
+    /// 값 없음 세 상태와 창 오른쪽 60초만 채운 낮은 부하 입력의 데이터 없는 구간에서 봅니다.
+    @Test func gridlineRowsOverTheBarePlotSurfaceAreDarkerThanItAndNotTheCardSurface() throws {
+        let valuelessStates: [ResourceCardState<CPUCardPresentation>] = [
+            .collecting,
+            .failure(lastKnown: nil),
+            .stopped(lastKnown: nil)
+        ]
+        let dataSpan = 60
+        let windowSeconds = Double(HistoryCapacity.defaultTimeRange.components.seconds)
+        let dataStartOffset = Int(Double(GraphPlotFrame.x.count) * (1 - Double(dataSpan) / windowSeconds))
+        let emptyColumns = GraphPlotFrame.x.lowerBound..<(GraphPlotFrame.x.lowerBound + dataStartOffset - 2)
+
+        let cases: [(name: String, card: CPUCardView, columns: Range<Int>)] =
+            valuelessStates.map { (name: "값 없음 \($0)", card: cpuCardView($0), columns: GraphPlotFrame.x) }
+            + [(name: "창 오른쪽 \(dataSpan)초 입력의 데이터 없는 구간", card: lowLoadCard(spanningLast: dataSpan), columns: emptyColumns)]
+
+        // 기준선 줄 바로 위 줄은 기준선 위쪽 절반의 판 면 자리입니다.
+        let referenceRow = GraphPlotFrame.upperHalfRows.upperBound - 1
+
+        for testCase in cases {
+            let pixels = try #require(renderedPixels(testCase.card))
+
+            let reference = pixelsFailing(isGraphPlotSurfaceColor, in: pixels, at: positions(x: testCase.columns, y: [referenceRow]))
+            #expect(reference.isEmpty, "\(testCase.name): 기준 줄이 판 면이 아닙니다 — \(describe(reference))")
+
+            let cardColored = pixelsFailing(
+                { !isCardSurfaceColor($0) },
+                in: pixels,
+                at: positions(x: testCase.columns, y: GraphPlotFrame.gridlineRows.sorted())
+            )
+            #expect(cardColored.isEmpty, "\(testCase.name): 기준선 줄 픽셀이 카드 면 색입니다 — \(describe(cardColored))")
+
+            let notDarker = try gridlinePixelsNotDarker(in: pixels, columns: testCase.columns, thanRows: [referenceRow])
+            #expect(notDarker.isEmpty, "\(testCase.name): 기준선 줄 픽셀이 판 면보다 어둡지 않습니다 — \(describe(notDarker))")
+        }
+    }
+
+    /// 부하가 50%를 넘어 밴드 채움이 기준선 자리를 덮어도, 기준선이 채움 위에 그려져 밴드 안에서 채움보다 한 단 어둡게 보입니다(SPEC §5.2, DESIGN §5 DP10).
+    /// User가 50%를 넘는 입력은 아래 채움 안을, User는 50% 아래이고 전체가 50%를 넘는 입력은 위 채움 안을 기준선이 지납니다.
+    @Test func gridlineStaysVisibleInsideBandsThatCoverFiftyPercent() throws {
+        let cases: [(name: String, overall: Double, user: Double)] = [
+            (name: "User 60% · 전체 70%(아래 채움 안)", overall: 70, user: 60),
+            (name: "User 30% · 전체 70%(위 채움 안)", overall: 70, user: 30)
+        ]
+        // 기준선 줄과 두 경계선(30%·60%·70%)에서 떨어진 55%·45% 줄은 같은 채움만 있는 자리입니다.
+        let referenceRows = [plotRow(forValue: 55), plotRow(forValue: 45)]
+        // 창 양끝의 안티에일리어싱과 클리핑 자리를 비켜 둡니다.
+        let columns = (GraphPlotFrame.x.lowerBound + 4)..<(GraphPlotFrame.x.upperBound - 4)
+        let span = Int(HistoryCapacity.defaultTimeRange.components.seconds)
+
+        for testCase in cases {
+            let pixels = try #require(renderedPixels(steadyLoadCard(overall: testCase.overall, user: testCase.user, spanningLast: span)))
+
+            // 입력이 실제로 채움으로 50% 자리를 덮었는지 봅니다 — 기준선 줄 위아래가 판 면도 카드 면도 아니어야 합니다.
+            let uncovered = pixelsFailing(
+                { !isGraphPlotSurfaceColor($0) && !isCardSurfaceColor($0) },
+                in: pixels,
+                at: positions(x: columns, y: referenceRows)
+            )
+            #expect(uncovered.isEmpty, "\(testCase.name): 기준선 줄 위아래가 채움으로 덮이지 않았습니다 — \(describe(uncovered))")
+
+            let notDarker = try gridlinePixelsNotDarker(in: pixels, columns: columns, thanRows: referenceRows)
+            #expect(notDarker.isEmpty, "\(testCase.name): 밴드 안 기준선 줄 픽셀이 같은 칸 열의 채움보다 어둡지 않습니다 — \(describe(notDarker))")
+        }
+    }
+}
+
+/// 픽셀의 밝기 비교용 상대 휘도. 기준선은 무채색 검정 합성이라 채널을 모두 같은 비율로 낮추므로, 가중합이 줄면 더 어두운 것입니다.
+private func renderedLuminance(_ color: NSColor) -> CGFloat {
+    0.2126 * color.redComponent + 0.7152 * color.greenComponent + 0.0722 * color.blueComponent
 }
 
 /// task-007 검증 조건: 카드 병합 줄에 그려지는 수치가 「사용 중」이 아니라 구성 합계인지 확인합니다.

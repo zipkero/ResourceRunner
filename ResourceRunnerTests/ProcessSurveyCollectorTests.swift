@@ -13,7 +13,7 @@ import Testing
 // MARK: - 테스트용 프로세스 조사 원본 공급자
 
 /// 미리 준비한 원본을 돌려주는 `ProcessSurveying`.
-/// pid별 호출 횟수를 세어 uid 사전 판별과 경로 캐시가 실제로 시스템 호출을 건너뛰는지 확인합니다.
+/// pid별 호출 횟수를 세어 uid 사전 판별과 매 조사 경로 조회를 확인합니다.
 private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendable {
     static let missingTaskInfoFailure = CollectorFailure(metric: .process, cause: .systemCall(name: "stub.taskInfo", code: -1))
     static let missingPathFailure = CollectorFailure(metric: .process, cause: .systemCall(name: "stub.executablePath", code: -1))
@@ -23,17 +23,20 @@ private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendab
     private var listOutcomes: [Result<[ProcessListEntry], CollectorFailure>]
     private var taskInfoOutcomes: [pid_t: Result<ProcessTaskInfo, CollectorFailure>]
     private var pathOutcomes: [pid_t: Result<String, CollectorFailure>]
+    private var pathOutcomeSequences: [pid_t: [Result<String, CollectorFailure>]]
     private var observedTaskInfoCalls: [pid_t] = []
     private var observedPathCalls: [pid_t] = []
 
     init(
         listOutcomes: [Result<[ProcessListEntry], CollectorFailure>],
         taskInfoOutcomes: [pid_t: Result<ProcessTaskInfo, CollectorFailure>] = [:],
-        pathOutcomes: [pid_t: Result<String, CollectorFailure>] = [:]
+        pathOutcomes: [pid_t: Result<String, CollectorFailure>] = [:],
+        pathOutcomeSequences: [pid_t: [Result<String, CollectorFailure>]] = [:]
     ) {
         self.listOutcomes = listOutcomes
         self.taskInfoOutcomes = taskInfoOutcomes
         self.pathOutcomes = pathOutcomes
+        self.pathOutcomeSequences = pathOutcomeSequences
     }
 
     var taskInfoCallCount: Int {
@@ -82,7 +85,13 @@ private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendab
     func executablePath(pid: pid_t) throws(CollectorFailure) -> String {
         lock.lock()
         observedPathCalls.append(pid)
-        let outcome = pathOutcomes[pid]
+        let outcome: Result<String, CollectorFailure>?
+        if var sequence = pathOutcomeSequences[pid] {
+            outcome = sequence.isEmpty ? nil : sequence.removeFirst()
+            pathOutcomeSequences[pid] = sequence
+        } else {
+            outcome = pathOutcomes[pid]
+        }
         lock.unlock()
 
         switch outcome {
@@ -115,8 +124,36 @@ private func entry(
 /// 실패한 프로세스의 값이 추정값으로 채워지지 않고, 결과 목록과 읽지 못한 수의 합이 전체 열거 수와 같습니다.
 struct ProcessSurveyCollectorTests {
 
+    @Test func effectiveUIDFiltersProcessesWhenRealUIDDiffers() throws {
+        let realUID = getuid()
+        let effectiveUID = realUID + 1
+        let entries = [
+            entry(pid: 100, uid: realUID),
+            entry(pid: 200, uid: effectiveUID),
+        ]
+        let reader = StubProcessSurveyReader(
+            listOutcomes: [.success(entries)],
+            taskInfoOutcomes: [
+                100: .success(ProcessTaskInfo(cpuTimeNanoseconds: 1, residentBytes: 2)),
+                200: .success(ProcessTaskInfo(cpuTimeNanoseconds: 3, residentBytes: 4)),
+            ],
+            pathOutcomes: [100: .success("/bin/real"), 200: .success("/bin/effective")]
+        )
+        var collector = ProcessSurveyCollector(reader: reader, effectiveUID: { effectiveUID })
+
+        let survey = try collector.survey()
+
+        #expect(survey.samples.map(\.identity.pid) == [200])
+        #expect(survey.samples.first?.uid == effectiveUID)
+        #expect(survey.unreadableCount == 1)
+        #expect(reader.taskInfoCallCount(for: 100) == 0)
+        #expect(reader.taskInfoCallCount(for: 200) == 1)
+        #expect(reader.pathCallCount(for: 100) == 0)
+        #expect(reader.pathCallCount(for: 200) == 1)
+    }
+
     @Test func nonMatchingUIDProcessesAreExcludedWithoutTaskInfoCall() throws {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let otherUID = currentUID + 1
         let entries = [
             entry(pid: 100, uid: currentUID),
@@ -143,7 +180,7 @@ struct ProcessSurveyCollectorTests {
     /// 이 단언이 고정하는 것은 "읽지 못한 프로세스를 값으로 채우지 않는다"입니다.
     /// proc_pidinfo가 실패한 프로세스는 0이나 다른 값으로 채워지지 않고 목록에서 통째로 빠집니다.
     @Test func taskInfoFailureExcludesProcessWithoutFillingValues() throws {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let entries = [entry(pid: 100, uid: currentUID), entry(pid: 101, uid: currentUID)]
         let reader = StubProcessSurveyReader(
             listOutcomes: [.success(entries)],
@@ -159,7 +196,7 @@ struct ProcessSurveyCollectorTests {
     }
 
     @Test func executablePathFailureExcludesProcess() throws {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let entries = [entry(pid: 100, uid: currentUID)]
         let reader = StubProcessSurveyReader(
             listOutcomes: [.success(entries)],
@@ -175,7 +212,7 @@ struct ProcessSurveyCollectorTests {
     }
 
     @Test func sampleCountPlusUnreadableCountEqualsListedEntries() throws {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let entries = [
             entry(pid: 1, uid: currentUID),
             entry(pid: 2, uid: currentUID + 1),
@@ -199,7 +236,7 @@ struct ProcessSurveyCollectorTests {
     /// Rosetta 실행 여부는 열거 단계에서 이미 얻은 `P_TRANSLATED` 값을 그대로 옮길 뿐,
     /// 별도 시스템 호출을 거치지 않습니다.
     @Test func translatedFlagPassesThroughFromListing() throws {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let entries = [entry(pid: 1, uid: currentUID, isTranslated: true)]
         let reader = StubProcessSurveyReader(
             listOutcomes: [.success(entries)],
@@ -224,32 +261,51 @@ struct ProcessSurveyCollectorTests {
     }
 }
 
-// MARK: - 정체성별 경로 캐시
+// MARK: - 매 조사 실행 경로
 
-/// task-004 검증 조건: 이미 경로를 읽은 정체성에는 `proc_pidpath`가 다시 호출되지 않습니다.
-struct ProcessSurveyPathCacheTests {
+/// task-004 검증 조건: 같은 정체성이 exec해도 현재 경로를 읽고 조회 실패 시 이전 값을 재사용하지 않습니다.
+struct ProcessSurveyPathRefreshTests {
 
-    @Test func pathIsReadOnlyOnceForSameIdentityAcrossSurveys() throws {
-        let currentUID = getuid()
+    @Test func sameIdentityReadsChangedPathOnNextSurvey() throws {
+        let currentUID = geteuid()
         let listedEntry = entry(pid: 100, uid: currentUID)
         let reader = StubProcessSurveyReader(
             listOutcomes: [.success([listedEntry]), .success([listedEntry])],
             taskInfoOutcomes: [100: .success(ProcessTaskInfo(cpuTimeNanoseconds: 1, residentBytes: 2))],
-            pathOutcomes: [100: .success("/bin/a")]
+            pathOutcomeSequences: [100: [.success("/bin/a"), .success("/bin/b")]]
         )
         var collector = ProcessSurveyCollector(reader: reader)
 
         _ = try collector.survey()
         let second = try collector.survey()
 
-        #expect(reader.pathCallCount(for: 100) == 1)
-        #expect(second.samples.first?.executablePath == "/bin/a")
+        #expect(reader.pathCallCount(for: 100) == 2)
+        #expect(second.samples.first?.executablePath == "/bin/b")
+        #expect(second.unreadableCount == 0)
+    }
+
+    @Test func secondPathFailureDoesNotReusePreviousPath() throws {
+        let listedEntry = entry(pid: 100, uid: geteuid())
+        let reader = StubProcessSurveyReader(
+            listOutcomes: [.success([listedEntry]), .success([listedEntry])],
+            taskInfoOutcomes: [100: .success(ProcessTaskInfo(cpuTimeNanoseconds: 1, residentBytes: 2))],
+            pathOutcomeSequences: [100: [.success("/bin/a"), .failure(StubProcessSurveyReader.missingPathFailure)]]
+        )
+        var collector = ProcessSurveyCollector(reader: reader)
+
+        let first = try collector.survey()
+        let second = try collector.survey()
+
+        #expect(first.samples.first?.executablePath == "/bin/a")
+        #expect(second.samples.isEmpty)
+        #expect(second.unreadableCount == 1)
+        #expect(reader.pathCallCount(for: 100) == 2)
     }
 
     /// 정체성이 재조사에서 사라지고 같은 PID가 다른 시작 시각으로 다시 나타나면
-    /// 새 정체성이므로 캐시를 재사용하지 않고 경로를 다시 읽습니다.
+    /// 새 정체성도 현재 실행 경로를 읽습니다.
     @Test func differentStartTimeForSamePIDIsTreatedAsNewIdentityAndReReadsPath() throws {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let first = entry(pid: 100, startTime: 1_000, uid: currentUID)
         let reused = entry(pid: 100, startTime: 2_000, uid: currentUID)
         let reader = StubProcessSurveyReader(
@@ -275,7 +331,7 @@ struct ProcessSurveyPathCacheTests {
 struct ProcessSurveySampleSourceTests {
 
     @Test func enumerationFailureIsReturnedAsAFailedSampleInsteadOfThrowing() async {
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let reader = StubProcessSurveyReader(
             listOutcomes: [.failure(StubProcessSurveyReader.exhaustedListFailure), .success([entry(pid: 100, uid: currentUID)])],
             taskInfoOutcomes: [100: .success(ProcessTaskInfo(cpuTimeNanoseconds: 1, residentBytes: 2))],
@@ -283,12 +339,12 @@ struct ProcessSurveySampleSourceTests {
         )
         let source = ProcessSurveySampleSource(collector: ProcessSurveyCollector(reader: reader))
 
-        let failed = await source.sample()
-        #expect(failed.result == .failure(StubProcessSurveyReader.exhaustedListFailure))
+        let failed = await source.sample(collectionEpoch: 7)
+        #expect(failed?.result == .failure(StubProcessSurveyReader.exhaustedListFailure))
 
         // 실패한 조사가 source의 상태를 망가뜨리지 않고 다음 조사가 정상 결과를 돌려줍니다.
-        let recovered = await source.sample()
-        guard case .success(let report) = recovered.result else {
+        let recovered = await source.sample(collectionEpoch: 8)
+        guard case .success(let report) = recovered?.result else {
             Issue.record("복구된 조사가 성공 샘플을 돌려주지 않았습니다.")
             return
         }
@@ -305,6 +361,7 @@ private final class CallCountingProcessSurveyReader: ProcessSurveying, @unchecke
     private let lock = NSLock()
     private var taskInfoCallsByPID: [pid_t: Int] = [:]
     private var pathCallsByPID: [pid_t: Int] = [:]
+    private var pathFailures = 0
     private(set) var lastListedEntries: [ProcessListEntry] = []
 
     init(underlying: ProcessSurveying) {
@@ -321,6 +378,18 @@ private final class CallCountingProcessSurveyReader: ProcessSurveying, @unchecke
         lock.lock()
         defer { lock.unlock() }
         return pathCallsByPID[pid, default: 0]
+    }
+
+    var pathCallCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return pathCallsByPID.values.reduce(0, +)
+    }
+
+    var pathFailureCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return pathFailures
     }
 
     func listProcesses() throws(CollectorFailure) -> [ProcessListEntry] {
@@ -342,24 +411,34 @@ private final class CallCountingProcessSurveyReader: ProcessSurveying, @unchecke
         lock.lock()
         pathCallsByPID[pid, default: 0] += 1
         lock.unlock()
-        return try underlying.executablePath(pid: pid)
+        do {
+            return try underlying.executablePath(pid: pid)
+        } catch {
+            lock.lock()
+            pathFailures += 1
+            lock.unlock()
+            throw error
+        }
     }
 }
 
-/// task-004 검증 조건 중 실기기 확인: macOS 26.5 Apple silicon에서 실제 조사 1회를 수행해
-/// uid 사전 판별·경로 캐시·읽지 못한 수를 단언합니다.
+/// task-004 검증 조건 중 실기기 확인: 실제 조사 두 번으로
+/// uid 사전 판별·매 조사 경로 조회·읽지 못한 수를 단언합니다.
 /// 이 테스트가 고정하는 것은 "uid 사전 판별을 건너뛰지 않는다"입니다 —
 /// uid 판별 없이 모든 프로세스에 `proc_pidinfo`를 호출하도록 되돌리면
 /// `taskInfoCallCount`가 uid가 같은 프로세스 수를 넘어서 이 테스트가 실패해야 합니다.
 struct ProcessSurveyRealDevicePathTests {
 
-    @Test func realSurveyExcludesOtherUIDsAndCachesOwnPath() throws {
+    @Test func realSurveyExcludesOtherUIDsAndRefreshesOwnPath() throws {
         let decorator = CallCountingProcessSurveyReader(underlying: HostProcessSurveyReader())
         var collector = ProcessSurveyCollector(reader: decorator)
 
+        let clock = ContinuousClock()
+        let firstStart = clock.now
         let survey = try collector.survey()
+        let firstElapsed = firstStart.duration(to: clock.now)
         let entries = decorator.lastListedEntries
-        let currentUID = getuid()
+        let currentUID = geteuid()
         let matchingUIDCount = entries.filter { $0.uid == currentUID }.count
 
         // 결과 목록 크기와 읽지 못한 수의 합이 열거된 전체 프로세스 수와 같습니다.
@@ -376,9 +455,13 @@ struct ProcessSurveyRealDevicePathTests {
         #expect(selfSample.isTranslated == false)
         #expect(decorator.pathCallCount(for: selfPID) == 1)
 
-        // 같은 정체성(자기 프로세스)을 두 번째로 조사해도 proc_pidpath가 다시 호출되지 않습니다.
-        _ = try collector.survey()
-        #expect(decorator.pathCallCount(for: selfPID) == 1)
+        // 같은 정체성도 다음 조사에서 현재 경로를 다시 읽습니다.
+        let secondStart = clock.now
+        let secondSurvey = try collector.survey()
+        let secondElapsed = secondStart.duration(to: clock.now)
+        #expect(decorator.pathCallCount(for: selfPID) == 2)
+        #expect(secondSurvey.samples.contains { $0.identity.pid == selfPID })
+        print("ProcessSurvey DP20: first=\(firstElapsed), second=\(secondElapsed), pathCalls=\(decorator.pathCallCount), pathFailures=\(decorator.pathFailureCount), unreadable=\(survey.unreadableCount)/\(secondSurvey.unreadableCount)")
     }
 
     /// 이 테스트가 고정하는 것은 "`cpuTimeNanoseconds`가 실제 나노초 단위다"입니다 —

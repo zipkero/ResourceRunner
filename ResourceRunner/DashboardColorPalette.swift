@@ -52,9 +52,11 @@ enum DashboardColorPalette {
     /// 판 위의 밴드와 기준선은 이 면 위에서 대비를 검증했으므로 이 값을 바꾸면 그 대비를 다시 검증해야 합니다.
     static let graphPlotSurface = dynamicColor(light: 0xf5f5f5, dark: 0x262626)
 
-    /// CPU 그래프 기준선 격자 색(task-005). 계열 색과 달리 다른 색과 구분할 필요가 없는 배경 대비 요소라
-    /// 색맹 시뮬레이션 대상이 아니며, 시스템이 라이트·다크에 맞춰 이미 조정하는 구분선 색을 그대로 씁니다.
-    static let cpuGridline = Color(NSColor.separatorColor)
+    /// 대시보드 그래프 판 기준선 색. 판 면 위에서는 판 면보다 한 단 어두운 선(`#ececec` / `#1f1f1f`)으로 보여
+    /// 판 가장자리 단차보다 약한 눈금으로 읽히고, 두 밴드 채움 위에서는 같은 알파로 채움을 조금 어둡게 해 밴드 안에서도 보입니다.
+    /// 시스템 구분선 색은 판 면 위에서 판 가장자리보다 강해 판을 위아래로 가르는 경계로 읽혔으므로, 라이트·다크 각각 따로 확정한 반투명 검정을 씁니다.
+    /// 판 면과 두 밴드 채움 기준으로 검증한 값이라 이 값이나 판 면·밴드 값을 바꾸면 그 관계를 다시 검증해야 합니다.
+    static let graphPlotGridline = dynamicColor(light: 0x000000, lightAlpha: 0.038, dark: 0x000000, darkAlpha: 0.18)
 
     /// 코어 격자 막대 트랙은 채움과 높이 경계를 이루는 무채색 시스템 색으로 남깁니다.
     static let cpuCoreTrack = Color(NSColor.quaternaryLabelColor)
@@ -119,15 +121,23 @@ enum DashboardColorPalette {
             return NSColor(rgbHex: isDark ? dark : light)
         })
     }
+
+    /// 반투명 색을 라이트·다크 각각 따로 확정해 만듭니다. 알파는 아래 면과 일반 알파 합성으로 섞입니다.
+    private static func dynamicColor(light: UInt32, lightAlpha: CGFloat, dark: UInt32, darkAlpha: CGFloat) -> Color {
+        Color(NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            return NSColor(rgbHex: isDark ? dark : light, alpha: isDark ? darkAlpha : lightAlpha)
+        })
+    }
 }
 
 private extension NSColor {
-    convenience init(rgbHex hex: UInt32) {
+    convenience init(rgbHex hex: UInt32, alpha: CGFloat = 1) {
         self.init(
             srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
             green: CGFloat((hex >> 8) & 0xFF) / 255,
             blue: CGFloat(hex & 0xFF) / 255,
-            alpha: 1
+            alpha: alpha
         )
     }
 }

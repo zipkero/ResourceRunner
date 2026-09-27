@@ -212,14 +212,24 @@ final class ApplicationCoordinator {
                 guard let latest = displayValue.latest,
                       case .success(let cpu?) = latest.value.cpu else { continue }
 
-                let next = CPUActivityStateEvaluator.evaluate(usage: cpu.overallUsage, timestamp: latest.timestamp, state: state)
+                let next = CPUActivityStateEvaluator.evaluate(
+                    usage: cpu.overallUsage,
+                    timestamp: latest.timestamp,
+                    state: state,
+                    collectionEpoch: latest.collectionEpoch
+                )
                 if next.displayedState != state.displayedState {
                     characterStateSource.send(next.displayedState)
                 }
 
 #if DEBUG
+                if let previousEpoch = state.lastCollectionEpoch, previousEpoch != latest.collectionEpoch {
+                    debugCPUActivityLogger.notice(
+                        "continuity reset previousEpoch=\(previousEpoch, privacy: .public) collectionEpoch=\(latest.collectionEpoch, privacy: .public) pendingRestarted=\(next.pendingSince == nil || next.pendingSince == latest.timestamp, privacy: .public) highStreakRestarted=\(next.highStreakStart == nil || next.highStreakStart == latest.timestamp, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
+                    )
+                }
                 debugCPUActivityLogger.notice(
-                    "usage=\(cpu.overallUsage, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
+                    "usage=\(cpu.overallUsage, privacy: .public) collectionEpoch=\(latest.collectionEpoch, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
                 )
 #endif
                 state = next

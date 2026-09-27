@@ -571,8 +571,10 @@ struct HistoryGraphView: View {
         case upper
     }
 
-    /// `Canvas`가 그리는 것과 순서. 기준선이 맨 먼저(가장 뒤)에 오고 두 밴드 채움·경계선이 그 위에 얹힙니다.
-    /// 기준선을 먼저 그려야 반투명 밴드 사이로 비칩니다.
+    /// `Canvas`가 그리는 것과 순서. 두 밴드 채움 → 기준선 → 두 경계선입니다.
+    /// 기준선을 채움 아래에 깔면 채움 불투명도만큼 가려져, 부하가 50%를 넘어 밴드가 그 자리를 덮을 때 거의 보이지 않습니다.
+    /// 반투명 검정 기준선을 채움 위에 그으면 판 면 위에서는 같은 색으로 보이면서 밴드 안에서는 채움을 한 단 어둡게 해 눈금이 남습니다.
+    /// 값을 나타내는 두 경계선은 그 위에 그려 기준선에 덮이지 않습니다.
     /// `body`가 이 배열을 그대로 순회해 그리므로, 이 배열 자체가 실제 그리기 순서입니다 —
     /// 순서를 검증하는 단위 테스트는 `Canvas` 내부가 아니라 이 배열을 단언합니다.
     enum DrawLayer: Equatable {
@@ -582,9 +584,9 @@ struct HistoryGraphView: View {
     }
 
     static let drawOrder: [DrawLayer] = [
-        .gridlines,
         .bandFill(.lower),
         .bandFill(.upper),
+        .gridlines,
         .bandBoundary(.lower),
         .bandBoundary(.upper)
     ]
@@ -606,8 +608,10 @@ struct HistoryGraphView: View {
         }
     }
 
-    /// 밴드 채움 불투명도. 두 밴드가 서로 다른 밀도로 채워지고, 격자가 부하가 높은 구간에서도
-    /// 비치도록 둘 다 반투명입니다.
+    /// 밴드 채움 불투명도. 두 밴드가 서로 다른 밀도로 채워지고, 둘 다 반투명이라 판 면이 채움 사이로 비쳐
+    /// 밴드가 같은 판 위에 얹힌 것으로 보입니다.
+    /// 기준선은 채움 위에 그어 그 합성색을 한 단 어둡게 하므로, 밴드 안 기준선 세기는 이 불투명도로 정해지는
+    /// 판 면 위 채움 합성색을 기준으로 맞춘 값입니다(DESIGN §5 DP10).
     static func fillOpacity(for band: BandRole) -> Double {
         switch band {
         case .lower: return 0.60
@@ -713,7 +717,7 @@ private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSi
         path.addLine(to: CGPoint(x: size.width, y: y))
         context.stroke(
             path,
-            with: .color(DashboardColorPalette.cpuGridline),
+            with: .color(DashboardColorPalette.graphPlotGridline),
             lineWidth: HistoryGraphGridline.lineWidth
         )
     }
@@ -744,6 +748,10 @@ private struct HistoryGraphSlotView: View {
                 // 판 틀의 네 변이 곧 100%·0%와 시간 창 양끝이라, 틀 전체를 각진 면으로 덮어 판의 범위를 면의 가장자리로 보입니다.
                 // `points`를 읽지 않아 수집되지 않은 구간도 같은 면이고, 윤곽선을 긋지 않아 판 위의 선은 기준선 하나로 남습니다.
                 .background(DashboardColorPalette.graphPlotSurface)
+                // 두 `Canvas`는 스스로 잘리지 않아, 창 양끝 밴드 경계선이 틀 밖 카드 면으로 번집니다 —
+                // 오른쪽은 지금 시각의 점에서 선 두께 절반이, 왼쪽은 tick 사이 막 창을 벗어난 점이 음수 x에 그려집니다.
+                // 같은 틀에서 한 번 잘라 면의 가장자리가 곧 그림의 끝이 되게 합니다.
+                .clipped()
 
                 ZStack {
                     HStack(spacing: 0) {

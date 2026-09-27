@@ -9,7 +9,7 @@ import Darwin
 import Foundation
 
 /// 프로세스 하나를 고유하게 식별하는 키.
-/// PID만 쓰면 재사용된 PID가 이전 이력을 이어받으므로, 시작 시각을 함께 묶어 이력·경로 캐시의 유일한 키로 삼습니다.
+/// PID만 쓰면 재사용된 PID가 이전 이력을 이어받으므로, 시작 시각을 함께 묶어 이력의 유일한 키로 삼습니다.
 nonisolated struct ProcessIdentity: Sendable, Equatable, Hashable {
     let pid: pid_t
     /// `kinfo_proc.kp_proc.p_un.__p_starttime`에서 얻은 프로세스 시작 시각.

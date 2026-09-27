@@ -250,6 +250,95 @@ struct CPUActivityStateEvaluatorTests {
         #expect(state.displayedState == .high)
     }
 
+    @Test func shortEpochChangeKeepsDisplayedBandButRestartsPendingHold() {
+        var state = CPUActivityStateEvaluator.State.initial
+        state = CPUActivityStateEvaluator.evaluate(usage: 30, timestamp: base, state: state, collectionEpoch: 0)
+        state = CPUActivityStateEvaluator.evaluate(usage: 30, timestamp: base.advanced(by: .seconds(3)), state: state, collectionEpoch: 0)
+        #expect(state.displayedState == .moderate)
+
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(4)), state: state, collectionEpoch: 0)
+        #expect(state.pendingBand == .high)
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(8)), state: state, collectionEpoch: 1)
+        #expect(state.displayedState == .moderate)
+        #expect(state.pendingSince == base.advanced(by: .seconds(8)))
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(10)), state: state, collectionEpoch: 1)
+        #expect(state.displayedState == .moderate)
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(11)), state: state, collectionEpoch: 1)
+        #expect(state.displayedState == .high)
+        #expect(state.lastCollectionEpoch == 1)
+    }
+
+    @Test func shortEpochChangeRestartsHighStreakWithoutLeavingVeryHigh() {
+        var state = CPUActivityStateEvaluator.State.initial
+        for second in stride(from: 0, through: 55, by: 5) {
+            state = CPUActivityStateEvaluator.evaluate(usage: 80, timestamp: base.advanced(by: .seconds(second)), state: state, collectionEpoch: 0)
+        }
+        #expect(state.displayedState == .veryHigh)
+
+        state = CPUActivityStateEvaluator.evaluate(usage: 80, timestamp: base.advanced(by: .seconds(60)), state: state, collectionEpoch: 1)
+        #expect(state.displayedState == .veryHigh)
+        #expect(state.highStreakStart == base.advanced(by: .seconds(60)))
+        for second in stride(from: 65, through: 115, by: 5) {
+            state = CPUActivityStateEvaluator.evaluate(usage: 80, timestamp: base.advanced(by: .seconds(second)), state: state, collectionEpoch: 1)
+        }
+        #expect(state.displayedState == .veryHigh)
+        state = CPUActivityStateEvaluator.evaluate(usage: 80, timestamp: base.advanced(by: .seconds(120)), state: state, collectionEpoch: 1)
+        #expect(state.displayedState == .sustainedHigh)
+    }
+
+    @Test(arguments: [false, true])
+    func sustainedHighReturnsToVeryHighWhenContinuityBreaks(epochChanges: Bool) {
+        var state = CPUActivityStateEvaluator.State.initial
+        for second in stride(from: 0, through: 60, by: 5) {
+            state = CPUActivityStateEvaluator.evaluate(usage: 80, timestamp: base.advanced(by: .seconds(second)), state: state, collectionEpoch: 0)
+        }
+        #expect(state.displayedState == .sustainedHigh)
+
+        let resumedSecond = epochChanges ? 65 : 71
+        let resumedEpoch = epochChanges ? 1 : 0
+        state = CPUActivityStateEvaluator.evaluate(
+            usage: 80,
+            timestamp: base.advanced(by: .seconds(resumedSecond)),
+            state: state,
+            collectionEpoch: resumedEpoch
+        )
+        #expect(state.displayedState == .veryHigh)
+        #expect(state.baseBand == .veryHigh)
+        #expect(state.highStreakStart == base.advanced(by: .seconds(resumedSecond)))
+
+        for second in stride(from: resumedSecond + 5, through: resumedSecond + 55, by: 5) {
+            state = CPUActivityStateEvaluator.evaluate(
+                usage: 80,
+                timestamp: base.advanced(by: .seconds(second)),
+                state: state,
+                collectionEpoch: resumedEpoch
+            )
+        }
+        #expect(state.displayedState == .veryHigh)
+        state = CPUActivityStateEvaluator.evaluate(
+            usage: 80,
+            timestamp: base.advanced(by: .seconds(resumedSecond + 60)),
+            state: state,
+            collectionEpoch: resumedEpoch
+        )
+        #expect(state.displayedState == .sustainedHigh)
+    }
+
+    @Test func sameEpochKeepsAccumulationAcrossFiveToOneSecondChangeAndExactTenSecondGap() {
+        var state = CPUActivityStateEvaluator.State.initial
+        state = CPUActivityStateEvaluator.evaluate(usage: 10, timestamp: base, state: state, collectionEpoch: 4)
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(5)), state: state, collectionEpoch: 4)
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(6)), state: state, collectionEpoch: 4)
+        #expect(state.displayedState == .low)
+        state = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(8)), state: state, collectionEpoch: 4)
+        #expect(state.displayedState == .high)
+
+        var exactGap = CPUActivityStateEvaluator.State.initial
+        exactGap = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base, state: exactGap, collectionEpoch: 4)
+        exactGap = CPUActivityStateEvaluator.evaluate(usage: 50, timestamp: base.advanced(by: .seconds(10)), state: exactGap, collectionEpoch: 4)
+        #expect(exactGap.displayedState == .high)
+    }
+
     // 실패 tick·값 없는 tick에서의 상태 유지와 `CharacterStateSource.send(_:)` 배선은
     // 순수 함수 하나로 시뮬레이션할 수 없는 `ApplicationCoordinator.consumeSystemMetrics(_:into:)`의 책임이라
     // ApplicationCoordinatorTests.swift에서 실제 배선(스토어 -> 평가 -> source)으로 검증합니다.

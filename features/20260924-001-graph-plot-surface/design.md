@@ -2,124 +2,167 @@
 
 ## 근거
 
-spec.md는 §1부터 §5까지 전부 읽었습니다.
+spec.md(2026-09-24 두 번째 재작성본)는 §1부터 §5까지 전부 읽었습니다.
 spec.md에 `승인 전 확인` 섹션이 없으므로 미답 질문은 없습니다.
-범위는 spec.md §1이 제한하는 CPU 카드 그래프 판의 표시 한 자리와 `docs/product.md`의 판 규칙 문구이고, 요구사항을 더하거나 약하게 바꾸지 않았습니다.
+범위는 spec.md §1이 제한하는 CPU 카드 그래프 판의 표시(판 면, 50% 기준선의 색·두께·선 모양)와 `docs/product.md`의 판 규칙 문구이고, 요구사항을 더하거나 약하게 바꾸지 않았습니다.
 
-읽은 입력 맥락 — `features/20260912-001-dashboard-visual-language/design.md` 전문(특히 DP3 면 값과 소유, DP5 보조 표시 제거, DP6 자리표시, DP7 미수집 구간, DP14 대비 기준면, DP15 테스트 갱신 원칙, DP16 부하 근거), 같은 feature의 spec.md §3 대비 기준면 문장과 §5.3, `features/20260906-001-graph-legibility-and-color/design.md`의 DP3(판 경계)과 DP8(밴드 합성 명도 차), `docs/product.md` §대시보드 §공통 정보 구조·§접근성·§CPU §기본 카드, `docs/design.md` 「대시보드 본체의 세로 예산」.
+앞 판 design.md의 승인 전 확인 두 질문에 대한 사용자 답을 반영했습니다.
+
+- 기준선을 두 모드 모두 판 면보다 어둡게, 판 가장자리 단차 아래(판 면 위 결과 `#ececec` / `#1f1f1f`)에 두는 채택안 — 확인(「ㅇㅋ」). §5 DP5에 반영했습니다.
+- 밴드가 덮는 구간에서 기준선이 거의 사라지는 대가 — 거부(「아니」). 이 답으로 spec.md §3 기준선 문단 끝과 §5.2 끝에 「부하가 50%를 넘어 두 밴드가 기준선 자리를 덮어도 기준선이 밴드 안에서 보인다」가 더해졌고, §1 입력 맥락에 그 경위가 적혔습니다. 이를 푸는 결정을 §5 DP10에 새로 두었습니다.
+
+재작성 전 design.md의 DP1(판 면 값, 사용자 확인), DP2(판 틀 배경), DP3(각진 면·윤곽선 없음), DP4(공유 자리), DP6(문서 문구), DP7(테스트 갱신 원칙), DP8(판 틀 클리핑, 사용자 결정), DP9(1pt 실선 유지)는 새 spec.md에서도 성립하는지 다시 따져 유지하고, 그리기 순서와 기준선 색 형태가 바뀌면서 영향받는 문장만 고쳤습니다.
+
+읽은 입력 맥락 — `features/20260912-001-dashboard-visual-language/design.md`(DP3 면 값과 소유, DP5 보조 표시 제거, DP6 자리표시, DP7 미수집 구간, DP14 대비 기준면, DP15 테스트 갱신 원칙), `features/20260906-001-graph-legibility-and-color/design.md`의 판 경계 결정(격자 색을 옅게 낮추는 변형을 「값의 높이를 어림할 기준선이 약해진다」로 접은 자리 포함), `features/20260818-001-resource-visualization/spec.md` §5.6(기준선 표시), `docs/product.md` §대시보드 §공통 정보 구조·§접근성·§CPU §기본 카드, `docs/design.md` 「대시보드 본체의 세로 예산」.
 
 ### 이번 방향이 한 번 접혔던 근거
 
-- `20260906` DP3은 판에 옅은 채움을 까는 옵션 B를 「카드 표면에 불투명 채움이 없다」는 당시 조건과 그것을 지키던 픽셀 테스트 때문에 접고, 판 둘레 1pt 닫힌 테두리를 채택했습니다. 그 조건은 `20260912` DP3이 카드에 불투명 면을 깔면서 이미 사라졌습니다.
-- `20260912` DP5 옵션 C가 그 테두리를 지웠고, 0%·100% 경계는 판 높이 자체와 판 바로 아래 축 라벨 줄이 나타낸다고 보았습니다.
-- `20260912` DP6 옵션 A(판 전체에 카드 면보다 한 단 낮은 면)는 두 이유로 접혔습니다 — ① 면 단계가 바탕·카드에 이어 셋이 된다 ② 값이 있을 때도 깔면 「보조 표시가 데이터보다 강한 상태」를 면으로 되살린다.
-- spec.md §1은 앱 실행 43초·CPU 7% 캡처에서 「판 높이와 축 라벨 줄이 경계를 나타낸다」는 판단이 성립하지 않았다는 것을 새 근거로 두고, 면을 까는 방향을 사용자와 확정했습니다. 두 이유에 대한 이 설계의 답은 §5 DP1에 둡니다.
+- `20260906`은 판에 옅은 채움을 까는 안을 「카드 표면에 불투명 채움이 없다」는 당시 조건 때문에 접고 닫힌 테두리를 채택했습니다. 그 조건은 `20260912` DP3이 카드에 불투명 면을 깔면서 사라졌습니다.
+- `20260912` DP5 옵션 C가 그 테두리를 지웠고, 0%·100% 경계는 판 높이와 축 라벨 줄이 나타낸다고 보았습니다.
+- `20260912` DP6 옵션 A(판 전체에 카드 면보다 한 단 낮은 면)는 ① 면 단계가 셋이 된다 ② 보조 표시가 데이터보다 강한 상태를 면으로 되살린다는 두 이유로 접혔습니다.
+- spec.md §1은 앱 실행 43초·CPU 7% 캡처에서 「판 높이와 축 라벨 줄이 경계를 나타낸다」가 성립하지 않았다는 것을 새 근거로 두었습니다. 두 이유에 대한 답은 §5 DP1에 둡니다.
+- spec.md §1 「SPEC 재작성의 근거」는 판 면만 깐 화면(task-002)에서 50% 기준선이 판을 두 영역으로 가르는 경계로 읽혔다는 실기기 다크 관찰이고, 사용자가 기준선을 약하게 하는 방향을 고르면서 밴드가 덮는 구간에서 기준선을 잃는 대가는 받아들이지 않았습니다.
 
-### 코드에서 확인한 사실
+### 현재 코드
 
-- `HistoryGraphSlotView`(`ResourceRunner/DashboardView.swift:723-761`)는 `TimelineView(.periodic(from: .now, by: 1))` 안에서 판과 축 라벨 줄을 `VStack`으로 쌓고, 판 자리는 `Group`이 값이 있으면 `HistoryGraphView`, 없으면 `GraphPlaceholderView`를 고른 뒤 `.frame(height: HistoryGraphLayout.plotHeight)`를 한 번 겁니다(`:735-742`). 두 경로가 같은 판 틀 하나를 공유합니다.
-- 이 슬롯의 production 소비자는 `CPUCardView`(`:155`) 하나입니다. 카드는 `.padding(DashboardStyle.CardSurface.contentPadding)`(8) 안이라 판 폭은 카드 콘텐츠 폭 232pt입니다.
-- `HistoryGraphView.drawOrder`(`:584-590`)는 `gridlines → bandFill(.lower) → bandFill(.upper) → bandBoundary(.lower) → bandBoundary(.upper)` 다섯 레이어이고, `body`가 이 배열을 그대로 순회합니다(`:682-698`).
-- `GraphPlaceholderView`(`:766-776`)는 `HistoryGraphGridline.placeholderDrawOrder`(`DashboardPresentation.swift:512-521`, 값 `[.gridlines]`)를 순회해 기준선 하나만 그립니다.
-- `drawCPUGraphGridlines`(`:708-720`)는 `HistoryGraphGridline.drawnBaselineValues`(가운데 값 50 하나)를 x 0부터 `size.width`까지 `DashboardColorPalette.cpuGridline` 1pt로 긋습니다. 두 경로가 이 함수를 공유합니다.
-- 좌표 변환은 두 축 모두 판 틀 경계와 정확히 맞습니다 — `HistoryGraphGridline.yPosition(forValue:height:)`는 0%를 `height`, 100%를 0에 두고(`DashboardPresentation.swift:425-428`), `HistoryPoint.normalizedXPosition`은 창 왼쪽 끝(`currentTimestamp - timeRange`)을 0, 그리는 시각을 1에 둡니다(`:380-397`). 판 틀 사각형의 네 변이 곧 0%·100%·창 양끝입니다.
-- `HistoryGraphLayout`(`:403-408`)은 `plotHeight = 100`, `axisSpacing = 4`, `axisLabelHeight = 14`, `slotHeight = 118`입니다.
-- `DashboardColorPalette`(`ResourceRunner/DashboardColorPalette.swift`)는 `popoverBackground`(`:43`, `#ececec` / `#1e1e1e`), `cardSurface`(`:47`, `#ffffff` / `#2e2e2e`)를 `dynamicColor(light:dark:)`로 라이트·다크 각각 확정해 내놓고, `cpuUser = cpu(.step3)`(`:33`), `cpuSystem = cpu(.step1)`(`:35`), `cpuGridline = Color(NSColor.separatorColor)`(`:51`)입니다.
-- 이 저장소 실행 환경(macOS 26.6.2)에서 `NSColor.separatorColor`를 appearance별로 풀면 라이트는 검정 α 0.098, 다크는 흰색 α 0.098입니다. 기준선은 반투명이라 아래 면과 합성된 색으로 보입니다.
-- CPU 카드는 감싸는 `Button`에서 `.accessibilityElement(children: .ignore)`(`DashboardView.swift:37`)로 닫혀 있고, 그래프 판 안의 그림은 접근성 노드를 만들지 않습니다. 상세 팝업에는 그래프가 없습니다.
-- 카드 면은 `RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)`(8)를 `.fill`로 깔고(`:159-163`), 판 틀은 카드 안쪽 여백 8pt만큼 카드 가장자리에서 떨어져 있습니다.
+작업 트리는 task-001(커밋 `ef633b9`)과 task-002(커밋 `bf0d186`과 그 뒤 미커밋 변경)의 구현이 들어간 상태입니다.
+task-001은 SPEC 재작성으로 승인만 초기화됐고 코드는 남아 있습니다.
+
+- `DashboardColorPalette`(`ResourceRunner/DashboardColorPalette.swift`)는 `popoverBackground`(`:43`, `#ececec` / `#1e1e1e`), `cardSurface`(`:47`, `#ffffff` / `#2e2e2e`), `graphPlotSurface`(`:53`, `#f5f5f5` / `#262626`)를 `dynamicColor(light:dark:)`로 라이트·다크 각각 확정해 내놓습니다. `dynamicColor`(`:116`)는 알파 1의 불투명 색만 만듭니다. `cpuUser = cpu(.step3)`, `cpuSystem = cpu(.step1)`이고, 기준선 색은 `cpuGridline = Color(NSColor.separatorColor)`(`:57`)입니다.
+- 이 실행 환경(macOS 26.6.2)에서 scratchpad Swift 스크립트로 appearance별로 풀어 본 값 — `separatorColor`는 라이트 검정 α 0.098, 다크 흰색 α 0.098이고, `quaternaryLabelColor`도 같은 값입니다. `NSColor.gridColor`는 불투명 무채색으로 라이트 `#e6e6e6`, 다크 `#1a1a1a`이라 두 모드 모두 이 앱의 면들보다 어둡습니다.
+- `HistoryGraphSlotView`(`ResourceRunner/DashboardView.swift:724` 이후)는 `TimelineView(.periodic(from: .now, by: 1))`(`:728`) 안에서 값이 있으면 `HistoryGraphView`, 없으면 `GraphPlaceholderView`를 고르는 `Group`에 `.frame(height: HistoryGraphLayout.plotHeight)`(`:743`), `.background(DashboardColorPalette.graphPlotSurface)`(`:746`), `.clipped()`(`:750`, 미커밋)를 한 번씩 겁니다. 판 틀은 폭 232 × 높이 100이고, 이 슬롯의 production 소비자는 `CPUCardView`(`:155`) 하나입니다.
+- 판 면은 `Canvas` 밖 뷰 배경이라, 두 `Canvas`는 투명 바탕 위에 그리고 그 결과가 판 면 위에 일반 알파 합성(source-over)으로 얹힙니다.
+- `HistoryGraphView.drawOrder`(`:584`)는 `gridlines → bandFill(.lower) → bandFill(.upper) → bandBoundary(.lower) → bandBoundary(.upper)` 다섯 레이어이고, 주석(`:575`)은 「기준선을 먼저 그려야 반투명 밴드 사이로 비친다」입니다. `GraphPlaceholderView`(`:774`)는 `HistoryGraphGridline.placeholderDrawOrder`(`[.gridlines]`)를 순회합니다.
+- `drawCPUGraphGridlines`(`:708-720`)는 `HistoryGraphGridline.drawnBaselineValues`(가운데 값 50 하나)를 x 0부터 `size.width`까지, 곧 판 틀 좌우 끝까지 `DashboardColorPalette.cpuGridline`, `HistoryGraphGridline.lineWidth`(1)로 한 번 긋습니다. 두 경로가 이 함수를 공유합니다.
+- 두 밴드는 겹치지 않습니다 — 아래 채움은 0 ~ User, 위 채움은 User ~ 전체입니다. 그래서 50% 높이의 한 칸은 판 면·위 채움·아래 채움 중 하나 위에 놓입니다.
+- 두 밴드의 구분 수단은 채움 불투명도(`fillOpacity`, 아래 0.60 / 위 0.15)와 경계선 모양(`boundaryStyle`, 아래 점선 `[3, 2]` / 위 실선)입니다. 요약 줄 스와치 `CPUSeriesSwatchView`(`:302-313`)가 같은 두 함수로 「점선 테두리 = User」를 범례로 보여 줍니다.
+- 좌표 변환은 판 틀 경계와 맞습니다 — `HistoryGraphGridline.yPosition(forValue:height:)`는 0%를 `height`, 100%를 0에 두고, `HistoryPoint.normalizedXPosition`은 창 시작을 0, 그리는 시각을 1에 둡니다. 판 틀의 네 변이 곧 0%·100%·창 양끝입니다.
+- 판 틀은 카드 안쪽 여백 8pt만큼 카드 가장자리에서 떨어져 있어, 판 틀 좌우 끝까지 긋는 기준선은 양끝에서 카드 면 여백과 맞닿습니다.
+- CPU 카드는 감싸는 `Button`에서 `.accessibilityElement(children: .ignore)`(`:37`)로 닫혀 있고, 카드 접근성 이름(`DashboardPresentation.swift:584`)은 「User와 System 두 계열 중첩 그래프, 기준선 50%」처럼 기준선 **값**만 읽고 색과 그리기 순서를 읽지 않습니다.
+
+### 의존 탐색 흔적 (§4의 근거)
+
+- `cpuGridline`의 production 소비자는 `drawCPUGraphGridlines` 한 자리이고, 테스트 소비자는 `DashboardColorPaletteTests`(`:94`의 기준선 합성 helper) 하나입니다.
+- `separatorColor`를 쓰는 production 자리는 `cpuGridline` 하나뿐입니다. 코어 격자 트랙 `cpuCoreTrack`과 Memory 구성 바 트랙 `memoryCompositionTrack`은 값이 같은 `quaternaryLabelColor`를 따로 쓰므로 기준선 색을 바꿔도 영향을 받지 않습니다.
+- `HistoryGraphView.drawOrder`의 소비자는 `HistoryGraphView.body`와 `DashboardPresentationTests`의 `gridlinesAreDrawnBeforeBandFillsAndBoundaries`(`:2033`), `drawOrderIsGridlinesThenFillsAndBoundaries`(`:2037`), `placeholderDrawOrderContainsOnlyGridlines`(`:2075`, `drawOrder.first == .gridlines`와 개수 5)입니다. `bandFillOpacitiesAreTranslucentSoGridlinesShowThrough`(`:2048`)는 불투명도 값을 단언하고 이름과 주석이 「기준선이 채움 아래로 비친다」를 이유로 듭니다.
+- `HistoryGraphGridline.lineWidth`는 `drawCPUGraphGridlines`, `DashboardPresentationTests`의 `lineWidth == 1`, `DashboardCardLayoutTests`의 `GraphPlotFrame.gridlineRows`가 씁니다.
+- `graphPlotSurface`의 소비자는 판 틀 배경, `DashboardColorPaletteTests`, `DashboardCardLayoutTests`(`RenderedGraphPlotSurface`)입니다.
+- `HistoryGraphView`의 다른 참조는 요약 줄 스와치의 `BandRole`·`fillOpacity(for:)`·`boundaryStyle(for:)`뿐이며, 스와치는 카드 면 위라 이번 변경과 무관합니다.
+- `HistoryGraphLayout`의 소비자는 슬롯 조립과 두 테스트 파일이고, 이 feature는 이 값을 바꾸지 않습니다.
+- `docs/product.md`에서 기준선을 다루는 자리는 §공통 정보 구조 127행(판 규칙)과 §CPU §기본 카드 155행이고, `docs/design.md`의 판 관련 서술은 세로 예산(90-92행)뿐이며, `ROADMAP.md`에는 판 모양을 적은 문장이 없습니다.
 
 ### 계산으로 얻은 수치
 
-sRGB 선형화, WCAG 명도대비, CIELAB `L*`·`C*`, 알파 합성을 구현한 검증기를 scratchpad에서 돌렸습니다.
-검증기가 기존 기준을 재현하는지는 CPU 램프 여덟 색의 카드 면 대비(라이트 11.53 / 7.84 / 5.33 / 3.63, 다크 9.71 / 6.89 / 4.73 / 3.13)와 바탕–카드 대비(1.18 / `ΔL*` 6.6, 1.23 / `ΔL*` 7.7)를 먼저 돌려 `20260912` 표와 소수점까지 일치하는 것으로 확인했습니다.
-밴드 합성은 production 불투명도(아래 0.60 / 위 0.15)를, 기준선 합성은 위에서 푼 `separatorColor` 값을 썼습니다.
+sRGB 선형화, WCAG 명도대비, CIELAB `L*`·`C*`, 알파 합성(8비트 부호화 값 위의 source-over)을 구현한 검증기를 scratchpad에서 돌렸습니다.
+검증기는 재작성 전 design.md가 `20260912` 표와 맞춰 둔 식이고, 이번에도 판 면 위 `separatorColor`의 `ΔL*` 8.43 / 9.83과 카드 면 위 8.70 / 9.25를 재현했습니다.
+기준선 `ΔL*`는 기준선이 그어진 칸과 그 아래 면(판 면 또는 밴드 채움 합성색)의 `L*` 차입니다.
 
 **면 세 값** (`L*`)
 
 | 자리 | 라이트 | `L*` | 다크 | `L*` |
 | --- | --- | ---: | --- | ---: |
-| 팝오버 바탕 | `#ececec` | 93.4 | `#1e1e1e` | 11.3 |
-| 판 면(채택) | `#f5f5f5` | 96.5 | `#262626` | 15.2 |
-| 카드 면 | `#ffffff` | 100.0 | `#2e2e2e` | 18.9 |
+| 팝오버 바탕 | `#ececec` | 93.40 | `#1e1e1e` | 11.26 |
+| 판 면 | `#f5f5f5` | 96.54 | `#262626` | 15.16 |
+| 카드 면 | `#ffffff` | 100.00 | `#2e2e2e` | 18.94 |
 
-- 판–카드 `ΔL*` 라이트 3.5 / 다크 3.8, 대비비 1.09 / 1.11.
-- 판–바탕 `ΔL*` 라이트 3.1 / 다크 3.9.
-- 바탕–카드 `ΔL*` 6.6 / 7.7은 그대로입니다.
-- 판 면의 `C*`는 라이트 0.01 / 다크 0.00으로 무채색입니다.
+- 판 가장자리(판–카드) `ΔL*` 라이트 3.46 / 다크 3.78, 대비비 1.090 / 1.114.
+- 판–바탕 `ΔL*` 3.14 / 3.90, 바탕–카드 `ΔL*` 6.60 / 7.67.
+- 판 면 `C*` 0.01 / 0.00.
 
-**판 면 위 데이터와 기준선** (변경 전은 카드 면 위)
+**판 면 위 두 밴드** (변경 전은 카드 면 위)
 
 | 항목 | 라이트 변경 전 | 라이트 판 면 | 다크 변경 전 | 다크 판 면 |
 | --- | ---: | ---: | ---: | ---: |
-| `cpuUser` 대비 | 5.33 | **4.89** | 4.73 | **5.27** |
-| `cpuSystem` 대비 | 11.53 | **10.57** | 9.71 | **10.82** |
-| 두 밴드 합성 `ΔL*` | 22.2 | **20.6** | 15.6 | **17.3** |
-| 기준선–면 대비비 | 1.248 | **1.246** | 1.362 | **1.357** |
-| 기준선–면 `ΔL*` | 8.71 | **8.43** | 9.25 | **9.83** |
+| `cpuUser` 대비 | 5.33 | 4.89 | 4.73 | 5.27 |
+| `cpuSystem` 대비 | 11.53 | 10.57 | 9.71 | 10.82 |
+| 두 밴드 합성 `ΔL*` | 22.2 | 20.6 | 15.6 | 17.3 |
 
-**검토한 다른 후보** (라이트 / 다크)
+판 면 위 두 밴드 요소 각각의 `ΔL*` — User 경계선 51.31 / 47.81, System 경계선 72.51 / 71.87, 아래 채움(0.60) 30.95 / 29.70, 위 채움(0.15) 10.31 / 12.35.
+가장 약한 밴드 요소는 위 채움입니다.
 
-| 후보 | 판–카드 `ΔL*` | `cpuUser` 대비 | 합성 `ΔL*` | 기준선 `ΔL*` |
-| --- | ---: | ---: | ---: | ---: |
-| 바탕 재사용 `#ececec` / `#1e1e1e` | 6.6 / 7.7 | 4.51 / 5.80 | 19.3 / 19.1 | 8.18 / 10.47 |
-| 다크만 카드보다 밝게 `#f5f5f5` / `#363636` | 3.5 / −3.7 | 4.89 / 4.21 | 20.6 / 14.0 | 8.43 / 8.72 |
-| 라이트 `#f7f7f7`·`#f2f2f2` | 2.8 · 4.5 | 4.97 · 4.76 | 21.0 · 20.2 | 8.48 · 8.35 |
-| 다크 `#282828`·`#252525` | 2.8 · 4.3 | 5.13 · 5.34 | 16.9 · 17.6 | 9.68 · 9.91 |
+**판 면 위 기준선 후보** (1pt 실선. 부호는 판 면보다 밝으면 +)
 
-- 시스템 반투명 채움 하나(검정·흰색 α 0.04)를 쓰면 합성 결과가 라이트 `#f5f5f5`, 다크 약 `#363636`이 되어 둘째 줄과 같은 값입니다.
-- 라이트에서 카드보다 어두운 후보는 모두 기준선 `ΔL*`가 8.71보다 작습니다(8.48 ~ 8.18). 기준선이 반투명 검정이라 아래 면이 어두워질수록 합성 차가 조금씩 줄기 때문이고, 대비비는 1.244 ~ 1.248로 거의 변하지 않습니다.
-- 변경 전 `20260906` 판 테두리(같은 `separatorColor` 1pt)의 카드 면 대비 `ΔL*`는 기준선과 같은 8.71 / 9.25입니다.
+| 후보 | 라이트 `ΔL*` | 다크 `ΔL*` | 판 가장자리 대비 | 비고 |
+| --- | ---: | ---: | --- | --- |
+| 현재 `separatorColor` | −8.43 | +9.83 | 2.44배 / 2.60배 | 대비비 1.246 / 1.357 |
+| `separatorColor` 불투명도 낮춤(판 가장자리 이하 최대, α 약 0.040 / 0.036) | −3.4 | +3.4 | 약 1배 | 다크 합성색 `L*`가 카드 면보다 0.09 낮을 뿐이라 카드 면 색과 같아짐 |
+| 시스템 `gridColor`(`#e6e6e6` / `#1a1a1a`) | −5.24 | −5.90 | 1.51배 / 1.56배 | OS가 소유한 값 |
+| 다크만 밝게, 판 가장자리 이하(`#ececec` / `#2d2d2d`) | −3.14 | +3.31 | 0.91배 / 0.88배 | 다크 선 `L*`가 카드 면보다 0.47 낮음 |
+| **채택: 두 모드 모두 어둡게, 판 면 위 결과 `#ececec` / `#1f1f1f`** | **−3.14** | **−3.40** | **0.91배 / 0.90배** | 대비비 1.084 / 1.089 |
+| 참고: 판 가장자리와 같게(`#ebebeb` / `#1e1e1e`) | −3.49 | −3.90 | 1.01배 / 1.03배 | 두 모드 모두 판 가장자리를 조금 넘음 |
+
+채택 결과를 만드는 색은 §5 DP10에서 라이트 검정 α 0.038, 다크 검정 α 0.18로 정합니다.
+판 면에 합성한 값은 라이트 235.69 → 8비트 236(`#ececec`, 부동소수 `ΔL*` 3.25), 다크 31.16 → 31(`#1f1f1f`, 3.32)이라 8비트 결과가 확인받은 값과 같습니다.
+
+**밴드가 50%를 덮는 칸의 기준선** (위 채택 세기 기준, 라이트 / 다크)
+
+| 표현 | 아래 채움(0.60) 안 `ΔL*` | 위 채움(0.15) 안 `ΔL*` | 비고 |
+| --- | ---: | ---: | --- |
+| 현재 `separatorColor`, 채움 아래 | 3.59 / 3.36 | 7.33 / 7.80 | 판 면 위가 판 가장자리의 2.4배 이상 |
+| 채택 세기의 불투명 회색, 채움 아래(지금 순서) | 1.34 / 1.11 | 2.73 / 2.64 | 앞 판 채택안. 사용자가 거부 |
+| 채움 아래에서 아래 채움 안 2.3을 내려면 필요한 판 면 위 세기 | 5.60 / 7.42 | — | 판 가장자리(3.46 / 3.78)를 넘음 |
+| 채택 세기의 불투명 회색, 채움 위 | 27.81 / 33.10 | 7.17 / 15.76 | 밴드 안에 밝은 틈이 생김 |
+| `plusDarker` 합성(판 면 위 −9 / −7단계), 채움 위 | 3.36 / 2.79 | 3.22 / 3.11 | 배경이 같은 합성 안에 있어야 성립 |
+| **채택: 검정 α 0.038 / 0.18, 채움 위·경계선 아래** | **2.29 / 7.89** | **2.93 / 5.23** | 8비트 렌더 2.21 / 7.83, 2.86 / 5.41 |
+
+- 채택 표현에서 기준선이 놓이는 세 자리의 세기는 판 면 3.25 / 3.32, 위 채움 2.93 / 5.23, 아래 채움 2.29 / 7.89입니다. 어느 자리에서도 그 자리 밴드 요소(위 채움 10.31 / 12.35, 아래 채움 30.95 / 29.70)보다 약하고, 가장 가까운 비율이 다크 위 채움의 0.42배입니다.
+- 채움 위 검정 겹침은 밴드 색의 `C*`를 조금 낮춥니다 — 아래 채움 라이트 28.74 → 27.85, 다크 31.06 → 26.40. 색조는 바뀌지 않습니다.
+- source-over 검정 겹침에서 채움 안 세기는 판 면 위 세기에 묶입니다. 라이트 아래 채움은 판 면보다 어두워(`L*` 65.59) 같은 알파가 더 작은 `ΔL*`를 만들고, 판 면 위를 판 가장자리 아래에 두는 한 라이트 아래 채움 안은 약 2.4를 넘지 못합니다. 검정이 아닌 회색을 겹치면 채움 안 세기가 오히려 줄어, 검정이 이 조건의 최대입니다.
+- 테스트 렌더(`ImageRenderer.scale = 1`)에서 1pt 선의 가운데가 정수 좌표에 놓여 위아래 두 픽셀 줄에 절반씩 칠해집니다. 채택 표현의 판 면 위 두 줄은 판 면과 8비트로 4.7 / 3.4단계, 아래 채움 위 두 줄은 채움과 성분당 라이트 2.3 ~ 4.0 / 다크 6.7 ~ 14.2단계 차이이고, 탐침의 색 허용 오차(성분당 0.004, 약 1단계)보다 큽니다. Retina 실기기에서는 1pt가 두 장치 픽셀에 온전히 칠해집니다.
 
 ### 기존 테스트가 잠그고 있는 것
 
-- `ResourceRunnerTests/DashboardPresentationTests.swift:2031-2086` — `HistoryGraphView.drawOrder`가 다섯 레이어이고 첫 항목이 `.gridlines`, `placeholderDrawOrder == [.gridlines]`이고 개수 1, 두 밴드 불투명도 0.60 / 0.15와 경계선 모양.
-- `ResourceRunnerTests/DashboardPresentationTests.swift:1902-1996` — 판 100 / 슬롯 118, 기준선 값 집합과 그리는 기준선 하나.
-- `ResourceRunnerTests/DashboardColorPaletteTests.swift:86-97` — 바탕과 카드 면이 다르고 두 모드에서 카드가 더 밝음. `:99-118` — CPU 램프 넷의 카드 면 대비 ≥ 3과 단조. `:156-166` — `cpuUser`·`cpuSystem`의 램프 배정. `:208-225` — 두 밴드를 **카드 면**에 합성한 `ΔL*` > 10.5와 밀도 차 0.45.
-- `ResourceRunnerTests/DashboardCardLayoutTests.swift:184-189` — 픽셀 영역 `cpuPlaceholderGraph`(x 0..<248, y 85..<189, 판은 y 87부터 100pt). `:194-223` — `visibleInk`가 카드 면 색만 잉크에서 뺌. `:416-419` — 값 없음 세 상태에서 「CPU 그래프 격자」가 그 영역에 `visibleInk` 픽셀 > 0으로 그려짐. `:1099-1107` — 그 영역에 채도 0.35 초과 픽셀이 0. `:1022-1040` — 카드 안쪽 여백 띠(x 2..<7)가 카드 면으로 칠해지고 카드 면 ≠ 바탕. `:854-866` — 표면 변경이 카드 높이를 바꾸지 않음.
-- `ResourceRunnerUITests/DashboardCPUCardUITests.swift:41-46` — 카드 접근성 이름의 「두 계열 중첩 그래프」·「최근 10분 그래프」·수집 진행 문구.
-
-### 의존 탐색 흔적 (§4의 근거)
-
-- `HistoryGraphSlotView`의 소비자는 `CPUCardView` 하나이고, `HistoryGraphView`·`GraphPlaceholderView`의 production 소비자는 이 슬롯 하나입니다.
-- `HistoryGraphView`를 참조하는 다른 자리는 요약 줄 스와치 `CPUSeriesSwatchView`(`DashboardView.swift:302-313`)가 `BandRole`·`fillOpacity(for:)`·`boundaryStyle(for:)`를 쓰는 것뿐이며, 스와치는 카드 면 위에 놓여 이번 변경과 무관합니다.
-- `drawCPUGraphGridlines`·`cpuGridline`의 소비자는 두 그리기 경로뿐입니다.
-- `DashboardColorPalette`의 면 값 소비자는 본체 루트(`:63`), 두 카드 표면(`DashboardStyle.CardSurface.fillColor` 경유, `:163`·`:366`), 두 상세 바탕(`:1006`·`:1042`), 테스트(`DashboardColorPaletteTests`, `DashboardCardLayoutTests`, `DetailPopoverValuelessStateTests:296`)입니다. 새 판 면 값은 그래프 판 한 자리만 소비합니다.
-- `HistoryGraphLayout`의 소비자는 슬롯 조립, `DashboardPresentationTests`, `DashboardCardLayoutTests`(M3 예산 산술과 축 라벨 줄 높이)이고, 이 feature는 이 값을 바꾸지 않습니다.
-- `docs/design.md` 「대시보드 본체의 세로 예산」은 판 100pt·`S = 118`에 기대는데, 판 크기가 그대로라 수치가 변하지 않습니다. `ROADMAP.md`에는 판 모양을 적은 문장이 없습니다.
+- `ResourceRunnerTests/DashboardColorPaletteTests.swift` — `graphPlotSurfaceSitsBetweenPopoverBackgroundAndCardSurfaceInBothAppearances`(`:220`), `graphPlotSurfaceIsAchromaticInBothAppearances`(`:241`), `cpuBandColorsMeetGraphPlotSurfaceContrastInBothAppearances`(`:252`), `gridlineOnGraphPlotSurfaceStaysAsVisibleAsOnCardSurface`(`:263`, 기준선의 판 면 합성이 카드 면 합성 대비 대비비 차 < 0.01, `ΔL*` 감소 < 1), `graphPlotEdgeIsWeakerThanGridlineAndUpperBandFill`(`:286`, 판 가장자리 < 기준선, 판 가장자리 < 위 채움), `cpuBandCompositeLightnessDifferenceImprovesInBothAppearances`(`:311`, 판 면 기준 합성 `ΔL*` > 10.5, 밀도 차 0.45). 앞의 셋과 마지막은 task-001이 더하거나 옮긴 것이고, `:263`과 `:286`의 기준선 쪽 절반은 재작성 전 기준(변경 전만큼 보인다, 밴드 > 기준선 > 판 가장자리)을 잠급니다.
+- 같은 파일의 카드 면 기준 CPU 램프 대비(`:111`), 바탕–카드(`:98`), 램프 배정(`:168`)은 스와치와 카드 면 계약입니다.
+- `ResourceRunnerTests/DashboardCardLayoutTests.swift` — `visibleInk`(`:197`)가 카드 면과 판 면 두 색을 잉크에서 빼고, 「CPU 그래프 격자」 탐침(`:434`)이 `cpuPlaceholderGraph`(`:187`, y 85..<189)에서 기준선 잉크를 셉니다. `CPUGraphPlotSurfaceRenderingTests`(`:1317`)의 네 테스트가 값 없음 세 상태와 값 있음 세 입력(창 오른쪽 60초, 창 전체, 창 시작을 막 벗어난 점, 모두 전체 7% · User 4%)에서 판 틀 안이 기준선 줄을 빼고 판 면이고, 틀 밖 줄·칸이 카드 면이며, 판 면을 뺀 뒤에도 기준선이 잉크로 세어지는지를 봅니다. 기준선 줄은 `GraphPlotFrame.gridlineRows`(`:1270`)가 `lineWidth`에서 계산합니다. 값 없음 판의 채도 0.35 초과 픽셀 0(`cpuGraphPlaceholderDoesNotRenderInventedZeroValues`, `:1131`)도 있습니다. 창 시작을 벗어난 점의 테스트와 클리핑은 미커밋입니다.
+- `ResourceRunnerTests/DashboardPresentationTests.swift` — 위 의존 탐색의 레이어 배열 단언 넷, 경계선 모양, 판 100 / 슬롯 118, 기준선 값 집합·그리는 기준선 하나·`lineWidth == 1`.
+- `ResourceRunnerUITests/DashboardCPUCardUITests.swift` — 카드 접근성 이름의 「두 계열 중첩 그래프」·「최근 10분 그래프」·수집 진행 문구와 수집 전후 프레임.
 
 ### 추정으로 남는 것
 
-- 판–카드 `ΔL*` 3.5 / 3.8의 면이 실제 화면에서 판 범위를 읽히게 하는지는 렌더를 보지 않은 판단입니다. 근거는 `20260912`가 렌더로 확인한 바탕–카드 `ΔL*` 6.6 / 7.7이 테두리 없이 카드 경계를 가른다는 사실과, 넓은 면에서 `ΔL*` 3 남짓은 식별 한계(`ΔE*ab` 약 2.3)를 넘는다는 일반 기준입니다. 렌더와 실행 중인 앱의 확인은 IMPLEMENT·verify 몫입니다.
-- 「판 면이 밴드보다 먼저 눈에 들어오지 않는다」는 지각 판정입니다. 이 설계가 대는 근거는 판 가장자리 `ΔL*`(3.5 / 3.8)가 기준선(8.43 / 9.83)과 밴드(경계선과 판 면의 `L*` 차 라이트 51 이상 / 다크 47 이상, 가장 옅은 위 밴드 채움의 합성 차도 10.3 / 12.4)보다 작다는 수치 위계입니다.
-- `Color` 배경이 `TimelineView` 재평가마다 다시 래스터화되지 않는다는 것은 SwiftUI 렌더러 동작에 대한 추정입니다. 자체 CPU 부하의 판정은 spec.md §5.9의 관찰 절차가 맡습니다.
+- 판 가장자리 `ΔL*` 3.46 / 3.78의 면이 실제 화면에서 판 범위를 읽히게 하는지는 task-002 실기기 다크 확인에서 「전보다는 좋아졌다」는 관찰을 얻었습니다(spec.md §1). 라이트 실기기 관찰은 아직 없습니다.
+- 「기준선이 판 가장자리보다 약하면 판을 가르는 경계가 아니라 판 안의 눈금으로 읽힌다」는 지각 판단입니다. 근거는 빈 위쪽 절반에서 가장 강한 가로 요소가 기준선에서 판 윗끝으로 바뀐다는 수치 위계와, 1pt 선은 같은 `ΔL*`의 넓은 면 경계보다 약하게 보인다는 일반적인 공간 대비 감도 특성입니다.
+- 「`ΔL*` 2.3 안팎의 1pt 선이 어림할 만큼 보인다」도 지각 판단입니다. 기준으로 쓴 식별 한계 `ΔE*ab` 약 2.3은 넓은 면의 값이고, 가는 선은 한계가 더 높을 수 있습니다. 라이트 아래 채움 안(2.29)이 이 한계에 가장 가깝습니다.
+- 다크에서 기준선이 아래 채움 안(7.89)에서 판 면 위(3.32)보다 두 배 넘게 진해, 밴드 경계를 지나며 선의 세기가 달라 보입니다. 이것이 밴드를 위아래 둘로 가르는 인상으로 이어지지 않는다는 근거는 그 세기가 아래 채움 자체(29.70)의 4분의 1 남짓이고 밴드 경계선(47 이상)의 6분의 1 아래라는 수치뿐입니다.
+- `Color` 값과 그리기 순서만 바뀌는 변경이 `TimelineView` 재평가마다 추가 작업을 만들지 않는다는 것은 SwiftUI 렌더러 동작에 대한 추정입니다. 자체 CPU 부하 판정은 spec.md §5.9의 관찰 절차가 맡습니다.
 
 ## 1. 구조
 
 새 모듈·새 뷰·새 레이어 타입을 만들지 않습니다.
-바뀌는 경계는 셋입니다 — 색을 소유하는 자리(`DashboardColorPalette`)에 면 하나가 늘고, 그래프 슬롯의 판 틀이 그 면을 배경으로 깔며, `docs/product.md`의 판 규칙이 면을 포함한 문구로 바뀝니다.
+바뀌는 경계는 넷입니다 — 색을 소유하는 자리(`DashboardColorPalette`)에 판 면과 판 기준선 두 값이 판 전용으로 모이고, 그래프 슬롯의 판 틀이 판 면을 배경으로 깔고 틀 경계로 자르며, 값 있음 `Canvas`의 그리기 순서에서 기준선이 두 채움 뒤·두 경계선 앞으로 옮겨 가고, `docs/product.md`의 판 규칙이 면과 기준선 세기를 포함한 문구로 바뀝니다.
 
-### 색 경계 — 팔레트의 세 번째 면
+### 색 경계 — 판 면과 판 기준선
 
 팔레트가 소유하는 면이 바탕·카드에 이어 **그래프 판 면** 하나를 더 갖습니다.
 라이트·다크를 각각 확정한 무채색 불투명 값이며, `L*`로 바탕과 카드 사이의 가운데에 놓입니다(§5 DP1).
-면 값을 팔레트가 소유하는 이유는 `20260912` DP3·DP14와 같습니다 — 판 위에 놓이는 두 밴드의 대비를 검증할 때 기준면을 다른 색과 같은 경로로 풀어야 하기 때문입니다(`SPEC §5.4`).
-이 면은 CPU 전용이 아니라 대시보드 그래프 판 공통 값이라, CPU 접두 없는 이름으로 둡니다(`SPEC §5.10`, §5 DP4).
+판 면 값을 팔레트가 소유하는 이유는 `20260912` DP3·DP14와 같습니다 — 판 위 두 밴드의 대비를 검증할 때 기준면을 다른 색과 같은 경로로 풀어야 하기 때문입니다(`SPEC §5.4`, `SPEC §5.5`).
 
-### 그래프 판 경계 — 판 틀의 배경
+50% 기준선 색은 시스템 구분선 색을 떠나, 라이트·다크 각각 확정한 **반투명 검정** 값이 됩니다(§5 DP5, §5 DP10).
+판 면 위에서는 판 면보다 한 단 어두운 `#ececec` / `#1f1f1f`로 보여 판 가장자리 단차보다 약하고, 밴드 채움 위에서는 같은 알파로 채움을 조금 어둡게 해 밴드 안에서도 보입니다.
+이 값의 타당성은 판 면·카드 면·두 밴드 채움과의 관계에서만 나오므로, 판 면 바로 옆에 판 면과 짝을 이루는 값으로 둡니다.
+두 값 모두 CPU 전용이 아니라 대시보드 그래프 판 공통 값이라 CPU 접두 없는 이름으로 둡니다 — 기존 `cpuGridline`은 `graphPlotGridline`으로 바뀝니다(`SPEC §5.10`, §5 DP4).
+팔레트의 `dynamicColor`는 불투명 색만 만들므로, 알파를 함께 받는 같은 형태의 생성 경로가 팔레트 안에 하나 필요합니다.
 
-판 면은 `HistoryGraphSlotView` 안에서 값 있음·자리표시 두 경로를 고르는 `Group`에 이미 걸려 있는 판 틀(폭 232 × `HistoryGraphLayout.plotHeight` 100)의 배경으로 한 번 선언됩니다(§5 DP2).
+### 그래프 판 경계 — 판 틀의 배경과 클리핑
+
+판 면은 `HistoryGraphSlotView` 안에서 값 있음·자리표시 두 경로를 고르는 `Group`에 걸린 판 틀(폭 232 × `HistoryGraphLayout.plotHeight` 100)의 배경으로 한 번 선언됩니다(§5 DP2).
 두 경로는 그 틀 안에서 각자의 `Canvas`를 그리므로, 면은 두 `Canvas`의 모든 레이어보다 뒤에 있고 두 경로가 같은 선언 하나를 공유합니다(`SPEC §5.7`).
-판 틀의 네 변이 좌표 변환상 0%·100%·창 양끝과 정확히 겹치므로, 면의 가장자리가 곧 판의 범위입니다(`SPEC §5.1`).
+판 틀의 네 변이 좌표 변환상 0%·100%·창 양끝과 겹치므로 면의 가장자리가 곧 판의 범위입니다(`SPEC §5.1`).
 면은 각진 사각형이고 윤곽선이 없습니다(§5 DP3, `SPEC §5.3`).
+같은 판 틀이 두 `Canvas`를 틀 경계로 잘라, 밴드 경계선이 창 양끝에서 틀 밖 카드 면 위로 번지지 않습니다(§5 DP8, `SPEC §5.1`).
 
-`HistoryGraphView.drawOrder`와 `HistoryGraphGridline.placeholderDrawOrder`는 바뀌지 않습니다.
-판 위에 그리는 선은 기존 `drawCPUGraphGridlines`의 50% 기준선 하나 그대로입니다.
+### 그리기 순서 경계 — 두 레이어 배열
+
+`HistoryGraphView.drawOrder`는 같은 다섯 항목을 `bandFill(.lower) → bandFill(.upper) → gridlines → bandBoundary(.lower) → bandBoundary(.upper)` 순서로 둡니다(§5 DP10).
+기준선은 두 채움 위에 반투명으로 겹쳐 밴드 안에서 보이고, 두 경계선은 기준선 위에 그대로 그려져 값을 나타내는 선이 기준선에 덮이지 않습니다(`SPEC §5.2`, `SPEC §5.4`).
+`HistoryGraphGridline.placeholderDrawOrder`는 `[.gridlines]` 그대로입니다.
+두 경로가 공유하는 것은 「레이어 목록의 첫 항목」이 아니라 같은 `.gridlines` 레이어와 같은 그리기 함수 `drawCPUGraphGridlines`입니다.
+판 위의 선은 여전히 50% 기준선 하나이고, 선 두께 `HistoryGraphGridline.lineWidth` 1과 실선 모양도 그대로입니다(§5 DP9, `SPEC §5.3`).
 
 ### 문서 경계 — 대시보드 그래프 판 공통 규칙
 
-`docs/product.md` §대시보드 §공통 정보 구조의 판 규칙이 「판은 면으로 범위를 나타낸다」를 포함하는 대시보드 그래프 판 공통 규칙이 됩니다(§5 DP6, `SPEC §5.10`).
-M3의 Network·Disk 그래프가 참조할 자리는 이 문구와 팔레트의 판 면 값 둘입니다.
+`docs/product.md` §대시보드 §공통 정보 구조의 판 규칙이 「판은 면으로 범위를 나타내고, 기준선은 판 가장자리보다 약한 눈금이며 밴드 안에서도 보인다」를 포함하는 대시보드 그래프 판 공통 규칙이 됩니다(§5 DP6, `SPEC §5.10`).
+M3의 Network·Disk 그래프가 참조할 자리는 이 문구와 팔레트의 판 면·판 기준선 두 값입니다.
 
 ## 2. 데이터 흐름
 
@@ -128,63 +171,80 @@ M3의 Network·Disk 그래프가 참조할 자리는 이 문구와 팔레트의 
 
 `MonitoringScheduler` tick → `ApplicationCoordinator` → `DashboardPresentationStore.updateCPUCard` → `ResourceCardState<CPUCardPresentation>` → `CPUCardView` → `HistoryGraphSlotView(points:)`.
 
-닿는 곳은 마지막 칸 안의 그림 순서뿐입니다.
+닿는 곳은 마지막 칸 안의 그림뿐입니다.
 
 ```
 CPUCardView (카드 면 #ffffff / #2e2e2e)
 └─ HistoryGraphSlotView — TimelineView 1초
-   ├─ 판 틀 232 × 100
+   ├─ 판 틀 232 × 100, 틀 경계로 클리핑
    │  ├─ [배경] 판 면 #f5f5f5 / #262626 — 두 경로 공유, 수집 여부와 무관
-   │  └─ points 있음 → HistoryGraphView Canvas: 기준선 → 밴드 채움 ×2 → 밴드 경계선 ×2
-   │     points 없음 → GraphPlaceholderView Canvas: 기준선
+   │  └─ points 있음 → HistoryGraphView Canvas:
+   │        밴드 채움 ×2 → 기준선(검정 α 0.038 / 0.18) → 밴드 경계선 ×2
+   │     points 없음 → GraphPlaceholderView Canvas: 기준선(검정 α 0.038 / 0.18)
    └─ 축 라벨 줄 (카드 면 위, 그대로)
 ```
 
-1. 카드가 카드 면을 깔고, 그 안의 판 틀이 판 면을 깝니다. 판 면은 `points`를 읽지 않으므로 수집된 구간·수집되지 않은 구간을 가리지 않고 시간 창 전체를 같은 모양으로 덮습니다 — 수집 초기와 창이 다 찬 뒤의 판 모양이 같고, 미수집 구간은 자기 경계를 가질 자리가 없습니다(`SPEC §5.1`, `SPEC §5.6`).
-2. `Canvas`는 투명 바탕 위에 기존 레이어를 그대로 그립니다. 기준선은 판 면 위에 합성되고, 판 면이 기준선 위아래로 이어지므로 기준선 위쪽 절반이 카드 여백이 아니라 판의 일부가 되어 선이 판 안의 눈금으로 읽힙니다(`SPEC §5.2`).
-3. 두 밴드는 반투명 채움(0.60 / 0.15)과 경계선 모양(점선 / 실선)을 그대로 쓰고 판 면 위에 합성됩니다. 구분 수단은 변경 전과 같고, 합성 `ΔL*`가 20.6 / 17.3으로 기존 하한 10.5를 넘습니다(`SPEC §5.4`).
-4. 값이 없으면 같은 판 틀 안에서 자리표시가 기준선 하나를 그리고, 배경의 판 면은 값 있음 경로와 같은 선언이라 같은 크기·같은 자리에 나타납니다. 네 상태(`collecting` / `normal` / `failure(lastKnown)` / `stopped(lastKnown)`)는 모두 이 슬롯을 지나며, 배경은 레이아웃에 참여하지 않아 슬롯·카드·팝오버의 크기와 위치가 변하지 않습니다(`SPEC §5.7`).
-5. 판 면의 라이트·다크 선택은 다른 팔레트 색과 같은 `NSColor(name:)` 클로저 안에서 appearance가 바뀔 때 결정되며 tick과 무관합니다.
+1. 카드가 카드 면을 깔고, 그 안의 판 틀이 판 면을 깝니다. 판 면은 `points`를 읽지 않으므로 수집된 구간과 수집되지 않은 구간을 가리지 않고 시간 창 전체를 같은 모양으로 덮습니다 — 수집 초기와 창이 다 찬 뒤의 판 모양이 같고, 미수집 구간은 자기 경계를 가질 자리가 없습니다(`SPEC §5.1`, `SPEC §5.6`).
+2. 값 있음 `Canvas`는 투명 바탕 위에 두 채움을 먼저 그리고, 그 위에 기준선을, 맨 위에 두 경계선을 그립니다. `Canvas` 결과는 판 면 위에 source-over로 얹히고, source-over는 결합 법칙이 성립해 「투명 바탕 위에 채움과 반투명 검정을 그린 뒤 판 면에 얹은 결과」가 「판 면 위에 차례로 그린 결과」와 같습니다. 그래서 기준선이 판 면 위에 놓인 칸은 `#ececec` / `#1f1f1f`, 채움 위에 놓인 칸은 그 채움을 같은 알파로 어둡게 한 색이 됩니다.
+3. 판 면이 기준선 위아래로 같은 색으로 이어지므로 기준선 위쪽 절반이 카드 여백이 아니라 판의 일부입니다. 기준선은 판 면 위에서 판 가장자리 단차보다 약해, 데이터가 기준선 아래에만 있는 화면에서도 빈 위쪽 절반에서 가장 강한 가로 요소는 판 윗끝(100%)입니다. 선 색이 카드 면 쪽이 아니라 반대쪽이라, 판 틀 좌우 끝에서 카드 면 여백과 맞닿아도 여백과 이어진 틈으로 보이지 않습니다. 그래서 선은 판을 둘로 가르는 경계가 아니라 한 판 안의 눈금으로 남고, 판 면 위에서 식별 한계를 넘는 차로 50% 높이를 알립니다(`SPEC §5.2`).
+4. 부하가 50%를 넘어 위 채움이나 아래 채움이 50% 자리를 덮는 구간에서는, 기준선이 채움 위에 그려져 채움을 한 단 어둡게 합니다(라이트 2.93 / 2.29, 다크 5.23 / 7.89). 밴드 윗끝과 그 안을 지나는 50% 선이 함께 보여, 높은 값이 50%보다 얼마나 위인지를 판 높이 안에서 어림할 수 있습니다(`SPEC §5.2`).
+5. 두 밴드는 반투명 채움(0.60 / 0.15)과 경계선 모양(점선 / 실선)을 그대로 쓰고 판 면 위에 합성됩니다. 구분 수단은 변경 전과 같고, 합성 `ΔL*`가 20.6 / 17.3으로 기존 하한 10.5를 넘습니다. 기준선은 어느 자리에서도 그 자리 밴드 요소보다 약하고, 값을 나타내는 두 경계선은 기준선 위에 그려져 덮이지 않습니다(`SPEC §5.4`).
+6. 값이 없으면 같은 판 틀 안에서 자리표시가 같은 기준선 하나를 같은 색으로 그리고, 투명 바탕 위 반투명 검정이 판 면 위에 얹혀 값 있음 경로의 판 면 위 칸과 같은 `#ececec` / `#1f1f1f`가 됩니다. 배경의 판 면은 값 있음 경로와 같은 선언이라 같은 크기·같은 자리에 나타납니다. 네 상태(`collecting` / `normal` / `failure(lastKnown)` / `stopped(lastKnown)`)는 모두 이 슬롯을 지나며, 배경과 클리핑은 레이아웃에 참여하지 않아 슬롯·카드·팝오버의 크기와 위치가 변하지 않습니다(`SPEC §5.7`).
+7. 판 면과 기준선의 라이트·다크 선택은 다른 팔레트 색과 같은 `NSColor(name:)` 클로저 안에서 appearance가 바뀔 때 결정되며 tick과 무관합니다.
 
-접근성 계층은 바뀌지 않습니다 — 판 면은 카드의 `.accessibilityElement(children: .ignore)` 안쪽 배경이라 새 노드를 만들지 않고, 카드 접근성 이름을 만드는 `cpuAccessibilityLabel`은 판 면을 읽지 않습니다. 도달하는 정보(초점 수치·상태·두 계열·기준선 50%·순위 안내·시간 창·수집 진행·단축키)가 그대로이고 새로 낭독되는 요소가 없습니다(`SPEC §5.8`).
+접근성 계층은 바뀌지 않습니다 — 판 면은 카드의 `.accessibilityElement(children: .ignore)` 안쪽 배경이라 새 노드를 만들지 않고, 카드 접근성 이름을 만드는 `cpuAccessibilityLabel`은 판 면, 기준선 색, 그리기 순서를 읽지 않고 기준선 값(50%)만 읽습니다. 도달하는 정보(초점 수치·상태·두 계열·기준선 50%·순위 안내·시간 창·수집 진행·단축키)가 그대로이고 새로 낭독되는 요소가 없습니다(`SPEC §5.8`).
 
-동작 줄이기·애니메이션 끄기에서도 같은 그림입니다 — 판 면은 정적 색 하나이고 `withAnimation`·`transition`·암시적 애니메이션을 걸지 않습니다.
-갱신 주기마다 하는 일도 늘지 않습니다 — 새 타이머·관찰자·이미지 생성·색 보간이 없고, `Canvas`가 1초마다 그리는 레이어 목록이 그대로입니다(`SPEC §5.9`, §5 DP2).
+동작 줄이기·애니메이션 끄기에서도 같은 그림입니다 — 판 면과 기준선은 정적 색이고 `withAnimation`·`transition`·암시적 애니메이션을 걸지 않습니다.
+갱신 주기마다 하는 일도 늘지 않습니다 — 새 타이머·관찰자·이미지 생성·색 보간이 없습니다. `Canvas`가 1초마다 그리는 레이어는 같은 다섯 항목이고 채움 호출 수·선 긋기 호출 수가 같으며, 순서만 바뀝니다. 기준선은 일반 알파 합성으로 한 번 긋고, 블렌드 모드·별도 합성 레이어(`drawLayer`)·클리핑 경로를 더하지 않습니다(`SPEC §5.9`, §5 DP2, §5 DP9, §5 DP10).
 
 ## 3. 인터페이스
 
 경계를 가로지르는 계약만 둡니다.
 
-- **팔레트의 그래프 판 면** — `DashboardColorPalette`가 라이트 `#f5f5f5` / 다크 `#262626`의 불투명 무채색 값 하나를 `popoverBackground`·`cardSurface`와 같은 형태(`Color`, appearance별로 풀 수 있는 `dynamicColor`)로 내놓습니다. 이름에 CPU 접두를 두지 않습니다. 소비자는 그래프 판 틀과 대비 검증 테스트입니다(`SPEC §5.4`, `SPEC §5.5`, `SPEC §5.10`).
-- **판 면과 두 면의 관계** — 두 모드 모두에서 `바탕 L* < 판 면 L* < 카드 L*`이고, 판–카드 `ΔL*`는 바탕–카드 `ΔL*`보다 작습니다. 테스트가 이 관계를 불변형으로 잠급니다(`SPEC §5.5`).
+- **팔레트의 그래프 판 면** — `DashboardColorPalette.graphPlotSurface`가 라이트 `#f5f5f5` / 다크 `#262626`의 불투명 무채색 값을 `popoverBackground`·`cardSurface`와 같은 형태(`Color`, appearance별로 풀 수 있는 동적 색)로 내놓습니다. 소비자는 판 틀과 대비 검증 테스트입니다(`SPEC §5.4`, `SPEC §5.5`, `SPEC §5.10`).
+- **팔레트의 그래프 판 기준선** — `DashboardColorPalette.graphPlotGridline`(기존 `cpuGridline`을 대체)이 라이트 검정 α 0.038 / 다크 검정 α 0.18의 반투명 무채색 값을 같은 형태로 내놓습니다. 시스템 색이나 판 면·바탕 값을 참조하지 않는 두 리터럴이고, 판 면 위에 source-over로 합성하면 8비트로 `#ececec` / `#1f1f1f`가 됩니다. 소비자는 `drawCPUGraphGridlines`와 대비 검증 테스트입니다(`SPEC §5.2`, `SPEC §5.4`, `SPEC §5.10`).
+- **판 면과 두 면의 관계** — 두 모드 모두에서 `바탕 L* < 판 면 L* < 카드 L*`이고 판–카드 `ΔL*`는 바탕–카드 `ΔL*`보다 작습니다(`SPEC §5.5`).
+- **판 기준선과 판 면·밴드의 관계** — 두 모드 모두에서, 기준선을 판 면에 합성한 색의 `L*`가 판 면 `L*`보다 낮고, `2.3 < 판 면 위 기준선 ΔL* < 판–카드 ΔL*`이며, 판–카드 `ΔL*`는 위 채움의 판 면 합성 `ΔL*`보다 작습니다(`SPEC §5.2`, `SPEC §5.4`). 두 채움 합성색 각각 위에 기준선을 합성한 `ΔL*`는 판 면 위 기준선 `ΔL*`의 3분의 2 이상이고, 채움 아래에 깔았을 때의 값보다 크며, 그 채움 자체의 판 면 대비 `ΔL*`보다 작습니다(`SPEC §5.2`, `SPEC §5.4`). 테스트가 이 관계를 불변형으로 잠가, 판 면 값을 나중에 조정해도 기준선이 관계를 벗어나면 그 자리에서 실패합니다.
 - **판 면 위 두 밴드 색** — `cpuUser`·`cpuSystem`은 판 면을 배경으로 두 모드 모두 3:1 이상입니다. 요약 줄 스와치는 카드 면 위라 기존 카드 면 대비 계약이 그대로입니다(`SPEC §5.4`).
-- **`HistoryGraphSlotView`의 판 틀** — 판 면을 배경으로 한 번 깔고, 그 안에서 `HistoryGraphView` 또는 `GraphPlaceholderView`를 그립니다. 면은 각진 사각형이고 판 틀과 같은 크기이며 윤곽선을 긋지 않습니다(`SPEC §5.1`, `SPEC §5.3`, `SPEC §5.7`).
-- **`HistoryGraphView.drawOrder`·`HistoryGraphGridline.placeholderDrawOrder`** — 변경 없음. 판 위의 선은 여전히 기준선 레이어 하나입니다(`SPEC §5.3`).
-- **`HistoryGraphLayout`** — 변경 없음(판 100 / 슬롯 118). `docs/design.md`의 세로 예산 산술이 그대로 성립합니다(`SPEC §5.7`).
+- **`HistoryGraphSlotView`의 판 틀** — 판 면을 배경으로 한 번 깔고 틀 경계로 한 번 자르며, 그 안에서 `HistoryGraphView` 또는 `GraphPlaceholderView`를 그립니다. 면은 각진 사각형이고 판 틀과 같은 크기이며 윤곽선을 긋지 않습니다(`SPEC §5.1`, `SPEC §5.3`, `SPEC §5.7`).
+- **`HistoryGraphView.drawOrder`** — 같은 다섯 항목, 순서 `bandFill(.lower) → bandFill(.upper) → gridlines → bandBoundary(.lower) → bandBoundary(.upper)`. 기준선 항목은 하나이고 두 채움보다 뒤, 두 경계선보다 앞입니다(`SPEC §5.2`, `SPEC §5.3`, `SPEC §5.4`).
+- **`HistoryGraphGridline.placeholderDrawOrder`·`HistoryGraphGridline.lineWidth`·`HistoryGraphLayout`** — 변경 없음(`[.gridlines]`, 1, 판 100 / 슬롯 118). `docs/design.md`의 세로 예산 산술이 그대로 성립합니다(`SPEC §5.3`, `SPEC §5.7`).
 - **접근성 계약** — 카드의 `.ignore` + `.accessibilityLabel` + `.isButton` + `CPUCard` 식별자와 이름 문구를 그대로 유지합니다(`SPEC §5.8`).
 
 ## 4. 영향 범위
 
 ### production 파일
 
-- `ResourceRunner/DashboardColorPalette.swift` — 그래프 판 면 값 하나 추가.
-- `ResourceRunner/DashboardView.swift` — `HistoryGraphSlotView`의 판 틀에 판 면 배경 추가. `HistoryGraphView`·`GraphPlaceholderView`·`drawCPUGraphGridlines`의 그리기 내용은 바뀌지 않고, 두 경로가 같은 판 면 위에 그린다는 사실을 설명하는 주석만 따라갑니다.
+- `ResourceRunner/DashboardColorPalette.swift` — 판 면 값 추가(현재 코드에 있음). `cpuGridline`(`separatorColor`)을 `graphPlotGridline`(라이트 검정 α 0.038 / 다크 검정 α 0.18)으로 바꾸고, 알파를 받는 동적 색 생성 경로를 팔레트 안에 둡니다. 그 값이 판 면·밴드 채움 기준으로 검증된 값이라는 설명이 따라갑니다.
+- `ResourceRunner/DashboardView.swift` — `HistoryGraphSlotView`의 판 틀에 판 면 배경과 틀 경계 클리핑(현재 코드에 있음, 클리핑은 미커밋). `HistoryGraphView.drawOrder`의 순서가 바뀌고, 「기준선을 먼저 그려야 반투명 밴드 사이로 비친다」는 설명이 새 순서의 이유로 바뀝니다. `drawCPUGraphGridlines`가 참조하는 색 이름이 `graphPlotGridline`으로 바뀝니다. 두 `Canvas`의 채움·경계선 그리기 내용과 `GraphPlaceholderView`는 바뀌지 않습니다.
 
-`ResourceRunner/DashboardPresentation.swift`(`HistoryGraphLayout`·`HistoryGraphGridline`·레이어 목록·카드 접근성 이름)와 `ResourceRunner/DashboardStyle.swift`는 변경이 없습니다.
+`ResourceRunner/DashboardPresentation.swift`(`HistoryGraphLayout`·`HistoryGraphGridline`·자리표시 레이어 목록·카드 접근성 이름)와 `ResourceRunner/DashboardStyle.swift`는 변경이 없습니다.
+코어 격자와 Memory 트랙의 `quaternaryLabelColor`는 기준선 색과 따로라 영향이 없습니다.
 
 ### 기준을 갱신할 테스트
 
 갱신 원칙은 §5 DP7에 둡니다.
 
-- `ResourceRunnerTests/DashboardColorPaletteTests.swift` — 두 밴드 합성 `ΔL*` 단언(`:208-225`)의 기준면이 카드 면에서 판 면으로 바뀝니다(값 22.2 / 15.6 → 20.6 / 17.3, 하한 10.5 유지). 판 면 위 `cpuUser`·`cpuSystem` 대비 ≥ 3, 판 면과 두 면의 관계(§3), 판 면 무채색 단언이 더해집니다. CPU 램프 넷의 카드 면 대비(`:99-118`)와 바탕–카드 단언(`:86-97`)은 그대로입니다.
-- `ResourceRunnerTests/DashboardCardLayoutTests.swift` — `visibleInk`(`:194-223`)가 판 면 색도 잉크에서 빼도록 바뀝니다. 그대로 두면 「CPU 그래프 격자」 탐침(`:418`)이 기준선이 사라져도 판 면 픽셀만으로 통과해 대상을 잃습니다. 판 면이 판 틀 전체를 덮고 틀 밖 1pt(`cpuPlaceholderGraph`의 y 85·86·187·188줄)는 카드 면이라는 픽셀 단언이 값 없음 세 상태와 값 있음 상태에 더해집니다. `cpuPlaceholderGraph`의 「둘레 경계를 포함」 주석이 현재 뜻으로 따라갑니다. 채도 0.35 초과 픽셀 0 단언(`:1099-1107`)은 판 면이 무채색이라 그대로 성립합니다.
-- `ResourceRunnerTests/DashboardPresentationTests.swift` — 변경 없음. 레이어 목록 단언(`:2031-2086`)과 판·슬롯 높이 단언이 그대로 성립합니다.
+- `ResourceRunnerTests/DashboardColorPaletteTests.swift`
+  - 판 면 관계·무채색·판 면 위 두 밴드 대비·판 면 기준 합성 `ΔL*` 단언은 현재 코드 그대로 유지합니다.
+  - `gridlineOnGraphPlotSurfaceStaysAsVisibleAsOnCardSurface`는 잠그던 요구(변경 전만큼 보인다)가 spec.md에서 빠졌으므로 지우고, §3의 판 기준선 관계로 바꿉니다 — 판 면 위(판 면보다 어둡고 `2.3 < ΔL* < 판 가장자리`), 두 채움 위(판 면 위의 3분의 2 이상, 채움 아래였을 때보다 큼, 그 채움보다 약함), 기준선 색이 무채색(R = G = B)입니다.
+  - `graphPlotEdgeIsWeakerThanGridlineAndUpperBandFill`은 「판 가장자리 < 기준선」 절반이 「판 면 위 기준선 < 판 가장자리」로 뒤집히고, 「판 가장자리 < 위 채움」 절반은 그대로입니다.
+  - 기준선 합성 helper는 새 이름의 색을 appearance별로 풀어 그 알파 그대로 판 면과 두 채움 합성색에 합성합니다.
+- `ResourceRunnerTests/DashboardPresentationTests.swift`
+  - `gridlinesAreDrawnBeforeBandFillsAndBoundaries`·`drawOrderIsGridlinesThenFillsAndBoundaries`는 새 순서(두 채움 → 기준선 → 두 경계선, 개수 5, 기준선 하나)로 바뀝니다.
+  - `placeholderDrawOrderContainsOnlyGridlines`의 `HistoryGraphView.drawOrder.first == .gridlines`는 「값 있음 배열에 같은 `.gridlines` 항목이 하나 있다」로 바뀌고, 나머지(`[.gridlines]`, 개수 1, 개수 5)는 그대로입니다.
+  - `bandFillOpacitiesAreTranslucentSoGridlinesShowThrough`의 불투명도 단언(0.60 / 0.15, 둘 다 1 미만)은 spec.md §4가 불투명도를 제외 범위로 두어 그대로 남고, 이름과 설명이 가리키던 이유(기준선이 채움 아래로 비친다)만 새 순서에 맞게 따라갑니다.
+  - `lineWidth == 1`, 경계선 모양, 판·슬롯 높이 단언은 그대로입니다.
+- `ResourceRunnerTests/DashboardCardLayoutTests.swift`
+  - `visibleInk`와 「CPU 그래프 격자」 탐침, `CPUGraphPlotSurfaceRenderingTests`의 네 테스트는 그대로입니다. 네 테스트의 입력(전체 7%)에서 50% 자리는 판 면이라 기준선 칸의 색은 순서가 바뀌어도 같습니다.
+  - 값 없음·값 있음 렌더에서 기준선 줄의 데이터 없는 칸 픽셀이 판 면보다 어둡고 카드 면 색이 아니라는 단언이 더해집니다(`SPEC §5.2`).
+  - 부하가 50%를 넘는 값 있음 입력 두 가지(User가 50%를 넘는 입력, User는 50% 아래이고 전체가 50%를 넘는 입력)에서 기준선 줄의 밴드 칸이 같은 칸 열의 기준선 밖 채움 픽셀보다 어둡다는 단언이 더해집니다(`SPEC §5.2`).
 - `ResourceRunnerUITests/` — 변경 없음. 팝오버 크기와 카드 접근성 이름이 그대로입니다.
 
 ### 문서
 
-- `docs/product.md` §대시보드 §공통 정보 구조의 그래프 판 규칙 문단(127-130행)을 §5 DP6의 문구로 바꿉니다(`SPEC §5.10`).
-- `docs/design.md`·`ROADMAP.md` — 변경 없음(§근거 의존 탐색 흔적).
+- `docs/product.md` §대시보드 §공통 정보 구조의 그래프 판 규칙 문단(127-130행) 앞 두 문장을 §5 DP6의 문구로 바꿉니다(`SPEC §5.10`).
+- `docs/product.md` §CPU §기본 카드 155행, `docs/design.md`, `ROADMAP.md` — 변경 없음(§근거 의존 탐색 흔적).
 
 ### 하위 호환·마이그레이션
 
@@ -197,41 +257,42 @@ CPUCardView (카드 면 #ffffff / #2e2e2e)
 
 `SPEC §5.1`은 판 범위가 면으로 보일 것을, `SPEC §5.4`는 판 면이 데이터보다 약하고 두 밴드가 판 면 위에서 3:1 이상일 것을, `SPEC §5.5`는 판 면이 카드 면과 구분되면서 카드가 바탕 위로 떠오르는 관계가 그대로일 것을 요구합니다.
 spec.md §3은 라이트·다크 값을 각각 확정하고 반전으로 유도하지 말 것을 정했습니다.
-라이트 카드 면이 이미 `#ffffff`라 라이트에서 카드보다 밝은 판 면은 존재하지 않습니다. 갈리는 것은 라이트의 깊이와 다크의 방향입니다.
+라이트 카드 면이 이미 `#ffffff`라 라이트에서 카드보다 밝은 판 면은 없습니다. 갈리는 것은 라이트의 깊이와 다크의 방향입니다.
 
-- 옵션 A — 판 면에 팝오버 바탕(`#ececec` / `#1e1e1e`)을 그대로 쓴다. 면 값이 둘에서 늘지 않는다. 대가: 판–카드 `ΔL*`가 바탕–카드와 같은 6.6 / 7.7이라 판이 카드에 뚫린 구멍처럼 읽히고, 판 폭 232가 카드 폭 248의 대부분이라 그래프 높이에서는 카드가 8pt 테두리만 남은 틀처럼 보여 「카드가 바탕 위로 떠오른다」가 흐려진다. 판 면이 카드 경계와 같은 세기라 데이터보다 약하다는 조건과도 가장 멀다.
+- 옵션 A — 판 면에 팝오버 바탕(`#ececec` / `#1e1e1e`)을 그대로 쓴다. 면 값이 늘지 않는다. 대가: 판–카드 `ΔL*`가 바탕–카드와 같은 6.6 / 7.7이라 판이 카드에 뚫린 구멍처럼 읽히고, 판 폭 232가 카드 폭 248의 대부분이라 그래프 높이에서는 카드가 8pt 테두리만 남은 틀처럼 보여 「카드가 바탕 위로 떠오른다」가 흐려진다. 판 가장자리가 카드 경계와 같은 세기라 데이터보다 약하다는 조건과도 가장 멀다.
 - 옵션 B — 두 모드 모두 카드보다 어둡게, `L*`로 바탕과 카드의 가운데에 둔다. 라이트 `#f5f5f5`, 다크 `#262626`. 대가: 면 값이 셋이 된다. 라이트에서 두 밴드 대비가 조금 내려간다(`cpuUser` 5.33 → 4.89).
-- 옵션 C — 라이트는 카드보다 어둡게, 다크는 카드보다 밝게 둔다(`#f5f5f5` / `#363636`). 시스템 반투명 채움 하나(검정·흰색 α 0.04)를 쓰는 변형도 합성 결과가 같다. 대가: 다크에서 판이 카드 위로 한 단 더 올라가 면이 바탕·카드·판 세 층으로 쌓이고, 두 모드에서 판의 뜻(들어간 면 / 올라온 면)이 갈린다. 다크 밴드 대비와 합성 차가 모두 내려간다(`cpuUser` 4.73 → 4.21, 합성 `ΔL*` 15.6 → 14.0). 반투명 변형은 spec.md §3의 「한쪽 값에서 반전으로 유도하지 않는다」와도 어긋난다.
+- 옵션 C — 라이트는 카드보다 어둡게, 다크는 카드보다 밝게 둔다(`#f5f5f5` / `#363636`). 시스템 반투명 채움 하나(검정·흰색 α 0.04)를 쓰는 변형도 합성 결과가 같다. 대가: 다크에서 판이 카드 위로 한 단 더 올라가 면이 세 층으로 쌓이고, 두 모드에서 판의 뜻(들어간 면 / 올라온 면)이 갈린다. 다크 밴드 대비와 합성 차가 내려간다(`cpuUser` 4.73 → 4.21, 합성 `ΔL*` 15.6 → 14.0). 반투명 변형은 spec.md §3의 「한쪽 값에서 반전으로 유도하지 않는다」와도 어긋난다.
 
-**채택: B.**
+**채택: B.** (2026-09-24 사용자 확인. 실기기 화면에서 범위가 약하게 읽히면 값을 조정할 여지를 둡니다.)
 
-- 방향이 두 모드에서 같습니다. 판은 두 모드 모두 「카드에 한 단 들어간 면」이고, 라이트에서 카드보다 밝게 둘 수 없다는 제약이 다크의 방향도 정합니다. 다크에서 밝게 두면 같은 규칙이 모드마다 반대 뜻이 됩니다.
-- 두 면의 가운데라는 위치가 두 경계를 모두 지킵니다. 판–카드 `ΔL*` 3.5 / 3.8로 카드 면과 갈리고, 판–바탕 `ΔL*` 3.1 / 3.9로 바탕과도 갈려 구멍으로 읽히지 않습니다. 카드 가장자리의 단차(6.6 / 7.7)가 판 가장자리 단차보다 두 배 가까이 커서 카드가 바탕 위로 떠오르는 관계가 여전히 화면에서 가장 강한 면 경계입니다(`SPEC §5.5`).
-- 두 밴드는 판 면 위에서 라이트 4.89 / 10.57, 다크 5.27 / 10.82로 3:1을 넘고, 합성 `ΔL*` 20.6 / 17.3이 기존 하한 10.5를 넘습니다. 다크는 대비와 합성 차가 모두 올라가고, 라이트는 내려가지만 `20260906`이 `#ececec` 근사 위에서 확정한 값(4.51 / 9.76 / 19.3)보다 높습니다(`SPEC §5.4`).
-- 라이트 깊이를 더 얕게(`#f7f7f7`, `ΔL*` 2.8) 두면 판 범위가 읽히지 않을 위험이 커지고, 더 깊게(`#f2f2f2`, `ΔL*` 4.5) 두면 바탕과의 차가 2.1로 줄어 옵션 A의 구멍 인상에 가까워집니다. 다크도 같은 이유로 가운데 값을 씁니다.
-- 판 면은 무채색(`C*` 0.00 ~ 0.01)입니다. 새 색조를 들이지 않아 두 밴드의 색조와 겹칠 자리가 없고, 값 없음 판에 채도 있는 픽셀이 없다는 기존 단언이 그대로 성립합니다.
+- 방향이 두 모드에서 같습니다. 판은 두 모드 모두 「카드에 한 단 들어간 면」이고, 라이트에서 카드보다 밝게 둘 수 없다는 제약이 다크의 방향도 정합니다.
+- 두 면의 가운데라 두 경계를 모두 지킵니다. 판–카드 `ΔL*` 3.46 / 3.78로 카드 면과 갈리고, 판–바탕 `ΔL*` 3.14 / 3.90으로 바탕과도 갈려 구멍으로 읽히지 않습니다. 카드 가장자리 단차(6.60 / 7.67)가 판 가장자리 단차의 두 배 가까이라 카드가 바탕 위로 떠오르는 관계가 여전히 화면에서 가장 강한 면 경계입니다(`SPEC §5.5`).
+- 두 밴드는 판 면 위에서 라이트 4.89 / 10.57, 다크 5.27 / 10.82로 3:1을 넘고, 합성 `ΔL*` 20.6 / 17.3이 기존 하한 10.5를 넘습니다(`SPEC §5.4`).
+- 라이트 깊이를 더 얕게(`#f7f7f7`, 판–카드 `ΔL*` 2.8) 두면 판 범위가 읽히지 않을 위험이 커지고, 더 깊게(`#f2f2f2`, 4.5) 두면 바탕과의 차가 2.1로 줄어 옵션 A의 구멍 인상에 가까워집니다. 다크도 같은 이유로 가운데 값을 씁니다.
+- 판 면은 무채색이라 두 밴드의 색조와 겹칠 자리가 없고, 값 없음 판에 채도 있는 픽셀이 없다는 기존 단언이 그대로 성립합니다.
+- 판 면 값을 조정하면 판 가장자리 단차와 판 면 위 기준선 결과가 함께 움직이므로 §DP5·§DP10의 관계도 다시 따집니다. §3의 불변형 테스트가 그 자리를 잡습니다.
 
 **`20260912` DP6 옵션 A를 접은 두 이유에 대한 답**
 
-- ① 「면 단계가 바탕·카드에 이어 셋이 된다」 — 면 **값**은 셋이 됩니다. 이 대가는 없어지지 않으며, spec.md §1이 가져온 새 근거(거의 빈 판에서 범위가 읽히지 않음)로 사용자와 함께 받아들인 것입니다. 이 설계는 그 대가를 둘로 제한합니다. 첫째, 판 면은 바탕·카드 위에 쌓이는 새 층이 아니라 두 면 **사이**에 놓인 카드의 들어간 자리이고, `바탕 < 판 < 카드` 순서가 두 모드에서 같아 층의 순서가 하나로 유지됩니다. 둘째, 판–카드 단차가 바탕–카드 단차의 절반 남짓이고 모서리 반경·윤곽선이 없어(§DP3) 카드 안에 또 하나의 카드가 얹힌 것으로 읽히지 않습니다. 옵션 C를 접은 이유가 바로 이것입니다 — 다크에서 판이 카드보다 밝으면 면이 세 층으로 쌓입니다.
-- ② 「보조 표시가 데이터보다 강한 상태를 면으로 되살린다」 — 판 위 요소의 세기가 `밴드 > 기준선 > 판 가장자리` 순서가 되도록 값을 골랐습니다. 판 가장자리 `ΔL*` 3.5 / 3.8은 기준선의 판 면 대비 `ΔL*` 8.43 / 9.83의 절반 이하이고, `20260912`가 걷어낸 `20260906` 판 테두리(8.71 / 9.25)의 40% 남짓입니다. 밴드 경계선과 판 면의 `L*` 차는 라이트 51 이상 / 다크 47 이상이고, 가장 옅은 위 밴드 채움(0.15)을 판 면에 합성한 차도 10.3 / 12.4로 판 가장자리의 세 배 가까이 됩니다. 면은 선이 아니라 넓게 퍼진 약한 단차이고 판을 칸으로 가르지 않으므로, `20260912`가 없애려 한 「선이 겹쳐 데이터보다 먼저 보이는 상태」와 모양이 다릅니다. 수치 위계가 지각에서도 성립하는지는 §근거 「추정으로 남는 것」대로 렌더와 실행 중인 앱에서 확인합니다.
+- ① 「면 단계가 바탕·카드에 이어 셋이 된다」 — 면 **값**은 셋이 됩니다. 이 대가는 spec.md §1이 가져온 새 근거로 사용자와 함께 받아들인 것입니다. 이 설계는 대가를 둘로 제한합니다. 첫째, 판 면은 바탕·카드 위에 쌓이는 새 층이 아니라 두 면 **사이**에 놓인 카드의 들어간 자리이고, `바탕 < 판 < 카드` 순서가 두 모드에서 같아 층의 순서가 하나로 유지됩니다. 둘째, 판–카드 단차가 바탕–카드 단차의 절반 남짓이고 모서리 반경·윤곽선이 없어(§DP3) 카드 안에 또 하나의 카드가 얹힌 것으로 읽히지 않습니다.
+- ② 「보조 표시가 데이터보다 강한 상태를 면으로 되살린다」 — 판 면 위 요소의 세기가 `밴드 > 판 가장자리 > 기준선` 순서입니다. 판 가장자리 `ΔL*` 3.46 / 3.78은 가장 약한 밴드 요소인 위 채움(10.31 / 12.35)의 3분의 1 남짓이고, 밴드 경계선(47 이상)의 10분의 1 아래이며, `20260912`가 걷어낸 `20260906` 판 테두리(8.71 / 9.25)의 40% 남짓입니다. 기준선을 판 가장자리 아래로 낮추므로(§DP5) 판 면 위에서 가장 강한 보조 표시는 판 가장자리가 되고, 변경 전 카드 면 위 기준선(8.70 / 9.25)보다 약합니다. 밴드 안의 기준선도 그 자리 밴드 요소보다 약합니다(§DP10). 면은 넓게 퍼진 약한 단차이고 판을 칸으로 가르지 않으므로, `20260912`가 없애려 한 「선이 겹쳐 데이터보다 먼저 보이는 상태」와 모양이 다릅니다.
 
 ### DP2. 판 면을 어느 자리에서 그리는가
 
 `SPEC §5.7`은 두 경로가 같은 크기·같은 자리의 같은 판 면을 보일 것을, spec.md §3은 갱신 주기마다 하는 일이 늘지 않을 것을 요구합니다.
-판 면은 기준선보다 뒤에 있어야 선이 면 위에 보입니다.
+판 면은 기준선과 밴드보다 뒤에 있어야 합니다.
 
-- 옵션 A — 두 `Canvas`의 첫 레이어로 판 면을 넣는다. `drawOrder`와 `placeholderDrawOrder` 맨 앞에 같은 항목을 두고, 기준선처럼 두 경로가 공유하는 그리기 함수 하나로 채운다. 순서와 공유가 레이어 배열 단언으로 잡힌다. 대가: `TimelineView`가 1초마다 `HistoryGraphView`의 `Canvas`를 다시 그리므로 매 갱신마다 232 × 100 채움 하나가 는다. 두 배열의 기존 단언(개수 5 / 1, 첫 항목 `.gridlines`)이 모두 바뀐다.
-- 옵션 B — 두 경로를 고르는 `Group`에 이미 걸린 판 틀의 배경으로 한 번 선언한다. 대가: 순서와 공유가 레이어 배열에 드러나지 않아, 테스트가 렌더 픽셀로 확인해야 한다.
+- 옵션 A — 두 `Canvas`의 첫 레이어로 판 면을 넣는다. 두 레이어 배열 맨 앞에 같은 항목을 두고 공유 그리기 함수 하나로 채운다. 순서와 공유가 레이어 배열 단언으로 잡힌다. 대가: `TimelineView`가 1초마다 `Canvas`를 다시 그리므로 매 갱신마다 232 × 100 채움 하나가 는다. 두 배열의 개수가 바뀐다.
+- 옵션 B — 두 경로를 고르는 `Group`에 걸린 판 틀의 배경으로 한 번 선언한다. 대가: 순서와 공유가 레이어 배열에 드러나지 않아, 테스트가 렌더 픽셀로 확인해야 한다. 판 면이 `Canvas` 밖에 있어 `Canvas` 안의 블렌드 모드가 판 면과 섞이지 않는다(§DP10).
 - 옵션 C — `HistoryGraphView`와 `GraphPlaceholderView`가 각자 배경을 깐다. 대가: 같은 사실을 두 자리가 따로 선언해 한쪽만 바뀌는 변경이 조용히 통과한다.
 
 **채택: B.**
 
-- 두 경로가 **선언 하나**를 공유합니다. 판 틀은 이미 두 경로를 고르는 자리 바깥에 한 번 걸려 있으므로, 거기에 건 배경은 어느 경로가 그려져도 같은 크기·같은 자리에 나타나고 경로별로 갈릴 수 있는 코드가 없습니다. 옵션 A는 두 배열에 같은 항목을 따로 넣어야 해서 공유가 단언으로만 보장됩니다.
-- `Canvas`의 그리기 내용이 바뀌지 않아 1초마다 그리는 레이어 목록이 그대로입니다. 옵션 A의 추가 채움 하나는 비용으로는 작지만, spec.md §3의 「갱신 주기마다 하는 일이 늘지 않는다」를 문자 그대로 어기는 쪽은 A뿐입니다.
-- 배경은 `Canvas`의 모든 레이어보다 뒤에 오므로 「기준선보다 먼저」가 뷰 구조로 성립합니다. 레이어 배열이 그대로라 `20260912` DP6이 세운 「두 경로가 같은 레이어 목록의 첫 항목(기준선)을 공유한다」도 그대로입니다.
+- 두 경로가 **선언 하나**를 공유합니다. 판 틀은 두 경로를 고르는 자리 바깥에 한 번 걸려 있으므로, 거기에 건 배경은 어느 경로가 그려져도 같은 크기·같은 자리에 나타납니다.
+- `Canvas`가 1초마다 그리는 레이어 수가 늘지 않습니다. spec.md §3의 「갱신 주기마다 하는 일이 늘지 않는다」를 문자 그대로 어기는 쪽은 A뿐입니다.
+- 배경은 `Canvas`의 모든 레이어보다 뒤에 오므로 「판 면이 가장 뒤」가 뷰 구조로 성립합니다.
 - 배경은 레이아웃에 참여하지 않아 슬롯·카드·팝오버 높이가 바뀌지 않습니다(`SPEC §5.7`).
-- 대가인 확인 수단은 기존 픽셀 기반(`DashboardCardLayoutTests`의 `renderedPixels`·`pixelCount`)으로 채웁니다 — 판 틀 안이 판 면으로 덮이고 틀 밖 1pt가 카드 면이라는 것을 값 있음·값 없음 두 경로에서 봅니다(§4).
+- 대가인 확인 수단은 기존 픽셀 기반(`renderedPixels`·`pixelCount`)으로 채웁니다 — 판 틀 안이 판 면으로 덮이고 틀 밖이 카드 면이라는 것을 두 경로에서 봅니다(§4, §DP7). 블렌드 모드를 못 쓰는 대가는 §DP10이 source-over로 받습니다.
 
 ### DP3. 판 면의 모서리와 가장자리를 어떻게 두는가
 
@@ -242,43 +303,56 @@ spec.md §3은 라이트·다크 값을 각각 확정하고 반전으로 유도�
 
 **채택: A.**
 모서리가 곧 (0%, 창 시작)·(100%, 지금) 같은 판의 끝점이라, 면을 자르지 않아야 가장자리 전체가 범위의 끝으로 읽힙니다.
-판 틀은 카드 가장자리에서 8pt 안쪽이라 카드의 둥근 모서리 구간과 겹치지 않고, 두 모양이 맞닿는 자리가 없습니다.
-윤곽선은 두지 않습니다 — 가장자리는 면 색과 카드 면 색의 단차만으로 생기며, 판 위의 선은 50% 기준선 하나로 남습니다(`SPEC §5.3`).
+판 틀은 카드 가장자리에서 8pt 안쪽이라 카드의 둥근 모서리 구간과 겹치지 않습니다.
+가장자리는 면 색과 카드 면 색의 단차만으로 생기며, 판 위의 선은 50% 기준선 하나로 남습니다(`SPEC §5.3`).
 
 ### DP4. 공통 규칙을 코드에서 어디까지 공유 자리로 만드는가
 
 spec.md §2는 이 규칙을 CPU 전용이 아니라 대시보드 그래프 판 규칙으로 정하라고 했고, spec.md §4는 Network·Disk 그래프 구현을 M3에 두었습니다.
+기준선 색이 이번 범위에 들어와, 기준선 값도 판 면처럼 M3 그래프가 그대로 쓸 값이 됩니다.
 
-- 옵션 A — 판 면·판 틀·축 라벨 줄을 묶는 범용 그래프 판 뷰를 지금 만든다. 대가: 지금 소비자가 CPU 하나뿐이라 받을 인자의 모양(Network·Disk의 세로 범위, 계열 수)을 근거 없이 정해야 하고, spec.md §4가 M3에 둔 구현을 앞당긴다.
-- 옵션 B — 공유 자리는 팔레트의 판 면 값(CPU 접두 없는 이름)과 `docs/product.md`의 규칙 문구 둘로 두고, 판 틀에 배경을 까는 일은 CPU 슬롯이 직접 한다.
-
-**채택: B.**
-M3가 참조해야 할 것은 「판이 무엇으로 범위를 나타내는가」라는 규칙과 그 면의 값이고, 둘 다 이 feature에서 한 자리씩 생깁니다.
-판 틀을 묶는 방식은 M3가 두 번째 소비자를 만들 때 실제 모양을 보고 정합니다.
-`cpuGridline`의 이름은 spec.md §4의 제외 범위(기준선 색)에 닿으므로 바꾸지 않습니다.
-
-### DP5. 기준선이 「변경 전 카드 면 위에서만큼 보인다」를 무엇으로 판정하는가
-
-`SPEC §5.4`는 기준선이 판 면 위에서 변경 전 카드 면 위에서만큼 보일 것을 요구하고, spec.md §3은 기준선이 시스템 구분선 색이라 3:1 대상이 아니라고 정했습니다.
-기준선은 라이트 검정 α 0.098, 다크 흰색 α 0.098의 반투명이라 아래 면에 따라 합성 결과가 달라집니다.
-
-- 옵션 A — 대비비와 `ΔL*`가 둘 다 변경 전 이상일 것. 대가: 라이트에서는 **성립할 수 있는 판 면 값이 없습니다.** 카드보다 밝은 면은 없고(`#ffffff`), 카드보다 어두운 후보는 모두 두 값이 조금씩 내려가며(§근거 후보 표), 기준선의 색·두께는 spec.md §4의 제외 범위라 바꿀 수 없다. 이 기준을 쓰면 판 면을 깔지 말라는 결론이 되어 `SPEC §5.1`과 충돌한다.
-- 옵션 B — 대비비 차가 0.01 미만이고 `ΔL*` 감소가 1 미만이면 「만큼 보인다」로 본다. 대가: 라이트에서 수치가 조금 내려가는 것을 허용한다.
-- 옵션 C — 대비비만 본다. 대가: 반투명 검정은 곱셈 합성이라 대비비가 면 밝기에 거의 무관해(1.244 ~ 1.248) 어떤 면을 깔아도 통과하고, 판정이 아무것도 가르지 못한다.
+- 옵션 A — 판 면·판 틀·기준선·축 라벨 줄을 묶는 범용 그래프 판 뷰를 지금 만든다. 대가: 지금 소비자가 CPU 하나뿐이라 받을 인자의 모양(Network·Disk의 세로 범위, 계열 수)을 근거 없이 정해야 하고, spec.md §4가 M3에 둔 구현을 앞당긴다.
+- 옵션 B — 공유 자리는 팔레트의 판 면·판 기준선 두 값과 `docs/product.md`의 규칙 문구로 두고, 판 틀에 배경을 까는 일과 기준선을 긋는 일은 CPU 슬롯과 CPU 그리기 함수가 직접 한다. 기준선 색 이름은 `cpuGridline`에서 CPU 접두 없는 `graphPlotGridline`으로 바꾼다. 대가: 이름이 바뀌어 참조 두 자리(그리기 함수, 팔레트 테스트 helper)가 따라 바뀐다.
+- 옵션 C — 옵션 B와 같되 기준선 색 이름 `cpuGridline`은 그대로 두고 값만 바꾼다. 대가: 판 면 기준으로만 성립하는 값이 CPU 이름을 달고 있어, M3가 같은 판을 만들 때 CPU 전용 색으로 오해하거나 자기 기준선 색을 따로 만들 여지가 생긴다.
 
 **채택: B.**
-채택 값에서 라이트 대비비 1.248 → 1.246(차 0.002), `ΔL*` 8.71 → 8.43(감소 0.28), 다크 대비비 1.362 → 1.357(차 0.005), `ΔL*` 9.25 → 9.83(증가)입니다.
-라이트 감소 0.28은 식별 한계로 쓰이는 `ΔE*ab` 약 2.3보다 한 자릿수 작고, 기준으로 둔 1보다도 작습니다.
-`ΔL*`를 함께 보는 이유는 옵션 C처럼 대비비만으로는 판 면을 바꿔도 판정이 움직이지 않기 때문입니다.
-이 판정 기준은 2026-09-24 사용자 확인을 받았습니다.
+M3가 참조해야 할 것은 「판이 무엇으로 범위를 나타내고 기준선이 얼마나 약하며 어디에 그리는가」라는 규칙과 그 두 값이고, 모두 이 feature에서 한 자리씩 생깁니다.
+기준선 값의 근거가 판 면·밴드 채움과의 관계(§DP5, §DP10)라 판 면과 같은 접두의 이름으로 짝을 지어 둡니다. 이름을 바꾸는 참조는 두 자리뿐입니다.
+그리기 함수 `drawCPUGraphGridlines`는 CPU 그래프의 좌표 변환을 쓰는 CPU 전용 함수라 이름을 두고, 판 틀을 묶는 방식은 M3가 두 번째 소비자를 만들 때 실제 모양을 보고 정합니다.
+
+### DP5. 판 면 위에서 50% 기준선을 얼마나, 어느 방향으로 보이게 하는가
+
+`SPEC §5.2`는 기준선이 판을 가르는 경계가 아니라 판 안의 눈금으로 읽히고, 데이터가 기준선 아래에만 있는 낮은 부하 화면에서도 선 위아래가 다른 영역으로 갈려 보이지 않으면서 값 높이를 어림할 만큼 보일 것을 요구합니다.
+`SPEC §5.4`는 기준선이 두 밴드보다 약해 데이터보다 먼저 눈에 들어오지 않을 것을 요구하고, spec.md §3은 기준선을 3:1 대비 대상에서 빼면서 판 면 위에서 보여야 한다고 정했습니다.
+spec.md §1은 실기기 다크에서 기준선–판 면 `ΔL*` 약 9.8이 판 가장자리 약 3.8보다 커서, 빈 위쪽 절반에서 가장 강한 가로 요소가 기준선이었다는 것을 원인으로 적었습니다.
+이 결정은 판 면 위에서 보이는 결과(세기와 방향)를 정하고, 그 결과를 어떤 색 형태로 만들지와 밴드 위에서 어떻게 보일지는 §DP10이 정합니다.
+
+판정 기준을 수치로 둡니다 — 두 모드 각각에서 판 면 위 기준선 `ΔL*`가 판 가장자리(판–카드) `ΔL*`보다 작으면 빈 위쪽 절반에서 가장 강한 가로 요소가 판 윗끝이 되어 기준선이 판을 가르는 경계가 되지 못한다고 봅니다(`SPEC §5.2`).
+가시성의 하한은 넓은 면의 식별 한계 `ΔE*ab` 약 2.3으로 둡니다.
+또 하나의 조건은 선 색의 방향입니다. 기준선은 판 틀 좌우 끝까지 그어져 양끝이 카드 면 여백과 맞닿으므로, 선 색이 카드 면 색에 가까우면 양쪽 여백이 선을 따라 판을 가로질러 이어진 틈으로 보여 판이 위아래 두 칸으로 나뉩니다.
+
+- 옵션 A — `separatorColor`를 그대로 둔다. 대가: 판 면 위 `ΔL*` 8.43 / 9.83이 판 가장자리의 2.4 / 2.6배라, 사용자가 실기기에서 본 「위아래가 다른 영역」 인상이 그대로 남는다. `SPEC §5.2`를 만족하지 못한다.
+- 옵션 B — `separatorColor`에 불투명도를 더 걸어 판 가장자리 아래로 낮춘다(α 약 0.040 / 0.036). 시스템 색의 방향(라이트는 어둡게, 다크는 밝게)을 따른다. 대가: 다크 합성색 `L*`가 카드 면보다 0.09 낮을 뿐이라 선이 카드 면 색이 되고, 양끝 여백과 이어진 틈으로 판을 둘로 가른다. 값이 OS가 소유한 알파에 곱해져 OS가 바뀌면 조용히 움직이고, spec.md §3이 요구하는 「라이트·다크 각각 따로 확정한 값」이 아니다.
+- 옵션 C — 시스템 `gridColor`(`#e6e6e6` / `#1a1a1a`)를 쓴다. 두 모드 모두 판 면보다 어둡고 세기가 지금의 60% 남짓(5.24 / 5.90)으로 준다. 대가: 여전히 판 가장자리의 1.5배라 빈 위쪽 절반에서 가장 강한 가로 요소가 기준선으로 남는다. OS가 소유한 값이라 대비 관계가 OS 버전에 따라 움직인다.
+- 옵션 D — 다크만 판 면보다 밝게, 판 가장자리 아래로 둔다(`#ececec` / `#2d2d2d`, 3.14 / 3.31). 다크 UI에서 선이 밝아지는 관례를 따른다. 대가: 다크 선 `L*`가 카드 면보다 0.47 낮아 옵션 B와 같은 틈 인상이 남는다. 다크에서 판 가장자리 아래이면서 판 면보다 밝은 값은 모두 판 면과 카드 면 사이, 곧 카드 면 쪽에 놓이므로 이 인상을 피할 값이 없다.
+- 옵션 E — 두 모드 모두 판 면보다 어둡게, 판 가장자리보다 약한 8비트 결과 중 가장 강한 값을 쓴다. 판 면 위 결과 라이트 `#ececec`, 다크 `#1f1f1f`(`ΔL*` 3.14 / 3.40, 판 가장자리의 0.91 / 0.90배). 대가: 다크에서 선이 지금의 밝은 선에서 어두운 선으로 바뀐다. 세기가 지금의 3분의 1 남짓이라 가는 선이 어림할 만큼 보이는지가 실기기 판단에 걸린다.
+
+**채택: E.** (2026-09-24 사용자 확인)
+
+- 두 모드 모두 판 가장자리보다 약해 판정 기준을 만족하는 옵션은 B·D·E이고, 그중 선 색이 카드 면 쪽에 놓이지 않는 것은 E뿐입니다. 라이트는 어느 옵션이든 어두운 쪽이라 방향이 갈리는 곳은 다크입니다.
+- 방향이 두 모드에서 같습니다. 판 면이 카드보다 한 단 들어간 면이듯(§DP1) 기준선은 판 면보다 한 단 더 들어간 선이고, 카드 면에서 멀어지는 쪽이라 양끝 여백과 이어지지 않습니다. 시스템 `gridColor`도 두 모드 모두 면보다 어두운 쪽이라, 격자선을 면보다 어둡게 두는 것은 플랫폼에도 있는 방향입니다.
+- 판 면 위 세기 순서가 `밴드 > 판 가장자리 > 기준선`이 됩니다. 기준선 3.14 / 3.40은 가장 약한 밴드 요소(위 채움 10.31 / 12.35)의 3분의 1 아래라 데이터보다 먼저 눈에 들어오지 않습니다(`SPEC §5.4`). 판 가장자리는 넓은 두 면 사이의 단차이고 기준선은 1pt 선이라, 같은 `ΔL*`에서도 선이 더 약하게 보이는 쪽으로 여유가 생깁니다.
+- 판 가장자리 아래에서 가장 강한 값을 골라 가시성 쪽으로 최대한 남깁니다. 두 값 모두 식별 한계 2.3을 넘고, 낮은 부하 화면에서는 선 전체가 판 면 위에 드러나 50% 높이를 알립니다(`SPEC §5.2`). 판 가장자리와 같게 두면(`#ebebeb` / `#1e1e1e`) 두 모드 모두 판 가장자리를 조금 넘어 판정 기준에 걸립니다.
+- 라이트 결과가 팝오버 바탕과 같은 수치이지만 근거가 판 면·카드 면과의 관계라, 바탕을 참조하지 않습니다. 판 면을 조정할 때(§DP1)는 §3의 불변형 테스트가 기준선이 관계를 벗어났는지를 잡습니다.
+- 20260906이 「격자 색을 옅게 낮추면 값의 높이를 어림할 기준선이 약해진다」며 접은 방향을 이번에 택하는 근거는 spec.md §1의 새 관찰과 사용자 선택이고, 그 대가는 가시성 하한, 밴드 안 가시성(§DP10), 실기기 확인으로 관리합니다.
 
 ### DP6. `docs/product.md`의 판 규칙 문구를 어떻게 고치는가
 
 `SPEC §5.10`은 문서 규칙이 현재 화면과 어긋나지 않고, 판이 면으로 범위를 나타낸다는 것이 대시보드 그래프 판 공통 규칙으로 적혀 있을 것을 요구합니다.
-지금 문단(127-130행)은 기준선 하나·세로 눈금 없음·판 테두리 없음·미수집 구간 표시만 적고 판의 범위를 무엇이 나타내는지는 적지 않습니다.
+지금 문단(127-130행)은 기준선 하나·세로 눈금 없음·판 테두리 없음·미수집 구간 표시만 적고, 판의 범위를 무엇이 나타내는지와 기준선이 얼마나 약하고 밴드와 어떻게 겹치는지는 적지 않습니다.
 
-- 옵션 A — 기존 문단 끝에 「판에 옅은 면을 깝니다」 한 문장만 더한다. 대가: 면이 무엇을 나타내는지(범위의 끝), 얼마나 약해야 하는지, 자리표시도 같은 면을 그리는지가 빠져 M3가 같은 판을 만들 근거가 되지 못한다.
-- 옵션 B — 문단 첫머리를 「대시보드의 모든 그래프 판은 면으로 범위를 나타낸다」로 바꾸고, 면의 뜻·세기·윤곽선 없음·자리표시 공유를 적은 뒤 기존 선 규칙과 미수집 구간 규칙을 잇는다. 세로 범위는 CPU 전용 값(0%·100%)이 아니라 「세로 범위의 양끝」으로 적는다.
+- 옵션 A — 기존 문단 끝에 「판에 옅은 면을 깝니다」 한 문장만 더한다. 대가: 면이 무엇을 나타내는지, 얼마나 약해야 하는지, 자리표시도 같은 면을 그리는지, 기준선이 판 가장자리보다 약하고 밴드 안에서도 보인다는 것이 빠져 M3가 같은 판을 만들 근거가 되지 못한다.
+- 옵션 B — 문단 첫머리를 「대시보드의 모든 그래프 판은 면으로 범위를 나타낸다」로 바꾸고, 면의 뜻·세기·윤곽선 없음·자리표시 공유, 기준선 하나와 그 세기·밴드와의 겹침을 적은 뒤 미수집 구간 규칙을 잇는다. 세로 범위는 CPU 전용 값이 아니라 「세로 범위의 양끝」으로 적는다.
 
 **채택: B.**
 
@@ -290,22 +364,89 @@ M3가 참조해야 할 것은 「판이 무엇으로 범위를 나타내는가�
 +판 면은 카드 면보다 한 단 가라앉은 무채색이고, 카드와 바탕 사이의 단차보다 약해 데이터보다 먼저 눈에 들어오지 않습니다.
 +면의 가장자리에는 윤곽선을 긋지 않고, 값이 없는 자리표시도 같은 판 면을 같은 크기·같은 자리에 그립니다.
 +판 위의 선은 값의 높이를 어림하는 가로 기준선 하나뿐이며 세로 눈금과 판 테두리를 두지 않습니다.
++기준선은 판을 가르는 경계가 아니라 판 안의 눈금이라, 판 면보다 한 단 더 가라앉은 무채색 실선으로 긋고 판 면 가장자리의 단차보다 약하게 둡니다.
++기준선은 밴드 채움 위, 밴드 경계선 아래에 옅게 겹쳐 그려, 값이 기준선을 넘는 구간에서도 밴드 안에서 보이고 값을 나타내는 선은 가리지 않습니다.
 +보조 표시가 판을 여러 칸으로 갈라 실제 값보다 먼저 눈에 들어오지 않게 하기 위해서입니다.
  아직 수집되지 않은 구간에는 점도 선도 그리지 않아 값 0으로 읽히지 않으며, 수집 중이라는 사실과 지금까지 모인 양은 축 아래 문구로 알립니다.
  시간 창이 다 찬 뒤에는 그 자리에 아무 표시도 남지 않습니다.
 ```
 
-- 「모든 그래프 판」이 §공통 정보 구조 안에서 규칙의 적용 범위를 CPU 밖으로 넓히는 문장이고, M3가 참조할 자리입니다.
-- 세기를 「카드와 바탕 사이의 단차보다 약하다」로 적어, 값이 아니라 관계를 규칙으로 둡니다. 구체 값은 팔레트가 소유합니다.
+- 「모든 그래프 판」이 규칙의 적용 범위를 CPU 밖으로 넓히는 문장이고, M3가 참조할 자리입니다.
+- 판 면과 기준선의 세기를 값이 아니라 관계(「카드와 바탕 사이의 단차보다 약하다」, 「판 면 가장자리의 단차보다 약하다」)로 적습니다. 구체 값은 팔레트가 소유합니다.
+- 밴드와의 겹침은 계열 수와 무관한 규칙(채움 위, 경계선 아래)으로 적어, 계열이 하나인 그래프에도 그대로 적용됩니다.
 - §CPU §기본 카드의 「값의 높이를 어림할 수 있는 기준선을 함께 둡니다」(155행)는 현재 화면과 어긋나지 않아 그대로 둡니다.
 
 ### DP7. 기존 테스트를 어떤 원칙으로 갱신하는가
 
-`20260912` DP15의 세 형태(유도형 / 불변형 / 기준값형)를 그대로 씁니다. 요구가 남아 있는 단언은 지우거나 완화하지 않습니다.
+`20260912` DP15의 세 형태(유도형 / 불변형 / 기준값형)를 그대로 씁니다.
+요구가 남아 있는 단언은 지우거나 완화하지 않고, 요구가 spec.md에서 빠지거나 바뀐 단언만 새 요구의 단언으로 바꿉니다.
 
-- **기준면이 바뀌는 단언** — 두 밴드 합성 `ΔL*` 단언은 「밴드가 실제로 놓이는 면」이 판 면이 되었으므로 기준면을 판 면으로 옮깁니다. 하한 10.5와 밀도 차 0.45는 그대로입니다. 카드 면 기준 CPU 램프 대비는 스와치가 카드 면에 남아 있으므로 그대로 둡니다 — 두 밴드 색은 카드 면(스와치)과 판 면(밴드) 두 기준 모두에서 3:1을 지킵니다(`SPEC §5.4`).
-- **불변형으로 더하는 단언** — 「판 면 ≠ 카드 면, 두 모드 모두 `바탕 L* < 판 L* < 카드 L*`, 판–카드 `ΔL*` < 바탕–카드 `ΔL*`」(`SPEC §5.5`), 「판 면 위 `cpuUser`·`cpuSystem` 대비 ≥ 3」(`SPEC §5.4`), 「판 면 `C*`가 무채색 범위」, 「기준선 합성의 판 면 대비비 차 < 0.01, `ΔL*` 감소 < 1」(`SPEC §5.4`, §DP5).
-- **대상을 잃는 단언** — 「CPU 그래프 격자」 탐침은 `visibleInk`가 판 면 색을 잉크로 세면 기준선 없이도 통과하므로, 판 면 색을 잉크에서 빼 기준선만 세게 합니다. 판 면 자체는 별도 탐침으로 셉니다. 이 교체는 요구가 남은 단언을 지우는 것이 아니라 같은 요구를 다시 가르게 하는 것입니다.
-- **렌더로 더하는 단언** — 값 없음 세 상태와 값 있음 상태에서 판 틀 100pt 안이 판 면으로 덮이고(기준선 줄 제외), 틀 바로 밖 1pt 줄과 칸이 카드 면이라는 것(`SPEC §5.1`, `SPEC §5.3`, `SPEC §5.6`, `SPEC §5.7`). 값 있음 상태는 데이터가 창의 오른쪽 일부에만 있는 점 배열로 그려, 데이터가 없는 왼쪽 구간과 기준선 위쪽 절반이 판 면이라는 것을 봅니다(`SPEC §5.1`, `SPEC §5.2`, `SPEC §5.6`).
-- **그대로 두는 단언** — 레이어 목록 두 개, 판·슬롯 높이, 카드 높이, 카드 안쪽 여백 띠의 카드 면, 값 없음 판의 채도 픽셀 0, UI 테스트의 팝오버 크기와 접근성 이름(`SPEC §5.7`, `SPEC §5.8`).
+- **기준면이 바뀌는 단언** — 두 밴드 합성 `ΔL*` 단언의 기준면은 판 면입니다(현재 코드에 반영됨). 하한 10.5와 밀도 차 0.45는 그대로입니다. 카드 면 기준 CPU 램프 대비는 스와치가 카드 면에 남아 있어 그대로 둡니다 — 두 밴드 색은 카드 면(스와치)과 판 면(밴드) 두 기준 모두에서 3:1을 지킵니다(`SPEC §5.4`).
+- **불변형 단언** — 판 면: 「판 면 ≠ 카드 면, `바탕 L* < 판 L* < 카드 L*`, 판–카드 `ΔL*` < 바탕–카드 `ΔL*`」(`SPEC §5.5`), 「판 면 위 `cpuUser`·`cpuSystem` 대비 ≥ 3」(`SPEC §5.4`), 「판 면 무채색」. 판 기준선: §3의 판 면 위·두 채움 위 관계와 「기준선 색 무채색」(`SPEC §5.2`, `SPEC §5.4`). 모두 두 모드에서, 테스트 안 리터럴이 아니라 팔레트 값을 appearance별로 풀어 잽니다. 채움 합성색은 `fillOpacity(for:)`와 두 밴드 색에서 유도합니다.
+- **요구가 빠지거나 바뀐 단언** — `gridlineOnGraphPlotSurfaceStaysAsVisibleAsOnCardSurface`가 잠그던 「변경 전 카드 면 위에서만큼 보인다」는 spec.md 재작성으로 빠졌고, `SPEC §5.2`가 그 반대 방향을 요구합니다. 이 단언은 지우고 판 기준선 불변형으로 대체합니다. `graphPlotEdgeIsWeakerThanGridlineAndUpperBandFill`의 「판 가장자리 < 기준선」 절반은 「판 면 위 기준선 < 판 가장자리」로 뒤집히고, 「판 가장자리 < 위 채움」 절반은 그대로입니다. 레이어 배열 단언은 「기준선이 가장 먼저」에서 「두 채움 → 기준선 → 두 경계선」으로 바뀝니다 — 앞의 순서가 지키던 요구(밴드가 덮어도 기준선이 보인다)는 남아 있고, 그 요구를 지키는 수단이 순서 변경(§DP10)으로 바뀌었기 때문입니다. 개수 5와 기준선 항목 하나는 그대로 잠급니다.
+- **대상을 잃는 단언** — 「CPU 그래프 격자」 탐침은 `visibleInk`가 판 면 색을 잉크에서 빼 기준선 픽셀만 셉니다(현재 코드에 반영됨). 기준선이 약해진 뒤에도 탐침이 대상을 잃지 않는다는 것은 scale 1 렌더에서 판 면과의 차가 허용 오차보다 크다는 것(§근거)으로 성립하며, 탐침이 통과하는 것으로 확인합니다.
+- **렌더로 더하는 단언** — 값 없음 세 상태와 낮은 부하 값 있음 입력(창 오른쪽 일부, 창 전체, 창 시작을 막 벗어난 점)에서 판 틀 안이 기준선 줄을 빼고 판 면이고, 틀 바로 밖 줄과 칸이 카드 면이며, 기준선 위쪽 절반이 판 면이라는 것(`SPEC §5.1`, `SPEC §5.2`, `SPEC §5.3`, `SPEC §5.6`, `SPEC §5.7`, 현재 코드에 반영됨). 여기에 기준선 줄의 데이터 없는 칸 픽셀이 판 면보다 어둡고 카드 면 색이 아니라는 단언, 부하가 50%를 넘는 두 입력에서 기준선 줄의 밴드 칸이 같은 칸 열의 기준선 밖 채움 픽셀보다 어둡다는 단언을 더합니다(`SPEC §5.2`).
+- **그대로 두는 단언** — 자리표시 레이어 목록, `lineWidth == 1`, 두 밴드 불투명도와 경계선 모양, 판·슬롯 높이, 카드 높이, 카드 안쪽 여백 띠의 카드 면, 값 없음 판의 채도 픽셀 0, UI 테스트의 팝오버 크기와 접근성 이름(`SPEC §5.3`, `SPEC §5.4`, `SPEC §5.7`, `SPEC §5.8`).
+- 「판을 가르는 경계가 아니라 눈금으로 읽힌다」, 「어림할 만큼 보인다」, 「밴드 안에서 50%보다 얼마나 위인지 어림된다」는 수치 위계가 지각에서도 성립하는지의 판단이라, 라이트·다크 실기기에서 낮은 부하 화면과 50%를 넘는 부하 화면을 보는 관찰이 남습니다(`SPEC §5.2`).
 - `SPEC §5.9`의 자체 CPU 부하는 단위 테스트가 아니라 `20260912`와 같은 관찰 절차(팝오버를 열어 둔 채 앱 자신의 CPU 사용량을 변경 전과 견줌)로 확인합니다.
+
+### DP8. 판 틀 밖으로 번지는 밴드를 어떻게 다루는가
+
+2026-09-24 task-002 구현 중 확인한 사실입니다 — 두 `Canvas`는 판 틀로 잘리지 않아, 밴드 경계선이 창 양끝에서 틀 밖으로 1–2px 번집니다.
+오른쪽은 마지막 점이 지금 시각에 있으면 선 두께의 절반이 틀 오른쪽 끝을 넘고, 왼쪽은 점 목록을 tick마다 거르는 사이 판이 1초마다 새 시각으로 다시 그려져 막 창을 벗어난 점이 음수 x에 그려집니다.
+변경 전에는 카드 면 위라 보이지 않았고, 판 면이 깔리면서 「면의 가장자리가 창 양끝」(`SPEC §5.1`)과 어긋나는 번짐으로 드러납니다.
+
+- 옵션 A — 두 경로가 공유하는 판 틀에 클리핑을 한 번 건다. 대가: 창 양끝에서 선 두께의 바깥 절반(1pt 미만)이 잘린다.
+- 옵션 B — production은 그대로 두고 테스트 입력의 점을 창 끝에서 뗀다. 대가: 실제 앱의 번짐이 남고, 검증이 입력 선택으로 번짐을 비켜 간다.
+- 옵션 C — `Canvas` 안에서 점을 창 범위로 자르거나 잘라 그린다. 대가: 두 `Canvas`의 채움·경계선 그리기 내용이 바뀌어 §DP2가 지키는 「매 갱신 작업을 늘리지 않는다」와 이 feature의 작은 변경 범위를 벗어난다.
+
+**채택: A.** (2026-09-24 사용자 결정)
+
+- 판 면 배경과 같은 판 틀 한 자리에 걸어 두 경로가 같은 선언을 공유하고, `Canvas`의 채움·경계선 그리기 내용은 그대로입니다(§DP2).
+- 잘리는 것은 창 양끝 선 두께의 바깥 절반뿐이고, 밴드의 채움 밀도·점선과 실선 구분·값은 바뀌지 않습니다. spec.md §4가 제외한 「밴드의 색·채움 밀도·경계선 모양」을 바꾸는 것으로 보지 않습니다.
+- 기준선은 x 0부터 판 틀 폭까지라 클리핑으로 잘리는 부분이 없습니다.
+- 클리핑은 레이아웃에 참여하지 않아 슬롯·카드·팝오버 높이가 바뀌지 않고, 접근성 계층에도 요소를 더하지 않습니다(`SPEC §5.7`, `SPEC §5.8`).
+- 확인은 값 있음 입력에서 틀 밖 줄과 칸이 카드 면이라는 렌더 단언이 잡습니다. 창 오른쪽 끝에 점이 있는 입력과, 창 시작을 막 벗어난 점이 남은 입력을 모두 씁니다(§DP7).
+
+### DP9. 기준선의 두께와 선 모양을 바꾸는가
+
+spec.md §1·§4는 기준선의 색·두께·선 모양을 범위에 넣고 값 50%와 가로선 하나는 고정했습니다.
+§DP5가 판 면 위 세기를, §DP10이 밴드 안 가시성을 색과 순서로 정하므로, 두께와 선 모양을 함께 바꿀지가 남습니다.
+아래 밴드 경계선은 이미 점선 `[3, 2]`이고, 요약 줄 스와치가 같은 점선 테두리로 「점선 = User」를 범례로 보여 줍니다.
+
+- 옵션 A — 1pt 실선을 그대로 두고 세기는 색과 순서로만 정한다. 대가: 세기를 조절할 수단이 색 하나라, 색만으로 부족하면 다시 이 결정을 연다.
+- 옵션 B — 두께를 0.5pt 헤어라인으로 줄인다. 대가: Retina에서는 한 장치 픽셀에 같은 색이 칠해져 픽셀당 대비가 그대로라 「가장 강한 가로 요소」 문제가 남고, scale 1 화면과 테스트 렌더에서는 반 픽셀 커버리지로 번져 세기가 화면 배율에 따라 달라진다(`separatorColor` 기준 판 면 위 `ΔL*` 4.19 / 5.00). 밴드 안에서는 더 약해져 `SPEC §5.2`의 밴드 안 가시성과 반대 방향이다. `HistoryGraphGridline.lineWidth == 1` 단언과 기준선 줄 계산이 바뀐다.
+- 옵션 C — 점선이나 점 모양(예: `[1, 2]`)으로 바꾼다. 선이 끊겨 연속된 경계로 읽히기 어렵다. 대가: 점 하나하나의 대비는 그대로라 세기 문제는 색으로 따로 풀어야 한다. 낮은 부하 화면에서는 User 경계선도 거의 수평인 점선이라, 점선 기준선과 수평 점선 두 줄이 판에 함께 놓이고 스와치가 알리는 「점선 = User」 범례와 모양이 겹친다. 기준선이 아래 밴드 안을 지나면 그 밴드의 점선 경계선과 같은 모양의 선이 밴드 안에 하나 더 생긴다.
+
+**채택: A.**
+
+- §DP5·§DP10의 색과 순서만으로 판 면 위 판정 기준과 밴드 안 가시성을 두 모드에서 만족하므로, 두께·모양까지 바꿀 이유가 없습니다.
+- 1pt는 Retina에서 두 장치 픽셀에 온전히 칠해지는 가장 가는 선이라, 세기가 화면 배율에 덜 흔들리고 테스트 렌더와 실기기 세기의 관계가 단순합니다.
+- 실선은 판 위와 밴드 안 모두에서 User 경계선의 점선과 모양이 갈려, 「점선 = User」라는 범례의 뜻이 판 안에서도 하나로 남습니다.
+- 두께·모양이 그대로라 선분 수, `lineWidth` 단언, 기준선 줄 계산이 바뀌지 않습니다(`SPEC §5.3`, `SPEC §5.9`).
+
+### DP10. 부하가 50%를 넘어 밴드가 기준선 자리를 덮는 구간에서 기준선을 어떻게 보이게 하는가
+
+`SPEC §5.2`는 부하가 50%를 넘어 두 밴드가 기준선 자리를 덮는 화면에서도 기준선이 밴드 안에서 보여, 높은 값이 50%보다 얼마나 위인지 어림할 수 있을 것을 요구합니다.
+spec.md §3은 기준선을 약하게 하는 대가로 높은 부하에서 눈금을 잃지 않을 것을 정했고, 이 요구는 앞 판 design.md의 대가(밴드 아래에서 1.34 / 1.11)를 사용자가 거부해 생겼습니다.
+지켜야 할 제약은 셋입니다 — 판 면 위 세기는 §DP5의 확인받은 값(판 가장자리 단차 아래)이어야 하고, 기준선은 어느 자리에서도 두 밴드보다 약해야 하며(`SPEC §5.4`), 갱신 주기마다 하는 일이 늘지 않아야 합니다(spec.md §3).
+지금 순서에서 기준선은 두 채움 아래에 깔려, 채움 불투명도만큼 가려집니다 — 아래 채움(0.60) 밑에서는 판 면 위 세기의 40% 남짓만 남습니다.
+판 면은 `Canvas` 밖 배경이라(§DP2), `Canvas` 안의 합성은 투명 바탕과 그 앞에 그린 레이어만을 상대로 일어납니다.
+
+- 옵션 A — 순서는 그대로 두고 기준선 색만 진하게 해, 채움 밑에서도 보이게 한다. 대가: 아래 채움 밑에서 식별 한계 2.3을 내려면 판 면 위 세기가 5.60 / 7.42여야 해, 판 가장자리(3.46 / 3.78)를 넘는다. §DP5의 확인받은 결과와 `SPEC §5.2`의 「경계가 아니다」를 함께 어긴다.
+- 옵션 B — 기준선을 두 채움 뒤·두 경계선 앞으로 옮기고, §DP5의 결과 색을 불투명 회색 그대로 긋는다. 대가: 밴드 안에서 기준선이 밴드보다 훨씬 밝은 회색 띠가 되어(아래 채움 안 27.81 / 33.10, 다크 위 채움 안 15.76) 밴드를 위아래로 끊는 틈으로 보이고, 다크 위 채움 안에서는 그 채움(12.35)보다 강해 `SPEC §5.4`를 어긴다.
+- 옵션 C — 기준선을 두 채움 뒤·두 경계선 앞으로 옮기고, 색을 반투명 검정(라이트 α 0.038 / 다크 α 0.18)으로 둔다. 판 면 위에서는 §DP5의 결과와 같고, 채움 위에서는 채움을 같은 알파로 어둡게 한다. 대가: 채움 안 세기가 판 면 위 세기에 묶여, 라이트 아래 채움 안은 2.29(8비트 2.21)로 식별 한계 수준에 머문다. 다크 아래 채움 안은 7.89로 판 면 위(3.32)보다 두 배 넘게 진해, 밴드 경계를 지나며 선의 세기가 달라 보인다. 채움 색의 `C*`가 조금 낮아진다(다크 아래 채움 31.06 → 26.40). 레이어 배열 단언이 바뀌고, 「두 경로가 레이어 목록의 첫 항목을 공유한다」가 「같은 레이어 항목을 공유한다」로 바뀐다.
+- 옵션 D — 순서는 그대로 두고, 기준선을 판 면용 한 번과 각 채움 경로로 자른 밴드용 한 번씩 다른 색으로 더 긋는다. 밴드 안 세기를 판 면 위와 따로 정할 수 있다. 대가: 매 갱신마다 선 긋기와 클리핑 경로가 연결 구간 수만큼 늘어 spec.md §3의 「갱신 주기마다 하는 일이 늘지 않는다」를 어기고, 레이어 목록이 늘어 「판 위의 선은 기준선 하나」의 구조 표현도 흐려진다.
+- 옵션 E — 기준선을 `Canvas` 밖 겹침 뷰로 옮기고 `plusDarker` 블렌드로 판 면과 채움을 같은 단계만큼 어둡게 한다. 판 면 위에서 §DP5와 같은 결과(−9 / −7단계)를 내면서 밴드 안에서도 3.36 / 2.79(아래 채움), 3.22 / 3.11(위 채움)로 고르게 보인다. 대가: 기준선이 두 레이어 배열에서 빠져 자리표시 레이어 목록이 비고 두 배열 단언과 `20260912` DP6의 구조가 모두 바뀐다. 겹침 뷰는 `Canvas` 전체 위에 놓여 기준선이 값을 나타내는 두 경계선 위에 올라간다. 블렌드 결과가 뒤에 놓인 판 면과 같은 합성 안에서 계산되는지에 기대며, 이를 보장하려고 합성 그룹을 걸면 판 틀 전체를 매 갱신마다 따로 래스터화해 spec.md §3의 「새 이미지 생성을 두지 않는다」와 부딪힌다. 이 동작이 `ImageRenderer` 렌더와 실기기에서 같은지는 확인하지 않았다.
+- 옵션 F — 판 면을 `Canvas` 안 첫 레이어로 되돌리고(§DP2 옵션 A), 기준선을 `Canvas` 안에서 `plusDarker`로 긋는다. 밴드 안 세기는 옵션 E와 같다. 대가: §DP2가 접은 매 갱신 232 × 100 채움이 돌아와 spec.md §3의 「갱신 주기마다 하는 일이 늘지 않는다」를 어기고, 두 레이어 배열의 개수가 바뀐다.
+
+**채택: C.**
+
+- 세 제약을 모두 지키는 옵션은 C뿐입니다. A는 판 면 위 세기를, B는 `SPEC §5.4`를, D와 F는 갱신 주기 작업량을 어기고, E는 합성 그룹 없이는 결과가 보장되지 않으며 그룹을 걸면 새 래스터화를 들입니다.
+- 판 면 위에서 보이는 모습은 §DP5에서 확인받은 `#ececec` / `#1f1f1f` 그대로입니다. source-over는 결합 법칙이 성립해, 판 면이 `Canvas` 밖 배경이어도 「채움과 반투명 검정을 투명 바탕에 그린 뒤 판 면에 얹은 결과」가 「판 면 위에 차례로 그린 결과」와 같습니다. 자리표시 경로도 같은 색·같은 함수로 같은 결과를 냅니다(`SPEC §5.7`).
+- 밴드가 50%를 덮는 칸에서 기준선은 위 채움 안 2.93 / 5.23, 아래 채움 안 2.29 / 7.89로 채움 밑에 깔렸을 때(2.73 / 2.64, 1.34 / 1.11)보다 모두 강하고, 다크와 라이트 위 채움은 식별 한계를 넉넉히 넘습니다(`SPEC §5.2`). 밴드 윗끝과 그 안을 지나는 50% 선이 함께 보여, 높은 값이 50%보다 얼마나 위인지를 판 높이 안에서 어림할 수 있습니다.
+- 기준선은 어느 자리에서도 그 자리 밴드 요소보다 약합니다 — 가장 가까운 비율이 다크 위 채움 안의 0.42배(5.23 / 12.35)이고, 아래 채움 안은 라이트 0.07배, 다크 0.27배입니다. 값을 나타내는 두 경계선은 기준선 위에 그려져 덮이지 않습니다(`SPEC §5.4`).
+- 검정은 무채색이라 채움의 색조를 바꾸지 않고, 채움 불투명도와 경계선 모양도 바꾸지 않으므로 두 밴드의 구분 수단은 변경 전과 같습니다(`SPEC §5.4`, spec.md §4). 두 밴드 합성 `ΔL*`(20.6 / 17.3)는 기준선이 지나는 1pt 줄 밖의 채움에서 재는 값이라 그대로입니다.
+- 갱신 주기마다 하는 일은 늘지 않습니다. 매 갱신 그리는 레이어는 같은 다섯 항목이고, 채움 호출 수·선 긋기 호출 수·경로 수가 같으며 순서만 바뀝니다. 기준선은 일반 알파 합성으로 한 번 긋고 블렌드 모드·별도 합성 레이어·클리핑 경로·이미지를 더하지 않습니다. 색은 appearance가 바뀔 때만 풀리고 시간에 따라 보간하지 않습니다(spec.md §3, `SPEC §5.9`).
+- 판 위의 선은 여전히 기준선 레이어 하나이고, 레이어 배열의 개수 5와 `[.gridlines]`가 그대로라 「선이 하나뿐」을 배열 단언으로 계속 잡습니다(`SPEC §5.3`).
+- 라이트 아래 채움 안이 식별 한계 수준에 머무는 대가는 남습니다. 판 면 위 결과를 판 가장자리 아래에 두는 한 source-over 겹침에서는 이것이 최대입니다(§근거). 이 대가는 2026-09-25 사용자가 받아들였고, 충분히 보이는지는 실기기 확인에서 판단합니다. 다크 아래 채움 안의 세기 차는 그 채움 자체의 4분의 1 남짓이라 밴드를 둘로 가르지 않는다고 보고, 실기기 확인으로 넘깁니다(§근거 「추정으로 남는 것」).

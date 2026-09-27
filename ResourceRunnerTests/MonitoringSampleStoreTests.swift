@@ -155,14 +155,16 @@ private func sample(
     at timestamp: ContinuousClock.Instant,
     cpuUsage: Double?,
     userRatio: Double = 0,
-    swapUsedBytes: UInt64 = 0
+    swapUsedBytes: UInt64 = 0,
+    collectionEpoch: Int = 0
 ) -> TimestampedSample<SystemMetricsSample> {
     TimestampedSample(
         timestamp: timestamp,
         value: SystemMetricsSample(
             cpu: .success(cpuUsage.map { cpuMetrics(overallUsage: $0, userRatio: userRatio) }),
             memory: .success(memoryMetrics(swapUsedBytes: swapUsedBytes))
-        )
+        ),
+        collectionEpoch: collectionEpoch
     )
 }
 
@@ -172,7 +174,7 @@ private let memoryFailure = CollectorFailure(metric: .memory, cause: .systemCall
 /// 값을 만들지 않는 최소 시스템 지표 source.
 /// 주기 변경(`apply(_:)`)이 저장소의 이력에 손대지 않는지만 관찰하므로 샘플을 공급할 필요가 없습니다.
 nonisolated private struct SilentSystemMetricsSampleSource: ScheduledSampleSource {
-    func sample() async throws -> SystemMetricsSample {
+    func sample(collectionEpoch: Int) async throws -> SystemMetricsSample? {
         throw CancellationError()
     }
 }
@@ -183,6 +185,28 @@ nonisolated private struct SilentSystemMetricsSampleSource: ScheduledSampleSourc
 /// 용량 초과 시 가장 오래된 항목만 교체, 긴 중지 뒤 표시용 값이 빈 목록이 되는 것,
 /// stream이 최신 조합 하나만 보존하는 것을 검증합니다.
 struct MonitoringSampleStoreTests {
+
+    @Test func shortStopPreservesDistinctEpochsWithoutAddingABaselinePoint() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+
+        await store.append(sample(at: base, cpuUsage: 20, swapUsedBytes: 100, collectionEpoch: 0))
+        // 5초 중지 뒤 재개한 첫 tick은 CPU 기준점만 갱신합니다.
+        await store.append(sample(at: base.advanced(by: .seconds(5)), cpuUsage: nil, swapUsedBytes: 150, collectionEpoch: 1))
+        let afterBaseline = await store.snapshot()
+        #expect(afterBaseline.latest?.collectionEpoch == 1)
+        #expect(afterBaseline.recentHistory.map(\.collectionEpoch) == [0])
+        #expect(afterBaseline.recentHistory.map(\.timestamp) == [base])
+
+        let resumed = base.advanced(by: .seconds(6))
+        await store.append(sample(at: resumed, cpuUsage: 30, swapUsedBytes: 200, collectionEpoch: 1))
+        let displayValue = await store.snapshot()
+
+        #expect(displayValue.recentHistory.map(\.timestamp) == [base, resumed])
+        #expect(displayValue.recentHistory.map(\.collectionEpoch) == [0, 1])
+        #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [20, 30])
+        #expect(displayValue.recentHistory.map(\.swapUsedBytes) == [100, 200])
+    }
 
     /// 이 테스트가 고정하는 것은 M1의 resize 회귀입니다 —
     /// 1초 주기로 이력을 채운 뒤 주기를 2초·5초로 바꿔도 저장된 값 배열 전체가 그대로여야 합니다.

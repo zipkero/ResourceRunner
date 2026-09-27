@@ -84,6 +84,9 @@ nonisolated struct HostCPUTickReader: CPUTickReading {
 /// 한 tick의 CPU 시스템 지표를 만드는 계약.
 /// 실패는 던지고, 값을 만들 수 없는 tick은 실패가 아니라 `nil`로 구분합니다.
 nonisolated protocol CPUSystemMetricsCollecting: Sendable {
+    /// 명시적 수집 중지 뒤에는 경과 시간과 무관하게 이전 tick을 차분 기준에서 제외합니다.
+    mutating func resetBaseline()
+
     /// 직전 tick 원본과의 차이로 이번 tick의 CPU 지표를 만듭니다.
     /// 직전 원본이 없거나 간격이 허용 범위를 넘으면 값을 만들지 않고 기준점만 갱신한 뒤 `nil`을 돌려줍니다.
     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics?
@@ -99,6 +102,10 @@ nonisolated struct CPUSystemMetricsCollector<Reader: CPUTickReading>: CPUSystemM
     init(reader: Reader, maximumTickGap: Duration = SystemMetricsSampling.maximumTickGap) {
         self.reader = reader
         self.maximumTickGap = maximumTickGap
+    }
+
+    mutating func resetBaseline() {
+        baseline = nil
     }
 
     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics? {

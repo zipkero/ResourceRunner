@@ -207,6 +207,40 @@ struct ApplicationCoordinatorTests {
         collectTask.cancel()
     }
 
+    @Test func consumeSystemMetricsPassesEpochToCharacterStateEvaluation() async {
+        let store = MonitoringSampleStore()
+        let characterStateSource = CharacterStateSource()
+        let dashboard = DashboardPresentationStore()
+        let consumeTask = ApplicationCoordinator.consumeSystemMetrics(store, into: characterStateSource, dashboard: dashboard)
+        var received: [CharacterActivityState] = []
+        let collectTask = Task { @MainActor in
+            for await state in characterStateSource.updates {
+                received.append(state)
+            }
+        }
+        let base = ContinuousClock().now
+
+        for (second, usage, epoch) in [(0, 50.0, 0), (1, 51.0, 0), (5, 52.0, 1), (7, 53.0, 1)] {
+            await store.append(cpuSuccessSample(
+                at: base.advanced(by: .seconds(second)),
+                overallUsage: usage,
+                collectionEpoch: epoch
+            ))
+            await waitUntil {
+                if case .normal(let cpu, _) = dashboard.cpuCard { return cpu.overallUsage == usage }
+                return false
+            }
+        }
+        #expect(received.isEmpty)
+
+        await store.append(cpuSuccessSample(at: base.advanced(by: .seconds(8)), overallUsage: 54, collectionEpoch: 1))
+        await waitUntil { received.count == 1 }
+        #expect(received == [.high])
+
+        consumeTask.cancel()
+        collectTask.cancel()
+    }
+
     // MARK: - 프로세스 조사 축 배선
 
     /// task-014 검증 조건: 프로세스 이력 저장소가 코디네이터에 연결되면, 시스템 지표 tick 하나가
@@ -422,9 +456,14 @@ private func cpuValuelessSample(at timestamp: ContinuousClock.Instant) -> Timest
 }
 
 /// CPU가 실제 사용률 값을 만든 tick.
-private func cpuSuccessSample(at timestamp: ContinuousClock.Instant, overallUsage: Double) -> TimestampedSample<SystemMetricsSample> {
+private func cpuSuccessSample(
+    at timestamp: ContinuousClock.Instant,
+    overallUsage: Double,
+    collectionEpoch: Int = 0
+) -> TimestampedSample<SystemMetricsSample> {
     TimestampedSample(
         timestamp: timestamp,
-        value: SystemMetricsSample(cpu: .success(cpuMetrics(overallUsage: overallUsage)), memory: .success(memoryMetrics()))
+        value: SystemMetricsSample(cpu: .success(cpuMetrics(overallUsage: overallUsage)), memory: .success(memoryMetrics())),
+        collectionEpoch: collectionEpoch
     )
 }

@@ -96,7 +96,7 @@ nonisolated enum DashboardValueColumn {
     }
 }
 
-/// 그래프 한 점. 인접 점의 시각 간격으로 빈 구간을 판별합니다.
+/// 그래프 한 점. 인접 점의 수집 구간과 시각 간격으로 빈 구간을 판별합니다.
 ///
 /// `subValue`는 `value`(전체 사용률)와 같은 표본에서 나온 하위 계열 값입니다(예: CPU 그래프의 User 비율).
 /// `nil`이면 1계열 그래프라는 뜻이고, CPU 조립 경로는 항상 채웁니다.
@@ -106,11 +106,13 @@ nonisolated struct HistoryPoint: Sendable, Equatable {
     let timestamp: ContinuousClock.Instant
     let value: Double
     let subValue: Double?
+    let collectionEpoch: Int
 
-    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil) {
+    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil, collectionEpoch: Int = 0) {
         self.timestamp = timestamp
         self.value = value
         self.subValue = subValue
+        self.collectionEpoch = collectionEpoch
     }
 }
 
@@ -129,8 +131,8 @@ extension HistoryPoint {
     /// 그보다 벌어진 두 그래프 점 사이에는 실제로 수집되지 않은 시간이 있다는 뜻이기 때문입니다.
     static let maximumConnectedGap = SystemMetricsSampling.maximumTickGap
 
-    /// 점 목록을 인접 간격으로 나눠 하나의 선으로 이어 그릴 수 있는 연속 구간들로 만듭니다.
-    /// 간격이 `maximumConnectedGap`을 넘는 두 점은 서로 다른 구간에 들어가 그 사이가 그래프에서 비어 보입니다.
+    /// 점 목록을 수집 구간과 인접 간격으로 나눠 하나의 선으로 이어 그릴 수 있는 연속 구간들로 만듭니다.
+    /// epoch가 다르거나 간격이 `maximumConnectedGap`을 넘는 두 점은 서로 다른 구간에 들어갑니다.
     /// 빈 입력은 빈 결과를, 점 하나짜리 입력은 그 점 하나만 담은 구간 하나를 돌려줍니다.
     static func connectedSegments(from points: [HistoryPoint]) -> [[HistoryPoint]] {
         guard let first = points.first else { return [] }
@@ -139,7 +141,8 @@ extension HistoryPoint {
         for point in points.dropFirst() {
             let lastSegmentIndex = segments.count - 1
             let previous = segments[lastSegmentIndex][segments[lastSegmentIndex].count - 1]
-            if previous.timestamp.duration(to: point.timestamp) > maximumConnectedGap {
+            if previous.collectionEpoch != point.collectionEpoch
+                || previous.timestamp.duration(to: point.timestamp) > maximumConnectedGap {
                 segments.append([point])
             } else {
                 segments[lastSegmentIndex].append(point)
@@ -274,7 +277,14 @@ extension CPUCardPresentation {
         let windowStart = currentTimestamp - HistoryCapacity.defaultTimeRange
         let graphPoints = history
             .filter { $0.timestamp >= windowStart }
-            .map { HistoryPoint(timestamp: $0.timestamp, value: $0.overallCPUUsage, subValue: $0.userRatio) }
+            .map {
+                HistoryPoint(
+                    timestamp: $0.timestamp,
+                    value: $0.overallCPUUsage,
+                    subValue: $0.userRatio,
+                    collectionEpoch: $0.collectionEpoch
+                )
+            }
 
         return CPUCardPresentation(
             overallUsage: cpu.overallUsage,

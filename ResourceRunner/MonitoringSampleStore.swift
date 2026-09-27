@@ -12,7 +12,7 @@ import OSLog
 /// 실기기 중지·재개 관찰에서 이력 링의 누적 개수와 고정 용량을 읽기 위한 로그 경계.
 /// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
 /// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
-enum MonitoringSampleStoreDebugLog {
+nonisolated enum MonitoringSampleStoreDebugLog {
     static let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "MonitoringSampleStore")
 }
 #endif
@@ -22,6 +22,13 @@ enum MonitoringSampleStoreDebugLog {
 nonisolated struct TimestampedSample<Value: Sendable>: Sendable {
     let timestamp: ContinuousClock.Instant
     let value: Value
+    let collectionEpoch: Int
+
+    init(timestamp: ContinuousClock.Instant, value: Value, collectionEpoch: Int = 0) {
+        self.timestamp = timestamp
+        self.value = value
+        self.collectionEpoch = collectionEpoch
+    }
 }
 
 /// 시간 범위와 수집 주기에서 양의 고정 용량을 계산하는 순수 정책.
@@ -106,6 +113,21 @@ nonisolated struct SystemMetricsHistoryPoint: Sendable, Equatable {
     let overallCPUUsage: Double
     let userRatio: Double
     let swapUsedBytes: UInt64
+    let collectionEpoch: Int
+
+    init(
+        timestamp: ContinuousClock.Instant,
+        overallCPUUsage: Double,
+        userRatio: Double,
+        swapUsedBytes: UInt64,
+        collectionEpoch: Int = 0
+    ) {
+        self.timestamp = timestamp
+        self.overallCPUUsage = overallCPUUsage
+        self.userRatio = userRatio
+        self.swapUsedBytes = swapUsedBytes
+        self.collectionEpoch = collectionEpoch
+    }
 }
 
 /// 저장소가 표시 계층으로 내보내는 값. 최신 스냅샷 하나와 시간 범위 안의 이력을 함께 담습니다.
@@ -126,6 +148,9 @@ actor MonitoringSampleStore: MonitoringSampleSink {
     private let timeRange: Duration
     private var history: CircularBuffer<SystemMetricsHistoryPoint>
     private var latest: TimestampedSample<SystemMetricsSample>?
+#if DEBUG
+    private var debugLastHistoryEpoch: Int?
+#endif
 
     /// 매 tick의 표시용 값을 내보내는 stream. 최신 조합 하나만 보존하므로 소비가 밀려도
     /// 오래된 조합이 쌓이지 않고 소비자는 항상 마지막 상태를 받습니다.
@@ -157,6 +182,16 @@ actor MonitoringSampleStore: MonitoringSampleSink {
         latest = sample
         if let point = Self.historyPoint(from: sample) {
             history.append(point)
+#if DEBUG
+            if debugLastHistoryEpoch != point.collectionEpoch {
+                debugLastHistoryEpoch = point.collectionEpoch
+                let epoch = point.collectionEpoch
+                let historyCount = history.count
+                Task.detached(priority: .utility) {
+                    MonitoringSampleStoreDebugLog.logger.notice("first valid history point collectionEpoch=\(epoch, privacy: .public) history=\(historyCount, privacy: .public)")
+                }
+            }
+#endif
         }
         continuation.yield(snapshot())
 #if DEBUG
@@ -200,7 +235,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
             timestamp: sample.timestamp,
             overallCPUUsage: cpu.overallUsage,
             userRatio: cpu.userRatio,
-            swapUsedBytes: memory.swapUsedBytes
+            swapUsedBytes: memory.swapUsedBytes,
+            collectionEpoch: sample.collectionEpoch
         )
     }
 

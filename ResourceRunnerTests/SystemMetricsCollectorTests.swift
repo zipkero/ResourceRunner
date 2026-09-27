@@ -199,6 +199,41 @@ struct CPUSystemMetricsCollectorTests {
         #expect(metrics?.overallUsage == 10)
     }
 
+    /// 명시적 중지 없이 수집 주기만 5초에서 1초로 바뀌면 두 차분 모두 유효합니다.
+    @Test func fiveSecondToOneSecondIntervalChangeKeepsProducingUsage() throws {
+        let reader = StubCPUTickReader(tickOutcomes: [
+            .success([ticks(user: 0, system: 0, idle: 0)]),
+            .success([ticks(user: 20, system: 0, idle: 80)]),
+            .success([ticks(user: 30, system: 0, idle: 170)]),
+        ])
+        var collector = CPUSystemMetricsCollector(reader: reader)
+
+        #expect(try collector.collect(at: baseInstant) == nil)
+        let fiveSecond = try #require(try collector.collect(at: baseInstant.advanced(by: .seconds(5))))
+        let oneSecond = try #require(try collector.collect(at: baseInstant.advanced(by: .seconds(6))))
+
+        #expect(fiveSecond.overallUsage == 20)
+        #expect(oneSecond.overallUsage == 10)
+        #expect(reader.loadAverageCallCount == 2)
+    }
+
+    @Test func explicitResetSkipsShortGapAndNextTickUsesNewBaseline() throws {
+        let reader = StubCPUTickReader(tickOutcomes: [
+            .success([ticks(user: 0, system: 0, idle: 0)]),
+            .success([ticks(user: 90, system: 0, idle: 10)]),
+            .success([ticks(user: 100, system: 0, idle: 100)]),
+        ])
+        var collector = CPUSystemMetricsCollector(reader: reader)
+
+        #expect(try collector.collect(at: baseInstant) == nil)
+        collector.resetBaseline()
+        #expect(try collector.collect(at: baseInstant.advanced(by: .seconds(5))) == nil)
+        #expect(reader.loadAverageCallCount == 0)
+
+        let metrics = try #require(try collector.collect(at: baseInstant.advanced(by: .seconds(6))))
+        #expect(metrics.overallUsage == 10)
+    }
+
     /// 논리 코어 수가 바뀐 tick은 직전 원본과 대응시킬 수 없으므로 기준점만 갱신합니다.
     @Test func coreCountChangeRefreshesBaselineWithoutProducingUsage() throws {
         let reader = StubCPUTickReader(tickOutcomes: [

@@ -49,7 +49,12 @@ final class DashboardDetailExpansionUITests: XCTestCase {
 
             let executableURL = fixtureDirectoryURL.appendingPathComponent(fixtureName)
             self.executableURL = executableURL
-            rowIdentifier = "AppRow-\(executableURL.path)"
+            // `proc_pidpath`는 `/tmp`의 실제 경로인 `/private/tmp`를 돌려주므로 같은 경로로 맞춥니다.
+            guard let canonicalPath = realpath(executableURL.path, nil) else {
+                throw CocoaError(.fileNoSuchFile)
+            }
+            defer { free(canonicalPath) }
+            rowIdentifier = "AppRow-\(String(cString: canonicalPath))"
         }
 
         deinit {

@@ -33,7 +33,8 @@ struct SystemMonotonicClock: MonotonicClock {
 /// 공급자 실패(`throw`)는 `MonitoringScheduler`가 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
 nonisolated protocol ScheduledSampleSource: Sendable {
     associatedtype Value: Sendable
-    func sample() async throws -> Value
+    /// 지난 수집 구간의 늦은 호출은 `nil`로 폐기할 수 있습니다.
+    func sample(collectionEpoch: Int) async throws -> Value?
 }
 
 /// 수집한 샘플을 받는 저장 대상 계약.
@@ -50,7 +51,7 @@ nonisolated protocol MonitoringSampleSink: Sendable {
 /// 실기기에서 실제 잠금·해제에 따른 수집 중지와 재개를 확인할 때도 그대로 씁니다.
 /// `Logger` 문자열 보간은 기본이 `.private`이라 명시하지 않으면 값이 가려지고, `.debug` 수준은
 /// Console.app 기본 수집 대상이 아니므로 `.notice`와 `privacy: .public`을 씁니다.
-enum MonitoringSchedulerDebugLog {
+nonisolated enum MonitoringSchedulerDebugLog {
     static let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "MonitoringScheduler")
 }
 #endif
@@ -69,6 +70,8 @@ actor MonitoringScheduler<
     private let sink: Sink
 
     private var task: Task<Void, Never>?
+    private var appliedSchedule: CollectionSchedule?
+    private(set) var collectionEpoch = 0
 
     /// `apply(_:)`가 새 작업을 시작할 때만 전진하는 세대 번호.
     /// `appendIfCurrentGeneration`이 이전 세대의 실행 결과를 걸러내는 근거이며,
@@ -106,6 +109,12 @@ actor MonitoringScheduler<
     func apply(_ schedule: CollectionSchedule) async {
         applyCallCount += 1
 
+        // 실제 실행에서 중지로 넘어갈 때만 새 수집 구간을 시작합니다.
+        if case .some(.running) = appliedSchedule, case .paused = schedule {
+            collectionEpoch += 1
+        }
+        appliedSchedule = schedule
+
         task?.cancel()
         task = nil
         // generation은 취소와 같은 동기 구간에서 즉시 전진시킵니다. 뒤에 오는 `await clock.now()`
@@ -123,8 +132,9 @@ actor MonitoringScheduler<
         let debugGeneration = generation
         let debugAxis = debugAxisLabel
         let debugCount = debugAppendedSampleCount
+        let debugEpoch = collectionEpoch
         Task.detached(priority: .utility) {
-            MonitoringSchedulerDebugLog.logger.notice("apply axis=\(debugAxis, privacy: .public) schedule=\(String(describing: debugSchedule), privacy: .public) generation=\(debugGeneration, privacy: .public) appendedTotal=\(debugCount, privacy: .public)")
+            MonitoringSchedulerDebugLog.logger.notice("apply axis=\(debugAxis, privacy: .public) schedule=\(String(describing: debugSchedule), privacy: .public) generation=\(debugGeneration, privacy: .public) collectionEpoch=\(debugEpoch, privacy: .public) appendedTotal=\(debugCount, privacy: .public)")
         }
 #endif
 
@@ -134,6 +144,7 @@ actor MonitoringScheduler<
 
         case .running(let interval):
             let currentGeneration = generation
+            let currentCollectionEpoch = collectionEpoch
             let clock = clock
             let source = source
             let sink = sink
@@ -141,6 +152,8 @@ actor MonitoringScheduler<
             // 읽으면 비동기 스케줄링 시점에 따라 anchor가 달라질 수 있어(수동 시계 테스트에서는 호출자의
             // 이후 전진과 경쟁), 매 tick이 이 고정된 기준에서만 전진하도록 보장할 수 없습니다.
             let startInstant = await clock.now()
+            // 기준 시각을 기다리는 동안 중지·일정 교체가 적용됐으면 지난 실행을 시작하지 않습니다.
+            guard currentGeneration == generation else { return }
 
             task = Task { [weak self] in
                 var deadline = startInstant
@@ -158,19 +171,20 @@ actor MonitoringScheduler<
                     if Task.isCancelled { return }
 
                     let timestamp = await clock.now()
-                    let value: Source.Value
+                    let value: Source.Value?
                     do {
-                        value = try await source.sample()
+                        value = try await source.sample(collectionEpoch: currentCollectionEpoch)
                     } catch {
                         // 공급자 실패는 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
                         continue
                     }
+                    guard let value else { continue }
                     if Task.isCancelled { return }
 
                     guard let self else { return }
                     await self.appendIfCurrentGeneration(
                         currentGeneration,
-                        sample: TimestampedSample(timestamp: timestamp, value: value),
+                        sample: TimestampedSample(timestamp: timestamp, value: value, collectionEpoch: currentCollectionEpoch),
                         into: sink
                     )
                 }
@@ -199,8 +213,9 @@ actor MonitoringScheduler<
         debugAppendedSampleCount += 1
         let debugAxis = debugAxisLabel
         let debugCount = debugAppendedSampleCount
+        let debugEpoch = sample.collectionEpoch
         Task.detached(priority: .utility) {
-            MonitoringSchedulerDebugLog.logger.notice("appended sample axis=\(debugAxis, privacy: .public) generation=\(resultGeneration, privacy: .public) appendedTotal=\(debugCount, privacy: .public)")
+            MonitoringSchedulerDebugLog.logger.notice("appended sample axis=\(debugAxis, privacy: .public) generation=\(resultGeneration, privacy: .public) collectionEpoch=\(debugEpoch, privacy: .public) appendedTotal=\(debugCount, privacy: .public)")
         }
 #endif
     }

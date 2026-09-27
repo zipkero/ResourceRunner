@@ -24,13 +24,13 @@ nonisolated struct ProcessTaskInfo: Sendable, Equatable {
 }
 
 /// 프로세스 조사에 쓰는 시스템 호출 경계.
-/// 이 경계를 분리해 두어야 uid 사전 판별·경로 캐시 규칙을 원본 주입으로 검증할 수 있습니다.
+/// 이 경계를 분리해 두어야 uid 사전 판별·매 조사 경로 조회를 원본 주입으로 검증할 수 있습니다.
 nonisolated protocol ProcessSurveying: Sendable {
     /// `sysctl(KERN_PROC_ALL)` 한 번으로 전체 프로세스를 열거합니다.
     func listProcesses() throws(CollectorFailure) -> [ProcessListEntry]
     /// 현재 유효 uid와 같은 프로세스에 대해서만 호출됩니다.
     func taskInfo(pid: pid_t) throws(CollectorFailure) -> ProcessTaskInfo
-    /// 새로 관찰된 정체성에 대해서만 호출됩니다.
+    /// 현재 유효 uid의 값을 읽은 프로세스마다 매 조사 호출됩니다.
     func executablePath(pid: pid_t) throws(CollectorFailure) -> String
 }
 
@@ -130,25 +130,23 @@ nonisolated protocol ProcessSurveyCollecting: Sendable {
     mutating func survey() throws(CollectorFailure) -> ProcessSurveyReport
 }
 
-/// `ProcessSurveying` 경계를 소유하고 uid 사전 판별과 경로 캐시 규칙을 적용하는 Collector.
-/// 정체성별 실행 경로 캐시를 상태로 가지므로 값 타입으로 두고 소유자의 격리 안에서만 변경됩니다.
+/// `ProcessSurveying` 경계를 소유하고 uid 사전 판별과 현재 실행 경로 조회를 적용하는 Collector.
 nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurveyCollecting {
     private let reader: Reader
-    /// 정체성마다 `proc_pidpath`를 한 번만 호출하기 위한 실행 경로 캐시.
-    private var pathCache: [ProcessIdentity: String] = [:]
+    private let effectiveUID: @Sendable () -> uid_t
 
-    init(reader: Reader) {
+    init(reader: Reader, effectiveUID: @escaping @Sendable () -> uid_t = { geteuid() }) {
         self.reader = reader
+        self.effectiveUID = effectiveUID
     }
 
     mutating func survey() throws(CollectorFailure) -> ProcessSurveyReport {
         let entries = try reader.listProcesses()
-        let currentUID = getuid()
+        let currentUID = effectiveUID()
 
         var samples: [ProcessSample] = []
         samples.reserveCapacity(entries.count)
         var unreadableCount = 0
-        var observedIdentities: Set<ProcessIdentity> = []
 
         for entry in entries {
             // uid가 다른 프로세스는 proc_pidinfo를 호출하지 않고 곧바로 읽지 못한 수에 더합니다.
@@ -163,18 +161,12 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
                 continue
             }
 
-            let path: String
-            if let cached = pathCache[entry.identity] {
-                path = cached
-            } else if let resolved = try? reader.executablePath(pid: entry.identity.pid) {
-                pathCache[entry.identity] = resolved
-                path = resolved
-            } else {
+            // 같은 정체성이 exec할 수 있으므로 CPU·메모리를 읽은 tick마다 현재 경로를 확인합니다.
+            guard let path = try? reader.executablePath(pid: entry.identity.pid) else {
                 unreadableCount += 1
                 continue
             }
 
-            observedIdentities.insert(entry.identity)
             samples.append(
                 ProcessSample(
                     identity: entry.identity,
@@ -187,9 +179,6 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
                 )
             )
         }
-
-        // 이번 조사에서 관찰되지 않은 정체성은 이미 사라진 프로세스이므로 경로 캐시에서도 지웁니다.
-        pathCache = pathCache.filter { observedIdentities.contains($0.key) }
 
         return ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount)
     }

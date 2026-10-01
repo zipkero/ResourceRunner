@@ -150,6 +150,21 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
         }
     }
 
+    /// 표시 대상의 topology까지 같은 반영 순간에 확인하며, 거절한 결과는 순서 표식을 전진시키지 않습니다.
+    @MainActor
+    func admitDisplayOptional<T>(_ context: CollectionRunContext, timestamp: ContinuousClock.Instant,
+                                 _ apply: @MainActor () -> T?) -> T? {
+        lock.withLock {
+            guard valid(context) else { return nil }
+            if let last = accepted[context.axis]?[.display],
+               context.requestSequence <= last.request || timestamp < last.timestamp { return nil }
+            guard let result = apply() else { return nil }
+            accepted[context.axis, default: [:]][.display] = Watermark(request: context.requestSequence,
+                                                                        timestamp: timestamp)
+            return result
+        }
+    }
+
     private func valid(_ context: CollectionRunContext) -> Bool {
         !boundary.stopped && context.epoch == boundary.epoch &&
             context.boundarySequence == boundary.sequence &&

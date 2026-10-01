@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 22:48 +0900
+저장: 2026-10-01 23:11 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-007 검증 기준 HEAD `c61f76e`. task-001~007 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~007 `[x]`, task-008~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-008이다.
+branch `main`, task-008 검증 기준 HEAD `c42a0cd5`. task-001~008 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~008 `[x]`, task-009~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-009이다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-007/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-008/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -25,7 +25,7 @@ async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완�
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
 Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network·Disk activity/metadata source·store와 여섯 축 production 배선은 구현됐고 새 표시 모델·카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+Network·Disk source/store·여섯 축 production 배선·표시 모델은 구현됐고 새 그래프·카드 뷰는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
 
 task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
 즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
@@ -52,7 +52,12 @@ task-007은 실제 앱 저전력 일정 로그 부족의 evidence reject를 보�
 집중23/23·전체unit579/579·Release/서명Debug·실제Sandbox PID31677과 소스15개 해시를 확인했다.
 실제 OS lowPower=false에서 DEBUG observer snapshot을 true/false로 전달해
 여섯 축 닫힘5/10/120초·열림2/4/60초·일반 복원을 관찰했다. OS 전력 설정은 변경하지 않았다.
-task-008 표시 조립을 이어 진행하며 실제 OS 전환·장치 전환·최종 UI 관문은 미완료다.
+task-007은 `c42a0cd`로 커밋했다. 실제 OS 전환·장치 전환·최종 UI 관문은 미완료다.
+
+task-008 독립 verify approved를 확정했다. 활동/보조 표시 모델·formatter와 네 production 소비 경로를
+표시 store에 연결하고 최종 commit에서 admission·topology를 함께 확인했다.
+과거 값의 원본 readAt·완전 lastKnown·partial/0/baseline·조건부 사유·AX를 검증했으며
+집중23/23·전체unit588/588·Release빌드와 소스7개 해시가 대응한다. 다음은 속도 graph task-009다.
 
 ## 현재 작업 문서
 - [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md) — 승인된 요구사항과 완료 조건 18개
@@ -82,8 +87,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-008 활동·보조 상태 조립과 지표별 단위를 worker로 구현하고 독립 verify한다.
-- 완료 기준: 활동/보조 상태 조합·부분 실패·정상0·baseline·lastKnown 시각·단위/로케일·조건부 의미·접근성·늦은 반영을 직접 테스트하고 CPU·Memory 회귀를 유지한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-009로 진행한다.
+- 작업: M3 task-009 두 독립 속도 계열과 공통 그래프 판을 worker로 구현하고 독립 verify한다.
+- 완료 기준: 원본 두 계열 peak·1–2–5상한·601/600초/segment·극값 downsampling과 100pt판/118pt슬롯·자리표시·미수집공백·라이트/다크렌더·CPU그래프회귀를 확인한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-010으로 진행한다.
 
 ## 먼저 읽을 파일
 

@@ -1,7 +1,7 @@
 import Foundation
 
-/// task-008의 카드 조립 전까지도 각 축의 최신 전달값을 독립적으로 보존하는 표시 소비 경계.
-/// 늦은 stream 항목은 ApplicationCoordinator의 display admission을 통과해야만 이곳에 들어옵니다.
+/// 네 독립 소비 축의 최신 전달값을 카드 재조립에도 재사용합니다.
+/// 늦은 stream 항목은 ApplicationCoordinator의 display admission과 topology 검사를 통과해야만 들어옵니다.
 @MainActor
 final class CollectionDeliveryStore {
     private(set) var networkActivity: NetworkActivityDisplayValue?

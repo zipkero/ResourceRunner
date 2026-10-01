@@ -233,7 +233,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify 재검증 approved를 main이 확정했습니다. 기준 HEAD `c61f76e`의 production 여섯 축 factory·독립 소비·순위 경계·topology 알림·보조 cache replay와 직접 테스트 15개 소스 해시 및 최종 patch가 `evidence/task-007/`과 일치합니다. 초기 lifecycle 전 무호출, 지표별 실패 원인 보존, 느린 보조/순위 중 카드·메뉴바 진행, 취소 무시 결과·늦은 실패·역순 cache replay·epoch/topology 폐기를 확인했습니다. 집중23/23·전체unit579/579·Release/서명Debug빌드가 통과했습니다. 실제 Sandbox PID31677에서 최초 여섯 축 전달·팝오버 개폐·알림 등록, DEBUG observer의 저전력 snapshot revision1에 따른 닫힘5/10/120초·열림2/4/60초·닫힘 전환과 revision2 일반 복원을 관찰했습니다. 실제 OS lowPower는 false였고 OS 설정 변경·실제 OS 전환으로 주장하지 않습니다. 최초 evidence reject의 앱 저전력 로그 부족은 보완됐으며 기존 SPEC·DESIGN·task-001~006 승인을 유지합니다. 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
-- [ ] task-008: 활동·보조 상태 조립과 지표별 단위
+- [x] task-008: 활동·보조 상태 조립과 지표별 단위
   - 목적: Network·Disk의 현재 속도·누적량·저장 공간을 구분하고
     일부 실패나 조건부 미지원에서도 성공한 값과 상태를 정확히 표시하는 모델을 완성합니다.
   - 접근: `DashboardPresentation.swift`·`DashboardPresentationStore.swift`에서
@@ -261,6 +261,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.7, SPEC §5.10, SPEC §5.11, SPEC §5.12,
     SPEC §5.14, SPEC §5.15, SPEC §5.18,
     DESIGN §1.4, DESIGN §2.3, DESIGN §2.4, DESIGN §3.1, DESIGN §3.2, DESIGN §3.3, DESIGN §4.2
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `c42a0cd5`의 표시 모델·formatter·production 네 소비자·최종 topology display commit 및 직접 테스트 7개 파일 해시/patch가 `evidence/task-008/`과 일치합니다. 활동/보조 identity·revision·원본시각 조립, 보조 실패 중 속도 갱신, 성공이력 없는 상태·정상0·연결/장치없음·baseline·partial·과거값/시각·중지상세 rate 제거·조건부 미지원/실패 사유·단위/작은속도/로케일·AX 및 대기중 구 topology/epoch 표시 거절을 확인했습니다. 집중23/23·전체unit588/588·Release빌드와 diff-check가 통과했습니다. 전체unit 이후 production 변경 없이 Operations 표시 테스트 단언만 추가했고 최종집중을 재실행했습니다. CPU·Memory 및 기존 경계 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. 실제 graph·카드 렌더는 task-009~011에서 확인합니다.
 
 - [ ] task-009: 두 독립 속도 계열과 공통 그래프 판
   - 목적: Network·Disk의 최근 10분 흐름과 미수집 공백을

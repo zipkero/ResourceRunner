@@ -115,13 +115,17 @@ final class ApplicationCoordinator {
             admission: admission
         )
         networkActivityTask = Self.consumeNetworkActivity(pipelines.networkStore,
-            into: collectionDeliveryStore, admission: admission)
+            into: collectionDeliveryStore, dashboard: dashboard,
+            topology: networkTopology, admission: admission)
         diskActivityTask = Self.consumeDiskActivity(pipelines.diskStore,
-            into: collectionDeliveryStore, admission: admission)
+            into: collectionDeliveryStore, dashboard: dashboard,
+            topology: diskTopology, admission: admission)
         networkMetadataTask = Self.consumeNetworkMetadata(pipelines.networkMetadataStore,
-            into: collectionDeliveryStore, admission: admission)
+            into: collectionDeliveryStore, dashboard: dashboard,
+            topology: networkTopology, admission: admission)
         storageMetadataTask = Self.consumeStorageMetadata(pipelines.storageMetadataStore,
-            into: collectionDeliveryStore, admission: admission)
+            into: collectionDeliveryStore, dashboard: dashboard,
+            topology: diskTopology, admission: admission)
         collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(pipelines.lifecycle, dashboard: dashboard, admission: admission)
         // 모든 소비 경로가 준비된 뒤 초기 lifecycle을 적용해야 최초 수집을 잃지 않습니다.
         monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle)
@@ -289,16 +293,31 @@ final class ApplicationCoordinator {
 
     static func consumeNetworkActivity(_ store: NetworkActivityStore,
                                        into delivery: CollectionDeliveryStore,
+                                       dashboard: DashboardPresentationStore? = nil,
+                                       topology: NetworkTopologyTracker? = nil,
                                        admission: CollectionAdmission) -> Task<Void, Never> {
         let updates = store.updates
         return Task { @MainActor in
             for await value in updates {
                 guard let latest = value.latest, let context = latest.context else { continue }
-                _ = admission.admitDisplay(context, timestamp: latest.value.readAt) {
-                    delivery.updateNetwork(value)
+                _ = admission.admitDisplayOptional(context, timestamp: latest.value.readAt) {
+                    let commit: @MainActor () -> Bool = {
+                        delivery.updateNetwork(value)
+                        if let dashboard {
+                            dashboard.recordSampleBoundary(context)
+                            dashboard.updateNetworkCard(activity: value,
+                                metadata: delivery.networkMetadata, epoch: context.epoch,
+                                currentTopologyRevision: latest.value.topologyRevision)
+                        }
 #if DEBUG
-                    debugPipelineLogger.notice("delivered axis=networkActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
+                        debugPipelineLogger.notice("delivered axis=networkActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
 #endif
+                        return true
+                    }
+                    if let topology {
+                        return topology.withCurrentRevision(latest.value.topologyRevision, commit)
+                    }
+                    return commit()
                 }
             }
         }
@@ -306,16 +325,31 @@ final class ApplicationCoordinator {
 
     static func consumeDiskActivity(_ store: DiskActivityStore,
                                     into delivery: CollectionDeliveryStore,
+                                    dashboard: DashboardPresentationStore? = nil,
+                                    topology: DiskTopologyTracker? = nil,
                                     admission: CollectionAdmission) -> Task<Void, Never> {
         let updates = store.updates
         return Task { @MainActor in
             for await value in updates {
                 guard let latest = value.latest, let context = latest.context else { continue }
-                _ = admission.admitDisplay(context, timestamp: latest.value.readAt) {
-                    delivery.updateDisk(value)
+                _ = admission.admitDisplayOptional(context, timestamp: latest.value.readAt) {
+                    let commit: @MainActor () -> Bool = {
+                        delivery.updateDisk(value)
+                        if let dashboard {
+                            dashboard.recordSampleBoundary(context)
+                            dashboard.updateDiskCard(activity: value,
+                                metadata: delivery.storageMetadata, epoch: context.epoch,
+                                currentTopologyRevision: latest.value.topologyRevision)
+                        }
 #if DEBUG
-                    debugPipelineLogger.notice("delivered axis=diskActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
+                        debugPipelineLogger.notice("delivered axis=diskActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
 #endif
+                        return true
+                    }
+                    if let topology {
+                        return topology.withCurrentRevision(latest.value.topologyRevision, commit)
+                    }
+                    return commit()
                 }
             }
         }
@@ -323,21 +357,42 @@ final class ApplicationCoordinator {
 
     static func consumeNetworkMetadata(_ store: NetworkMetadataStore,
                                        into delivery: CollectionDeliveryStore,
+                                       dashboard: DashboardPresentationStore? = nil,
+                                       topology: NetworkTopologyTracker? = nil,
                                        admission: CollectionAdmission) -> Task<Void, Never> {
         let updates = store.updates
         return Task { @MainActor in
             for await value in updates {
                 guard let latest = value.latest, let context = latest.context else { continue }
-                _ = admission.admitDisplay(context, timestamp: latest.timestamp) {
-                    delivery.updateNetworkMetadata(value)
+                let revision: UInt64?
+                switch latest.value {
+                case .available(let snapshot): revision = snapshot.topologyRevision
+                case .failure(_, let failedRevision): revision = failedRevision
+                }
+                _ = admission.admitDisplayOptional(context, timestamp: latest.timestamp) { () -> Bool? in
+                    let commit: @MainActor () -> Bool = {
+                        delivery.updateNetworkMetadata(value)
+                        if let dashboard {
+                            dashboard.recordSampleBoundary(context)
+                            dashboard.updateNetworkCard(activity: delivery.networkActivity,
+                                metadata: value, epoch: context.epoch,
+                                currentTopologyRevision: revision)
+                        }
 #if DEBUG
-                    let result: String
-                    switch latest.value {
-                    case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) records=\(snapshot.records.count)"
-                    case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
-                    }
-                    debugPipelineLogger.notice("delivered axis=networkMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
+                        let result: String
+                        switch latest.value {
+                        case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) records=\(snapshot.records.count)"
+                        case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
+                        }
+                        debugPipelineLogger.notice("delivered axis=networkMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
 #endif
+                        return true
+                    }
+                    if let topology {
+                        guard let revision else { return nil }
+                        return topology.withCurrentRevision(revision, commit)
+                    }
+                    return commit()
                 }
             }
         }
@@ -345,21 +400,42 @@ final class ApplicationCoordinator {
 
     static func consumeStorageMetadata(_ store: StorageMetadataStore,
                                        into delivery: CollectionDeliveryStore,
+                                       dashboard: DashboardPresentationStore? = nil,
+                                       topology: DiskTopologyTracker? = nil,
                                        admission: CollectionAdmission) -> Task<Void, Never> {
         let updates = store.updates
         return Task { @MainActor in
             for await value in updates {
                 guard let latest = value.latest, let context = latest.context else { continue }
-                _ = admission.admitDisplay(context, timestamp: latest.timestamp) {
-                    delivery.updateStorageMetadata(value)
+                let revision: UInt64?
+                switch latest.value {
+                case .available(let snapshot): revision = snapshot.topologyRevision
+                case .failure(_, let failedRevision): revision = failedRevision
+                }
+                _ = admission.admitDisplayOptional(context, timestamp: latest.timestamp) { () -> Bool? in
+                    let commit: @MainActor () -> Bool = {
+                        delivery.updateStorageMetadata(value)
+                        if let dashboard {
+                            dashboard.recordSampleBoundary(context)
+                            dashboard.updateDiskCard(activity: delivery.diskActivity,
+                                metadata: value, epoch: context.epoch,
+                                currentTopologyRevision: revision)
+                        }
 #if DEBUG
-                    let result: String
-                    switch latest.value {
-                    case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) devices=\(snapshot.devices.count)"
-                    case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
-                    }
-                    debugPipelineLogger.notice("delivered axis=storageMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
+                        let result: String
+                        switch latest.value {
+                        case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) devices=\(snapshot.devices.count)"
+                        case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
+                        }
+                        debugPipelineLogger.notice("delivered axis=storageMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
 #endif
+                        return true
+                    }
+                    if let topology {
+                        guard let revision else { return nil }
+                        return topology.withCurrentRevision(revision, commit)
+                    }
+                    return commit()
                 }
             }
         }

@@ -19,6 +19,8 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 
 ## 이력
 
+- 2026-10-01: task-008 독립 verify approved를 main이 확정했습니다. 활동과 보조 상태를 표시 store에 연결하고 지표별 단위·과거값·부분값·조건부 이유를 구분했습니다. 최종 표시 commit에서 topology까지 확인해 늦은 결과를 차단했습니다. 집중23/23·전체unit588/588·Release빌드와 소스7개 해시를 확인했습니다. task-008만 `[x]`로 전환하고 선행 승인·SPEC·DESIGN을 유지합니다. 의미 변경·승인 취소는 없으며 IMPLEMENT와 task-009 이후는 `[ ]`입니다. 커밋 후 task-009를 진행합니다.
+
 - 2026-10-01: task-007의 실제 앱 저전력 일정 근거를 보완하고 독립 재verify approved를 main이 확정했습니다. 서명 앱 observer에 DEBUG snapshot을 주입해 여섯 축 닫힘5/10/120초·열림2/4/60초·일반 복원을 관찰했으며 실제 OS 전력 설정은 변경하지 않았습니다. 최종 집중23/23·전체unit579/579·Release/서명Debug와 소스15개 해시를 대조했습니다. task-007만 `[x]`로 전환하고 기존 승인을 유지합니다. 요구사항·설계·완료 기준 변경이나 승인 취소는 없으며 IMPLEMENT와 task-008 이후는 `[ ]`입니다. 커밋 후 task-008을 진행합니다.
 
 - 2026-10-01: task-007 completed 후보의 독립 verify에서 실제 앱 저전력 일정 관찰 근거가 부족해 `evidence` rejected를 확정했습니다. 같은 production factory의 저전력 테스트와 일반 전력 실제 앱 로그는 확보했으며, 실제 앱 DEBUG lifecycle 입력에 저전력 snapshot을 주입해 로그를 보완합니다. 승인 계약·선행 승인 변경은 없고 task-007 및 IMPLEMENT는 `[ ]`입니다.

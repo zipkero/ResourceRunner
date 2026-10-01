@@ -1,0 +1,1200 @@
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 6ada064..50d4bed 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -115,13 +115,17 @@ final class ApplicationCoordinator {
+             admission: admission
+         )
+         networkActivityTask = Self.consumeNetworkActivity(pipelines.networkStore,
+-            into: collectionDeliveryStore, admission: admission)
++            into: collectionDeliveryStore, dashboard: dashboard,
++            topology: networkTopology, admission: admission)
+         diskActivityTask = Self.consumeDiskActivity(pipelines.diskStore,
+-            into: collectionDeliveryStore, admission: admission)
++            into: collectionDeliveryStore, dashboard: dashboard,
++            topology: diskTopology, admission: admission)
+         networkMetadataTask = Self.consumeNetworkMetadata(pipelines.networkMetadataStore,
+-            into: collectionDeliveryStore, admission: admission)
++            into: collectionDeliveryStore, dashboard: dashboard,
++            topology: networkTopology, admission: admission)
+         storageMetadataTask = Self.consumeStorageMetadata(pipelines.storageMetadataStore,
+-            into: collectionDeliveryStore, admission: admission)
++            into: collectionDeliveryStore, dashboard: dashboard,
++            topology: diskTopology, admission: admission)
+         collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(pipelines.lifecycle, dashboard: dashboard, admission: admission)
+         // 모든 소비 경로가 준비된 뒤 초기 lifecycle을 적용해야 최초 수집을 잃지 않습니다.
+         monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle)
+@@ -289,16 +293,31 @@ final class ApplicationCoordinator {
+ 
+     static func consumeNetworkActivity(_ store: NetworkActivityStore,
+                                        into delivery: CollectionDeliveryStore,
++                                       dashboard: DashboardPresentationStore? = nil,
++                                       topology: NetworkTopologyTracker? = nil,
+                                        admission: CollectionAdmission) -> Task<Void, Never> {
+         let updates = store.updates
+         return Task { @MainActor in
+             for await value in updates {
+                 guard let latest = value.latest, let context = latest.context else { continue }
+-                _ = admission.admitDisplay(context, timestamp: latest.value.readAt) {
+-                    delivery.updateNetwork(value)
++                _ = admission.admitDisplayOptional(context, timestamp: latest.value.readAt) {
++                    let commit: @MainActor () -> Bool = {
++                        delivery.updateNetwork(value)
++                        if let dashboard {
++                            dashboard.recordSampleBoundary(context)
++                            dashboard.updateNetworkCard(activity: value,
++                                metadata: delivery.networkMetadata, epoch: context.epoch,
++                                currentTopologyRevision: latest.value.topologyRevision)
++                        }
+ #if DEBUG
+-                    debugPipelineLogger.notice("delivered axis=networkActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
++                        debugPipelineLogger.notice("delivered axis=networkActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
+ #endif
++                        return true
++                    }
++                    if let topology {
++                        return topology.withCurrentRevision(latest.value.topologyRevision, commit)
++                    }
++                    return commit()
+                 }
+             }
+         }
+@@ -306,16 +325,31 @@ final class ApplicationCoordinator {
+ 
+     static func consumeDiskActivity(_ store: DiskActivityStore,
+                                     into delivery: CollectionDeliveryStore,
++                                    dashboard: DashboardPresentationStore? = nil,
++                                    topology: DiskTopologyTracker? = nil,
+                                     admission: CollectionAdmission) -> Task<Void, Never> {
+         let updates = store.updates
+         return Task { @MainActor in
+             for await value in updates {
+                 guard let latest = value.latest, let context = latest.context else { continue }
+-                _ = admission.admitDisplay(context, timestamp: latest.value.readAt) {
+-                    delivery.updateDisk(value)
++                _ = admission.admitDisplayOptional(context, timestamp: latest.value.readAt) {
++                    let commit: @MainActor () -> Bool = {
++                        delivery.updateDisk(value)
++                        if let dashboard {
++                            dashboard.recordSampleBoundary(context)
++                            dashboard.updateDiskCard(activity: value,
++                                metadata: delivery.storageMetadata, epoch: context.epoch,
++                                currentTopologyRevision: latest.value.topologyRevision)
++                        }
+ #if DEBUG
+-                    debugPipelineLogger.notice("delivered axis=diskActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
++                        debugPipelineLogger.notice("delivered axis=diskActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
+ #endif
++                        return true
++                    }
++                    if let topology {
++                        return topology.withCurrentRevision(latest.value.topologyRevision, commit)
++                    }
++                    return commit()
+                 }
+             }
+         }
+@@ -323,21 +357,42 @@ final class ApplicationCoordinator {
+ 
+     static func consumeNetworkMetadata(_ store: NetworkMetadataStore,
+                                        into delivery: CollectionDeliveryStore,
++                                       dashboard: DashboardPresentationStore? = nil,
++                                       topology: NetworkTopologyTracker? = nil,
+                                        admission: CollectionAdmission) -> Task<Void, Never> {
+         let updates = store.updates
+         return Task { @MainActor in
+             for await value in updates {
+                 guard let latest = value.latest, let context = latest.context else { continue }
+-                _ = admission.admitDisplay(context, timestamp: latest.timestamp) {
+-                    delivery.updateNetworkMetadata(value)
++                let revision: UInt64?
++                switch latest.value {
++                case .available(let snapshot): revision = snapshot.topologyRevision
++                case .failure(_, let failedRevision): revision = failedRevision
++                }
++                _ = admission.admitDisplayOptional(context, timestamp: latest.timestamp) { () -> Bool? in
++                    let commit: @MainActor () -> Bool = {
++                        delivery.updateNetworkMetadata(value)
++                        if let dashboard {
++                            dashboard.recordSampleBoundary(context)
++                            dashboard.updateNetworkCard(activity: delivery.networkActivity,
++                                metadata: value, epoch: context.epoch,
++                                currentTopologyRevision: revision)
++                        }
+ #if DEBUG
+-                    let result: String
+-                    switch latest.value {
+-                    case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) records=\(snapshot.records.count)"
+-                    case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
+-                    }
+-                    debugPipelineLogger.notice("delivered axis=networkMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
++                        let result: String
++                        switch latest.value {
++                        case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) records=\(snapshot.records.count)"
++                        case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
++                        }
++                        debugPipelineLogger.notice("delivered axis=networkMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
+ #endif
++                        return true
++                    }
++                    if let topology {
++                        guard let revision else { return nil }
++                        return topology.withCurrentRevision(revision, commit)
++                    }
++                    return commit()
+                 }
+             }
+         }
+@@ -345,21 +400,42 @@ final class ApplicationCoordinator {
+ 
+     static func consumeStorageMetadata(_ store: StorageMetadataStore,
+                                        into delivery: CollectionDeliveryStore,
++                                       dashboard: DashboardPresentationStore? = nil,
++                                       topology: DiskTopologyTracker? = nil,
+                                        admission: CollectionAdmission) -> Task<Void, Never> {
+         let updates = store.updates
+         return Task { @MainActor in
+             for await value in updates {
+                 guard let latest = value.latest, let context = latest.context else { continue }
+-                _ = admission.admitDisplay(context, timestamp: latest.timestamp) {
+-                    delivery.updateStorageMetadata(value)
++                let revision: UInt64?
++                switch latest.value {
++                case .available(let snapshot): revision = snapshot.topologyRevision
++                case .failure(_, let failedRevision): revision = failedRevision
++                }
++                _ = admission.admitDisplayOptional(context, timestamp: latest.timestamp) { () -> Bool? in
++                    let commit: @MainActor () -> Bool = {
++                        delivery.updateStorageMetadata(value)
++                        if let dashboard {
++                            dashboard.recordSampleBoundary(context)
++                            dashboard.updateDiskCard(activity: delivery.diskActivity,
++                                metadata: value, epoch: context.epoch,
++                                currentTopologyRevision: revision)
++                        }
+ #if DEBUG
+-                    let result: String
+-                    switch latest.value {
+-                    case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) devices=\(snapshot.devices.count)"
+-                    case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
+-                    }
+-                    debugPipelineLogger.notice("delivered axis=storageMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
++                        let result: String
++                        switch latest.value {
++                        case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) devices=\(snapshot.devices.count)"
++                        case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
++                        }
++                        debugPipelineLogger.notice("delivered axis=storageMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
+ #endif
++                        return true
++                    }
++                    if let topology {
++                        guard let revision else { return nil }
++                        return topology.withCurrentRevision(revision, commit)
++                    }
++                    return commit()
+                 }
+             }
+         }
+diff --git a/ResourceRunner/CollectionAdmission.swift b/ResourceRunner/CollectionAdmission.swift
+index 8da6139..2ea7399 100644
+--- a/ResourceRunner/CollectionAdmission.swift
++++ b/ResourceRunner/CollectionAdmission.swift
+@@ -150,6 +150,21 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
+         }
+     }
+ 
++    /// 표시 대상의 topology까지 같은 반영 순간에 확인하며, 거절한 결과는 순서 표식을 전진시키지 않습니다.
++    @MainActor
++    func admitDisplayOptional<T>(_ context: CollectionRunContext, timestamp: ContinuousClock.Instant,
++                                 _ apply: @MainActor () -> T?) -> T? {
++        lock.withLock {
++            guard valid(context) else { return nil }
++            if let last = accepted[context.axis]?[.display],
++               context.requestSequence <= last.request || timestamp < last.timestamp { return nil }
++            guard let result = apply() else { return nil }
++            accepted[context.axis, default: [:]][.display] = Watermark(request: context.requestSequence,
++                                                                        timestamp: timestamp)
++            return result
++        }
++    }
++
+     private func valid(_ context: CollectionRunContext) -> Bool {
+         !boundary.stopped && context.epoch == boundary.epoch &&
+             context.boundarySequence == boundary.sequence &&
+diff --git a/ResourceRunner/CollectionDeliveryStore.swift b/ResourceRunner/CollectionDeliveryStore.swift
+index 4f2cb59..f208138 100644
+--- a/ResourceRunner/CollectionDeliveryStore.swift
++++ b/ResourceRunner/CollectionDeliveryStore.swift
+@@ -1,7 +1,7 @@
+ import Foundation
+ 
+-/// task-008의 카드 조립 전까지도 각 축의 최신 전달값을 독립적으로 보존하는 표시 소비 경계.
+-/// 늦은 stream 항목은 ApplicationCoordinator의 display admission을 통과해야만 이곳에 들어옵니다.
++/// 네 독립 소비 축의 최신 전달값을 카드 재조립에도 재사용합니다.
++/// 늦은 stream 항목은 ApplicationCoordinator의 display admission과 topology 검사를 통과해야만 들어옵니다.
+ @MainActor
+ final class CollectionDeliveryStore {
+     private(set) var networkActivity: NetworkActivityDisplayValue?
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index a4ac7cc..c09f34c 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -15,6 +15,8 @@ import Foundation
+ final class DashboardPresentationStore: ObservableObject {
+     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
+     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
++    @Published private(set) var networkCard: NetworkCardPresentation = .collecting
++    @Published private(set) var diskCard: DiskCardPresentation = .collecting
+     private var lastCollectionBoundarySequence = 0
+ 
+     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
+@@ -138,13 +140,34 @@ final class DashboardPresentationStore: ObservableObject {
+         }
+     }
+ 
++    /// 빠른 활동과 느린 보조 정보 중 어느 축이 도착해도 현재 실행권의 값으로 다시 조립합니다.
++    /// 원본 readAt과 같은 대상 revision을 유지하므로 느린 보조 실패가 새 속도를 묶어 두지 않습니다.
++    func updateNetworkCard(activity: NetworkActivityDisplayValue?,
++                           metadata: NetworkMetadataStatus?, epoch: Int,
++                           currentTopologyRevision: UInt64? = nil) {
++        let stopped: Bool = if case .stopped = networkCard.phase { true } else { false }
++        networkCard = NetworkCardPresentation.assemble(activity: activity,
++            metadata: metadata, epoch: epoch, wasStopped: stopped,
++            currentTopologyRevision: currentTopologyRevision)
++    }
++
++    func updateDiskCard(activity: DiskActivityDisplayValue?,
++                        metadata: StorageMetadataStatus?, epoch: Int,
++                        currentTopologyRevision: UInt64? = nil) {
++        let stopped: Bool = if case .stopped = diskCard.phase { true } else { false }
++        diskCard = DiskCardPresentation.assemble(activity: activity,
++            metadata: metadata, epoch: epoch, wasStopped: stopped,
++            currentTopologyRevision: currentTopologyRevision)
++    }
++
+     /// 일정 중지·재개 전이를 받는 진입점. 수집 tick과 별개의 경로로, 코디네이터가 생명주기 store가 알리는
+     /// "새로 멈췄다" 전이를 그대로 이 메서드에 전달합니다(ANALYSIS §1 「생명주기 경계」, §5 DP16).
+-    /// 두 카드가 함께 마지막 성공 값을 유지한 채 중지로 바뀝니다.
+-    /// 재개는 이 저장소에 별도로 알리지 않습니다 — 다음에 값이 성립한 tick의 `updateCPUCard`·`updateMemoryCard`
+-    /// 호출이 조립 결과로 중지를 자연히 대체하기 때문입니다.
++    /// 네 카드가 함께 마지막 성공 값을 유지한 채 중지로 바뀝니다.
++    /// 재개는 이 저장소에 별도로 알리지 않습니다. 다음에 성립한 각 축의 결과가 중지 표시를 대체합니다.
+     func markCollectionStopped() {
+         cpuCard = .stopped(lastKnown: cpuCard.lastKnownValue)
+         memoryCard = .stopped(lastKnown: memoryCard.lastKnownValue)
++        networkCard = networkCard.stopping()
++        diskCard = diskCard.stopping()
+     }
+ }
+diff --git a/ResourceRunner/ResourceActivityPresentation.swift b/ResourceRunner/ResourceActivityPresentation.swift
+new file mode 100644
+index 0000000..c4f4faa
+--- /dev/null
++++ b/ResourceRunner/ResourceActivityPresentation.swift
+@@ -0,0 +1,408 @@
++import Foundation
++
++nonisolated enum ResourceActivityPhase: Sendable, Equatable {
++    case collecting, measured, partial(String), baseline(String)
++    case disconnected, noPhysicalDevice, failure(String), stopped
++}
++
++nonisolated enum SupplementalDisplayPhase: Sendable, Equatable {
++    case collecting, refreshing, available, partial(String)
++    case failure(String), unsupported(String)
++}
++
++nonisolated enum ConditionalMetric: Sendable, Equatable {
++    case collecting, available(String), unsupported(String), failure(String)
++}
++
++nonisolated struct LastKnownRate: Sendable, Equatable {
++    let rate: RatePair
++    let readAt: ContinuousClock.Instant
++}
++
++nonisolated struct NetworkInterfacePresentation: Sendable {
++    let key: NetworkTargetKey
++    let kind: NetworkInterfaceKind
++    let classificationReason: String
++    let linkActive: Bool?
++    let receivedBytes: UInt64
++    let sentBytes: UInt64
++    let rate: RatePair?
++    let ipv4: [String]
++    let ipv6: [String]
++    let linkSpeed: ConditionalMetric
++}
++
++nonisolated struct NetworkSupplementalPresentation: Sendable {
++    let phase: SupplementalDisplayPhase
++    /// 원본 metadata가 실제로 읽힌 시각이며 활동 tick 시각으로 대체하지 않습니다.
++    let readAt: ContinuousClock.Instant?
++    let records: [NetworkMetadataRecord]
++    let isLastKnown: Bool
++}
++
++nonisolated struct NetworkCardPresentation: Sendable {
++    let phase: ResourceActivityPhase
++    /// 불완전 합계에서는 확인된 물리 대상의 부분 속도만 담습니다.
++    let currentRate: RatePair?
++    let currentRateIsPartial: Bool
++    let latestReadAt: ContinuousClock.Instant?
++    let lastKnownRate: LastKnownRate?
++    let topologyRevision: UInt64?
++    let interfaces: [NetworkInterfacePresentation]
++    let supplemental: NetworkSupplementalPresentation
++
++    static let collecting = NetworkCardPresentation(phase: .collecting, currentRate: nil,
++        currentRateIsPartial: false, latestReadAt: nil, lastKnownRate: nil,
++        topologyRevision: nil, interfaces: [],
++        supplemental: NetworkSupplementalPresentation(phase: .collecting, readAt: nil,
++            records: [], isLastKnown: false))
++
++    static func assemble(activity: NetworkActivityDisplayValue?, metadata: NetworkMetadataStatus?,
++                         epoch: Int, wasStopped: Bool,
++                         currentTopologyRevision: UInt64? = nil) -> NetworkCardPresentation {
++        let current = activity?.latest.flatMap {
++            $0.collectionEpoch == epoch &&
++                (currentTopologyRevision == nil || $0.value.topologyRevision == currentTopologyRevision)
++                ? $0.value : nil
++        }
++        let lastKnown = activity?.lastSuccess.flatMap { sample in
++            sample.value.representative.map { LastKnownRate(rate: $0, readAt: sample.value.readAt) }
++        }
++        let phase: ResourceActivityPhase
++        if let current {
++            switch current.status {
++            case .rate: phase = .measured
++            case .partial(let reason): phase = .partial(reason)
++            case .baselineOnly(let reason): phase = .baseline(String(describing: reason))
++            case .disconnected: phase = .disconnected
++            case .failure(let reason): phase = .failure(reason)
++            }
++        } else if wasStopped { phase = .stopped }
++        else if activity?.latest?.collectionEpoch == epoch && currentTopologyRevision != nil {
++            phase = .baseline("topologyChanged")
++        } else { phase = .collecting }
++
++        let supplemental = supplemental(for: current, metadata: metadata, epoch: epoch)
++        let records = Dictionary(uniqueKeysWithValues: supplemental.records.map { ($0.key, $0) })
++        let interfaces: [NetworkInterfacePresentation] = current?.interfaces.map { item in
++            let record = records[item.key]
++            let linkSpeed: ConditionalMetric
++            if let record {
++                linkSpeed = record.linkSpeed.hasPrefix("unsupported:")
++                    ? .unsupported(record.linkSpeed) : .failure("링크 속도 원본을 해석할 수 없음: \(record.linkSpeed)")
++            } else if case .failure(let reason) = supplemental.phase {
++                linkSpeed = .failure(reason)
++            } else { linkSpeed = .collecting }
++            return NetworkInterfacePresentation(key: item.key, kind: item.kind,
++                classificationReason: item.classificationReason, linkActive: item.linkActive,
++                receivedBytes: item.receivedBytes, sentBytes: item.sentBytes, rate: item.rate,
++                ipv4: record?.ipv4 ?? [], ipv6: record?.ipv6 ?? [],
++                linkSpeed: linkSpeed)
++        } ?? []
++        let partial = current?.representative == nil && current?.knownPhysicalRates != nil
++        return NetworkCardPresentation(phase: phase,
++            currentRate: current?.representative ?? current?.knownPhysicalRates,
++            currentRateIsPartial: partial,
++            latestReadAt: current?.readAt, lastKnownRate: lastKnown,
++            topologyRevision: current?.topologyRevision, interfaces: interfaces,
++            supplemental: supplemental)
++    }
++
++    private static func supplemental(for activity: NetworkActivitySample?,
++                                     metadata: NetworkMetadataStatus?, epoch: Int) -> NetworkSupplementalPresentation {
++        guard let activity else {
++            guard let latest = metadata?.latest else {
++                return NetworkSupplementalPresentation(phase: .collecting, readAt: nil,
++                    records: [], isLastKnown: false)
++            }
++            guard latest.collectionEpoch == epoch else {
++                return NetworkSupplementalPresentation(phase: .refreshing, readAt: nil,
++                    records: [], isLastKnown: false)
++            }
++            switch latest.value {
++            case .available(let snapshot):
++                return NetworkSupplementalPresentation(
++                    phase: snapshot.physicalTotalsComplete ? .available : .partial("물리 대상 정보 일부 미확인"),
++                    readAt: snapshot.readAt, records: snapshot.records, isLastKnown: false)
++            case .failure(let reason, let revision):
++                let lastKnown = metadata?.lastKnown.flatMap { $0.topologyRevision == revision ? $0 : nil }
++                return NetworkSupplementalPresentation(phase: .failure(reason),
++                    readAt: lastKnown?.readAt, records: lastKnown?.records ?? [],
++                    isLastKnown: lastKnown != nil)
++            }
++        }
++        let revision = activity.topologyRevision
++        let keys = Set(activity.interfaces.map(\.key))
++        func records(_ snapshot: NetworkMetadataSnapshot) -> [NetworkMetadataRecord] {
++            snapshot.records.filter { keys.contains($0.key) }
++        }
++        guard let latest = metadata?.latest else {
++            return NetworkSupplementalPresentation(phase: .refreshing, readAt: nil,
++                records: [], isLastKnown: false)
++        }
++        let lastKnown = metadata?.lastKnown.flatMap { $0.topologyRevision == revision ? $0 : nil }
++        guard latest.collectionEpoch == epoch else {
++            return NetworkSupplementalPresentation(phase: .refreshing,
++                readAt: lastKnown?.readAt, records: lastKnown.map(records) ?? [],
++                isLastKnown: lastKnown != nil)
++        }
++        switch latest.value {
++        case .available(let snapshot) where snapshot.topologyRevision == revision:
++            let matchingRecords = records(snapshot)
++            return NetworkSupplementalPresentation(
++                phase: snapshot.physicalTotalsComplete && matchingRecords.count == keys.count
++                    ? .available : .partial("대상 identity 또는 물리 정보 일부 미확인"),
++                readAt: snapshot.readAt, records: matchingRecords, isLastKnown: false)
++        case .failure(let reason, let failureRevision) where failureRevision == revision:
++            return NetworkSupplementalPresentation(phase: .failure(reason),
++                readAt: lastKnown?.readAt, records: lastKnown.map(records) ?? [],
++                isLastKnown: lastKnown != nil)
++        default:
++            return NetworkSupplementalPresentation(phase: .refreshing, readAt: nil,
++                records: [], isLastKnown: false)
++        }
++    }
++
++    var accessibilityLabel: String {
++        var parts = ["Network 카드", phase.accessibilityText]
++        if let currentRate {
++            let qualifier = currentRateIsPartial ? "확인된 일부 합계" : "현재"
++            parts.append("\(qualifier) 다운로드 \(ResourceQuantityFormatter.byteRate(currentRate.receivedBytesPerSecond)), 업로드 \(ResourceQuantityFormatter.byteRate(currentRate.sentBytesPerSecond))")
++        } else if let lastKnownRate {
++            parts.append("마지막 측정값(과거) 다운로드 \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.receivedBytesPerSecond)), 업로드 \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.sentBytesPerSecond))")
++        } else { parts.append("측정된 속도 없음") }
++        parts.append(supplemental.phase.accessibilityText)
++        if supplemental.isLastKnown { parts.append("보조 정보는 마지막 성공 시각의 과거 값") }
++        return parts.joined(separator: ", ")
++    }
++
++    func stopping() -> NetworkCardPresentation {
++        return NetworkCardPresentation(phase: .stopped, currentRate: nil,
++            currentRateIsPartial: false, latestReadAt: latestReadAt,
++            lastKnownRate: lastKnownRate,
++            topologyRevision: topologyRevision,
++            interfaces: interfaces.map { item in
++                NetworkInterfacePresentation(key: item.key, kind: item.kind,
++                    classificationReason: item.classificationReason, linkActive: item.linkActive,
++                    receivedBytes: item.receivedBytes, sentBytes: item.sentBytes, rate: nil,
++                    ipv4: item.ipv4, ipv6: item.ipv6, linkSpeed: item.linkSpeed)
++            }, supplemental: NetworkSupplementalPresentation(phase: supplemental.phase,
++                readAt: supplemental.readAt, records: supplemental.records,
++                isLastKnown: supplemental.readAt != nil))
++    }
++}
++
++nonisolated struct DiskCapacityPresentation: Sendable {
++    let identity: String
++    let totalBytes: UInt64
++    let availableBytes: UInt64
++    let usedBytes: UInt64
++    let sharedCapacity: Bool
++    let relationReason: String
++    let readAt: ContinuousClock.Instant
++}
++
++nonisolated struct DiskDevicePresentation: Sendable {
++    let registryID: UInt64
++    let bsdNames: Set<String>
++    let readBytes: UInt64?
++    let writtenBytes: UInt64?
++    let bytesReason: String
++    let rate: RatePair?
++    let readOperations: UInt64?
++    let writeOperations: UInt64?
++    let operationsRate: DiskOperationRates?
++    let operations: ConditionalMetric
++    let external: DiskExternalKind?
++    let externalReason: String?
++    let mountState: StorageMountState?
++}
++
++nonisolated struct StorageSupplementalPresentation: Sendable {
++    let phase: SupplementalDisplayPhase
++    let readAt: ContinuousClock.Instant?
++    let capacity: DiskCapacityPresentation?
++    let volumes: [DiskVolumeReading]
++    let externalDevicesAbsent: Bool?
++    let isLastKnown: Bool
++}
++
++nonisolated struct DiskCardPresentation: Sendable {
++    let phase: ResourceActivityPhase
++    let currentRate: RatePair?
++    let currentRateIsPartial: Bool
++    let latestReadAt: ContinuousClock.Instant?
++    let lastKnownRate: LastKnownRate?
++    let topologyRevision: UInt64?
++    let devices: [DiskDevicePresentation]
++    let supplemental: StorageSupplementalPresentation
++
++    static let collecting = DiskCardPresentation(phase: .collecting, currentRate: nil,
++        currentRateIsPartial: false, latestReadAt: nil, lastKnownRate: nil,
++        topologyRevision: nil, devices: [],
++        supplemental: StorageSupplementalPresentation(phase: .collecting, readAt: nil,
++            capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false))
++
++    static func assemble(activity: DiskActivityDisplayValue?, metadata: StorageMetadataStatus?,
++                         epoch: Int, wasStopped: Bool,
++                         currentTopologyRevision: UInt64? = nil) -> DiskCardPresentation {
++        let current = activity?.latest.flatMap {
++            $0.collectionEpoch == epoch &&
++                (currentTopologyRevision == nil || $0.value.topologyRevision == currentTopologyRevision)
++                ? $0.value : nil
++        }
++        let lastKnown = activity?.lastSuccess.flatMap { sample in
++            sample.value.representative.map { LastKnownRate(rate: $0, readAt: sample.value.readAt) }
++        }
++        let phase: ResourceActivityPhase
++        if let current {
++            switch current.status {
++            case .rate: phase = .measured
++            case .partial(let reason): phase = .partial(reason)
++            case .baselineOnly(let reason): phase = .baseline(String(describing: reason))
++            case .noPhysicalDevice: phase = .noPhysicalDevice
++            case .failure(let reason): phase = .failure(reason)
++            }
++        } else if wasStopped { phase = .stopped }
++        else if activity?.latest?.collectionEpoch == epoch && currentTopologyRevision != nil {
++            phase = .baseline("topologyChanged")
++        } else { phase = .collecting }
++        let supplemental = supplemental(for: current, metadata: metadata, epoch: epoch)
++        let matchingDevices: [StorageDeviceRecord]
++        if let current, let snapshot = metadata?.lastKnown,
++           snapshot.topologyRevision == current.topologyRevision,
++           supplemental.readAt != nil {
++            matchingDevices = snapshot.devices
++        } else { matchingDevices = [] }
++        let metadataDevices = Dictionary(uniqueKeysWithValues: matchingDevices.map { ($0.registryID, $0) })
++        let devices: [DiskDevicePresentation] = current?.devices.map { item in
++            let record = metadataDevices[item.registryID]
++            let operations: ConditionalMetric
++            if let rate = item.operationsRate {
++                operations = .available("Read \(ResourceQuantityFormatter.driverOperationsPerSecond(rate.readsPerSecond)), Write \(ResourceQuantityFormatter.driverOperationsPerSecond(rate.writesPerSecond))")
++            } else if item.readOperations == nil || item.writeOperations == nil {
++                operations = item.operationsReason.hasPrefix("unsupported")
++                    ? .unsupported(item.operationsReason) : .failure(item.operationsReason)
++            } else { operations = .collecting }
++            return DiskDevicePresentation(registryID: item.registryID, bsdNames: item.bsdNames,
++                readBytes: item.readBytes, writtenBytes: item.writtenBytes,
++                bytesReason: item.bytesReason, rate: item.rate,
++                readOperations: item.readOperations, writeOperations: item.writeOperations,
++                operationsRate: item.operationsRate, operations: operations,
++                external: record?.external, externalReason: record?.externalReason,
++                mountState: record?.mountState)
++        } ?? []
++        let partial = current?.representative == nil && current?.knownPhysicalRates != nil
++        return DiskCardPresentation(phase: phase,
++            currentRate: current?.representative ?? current?.knownPhysicalRates,
++            currentRateIsPartial: partial,
++            latestReadAt: current?.readAt, lastKnownRate: lastKnown,
++            topologyRevision: current?.topologyRevision, devices: devices,
++            supplemental: supplemental)
++    }
++
++    private static func supplemental(for activity: DiskActivitySample?,
++                                     metadata: StorageMetadataStatus?, epoch: Int) -> StorageSupplementalPresentation {
++        guard let latest = metadata?.latest else {
++            return StorageSupplementalPresentation(phase: activity == nil ? .collecting : .refreshing,
++                readAt: nil, capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false)
++        }
++        let revision = activity?.topologyRevision
++        let lastKnown = metadata?.lastKnown.flatMap { snapshot in
++            revision == nil || snapshot.topologyRevision == revision ? snapshot : nil
++        }
++        func view(_ snapshot: StorageMetadataSnapshot, phase: SupplementalDisplayPhase,
++                  stale: Bool) -> StorageSupplementalPresentation {
++            let system = snapshot.systemVolume
++            let capacity = DiskCapacityPresentation(identity: system.identity,
++                totalBytes: system.totalBytes, availableBytes: system.availableBytes,
++                usedBytes: system.usedBytes, sharedCapacity: system.sharedCapacity,
++                relationReason: system.relationReason, readAt: snapshot.readAt)
++            return StorageSupplementalPresentation(phase: phase, readAt: snapshot.readAt,
++                capacity: capacity, volumes: snapshot.volumes,
++                externalDevicesAbsent: snapshot.externalDevicesAbsent, isLastKnown: stale)
++        }
++        guard latest.collectionEpoch == epoch else {
++            return lastKnown.map { view($0, phase: .refreshing, stale: true) } ??
++                StorageSupplementalPresentation(phase: .refreshing, readAt: nil,
++                    capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false)
++        }
++        switch latest.value {
++        case .available(let snapshot) where revision == nil || snapshot.topologyRevision == revision:
++            return view(snapshot, phase: snapshot.relationshipsComplete ? .available : .partial("장치·볼륨 관계 일부 미확인"), stale: false)
++        case .failure(let reason, let failureRevision) where revision == nil || failureRevision == revision:
++            return lastKnown.map { view($0, phase: .failure(reason), stale: true) } ??
++                StorageSupplementalPresentation(phase: .failure(reason), readAt: nil,
++                    capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false)
++        default:
++            return StorageSupplementalPresentation(phase: .refreshing, readAt: nil,
++                capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false)
++        }
++    }
++
++    var accessibilityLabel: String {
++        var parts = ["Disk 카드", phase.accessibilityText]
++        if let currentRate {
++            let qualifier = currentRateIsPartial ? "확인된 일부 합계" : "현재"
++            parts.append("\(qualifier) Read \(ResourceQuantityFormatter.byteRate(currentRate.receivedBytesPerSecond)), Write \(ResourceQuantityFormatter.byteRate(currentRate.sentBytesPerSecond))")
++        } else if let lastKnownRate {
++            parts.append("마지막 측정값(과거) Read \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.receivedBytesPerSecond)), Write \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.sentBytesPerSecond))")
++        } else { parts.append("측정된 속도 없음") }
++        parts.append(supplemental.phase.accessibilityText)
++        if supplemental.isLastKnown { parts.append("보조 정보는 마지막 성공 시각의 과거 값") }
++        if let capacity = supplemental.capacity {
++            let qualifier = supplemental.isLastKnown ? "마지막 저장 공간(과거)" : "저장 공간"
++            parts.append("\(qualifier) 전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes)), 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes)), 사용 중은 전체에서 사용 가능을 뺀 값")
++            if capacity.sharedCapacity { parts.append("APFS 공유 공간이며 볼륨별 독점 사용량이 아님") }
++        }
++        return parts.joined(separator: ", ")
++    }
++
++    func stopping() -> DiskCardPresentation {
++        return DiskCardPresentation(phase: .stopped, currentRate: nil,
++            currentRateIsPartial: false, latestReadAt: latestReadAt,
++            lastKnownRate: lastKnownRate,
++            topologyRevision: topologyRevision,
++            devices: devices.map { item in
++                DiskDevicePresentation(registryID: item.registryID, bsdNames: item.bsdNames,
++                    readBytes: item.readBytes, writtenBytes: item.writtenBytes,
++                    bytesReason: item.bytesReason, rate: nil,
++                    readOperations: item.readOperations, writeOperations: item.writeOperations,
++                    operationsRate: nil, operations: .collecting,
++                    external: item.external, externalReason: item.externalReason,
++                    mountState: item.mountState)
++            }, supplemental: StorageSupplementalPresentation(phase: supplemental.phase,
++                readAt: supplemental.readAt, capacity: supplemental.capacity,
++                volumes: supplemental.volumes,
++                externalDevicesAbsent: supplemental.externalDevicesAbsent,
++                isLastKnown: supplemental.readAt != nil))
++    }
++}
++
++nonisolated private extension ResourceActivityPhase {
++    var accessibilityText: String {
++        switch self {
++        case .collecting: "수집 중"
++        case .measured: "정상 측정"
++        case .partial(let reason): "일부 수집 실패: \(reason)"
++        case .baseline: "기준점 갱신 중, 현재 속도 없음"
++        case .disconnected: "연결 없음, 현재 속도 없음"
++        case .noPhysicalDevice: "물리 장치 없음, 현재 속도 없음"
++        case .failure(let reason): "활동 조회 실패: \(reason)"
++        case .stopped: "수집 중지"
++        }
++    }
++}
++
++nonisolated private extension SupplementalDisplayPhase {
++    var accessibilityText: String {
++        switch self {
++        case .collecting: "보조 정보 수집 중"
++        case .refreshing: "보조 정보 갱신 중"
++        case .available: "보조 정보 확인됨"
++        case .partial(let reason): "일부 수집 실패: \(reason)"
++        case .failure(let reason): "일부 수집 실패: 보조 조회 실패 \(reason)"
++        case .unsupported(let reason): "보조 정보 미지원: \(reason)"
++        }
++    }
++}
+diff --git a/ResourceRunner/ResourceQuantityFormatter.swift b/ResourceRunner/ResourceQuantityFormatter.swift
+new file mode 100644
+index 0000000..f5c9a13
+--- /dev/null
++++ b/ResourceRunner/ResourceQuantityFormatter.swift
+@@ -0,0 +1,45 @@
++import Foundation
++
++/// 현재 속도·누적 바이트·링크 비트율·드라이버 작업률의 단위를 섞지 않습니다.
++nonisolated enum ResourceQuantityFormatter {
++    static func byteRate(_ value: Double, locale: Locale = .current) -> String {
++        guard value.isFinite, value >= 0 else { return "-" }
++        let units: [(Double, String)] = [
++            (Double(1 << 30), "GB/s"), (Double(1 << 20), "MB/s"),
++            (Double(1 << 10), "KB/s"), (1, "B/s")
++        ]
++        let selected = units.first { value >= $0.0 } ?? units[units.count - 1]
++        return formatted(value / selected.0, unit: selected.1, locale: locale)
++    }
++
++    static func bytes(_ value: UInt64, locale: Locale = .current) -> String {
++        let units: [(Double, String)] = [
++            (Double(1 << 40), "TB"), (Double(1 << 30), "GB"),
++            (Double(1 << 20), "MB"), (Double(1 << 10), "KB"), (1, "B")
++        ]
++        let selected = units.first { Double(value) >= $0.0 } ?? units[units.count - 1]
++        return formatted(Double(value) / selected.0, unit: selected.1, locale: locale)
++    }
++
++    static func linkBitsPerSecond(_ value: Double, locale: Locale = .current) -> String {
++        guard value.isFinite, value > 0 else { return "-" }
++        let units: [(Double, String)] = [
++            (1_000_000_000, "Gbit/s"), (1_000_000, "Mbit/s"),
++            (1_000, "Kbit/s"), (1, "bit/s")
++        ]
++        let selected = units.first { value >= $0.0 } ?? units[units.count - 1]
++        return formatted(value / selected.0, unit: selected.1, locale: locale)
++    }
++
++    static func driverOperationsPerSecond(_ value: Double, locale: Locale = .current) -> String {
++        guard value.isFinite, value >= 0 else { return "-" }
++        return formatted(value, unit: "회/s", locale: locale)
++    }
++
++    private static func formatted(_ value: Double, unit: String, locale: Locale) -> String {
++        let minimum = 0.1.formatted(.number.locale(locale).precision(.fractionLength(1)))
++        if value > 0 && value < 0.05 { return "<\(minimum) \(unit)" }
++        let number = value.formatted(.number.locale(locale).precision(.fractionLength(1)))
++        return "\(number) \(unit)"
++    }
++}
+diff --git a/ResourceRunnerTests/ResourceActivityPresentationTests.swift b/ResourceRunnerTests/ResourceActivityPresentationTests.swift
+new file mode 100644
+index 0000000..93a7901
+--- /dev/null
++++ b/ResourceRunnerTests/ResourceActivityPresentationTests.swift
+@@ -0,0 +1,440 @@
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++struct ResourceActivityPresentationTests {
++    private let origin = ContinuousClock().now
++    private let key = NetworkTargetKey(name: "en0", index: 1, registryID: 7, lifetime: 1)
++
++    private func rate(_ rx: Double, _ tx: Double) -> RatePair {
++        RatePair(receivedBytesPerSecond: rx, sentBytesPerSecond: tx)!
++    }
++
++    private func network(_ status: NetworkActivityStatus, _ speed: RatePair? = nil,
++                         partial: RatePair? = nil, revision: UInt64 = 1,
++                         at second: Int = 1) -> NetworkActivityDisplayValue {
++        let item = NetworkInterfaceActivity(key: key, kind: .physicalEthernet,
++            classificationReason: "physical", linkActive: true,
++            receivedBytes: 1_000, sentBytes: 2_000, rate: speed)
++        let sample = NetworkActivitySample(readAt: origin.advanced(by: .seconds(second)),
++            topologyRevision: revision, interfaces: [item],
++            knownPhysicalRates: partial ?? speed, representative: speed,
++            physicalTotalsComplete: speed != nil, status: status, rateSegment: 1)
++        let stamp = TimestampedSample(timestamp: sample.readAt, value: sample)
++        return NetworkActivityDisplayValue(latest: stamp,
++            lastSuccess: speed == nil ? nil : stamp, recentHistory: [])
++    }
++
++    private func metadata(_ revision: UInt64 = 1, key metadataKey: NetworkTargetKey? = nil,
++                          failure: String? = nil) -> NetworkMetadataStatus {
++        let record = NetworkMetadataRecord(key: metadataKey ?? key,
++            kind: .physicalEthernet, classificationReason: "physical",
++            ipv4: ["192.0.2.10"], ipv6: [], linkActive: true,
++            status: "link active", linkSpeed: "unsupported: negotiated speed unverified")
++        let snapshot = NetworkMetadataSnapshot(readAt: origin, topologyRevision: revision,
++            records: [record], physicalTotalsComplete: true, nativeStatus: "test")
++        let result: NetworkMetadataResult = failure.map { .failure($0, revision: revision) }
++            ?? .available(snapshot)
++        return NetworkMetadataStatus(latest: TimestampedSample(timestamp: origin, value: result),
++            lastKnown: failure == nil ? snapshot : nil)
++    }
++
++    private func disk(_ status: DiskActivityStatus, _ speed: RatePair? = nil,
++                      partial: RatePair? = nil, revision: UInt64 = 1,
++                      at second: Int = 1) -> DiskActivityDisplayValue {
++        let item = DiskDeviceActivity(registryID: 8, bsdNames: ["disk0"],
++            kind: .physical, kindReason: "physical", readBytes: 4_096,
++            writtenBytes: 8_192, readOperations: nil, writeOperations: nil,
++            operationsReason: "unsupported: no Operations", bytesReason: "Statistics bytes",
++            rate: speed, operationsRate: nil)
++        let sample = DiskActivitySample(readAt: origin.advanced(by: .seconds(second)),
++            topologyRevision: revision, devices: [item],
++            knownPhysicalRates: partial ?? speed, representative: speed,
++            knownPhysicalOperations: nil, representativeOperations: nil,
++            physicalTotalsComplete: speed != nil, status: status, rateSegment: 1)
++        let stamp = TimestampedSample(timestamp: sample.readAt, value: sample)
++        return DiskActivityDisplayValue(latest: stamp,
++            lastSuccess: speed == nil ? nil : stamp, recentHistory: [])
++    }
++
++    private func storage(_ revision: UInt64 = 1, failure: String? = nil) -> StorageMetadataStatus {
++        let volume = DiskVolumeReading(identity: "system", mountPaths: ["/"],
++            bsdName: "disk3s1", fileSystem: "apfs", totalBytes: 1 << 40,
++            availableBytes: 1 << 39, driverIDs: [8], scope: .physical,
++            relationReason: "APFS shared", sharedCapacity: true)
++        let device = StorageDeviceRecord(registryID: 8, bsdNames: ["disk0"],
++            external: .internalDevice, externalReason: "built-in", removable: false,
++            ejectable: false, connection: "PCI", mountState: .mounted)
++        let snapshot = StorageMetadataSnapshot(readAt: origin, topologyRevision: revision,
++            volumes: [volume], systemVolume: volume, devices: [device],
++            relationshipsComplete: true, externalDevicesAbsent: true, nativeStatus: "test")
++        let result: StorageMetadataResult = failure.map { .failure($0, revision: revision) }
++            ?? .available(snapshot)
++        return StorageMetadataStatus(latest: TimestampedSample(timestamp: origin, value: result),
++            lastKnown: failure == nil ? snapshot : nil)
++    }
++
++    @Test func measuredZeroIsDistinctFromNoConnectionBaselineAndFailure() {
++        let zero = NetworkCardPresentation.assemble(activity: network(.rate, rate(0, 0)),
++            metadata: metadata(), epoch: 0, wasStopped: false)
++        #expect(zero.phase == .measured)
++        #expect(zero.currentRate == rate(0, 0))
++        #expect(zero.accessibilityLabel.contains("0.0 B/s"))
++        #expect(zero.interfaces[0].receivedBytes == 1_000)
++        #expect(zero.interfaces[0].ipv4 == ["192.0.2.10"])
++        #expect(zero.interfaces[0].linkSpeed == .unsupported("unsupported: negotiated speed unverified"))
++        let disconnected = NetworkCardPresentation.assemble(activity: network(.disconnected),
++            metadata: metadata(), epoch: 0, wasStopped: false)
++        #expect(disconnected.phase == .disconnected)
++        #expect(disconnected.currentRate == nil)
++        let baseline = NetworkCardPresentation.assemble(activity: network(.baselineOnly(.first)),
++            metadata: metadata(), epoch: 0, wasStopped: false)
++        #expect(baseline.currentRate == nil)
++        #expect(baseline.interfaces[0].receivedBytes == 1_000)
++        #expect(baseline.accessibilityLabel.contains("기준점 갱신"))
++        let failure = NetworkCardPresentation.assemble(activity: network(.failure("route")),
++            metadata: metadata(failure: "SC failed"), epoch: 0, wasStopped: false)
++        #expect(failure.currentRate == nil)
++        #expect(failure.lastKnownRate == nil)
++        #expect(failure.accessibilityLabel.contains("측정된 속도 없음"))
++        #expect(failure.interfaces[0].linkSpeed == .failure("SC failed"))
++    }
++
++    @Test func supplementalFailureDoesNotFreezeFastRateAndIdentityMustMatch() {
++        let initial = NetworkCardPresentation.assemble(activity: network(.rate, rate(10, 20)),
++            metadata: metadata(failure: "SC failed"), epoch: 0, wasStopped: false)
++        let next = NetworkCardPresentation.assemble(activity: network(.rate, rate(30, 40), at: 2),
++            metadata: metadata(failure: "SC failed"), epoch: 0, wasStopped: false)
++        #expect(initial.currentRate == rate(10, 20))
++        #expect(next.currentRate == rate(30, 40))
++        #expect(next.supplemental.phase == .failure("SC failed"))
++        #expect(next.accessibilityLabel.contains("일부 수집 실패"))
++        let replacedKey = NetworkTargetKey(name: "en0", index: 1, registryID: 9, lifetime: 2)
++        let mismatch = NetworkCardPresentation.assemble(activity: network(.rate, rate(10, 20)),
++            metadata: metadata(key: replacedKey), epoch: 0, wasStopped: false)
++        #expect(mismatch.interfaces[0].ipv4.isEmpty)
++        #expect(mismatch.supplemental.phase == .partial("대상 identity 또는 물리 정보 일부 미확인"))
++        let changed = NetworkCardPresentation.assemble(activity: network(.rate, rate(10, 20), revision: 2),
++            metadata: metadata(), epoch: 0, wasStopped: false)
++        #expect(changed.supplemental.phase == .refreshing)
++        #expect(changed.interfaces[0].ipv4.isEmpty)
++    }
++
++    @Test func partialRateNeverBecomesFullLastKnownOnStop() {
++        let partial = NetworkCardPresentation.assemble(activity: network(.partial("unknown physical"),
++            partial: rate(10, 20)), metadata: nil, epoch: 0, wasStopped: false)
++        #expect(partial.currentRateIsPartial)
++        #expect(partial.currentRate == rate(10, 20))
++        let stopped = partial.stopping()
++        #expect(stopped.phase == .stopped)
++        #expect(stopped.currentRate == nil)
++        #expect(stopped.lastKnownRate == nil)
++        #expect(stopped.interfaces[0].rate == nil)
++        let full = NetworkCardPresentation.assemble(activity: network(.rate, rate(10, 20)),
++            metadata: nil, epoch: 0, wasStopped: false).stopping()
++        #expect(full.lastKnownRate?.rate == rate(10, 20))
++        #expect(full.lastKnownRate?.readAt == origin.advanced(by: .seconds(1)))
++        let pastMetadata = NetworkCardPresentation.assemble(activity: network(.rate, rate(10, 20)),
++            metadata: metadata(), epoch: 0, wasStopped: false).stopping()
++        #expect(pastMetadata.supplemental.isLastKnown)
++        #expect(pastMetadata.supplemental.readAt == origin)
++        #expect(pastMetadata.accessibilityLabel.contains("과거 값"))
++    }
++
++    @Test func diskCapacityAndUnsupportedOperationsRemainSeparateFromByteRate() {
++        let measured = DiskCardPresentation.assemble(activity: disk(.rate, rate(0, 0)),
++            metadata: storage(), epoch: 0, wasStopped: false)
++        #expect(measured.phase == .measured)
++        #expect(measured.currentRate == rate(0, 0))
++        #expect(measured.devices[0].operations == .unsupported("unsupported: no Operations"))
++        #expect(measured.supplemental.capacity?.totalBytes == 1 << 40)
++        #expect(measured.supplemental.capacity?.sharedCapacity == true)
++        #expect(measured.accessibilityLabel.contains("APFS 공유 공간"))
++        let partial = DiskCardPresentation.assemble(activity: disk(.partial("missing bytes"),
++            partial: rate(5, 6)), metadata: storage(failure: "volume lookup"),
++            epoch: 0, wasStopped: false)
++        #expect(partial.currentRateIsPartial)
++        #expect(partial.supplemental.phase == .failure("volume lookup"))
++        #expect(partial.accessibilityLabel.contains("일부 수집 실패"))
++        #expect(partial.stopping().lastKnownRate == nil)
++        let pastCapacity = measured.stopping()
++        #expect(pastCapacity.supplemental.isLastKnown)
++        #expect(pastCapacity.supplemental.capacity?.readAt == origin)
++        #expect(pastCapacity.accessibilityLabel.contains("과거 값"))
++        let absent = DiskCardPresentation.assemble(activity: disk(.noPhysicalDevice),
++            metadata: nil, epoch: 0, wasStopped: false)
++        #expect(absent.phase == .noPhysicalDevice)
++        #expect(absent.currentRate == nil)
++    }
++
++    @Test func formatterKeepsFourUnitsAndSmallRateAndLocale() {
++        let english = Locale(identifier: "en_US")
++        let german = Locale(identifier: "de_DE")
++        #expect(ResourceQuantityFormatter.byteRate(1_023, locale: english) == "1,023.0 B/s")
++        #expect(ResourceQuantityFormatter.byteRate(1_024, locale: english) == "1.0 KB/s")
++        #expect(ResourceQuantityFormatter.byteRate(Double(1 << 30), locale: english) == "1.0 GB/s")
++        #expect(ResourceQuantityFormatter.byteRate(0.01, locale: english) == "<0.1 B/s")
++        #expect(ResourceQuantityFormatter.byteRate(1_024, locale: german) == "1,0 KB/s")
++        #expect(ResourceQuantityFormatter.bytes(1 << 40, locale: english) == "1.0 TB")
++        #expect(ResourceQuantityFormatter.linkBitsPerSecond(1_000_000, locale: english) == "1.0 Mbit/s")
++        #expect(ResourceQuantityFormatter.driverOperationsPerSecond(2.5, locale: english) == "2.5 회/s")
++    }
++
++    @Test func auxiliaryCanArriveBeforeFastSampleAndDiskIdentityMismatchHidesDeviceRelation() {
++        let earlyNetwork = NetworkCardPresentation.assemble(activity: nil,
++            metadata: metadata(), epoch: 0, wasStopped: false)
++        #expect(earlyNetwork.phase == .collecting)
++        #expect(earlyNetwork.supplemental.phase == .available)
++        #expect(earlyNetwork.supplemental.readAt == origin)
++        #expect(earlyNetwork.currentRate == nil)
++        let earlyDisk = DiskCardPresentation.assemble(activity: nil,
++            metadata: storage(), epoch: 0, wasStopped: false)
++        #expect(earlyDisk.phase == .collecting)
++        #expect(earlyDisk.supplemental.capacity?.totalBytes == 1 << 40)
++        let mismatch = DiskCardPresentation.assemble(activity: disk(.rate, rate(1, 2), revision: 2),
++            metadata: storage(), epoch: 0, wasStopped: false)
++        #expect(mismatch.supplemental.phase == .refreshing)
++        #expect(mismatch.supplemental.capacity == nil)
++        #expect(mismatch.devices[0].external == nil)
++        #expect(mismatch.devices[0].mountState == nil)
++        let newNetworkRevision = NetworkCardPresentation.assemble(
++            activity: network(.rate, rate(9, 9)), metadata: metadata(2), epoch: 0,
++            wasStopped: false, currentTopologyRevision: 2)
++        #expect(newNetworkRevision.phase == .baseline("topologyChanged"))
++        #expect(newNetworkRevision.currentRate == nil)
++        #expect(newNetworkRevision.lastKnownRate?.rate == rate(9, 9))
++        #expect(newNetworkRevision.supplemental.phase == .available)
++        let newDiskRevision = DiskCardPresentation.assemble(
++            activity: disk(.rate, rate(9, 9)), metadata: storage(2), epoch: 0,
++            wasStopped: false, currentTopologyRevision: 2)
++        #expect(newDiskRevision.phase == .baseline("topologyChanged"))
++        #expect(newDiskRevision.currentRate == nil)
++        #expect(newDiskRevision.supplemental.capacity?.totalBytes == 1 << 40)
++    }
++
++    @Test func activityFailureUsesOnlyPriorFullSuccessAndOptionalLookupFailureIsExplicit() {
++        let networkSuccess = network(.rate, rate(12, 34)).latest!
++        let networkFailure = network(.failure("route read"), at: 2).latest!
++        let networkValue = NetworkActivityDisplayValue(latest: networkFailure,
++            lastSuccess: networkSuccess, recentHistory: [])
++        let networkCard = NetworkCardPresentation.assemble(activity: networkValue,
++            metadata: metadata(), epoch: 0, wasStopped: false)
++        #expect(networkCard.phase == .failure("route read"))
++        #expect(networkCard.currentRate == nil)
++        #expect(networkCard.lastKnownRate?.rate == rate(12, 34))
++        #expect(networkCard.lastKnownRate?.readAt == origin.advanced(by: .seconds(1)))
++        #expect(networkCard.accessibilityLabel.contains("마지막 측정값(과거)"))
++
++        let diskSuccess = disk(.rate, rate(5, 6)).latest!
++        let diskFailure = disk(.failure("driver read"), at: 2).latest!
++        let diskValue = DiskActivityDisplayValue(latest: diskFailure,
++            lastSuccess: diskSuccess, recentHistory: [])
++        let diskCard = DiskCardPresentation.assemble(activity: diskValue,
++            metadata: storage(), epoch: 0, wasStopped: false)
++        #expect(diskCard.phase == .failure("driver read"))
++        #expect(diskCard.currentRate == nil)
++        #expect(diskCard.lastKnownRate?.rate == rate(5, 6))
++        #expect(diskCard.lastKnownRate?.readAt == origin.advanced(by: .seconds(1)))
++
++        let invalidOperations = DiskDeviceActivity(registryID: 8, bsdNames: ["disk0"],
++            kind: .physical, kindReason: "physical", readBytes: 4_096, writtenBytes: 8_192,
++            readOperations: nil, writeOperations: nil, operationsReason: "invalid: Operations key",
++            bytesReason: "Statistics bytes", rate: rate(5, 6), operationsRate: nil)
++        let sample = DiskActivitySample(readAt: origin, topologyRevision: 1,
++            devices: [invalidOperations], knownPhysicalRates: rate(5, 6),
++            representative: rate(5, 6), knownPhysicalOperations: nil,
++            representativeOperations: nil, physicalTotalsComplete: true,
++            status: .rate, rateSegment: 1)
++        let invalid = DiskCardPresentation.assemble(activity: DiskActivityDisplayValue(
++            latest: TimestampedSample(timestamp: origin, value: sample),
++            lastSuccess: nil, recentHistory: []), metadata: storage(), epoch: 0, wasStopped: false)
++        #expect(invalid.devices[0].operations == .failure("invalid: Operations key"))
++        #expect(invalid.currentRate == rate(5, 6))
++        let supportedOperations = DiskDeviceActivity(registryID: 8, bsdNames: ["disk0"],
++            kind: .physical, kindReason: "physical", readBytes: 4_096, writtenBytes: 8_192,
++            readOperations: 100, writeOperations: 200, operationsReason: "Statistics operations",
++            bytesReason: "Statistics bytes", rate: rate(5, 6),
++            operationsRate: DiskOperationRates(readsPerSecond: 2.5, writesPerSecond: 3)!)
++        let supportedSample = DiskActivitySample(readAt: origin, topologyRevision: 1,
++            devices: [supportedOperations], knownPhysicalRates: rate(5, 6),
++            representative: rate(5, 6), knownPhysicalOperations: supportedOperations.operationsRate,
++            representativeOperations: supportedOperations.operationsRate,
++            physicalTotalsComplete: true, status: .rate, rateSegment: 1)
++        let supported = DiskCardPresentation.assemble(activity: DiskActivityDisplayValue(
++            latest: TimestampedSample(timestamp: origin, value: supportedSample),
++            lastSuccess: nil, recentHistory: []), metadata: storage(), epoch: 0, wasStopped: false)
++        #expect(supported.devices[0].operations == .available("Read 2.5 회/s, Write 3.0 회/s"))
++        #expect(supported.currentRate == rate(5, 6))
++    }
++    @Test func productionConsumersAdvanceFastCardsDuringAuxFailureAndRejectOldEpoch() async throws {
++        let gate = CollectionAdmission()
++        gate.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        for axis: CollectionAxis in [.networkActivity, .diskActivity, .networkMetadata, .storageMetadata] {
++            _ = gate.advance(axis)
++        }
++        let networkStore = NetworkActivityStore(admission: gate)
++        let diskStore = DiskActivityStore(admission: gate)
++        let networkMetadataStore = NetworkMetadataStore(admission: gate)
++        let storageStore = StorageMetadataStore(admission: gate)
++        let delivery = CollectionDeliveryStore()
++        let dashboard = DashboardPresentationStore()
++        let consumers = [
++            ApplicationCoordinator.consumeNetworkActivity(networkStore, into: delivery,
++                dashboard: dashboard, admission: gate),
++            ApplicationCoordinator.consumeDiskActivity(diskStore, into: delivery,
++                dashboard: dashboard, admission: gate),
++            ApplicationCoordinator.consumeNetworkMetadata(networkMetadataStore, into: delivery,
++                dashboard: dashboard, admission: gate),
++            ApplicationCoordinator.consumeStorageMetadata(storageStore, into: delivery,
++                dashboard: dashboard, admission: gate)
++        ]
++        defer { consumers.forEach { $0.cancel() } }
++        let networkContext = try #require(gate.issue(.networkActivity))
++        let diskContext = try #require(gate.issue(.diskActivity))
++        let networkSample = try #require(network(.rate, rate(10, 20)).latest)
++        let diskSample = try #require(disk(.rate, rate(30, 40)).latest)
++        #expect(await networkStore.append(TimestampedSample(timestamp: networkSample.timestamp,
++            value: networkSample.value, context: networkContext), context: networkContext))
++        #expect(await diskStore.append(TimestampedSample(timestamp: diskSample.timestamp,
++            value: diskSample.value, context: diskContext), context: diskContext))
++        for _ in 0..<10_000 where dashboard.networkCard.currentRate != rate(10, 20)
++            || dashboard.diskCard.currentRate != rate(30, 40) { await Task.yield() }
++        #expect(dashboard.networkCard.currentRate == rate(10, 20))
++        #expect(dashboard.diskCard.currentRate == rate(30, 40))
++
++        let networkAuxContext = try #require(gate.issue(.networkMetadata))
++        let diskAuxContext = try #require(gate.issue(.storageMetadata))
++        let networkFailure = TimestampedSample(timestamp: origin, value:
++            NetworkMetadataResult.failure("SC failed", revision: 1), context: networkAuxContext)
++        let storageFailure = TimestampedSample(timestamp: origin, value:
++            StorageMetadataResult.failure("DA failed", revision: 1), context: diskAuxContext)
++        #expect(await networkMetadataStore.append(networkFailure, context: networkAuxContext))
++        #expect(await storageStore.append(storageFailure, context: diskAuxContext))
++        for _ in 0..<10_000 where dashboard.networkCard.supplemental.phase != .failure("SC failed")
++            || dashboard.diskCard.supplemental.phase != .failure("DA failed") { await Task.yield() }
++        #expect(dashboard.networkCard.supplemental.phase == .failure("SC failed"))
++        #expect(dashboard.diskCard.supplemental.phase == .failure("DA failed"))
++
++        let nextNetwork = try #require(gate.issue(.networkActivity))
++        let nextDisk = try #require(gate.issue(.diskActivity))
++        let n = try #require(network(.rate, rate(50, 60), at: 2).latest)
++        let d = try #require(disk(.rate, rate(70, 80), at: 2).latest)
++        #expect(await networkStore.append(TimestampedSample(timestamp: n.timestamp, value: n.value,
++            context: nextNetwork), context: nextNetwork))
++        #expect(await diskStore.append(TimestampedSample(timestamp: d.timestamp, value: d.value,
++            context: nextDisk), context: nextDisk))
++        for _ in 0..<10_000 where dashboard.networkCard.currentRate != rate(50, 60)
++            || dashboard.diskCard.currentRate != rate(70, 80) { await Task.yield() }
++        #expect(dashboard.networkCard.currentRate == rate(50, 60))
++        #expect(dashboard.diskCard.currentRate == rate(70, 80))
++        #expect(dashboard.networkCard.supplemental.phase == .failure("SC failed"))
++        #expect(dashboard.diskCard.supplemental.phase == .failure("DA failed"))
++
++        let stop = CollectionBoundary(revision: 1, sequence: 1, epoch: 0, stopped: true)
++        gate.transition(stop)
++        dashboard.observe(stop, admission: gate)
++        #expect(dashboard.networkCard.phase == .stopped)
++        #expect(dashboard.diskCard.phase == .stopped)
++        #expect(dashboard.networkCard.lastKnownRate?.rate == rate(50, 60))
++        let resume = CollectionBoundary(revision: 2, sequence: 2, epoch: 1, stopped: false)
++        gate.transition(resume)
++        dashboard.observe(resume, admission: gate)
++        #expect(await networkStore.append(TimestampedSample(timestamp: origin.advanced(by: .seconds(3)),
++            value: network(.rate, rate(900, 900), at: 3).latest!.value,
++            collectionEpoch: 0, context: nextNetwork), context: nextNetwork) == false)
++        #expect(await networkMetadataStore.append(networkFailure, context: networkAuxContext) == false)
++        #expect(dashboard.networkCard.phase == .stopped)
++        #expect(dashboard.networkCard.lastKnownRate?.rate == rate(50, 60))
++        #expect(dashboard.diskCard.phase == .stopped)
++    }
++
++    @Test func queuedOldTopologyEventsCannotReachProductionDisplayOrReassembleOldActivity() async throws {
++        let gate = CollectionAdmission()
++        gate.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        for axis: CollectionAxis in [.networkActivity, .diskActivity, .networkMetadata, .storageMetadata] {
++            _ = gate.advance(axis)
++        }
++        let networkTopology = NetworkTopologyTracker()
++        let diskTopology = DiskTopologyTracker()
++        let networkStore = NetworkActivityStore(admission: gate)
++        let diskStore = DiskActivityStore(admission: gate)
++        let networkMetadataStore = NetworkMetadataStore(admission: gate)
++        let storageStore = StorageMetadataStore(admission: gate)
++        let delivery = CollectionDeliveryStore()
++        let dashboard = DashboardPresentationStore()
++
++        // 소비 Task를 만들기 전에 stream에 쌓인 구 topology 결과가 표시될 때에는 revision이 전진해 있습니다.
++        let oldNetworkContext = try #require(gate.issue(.networkActivity))
++        let oldDiskContext = try #require(gate.issue(.diskActivity))
++        let oldNetworkAuxContext = try #require(gate.issue(.networkMetadata))
++        let oldDiskAuxContext = try #require(gate.issue(.storageMetadata))
++        let oldNetwork = try #require(network(.rate, rate(99, 99), revision: 0).latest)
++        let oldDisk = try #require(disk(.rate, rate(99, 99), revision: 0).latest)
++        #expect(await networkStore.append(TimestampedSample(timestamp: oldNetwork.timestamp,
++            value: oldNetwork.value, context: oldNetworkContext), context: oldNetworkContext))
++        #expect(await diskStore.append(TimestampedSample(timestamp: oldDisk.timestamp,
++            value: oldDisk.value, context: oldDiskContext), context: oldDiskContext))
++        let oldNetworkMetadata = NetworkMetadataSnapshot(readAt: origin, topologyRevision: 0,
++            records: [], physicalTotalsComplete: true, nativeStatus: "old")
++        let oldStorage = storage(0).lastKnown!
++        #expect(await networkMetadataStore.append(TimestampedSample(timestamp: origin,
++            value: NetworkMetadataResult.available(oldNetworkMetadata), context: oldNetworkAuxContext),
++            context: oldNetworkAuxContext))
++        #expect(await storageStore.append(TimestampedSample(timestamp: origin,
++            value: StorageMetadataResult.available(oldStorage), context: oldDiskAuxContext),
++            context: oldDiskAuxContext))
++        networkTopology.noteChange()
++        diskTopology.noteChange()
++        let consumers = [
++            ApplicationCoordinator.consumeNetworkActivity(networkStore, into: delivery,
++                dashboard: dashboard, topology: networkTopology, admission: gate),
++            ApplicationCoordinator.consumeDiskActivity(diskStore, into: delivery,
++                dashboard: dashboard, topology: diskTopology, admission: gate),
++            ApplicationCoordinator.consumeNetworkMetadata(networkMetadataStore, into: delivery,
++                dashboard: dashboard, topology: networkTopology, admission: gate),
++            ApplicationCoordinator.consumeStorageMetadata(storageStore, into: delivery,
++                dashboard: dashboard, topology: diskTopology, admission: gate)
++        ]
++        defer { consumers.forEach { $0.cancel() } }
++        for _ in 0..<200 { await Task.yield() }
++        #expect(delivery.networkActivity == nil)
++        #expect(delivery.diskActivity == nil)
++        #expect(delivery.networkMetadata == nil)
++        #expect(delivery.storageMetadata == nil)
++        #expect(dashboard.networkCard.currentRate == nil)
++        #expect(dashboard.diskCard.currentRate == nil)
++
++        let newNetworkContext = try #require(gate.issue(.networkActivity))
++        let newDiskContext = try #require(gate.issue(.diskActivity))
++        let newNetwork = try #require(network(.rate, rate(10, 20), revision: 1, at: 2).latest)
++        let newDisk = try #require(disk(.rate, rate(30, 40), revision: 1, at: 2).latest)
++        #expect(await networkStore.append(TimestampedSample(timestamp: newNetwork.timestamp,
++            value: newNetwork.value, context: newNetworkContext), context: newNetworkContext))
++        #expect(await diskStore.append(TimestampedSample(timestamp: newDisk.timestamp,
++            value: newDisk.value, context: newDiskContext), context: newDiskContext))
++        for _ in 0..<10_000 where dashboard.networkCard.currentRate != rate(10, 20)
++            || dashboard.diskCard.currentRate != rate(30, 40) { await Task.yield() }
++        #expect(dashboard.networkCard.currentRate == rate(10, 20))
++        #expect(dashboard.diskCard.currentRate == rate(30, 40))
++        #expect(delivery.networkMetadata == nil)
++        #expect(delivery.storageMetadata == nil)
++
++        let newNetworkAuxContext = try #require(gate.issue(.networkMetadata))
++        let newDiskAuxContext = try #require(gate.issue(.storageMetadata))
++        #expect(await networkMetadataStore.append(TimestampedSample(timestamp: origin.advanced(by: .seconds(2)),
++            value: NetworkMetadataResult.failure("new SC failure", revision: 1),
++            context: newNetworkAuxContext), context: newNetworkAuxContext))
++        #expect(await storageStore.append(TimestampedSample(timestamp: origin.advanced(by: .seconds(2)),
++            value: StorageMetadataResult.failure("new DA failure", revision: 1),
++            context: newDiskAuxContext), context: newDiskAuxContext))
++        for _ in 0..<10_000 where dashboard.networkCard.supplemental.phase != .failure("new SC failure")
++            || dashboard.diskCard.supplemental.phase != .failure("new DA failure") { await Task.yield() }
++        #expect(dashboard.networkCard.currentRate == rate(10, 20))
++        #expect(dashboard.diskCard.currentRate == rate(30, 40))
++        #expect(dashboard.networkCard.supplemental.phase == .failure("new SC failure"))
++        #expect(dashboard.diskCard.supplemental.phase == .failure("new DA failure"))
++        #expect(dashboard.networkCard.interfaces[0].ipv4.isEmpty)
++    }
++
++}

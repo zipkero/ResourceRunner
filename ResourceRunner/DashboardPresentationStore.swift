@@ -15,6 +15,8 @@ import Foundation
 final class DashboardPresentationStore: ObservableObject {
     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
+    @Published private(set) var networkCard: NetworkCardPresentation = .collecting
+    @Published private(set) var diskCard: DiskCardPresentation = .collecting
     private var lastCollectionBoundarySequence = 0
 
     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
@@ -138,13 +140,34 @@ final class DashboardPresentationStore: ObservableObject {
         }
     }
 
+    /// 빠른 활동과 느린 보조 정보 중 어느 축이 도착해도 현재 실행권의 값으로 다시 조립합니다.
+    /// 원본 readAt과 같은 대상 revision을 유지하므로 느린 보조 실패가 새 속도를 묶어 두지 않습니다.
+    func updateNetworkCard(activity: NetworkActivityDisplayValue?,
+                           metadata: NetworkMetadataStatus?, epoch: Int,
+                           currentTopologyRevision: UInt64? = nil) {
+        let stopped: Bool = if case .stopped = networkCard.phase { true } else { false }
+        networkCard = NetworkCardPresentation.assemble(activity: activity,
+            metadata: metadata, epoch: epoch, wasStopped: stopped,
+            currentTopologyRevision: currentTopologyRevision)
+    }
+
+    func updateDiskCard(activity: DiskActivityDisplayValue?,
+                        metadata: StorageMetadataStatus?, epoch: Int,
+                        currentTopologyRevision: UInt64? = nil) {
+        let stopped: Bool = if case .stopped = diskCard.phase { true } else { false }
+        diskCard = DiskCardPresentation.assemble(activity: activity,
+            metadata: metadata, epoch: epoch, wasStopped: stopped,
+            currentTopologyRevision: currentTopologyRevision)
+    }
+
     /// 일정 중지·재개 전이를 받는 진입점. 수집 tick과 별개의 경로로, 코디네이터가 생명주기 store가 알리는
     /// "새로 멈췄다" 전이를 그대로 이 메서드에 전달합니다(ANALYSIS §1 「생명주기 경계」, §5 DP16).
-    /// 두 카드가 함께 마지막 성공 값을 유지한 채 중지로 바뀝니다.
-    /// 재개는 이 저장소에 별도로 알리지 않습니다 — 다음에 값이 성립한 tick의 `updateCPUCard`·`updateMemoryCard`
-    /// 호출이 조립 결과로 중지를 자연히 대체하기 때문입니다.
+    /// 네 카드가 함께 마지막 성공 값을 유지한 채 중지로 바뀝니다.
+    /// 재개는 이 저장소에 별도로 알리지 않습니다. 다음에 성립한 각 축의 결과가 중지 표시를 대체합니다.
     func markCollectionStopped() {
         cpuCard = .stopped(lastKnown: cpuCard.lastKnownValue)
         memoryCard = .stopped(lastKnown: memoryCard.lastKnownValue)
+        networkCard = networkCard.stopping()
+        diskCard = diskCard.stopping()
     }
 }

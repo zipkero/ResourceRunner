@@ -264,7 +264,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `c42a0cd5`의 표시 모델·formatter·production 네 소비자·최종 topology display commit 및 직접 테스트 7개 파일 해시/patch가 `evidence/task-008/`과 일치합니다. 활동/보조 identity·revision·원본시각 조립, 보조 실패 중 속도 갱신, 성공이력 없는 상태·정상0·연결/장치없음·baseline·partial·과거값/시각·중지상세 rate 제거·조건부 미지원/실패 사유·단위/작은속도/로케일·AX 및 대기중 구 topology/epoch 표시 거절을 확인했습니다. 집중23/23·전체unit588/588·Release빌드와 diff-check가 통과했습니다. 전체unit 이후 production 변경 없이 Operations 표시 테스트 단언만 추가했고 최종집중을 재실행했습니다. CPU·Memory 및 기존 경계 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. 실제 graph·카드 렌더는 task-009~011에서 확인합니다.
 
-- [ ] task-009: 두 독립 속도 계열과 공통 그래프 판
+- [x] task-009: 두 독립 속도 계열과 공통 그래프 판
   - 목적: Network·Disk의 최근 10분 흐름과 미수집 공백을
     두 독립 선과 같은 크기의 공통 그래프 판으로 읽을 수 있게 합니다.
   - 접근: 기존 CPU 누적 밴드의 의미를 유지하면서 속도 전용 그래프 경로를 만듭니다.
@@ -293,6 +293,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.1, SPEC §5.2, SPEC §5.8, SPEC §5.9,
     SPEC §5.12, SPEC §5.15, SPEC §5.17,
     DESIGN §2.5, DESIGN §3.3, DESIGN §3.4, DESIGN §4.2
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `2068184`의 속도 그래프 모델/view·store 첫 유효 시각·표시 history 전달·공통판/팔레트 및 직접 테스트 소스9개 해시와 최종 patch가 `evidence/task-009/`과 일치합니다. 원본 두 peak 기반 1–2–5축·최소1024·빈 값/실제0·epoch/segment/10초초과 공백·극값 index 합집합 축소·중지 중600초창 이동·축출후 진행문구 종료를 확인했습니다. 렌더PNG20개를 main/verifier가 직접 열어 라이트/다크 정상/빈판·확장 연속 구간·큰공백·별도범례/범위·점선/실선·100pt판/118pt슬롯·1pt절반기준선·clipping/윤곽선없음을 확인했고 해시가 일치합니다. 집중51/51·전체unit597/597·Release빌드·diff-check가 통과하고 CPU그래프/source/store 계약을 유지합니다. 마지막 매핑이 끝난 SPEC 조건은 없습니다. 카드 통합 배치는 task-010/011에서 확인합니다.
 
 - [ ] task-010: Network 요약 카드와 인터페이스 상세
   - 목적: Network 카드에서 현재 송수신·활성 종류·대상 수·최근 그래프를 확인하고

@@ -256,6 +256,18 @@ nonisolated struct NetworkActivityDisplayValue: Sendable {
     let latest: TimestampedSample<NetworkActivitySample>?
     let lastSuccess: TimestampedSample<NetworkActivitySample>?
     let recentHistory: [RateHistoryPoint]
+    /// 최근 창에서 오래된 점이 빠져도 수집 진행 문구가 다시 나타나지 않는 기준 시각입니다.
+    let firstHistoryPointAt: ContinuousClock.Instant?
+
+    init(latest: TimestampedSample<NetworkActivitySample>?,
+         lastSuccess: TimestampedSample<NetworkActivitySample>?,
+         recentHistory: [RateHistoryPoint],
+         firstHistoryPointAt: ContinuousClock.Instant? = nil) {
+        self.latest = latest
+        self.lastSuccess = lastSuccess
+        self.recentHistory = recentHistory
+        self.firstHistoryPointAt = firstHistoryPointAt
+    }
 }
 
 /// 유효한 대표 두 속도만 601개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
@@ -264,6 +276,7 @@ actor NetworkActivityStore: MonitoringSampleSink {
     private let topology: NetworkTopologyTracker?
     private var latest: TimestampedSample<NetworkActivitySample>?
     private var lastSuccess: TimestampedSample<NetworkActivitySample>?
+    private var firstHistoryPointAt: ContinuousClock.Instant?
     private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
     nonisolated let updates: AsyncStream<NetworkActivityDisplayValue>
     private let continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation
@@ -279,6 +292,7 @@ actor NetworkActivityStore: MonitoringSampleSink {
     func append(_ sample: TimestampedSample<NetworkActivitySample>) {
         latest = sample
         if let rate = sample.value.representative {
+            if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
             lastSuccess = sample
             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
@@ -304,7 +318,8 @@ actor NetworkActivityStore: MonitoringSampleSink {
     func snapshot(at now: ContinuousClock.Instant) -> NetworkActivityDisplayValue {
         let threshold = now.advanced(by: .seconds(-600))
         return NetworkActivityDisplayValue(latest: latest, lastSuccess: lastSuccess,
-            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now })
+            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now },
+            firstHistoryPointAt: firstHistoryPointAt)
     }
 
     var storedHistoryCount: Int { history.count }

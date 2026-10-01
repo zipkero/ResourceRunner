@@ -34,6 +34,12 @@ enum DashboardColorPalette {
     /// CPU 그래프 위 밴드(System)와 요약 줄 스와치는 첫 번째 단계입니다.
     static let cpuSystem = cpu(.step1)
 
+    /// 속도 그래프는 CPU·Memory의 검증된 색 값을 참조하되 별도 리소스 역할로 이름 붙입니다.
+    static let networkReceived = cpu(.step3)
+    static let networkSent = cpu(.step1)
+    static let diskRead = memoryComposition(.compressed)
+    static let diskWritten = memoryComposition(.cached)
+
     static func cpu(_ step: RampStep) -> Color {
         cpuRamp[step]
     }

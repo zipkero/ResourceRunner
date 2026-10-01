@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 23:11 +0900
+저장: 2026-10-01 23:36 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-008 검증 기준 HEAD `c42a0cd5`. task-001~008 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~008 `[x]`, task-009~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-009이다.
+branch `main`, task-009 검증 기준 HEAD `2068184`. task-001~009 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~009 `[x]`, task-010~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-010이다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-008/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-009/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -25,7 +25,7 @@ async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완�
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
 Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network·Disk source/store·여섯 축 production 배선·표시 모델은 구현됐고 새 그래프·카드 뷰는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+Network·Disk source/store·여섯 축 production 배선·표시 모델·독립 그래프는 구현됐고 새 카드 뷰는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
 
 task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
 즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
@@ -57,7 +57,12 @@ task-007은 `c42a0cd`로 커밋했다. 실제 OS 전환·장치 전환·최종 U
 task-008 독립 verify approved를 확정했다. 활동/보조 표시 모델·formatter와 네 production 소비 경로를
 표시 store에 연결하고 최종 commit에서 admission·topology를 함께 확인했다.
 과거 값의 원본 readAt·완전 lastKnown·partial/0/baseline·조건부 사유·AX를 검증했으며
-집중23/23·전체unit588/588·Release빌드와 소스7개 해시가 대응한다. 다음은 속도 graph task-009다.
+집중23/23·전체unit588/588·Release빌드와 소스7개 해시가 대응하며 `2068184`로 커밋했다.
+
+task-009 독립 verify approved를 확정했다. 속도 graph·공통plot modifier·팔레트역할과
+store 첫 유효 시각을 구현해 원본peak/공백/극값/진행문구를 유지한다.
+집중51/51·전체unit597/597·Release빌드·소스9개/PNG20개 해시를 확인했고 main과verifier가 실제렌더를 검토했다.
+다음은 Network 카드·상세의 실제 UI 통합 task-010이다.
 
 ## 현재 작업 문서
 - [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md) — 승인된 요구사항과 완료 조건 18개
@@ -87,8 +92,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-009 두 독립 속도 계열과 공통 그래프 판을 worker로 구현하고 독립 verify한다.
-- 완료 기준: 원본 두 계열 peak·1–2–5상한·601/600초/segment·극값 downsampling과 100pt판/118pt슬롯·자리표시·미수집공백·라이트/다크렌더·CPU그래프회귀를 확인한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-010으로 진행한다.
+- 작업: M3 task-010 Network 요약 카드와 인터페이스 상세를 worker로 구현하고 독립 verify한다.
+- 완료 기준: 294pt 고정 슬롯·모든 상태/최장표기/로케일·물리대표와VPN/터널상세범위·현재/누적/링크 단위·실제UI상세항목/개폐/프레임을 확인한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-011로 진행한다.
 
 ## 먼저 읽을 파일
 

@@ -1,0 +1,857 @@
+diff --git a/ResourceRunner/DashboardColorPalette.swift b/ResourceRunner/DashboardColorPalette.swift
+index d4ca3c9..f54351e 100644
+--- a/ResourceRunner/DashboardColorPalette.swift
++++ b/ResourceRunner/DashboardColorPalette.swift
+@@ -34,6 +34,12 @@ enum DashboardColorPalette {
+     /// CPU 그래프 위 밴드(System)와 요약 줄 스와치는 첫 번째 단계입니다.
+     static let cpuSystem = cpu(.step1)
+ 
++    /// 속도 그래프는 CPU·Memory의 검증된 색 값을 참조하되 별도 리소스 역할로 이름 붙입니다.
++    static let networkReceived = cpu(.step3)
++    static let networkSent = cpu(.step1)
++    static let diskRead = memoryComposition(.compressed)
++    static let diskWritten = memoryComposition(.cached)
++
+     static func cpu(_ step: RampStep) -> Color {
+         cpuRamp[step]
+     }
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index 8661535..9df9ff8 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -566,7 +566,7 @@ struct HistoryGraphView: View {
+     /// 두 밴드 중 어느 쪽인지. 아래(User)와 위(System)가 색이 아니라 채움 밀도·경계선 모양으로도
+     /// 구분되도록 이 값에서 스타일을 유도합니다(SPEC §5.5, ANALYSIS §5 DP9).
+     /// 요약 줄 스와치(`CPUSeriesSwatchView`)가 같은 유도 함수를 써서 그래프와 스와치의 모양이 어긋나지 않습니다.
+-    enum BandRole {
++    nonisolated enum BandRole: Sendable {
+         case lower
+         case upper
+     }
+@@ -744,14 +744,8 @@ private struct HistoryGraphSlotView: View {
+                         GraphPlaceholderView()
+                     }
+                 }
+-                .frame(height: HistoryGraphLayout.plotHeight)
+-                // 판 틀의 네 변이 곧 100%·0%와 시간 창 양끝이라, 틀 전체를 각진 면으로 덮어 판의 범위를 면의 가장자리로 보입니다.
+-                // `points`를 읽지 않아 수집되지 않은 구간도 같은 면이고, 윤곽선을 긋지 않아 판 위의 선은 기준선 하나로 남습니다.
+-                .background(DashboardColorPalette.graphPlotSurface)
+-                // 두 `Canvas`는 스스로 잘리지 않아, 창 양끝 밴드 경계선이 틀 밖 카드 면으로 번집니다 —
+-                // 오른쪽은 지금 시각의 점에서 선 두께 절반이, 왼쪽은 tick 사이 막 창을 벗어난 점이 음수 x에 그려집니다.
+-                // 같은 틀에서 한 번 잘라 면의 가장자리가 곧 그림의 끝이 되게 합니다.
+-                .clipped()
++                // 값 있음·자리표시와 속도 그래프가 같은 판 면·클리핑을 사용합니다.
++                .modifier(DashboardGraphPlotSurface())
+ 
+                 ZStack {
+                     HStack(spacing: 0) {
+diff --git a/ResourceRunner/DiskActivity.swift b/ResourceRunner/DiskActivity.swift
+index e5d00ee..b45b2b2 100644
+--- a/ResourceRunner/DiskActivity.swift
++++ b/ResourceRunner/DiskActivity.swift
+@@ -258,6 +258,17 @@ nonisolated struct DiskActivityDisplayValue: Sendable {
+     let latest: TimestampedSample<DiskActivitySample>?
+     let lastSuccess: TimestampedSample<DiskActivitySample>?
+     let recentHistory: [RateHistoryPoint]
++    let firstHistoryPointAt: ContinuousClock.Instant?
++
++    init(latest: TimestampedSample<DiskActivitySample>?,
++         lastSuccess: TimestampedSample<DiskActivitySample>?,
++         recentHistory: [RateHistoryPoint],
++         firstHistoryPointAt: ContinuousClock.Instant? = nil) {
++        self.latest = latest
++        self.lastSuccess = lastSuccess
++        self.recentHistory = recentHistory
++        self.firstHistoryPointAt = firstHistoryPointAt
++    }
+ }
+ 
+ actor DiskActivityStore: MonitoringSampleSink {
+@@ -265,6 +276,7 @@ actor DiskActivityStore: MonitoringSampleSink {
+     private let topology: DiskTopologyTracker?
+     private var latest: TimestampedSample<DiskActivitySample>?
+     private var lastSuccess: TimestampedSample<DiskActivitySample>?
++    private var firstHistoryPointAt: ContinuousClock.Instant?
+     private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
+     nonisolated let updates: AsyncStream<DiskActivityDisplayValue>
+     private let continuation: AsyncStream<DiskActivityDisplayValue>.Continuation
+@@ -280,6 +292,7 @@ actor DiskActivityStore: MonitoringSampleSink {
+     func append(_ sample: TimestampedSample<DiskActivitySample>) {
+         latest = sample
+         if let rate = sample.value.representative {
++            if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+             lastSuccess = sample
+             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
+                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
+@@ -305,7 +318,8 @@ actor DiskActivityStore: MonitoringSampleSink {
+     func snapshot(at now: ContinuousClock.Instant) -> DiskActivityDisplayValue {
+         let threshold = now.advanced(by: .seconds(-600))
+         return DiskActivityDisplayValue(latest: latest, lastSuccess: lastSuccess,
+-            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now })
++            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now },
++            firstHistoryPointAt: firstHistoryPointAt)
+     }
+ 
+     var storedHistoryCount: Int { history.count }
+diff --git a/ResourceRunner/NetworkActivity.swift b/ResourceRunner/NetworkActivity.swift
+index 58f8399..afa6d22 100644
+--- a/ResourceRunner/NetworkActivity.swift
++++ b/ResourceRunner/NetworkActivity.swift
+@@ -256,6 +256,18 @@ nonisolated struct NetworkActivityDisplayValue: Sendable {
+     let latest: TimestampedSample<NetworkActivitySample>?
+     let lastSuccess: TimestampedSample<NetworkActivitySample>?
+     let recentHistory: [RateHistoryPoint]
++    /// 최근 창에서 오래된 점이 빠져도 수집 진행 문구가 다시 나타나지 않는 기준 시각입니다.
++    let firstHistoryPointAt: ContinuousClock.Instant?
++
++    init(latest: TimestampedSample<NetworkActivitySample>?,
++         lastSuccess: TimestampedSample<NetworkActivitySample>?,
++         recentHistory: [RateHistoryPoint],
++         firstHistoryPointAt: ContinuousClock.Instant? = nil) {
++        self.latest = latest
++        self.lastSuccess = lastSuccess
++        self.recentHistory = recentHistory
++        self.firstHistoryPointAt = firstHistoryPointAt
++    }
+ }
+ 
+ /// 유효한 대표 두 속도만 601개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
+@@ -264,6 +276,7 @@ actor NetworkActivityStore: MonitoringSampleSink {
+     private let topology: NetworkTopologyTracker?
+     private var latest: TimestampedSample<NetworkActivitySample>?
+     private var lastSuccess: TimestampedSample<NetworkActivitySample>?
++    private var firstHistoryPointAt: ContinuousClock.Instant?
+     private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
+     nonisolated let updates: AsyncStream<NetworkActivityDisplayValue>
+     private let continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation
+@@ -279,6 +292,7 @@ actor NetworkActivityStore: MonitoringSampleSink {
+     func append(_ sample: TimestampedSample<NetworkActivitySample>) {
+         latest = sample
+         if let rate = sample.value.representative {
++            if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+             lastSuccess = sample
+             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
+                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
+@@ -304,7 +318,8 @@ actor NetworkActivityStore: MonitoringSampleSink {
+     func snapshot(at now: ContinuousClock.Instant) -> NetworkActivityDisplayValue {
+         let threshold = now.advanced(by: .seconds(-600))
+         return NetworkActivityDisplayValue(latest: latest, lastSuccess: lastSuccess,
+-            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now })
++            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now },
++            firstHistoryPointAt: firstHistoryPointAt)
+     }
+ 
+     var storedHistoryCount: Int { history.count }
+diff --git a/ResourceRunner/ResourceActivityPresentation.swift b/ResourceRunner/ResourceActivityPresentation.swift
+index c4f4faa..19e857d 100644
+--- a/ResourceRunner/ResourceActivityPresentation.swift
++++ b/ResourceRunner/ResourceActivityPresentation.swift
+@@ -48,12 +48,14 @@ nonisolated struct NetworkCardPresentation: Sendable {
+     let latestReadAt: ContinuousClock.Instant?
+     let lastKnownRate: LastKnownRate?
+     let topologyRevision: UInt64?
++    let recentHistory: [RateHistoryPoint]
++    let firstHistoryPointAt: ContinuousClock.Instant?
+     let interfaces: [NetworkInterfacePresentation]
+     let supplemental: NetworkSupplementalPresentation
+ 
+     static let collecting = NetworkCardPresentation(phase: .collecting, currentRate: nil,
+         currentRateIsPartial: false, latestReadAt: nil, lastKnownRate: nil,
+-        topologyRevision: nil, interfaces: [],
++        topologyRevision: nil, recentHistory: [], firstHistoryPointAt: nil, interfaces: [],
+         supplemental: NetworkSupplementalPresentation(phase: .collecting, readAt: nil,
+             records: [], isLastKnown: false))
+ 
+@@ -104,7 +106,10 @@ nonisolated struct NetworkCardPresentation: Sendable {
+             currentRate: current?.representative ?? current?.knownPhysicalRates,
+             currentRateIsPartial: partial,
+             latestReadAt: current?.readAt, lastKnownRate: lastKnown,
+-            topologyRevision: current?.topologyRevision, interfaces: interfaces,
++            topologyRevision: current?.topologyRevision,
++            recentHistory: activity?.recentHistory ?? [],
++            firstHistoryPointAt: activity?.firstHistoryPointAt,
++            interfaces: interfaces,
+             supplemental: supplemental)
+     }
+ 
+@@ -181,6 +186,7 @@ nonisolated struct NetworkCardPresentation: Sendable {
+             currentRateIsPartial: false, latestReadAt: latestReadAt,
+             lastKnownRate: lastKnownRate,
+             topologyRevision: topologyRevision,
++            recentHistory: recentHistory, firstHistoryPointAt: firstHistoryPointAt,
+             interfaces: interfaces.map { item in
+                 NetworkInterfacePresentation(key: item.key, kind: item.kind,
+                     classificationReason: item.classificationReason, linkActive: item.linkActive,
+@@ -234,12 +240,14 @@ nonisolated struct DiskCardPresentation: Sendable {
+     let latestReadAt: ContinuousClock.Instant?
+     let lastKnownRate: LastKnownRate?
+     let topologyRevision: UInt64?
++    let recentHistory: [RateHistoryPoint]
++    let firstHistoryPointAt: ContinuousClock.Instant?
+     let devices: [DiskDevicePresentation]
+     let supplemental: StorageSupplementalPresentation
+ 
+     static let collecting = DiskCardPresentation(phase: .collecting, currentRate: nil,
+         currentRateIsPartial: false, latestReadAt: nil, lastKnownRate: nil,
+-        topologyRevision: nil, devices: [],
++        topologyRevision: nil, recentHistory: [], firstHistoryPointAt: nil, devices: [],
+         supplemental: StorageSupplementalPresentation(phase: .collecting, readAt: nil,
+             capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false))
+ 
+@@ -297,7 +305,10 @@ nonisolated struct DiskCardPresentation: Sendable {
+             currentRate: current?.representative ?? current?.knownPhysicalRates,
+             currentRateIsPartial: partial,
+             latestReadAt: current?.readAt, lastKnownRate: lastKnown,
+-            topologyRevision: current?.topologyRevision, devices: devices,
++            topologyRevision: current?.topologyRevision,
++            recentHistory: activity?.recentHistory ?? [],
++            firstHistoryPointAt: activity?.firstHistoryPointAt,
++            devices: devices,
+             supplemental: supplemental)
+     }
+ 
+@@ -363,6 +374,7 @@ nonisolated struct DiskCardPresentation: Sendable {
+             currentRateIsPartial: false, latestReadAt: latestReadAt,
+             lastKnownRate: lastKnownRate,
+             topologyRevision: topologyRevision,
++            recentHistory: recentHistory, firstHistoryPointAt: firstHistoryPointAt,
+             devices: devices.map { item in
+                 DiskDevicePresentation(registryID: item.registryID, bsdNames: item.bsdNames,
+                     readBytes: item.readBytes, writtenBytes: item.writtenBytes,
+diff --git a/ResourceRunner/ResourceRateGraph.swift b/ResourceRunner/ResourceRateGraph.swift
+new file mode 100644
+index 0000000..dd80bcd
+--- /dev/null
++++ b/ResourceRunner/ResourceRateGraph.swift
+@@ -0,0 +1,98 @@
++import Foundation
++
++/// Network·Disk의 두 방향을 같은 양의 B/s 축에 놓는 순수 그래프 모델입니다.
++nonisolated struct ResourceRateGraph: Sendable {
++    let visibleSegments: [[RateHistoryPoint]]
++    let upperBound: Double?
++    let firstHistoryPointAt: ContinuousClock.Instant?
++    let currentTimestamp: ContinuousClock.Instant
++
++    static let window: Duration = .seconds(600)
++    static let maximumConnectedGap: Duration = .seconds(10)
++    static let minimumUpperBound = 1_024.0
++
++    static func make(history: [RateHistoryPoint], firstHistoryPointAt: ContinuousClock.Instant?,
++                     currentTimestamp: ContinuousClock.Instant) -> ResourceRateGraph {
++        let start = currentTimestamp - window
++        let visible = history.filter { $0.timestamp >= start && $0.timestamp <= currentTimestamp }
++            .sorted { $0.timestamp < $1.timestamp }
++        var segments: [[RateHistoryPoint]] = []
++        for point in visible {
++            if let previous = segments.last?.last,
++               previous.collectionEpoch == point.collectionEpoch,
++               previous.rateSegment == point.rateSegment,
++               previous.timestamp < point.timestamp,
++               previous.timestamp.duration(to: point.timestamp) <= maximumConnectedGap {
++                segments[segments.count - 1].append(point)
++            } else { segments.append([point]) }
++        }
++        let maximum = visible.reduce(0.0) { partial, point in
++            max(partial, point.rate.receivedBytesPerSecond, point.rate.sentBytesPerSecond)
++        }
++        return ResourceRateGraph(visibleSegments: segments,
++            upperBound: visible.isEmpty ? nil : niceUpperBound(for: maximum),
++            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: currentTimestamp)
++    }
++
++    /// 10분 원본의 두 peak를 본 뒤에만 축을 정합니다. 빈 판에는 측정된 peak가 없습니다.
++    static func niceUpperBound(for maximum: Double) -> Double {
++        guard maximum.isFinite, maximum > minimumUpperBound else { return minimumUpperBound }
++        let power = pow(10, floor(log10(maximum)))
++        for multiplier in [1.0, 2.0, 5.0, 10.0] {
++            let candidate = power * multiplier
++            if candidate.isFinite && candidate >= maximum { return candidate }
++        }
++        return maximum
++    }
++
++    var rangeLabel: String {
++        guard let upperBound else { return "속도 범위 대기 · B/s" }
++        return "0–\(ResourceQuantityFormatter.byteRate(upperBound))"
++    }
++
++    var progressLabel: String {
++        guard let firstHistoryPointAt else { return "데이터 수집 중 · 00:00 / 10:00" }
++        let duration = firstHistoryPointAt.duration(to: currentTimestamp)
++        let (seconds, attoseconds) = duration.components
++        let elapsed = max(0, Double(seconds) + Double(attoseconds) / 1e18)
++        guard elapsed < 600 else { return "" }
++        let whole = Int(elapsed)
++        return String(format: "데이터 수집 중 · %02d:%02d / 10:00", whole / 60, whole % 60)
++    }
++
++    /// 먼저 분리한 연속 구간마다 버킷의 RX/Read·TX/Write 최소·최대 실제 index 합집합을 보존합니다.
++    func downsampledSegments(bucketCount: Int) -> [[RateHistoryPoint]] {
++        visibleSegments.map { segment in
++            guard segment.count > 2 else { return segment }
++            let buckets = min(segment.count, max(1, bucketCount))
++            var selected: Set<Int> = [0, segment.count - 1]
++            for bucket in 0..<buckets {
++                let lower = bucket * segment.count / buckets
++                let upper = (bucket + 1) * segment.count / buckets
++                guard lower < upper else { continue }
++                let indices = lower..<upper
++                for value: (RateHistoryPoint) -> Double in [
++                    { $0.rate.receivedBytesPerSecond }, { $0.rate.sentBytesPerSecond }
++                ] {
++                    if let low = indices.min(by: { value(segment[$0]) < value(segment[$1]) }),
++                       let high = indices.max(by: { value(segment[$0]) < value(segment[$1]) }) {
++                        selected.insert(low)
++                        selected.insert(high)
++                    }
++                }
++            }
++            return selected.sorted().map { segment[$0] }
++        }
++    }
++
++    func normalizedX(_ timestamp: ContinuousClock.Instant) -> Double {
++        let start = currentTimestamp - Self.window
++        let (seconds, attoseconds) = start.duration(to: timestamp).components
++        return (Double(seconds) + Double(attoseconds) / 1e18) / 600
++    }
++
++    func normalizedY(_ value: Double) -> Double {
++        guard let upperBound else { return 1 }
++        return 1 - min(1, max(0, value / upperBound))
++    }
++}
+diff --git a/ResourceRunner/ResourceRateGraphView.swift b/ResourceRunner/ResourceRateGraphView.swift
+new file mode 100644
+index 0000000..4101c4a
+--- /dev/null
++++ b/ResourceRunner/ResourceRateGraphView.swift
+@@ -0,0 +1,176 @@
++import SwiftUI
++
++/// CPU와 속도 그래프가 동일한 100pt 판 면·클리핑을 사용합니다.
++/// 지금 시각의 선 두께와 창 밖으로 막 밀려난 표본이 카드 면으로 번지지 않게 판에서 자릅니다.
++struct DashboardGraphPlotSurface: ViewModifier {
++    func body(content: Content) -> some View {
++        content
++            .frame(height: HistoryGraphLayout.plotHeight)
++            .background(DashboardColorPalette.graphPlotSurface)
++            .clipped()
++    }
++}
++
++struct ResourceRateGraphSlotView: View {
++    enum Kind: Sendable {
++        case network, disk
++
++        var labels: (String, String) {
++            switch self {
++            case .network: ("다운로드", "업로드")
++            case .disk: ("읽기", "쓰기")
++            }
++        }
++
++        func color(for series: Series) -> Color {
++            switch (self, series) {
++            case (.network, .received): DashboardColorPalette.networkReceived
++            case (.network, .sent): DashboardColorPalette.networkSent
++            case (.disk, .received): DashboardColorPalette.diskRead
++            case (.disk, .sent): DashboardColorPalette.diskWritten
++            }
++        }
++    }
++
++    enum Series: CaseIterable, Sendable {
++        case received, sent
++
++        var style: StrokeStyle {
++            switch self {
++            case .received: StrokeStyle(lineWidth: 1.5, dash: [4, 3])
++            case .sent: StrokeStyle(lineWidth: 1.5)
++            }
++        }
++
++        func value(_ point: RateHistoryPoint) -> Double {
++            switch self {
++            case .received: point.rate.receivedBytesPerSecond
++            case .sent: point.rate.sentBytesPerSecond
++            }
++        }
++    }
++
++    let kind: Kind
++    let history: [RateHistoryPoint]
++    let firstHistoryPointAt: ContinuousClock.Instant?
++    /// 결정적 렌더 테스트에서는 시간을 고정하고 실제 앱에서는 매초 새 창을 그립니다.
++    var fixedNow: ContinuousClock.Instant? = nil
++
++    var body: some View {
++        Group {
++            if let fixedNow {
++                slot(at: fixedNow)
++            } else {
++                TimelineView(.periodic(from: .now, by: 1)) { _ in
++                    slot(at: ContinuousClock().now)
++                }
++            }
++        }
++        .frame(height: HistoryGraphLayout.slotHeight)
++    }
++
++    private func slot(at now: ContinuousClock.Instant) -> some View {
++        let graph = ResourceRateGraph.make(history: history,
++            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now)
++        return VStack(spacing: HistoryGraphLayout.axisSpacing) {
++            ZStack(alignment: .top) {
++                Canvas { context, size in
++                    drawGridline(in: &context, size: size)
++                    let segments = graph.downsampledSegments(
++                        bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
++                    // 실제 0과 상한의 선 두께 절반이 판 밖으로 잘려 사라지지 않게 중심만 안쪽에 둡니다.
++                    func yPosition(_ value: Double, series: Series) -> CGFloat {
++                        let inset = series.style.lineWidth / 2
++                        return min(size.height - inset,
++                            max(inset, size.height * graph.normalizedY(value)))
++                    }
++                    // 겹치는 0선에서도 점선 조각이 보이도록 실선을 먼저 그립니다.
++                    for series: Series in [.sent, .received] {
++                        for segment in segments {
++                            guard !segment.isEmpty else { continue }
++                            var path = Path()
++                            for (index, point) in segment.enumerated() {
++                                let position = CGPoint(x: size.width * graph.normalizedX(point.timestamp),
++                                    y: yPosition(series.value(point), series: series))
++                                if index == 0 { path.move(to: position) }
++                                else { path.addLine(to: position) }
++                            }
++                            let color = kind.color(for: series)
++                            if segment.count == 1, let point = segment.first {
++                                let center = CGPoint(x: size.width * graph.normalizedX(point.timestamp),
++                                    y: yPosition(series.value(point), series: series))
++                                context.fill(Path(ellipseIn: CGRect(x: center.x - 1, y: center.y - 1,
++                                    width: 2, height: 2)), with: .color(color))
++                            } else {
++                                context.stroke(path, with: .color(color), style: series.style)
++                            }
++                        }
++                    }
++                }
++            }
++            .modifier(DashboardGraphPlotSurface())
++            ZStack {
++                HStack(spacing: 0) {
++                    Text("10분 전")
++                    Spacer(minLength: 0)
++                    Text("지금")
++                }
++                Text(graph.progressLabel)
++                    .lineLimit(1)
++            }
++            .dashboardTypography(DashboardStyle.TypographyRole.label)
++            .frame(height: HistoryGraphLayout.axisLabelHeight)
++        }
++        .frame(height: HistoryGraphLayout.slotHeight)
++    }
++
++    private func drawGridline(in context: inout GraphicsContext, size: CGSize) {
++        var path = Path()
++        path.move(to: CGPoint(x: 0, y: size.height / 2))
++        path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
++        context.stroke(path, with: .color(DashboardColorPalette.graphPlotGridline),
++            lineWidth: HistoryGraphGridline.lineWidth)
++    }
++}
++
++/// 두 현재값 이름 옆에서 재사용할 범례입니다. 판의 미수집 면에는 범례 선을 그리지 않습니다.
++struct ResourceRateLegendView: View {
++    let kind: ResourceRateGraphSlotView.Kind
++
++    var body: some View {
++        HStack(spacing: 8) {
++            legend(.received, label: kind.labels.0)
++            legend(.sent, label: kind.labels.1)
++        }
++        .dashboardTypography(DashboardStyle.TypographyRole.label)
++    }
++
++    private func legend(_ series: ResourceRateGraphSlotView.Series, label: String) -> some View {
++        HStack(spacing: 3) {
++            Canvas { context, size in
++                var path = Path()
++                path.move(to: CGPoint(x: 0, y: size.height / 2))
++                path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
++                context.stroke(path, with: .color(kind.color(for: series)), style: series.style)
++            }
++            .frame(width: 14, height: 8)
++            Text(label)
++        }
++    }
++
++}
++
++/// 현재값 이름 옆 범례와 축 범위를 판 밖 요약 줄에 배치할 때 재사용합니다.
++struct ResourceRateGraphHeaderView: View {
++    let kind: ResourceRateGraphSlotView.Kind
++    let rangeLabel: String
++
++    var body: some View {
++        HStack(spacing: 4) {
++            ResourceRateLegendView(kind: kind)
++            Spacer(minLength: 0)
++            Text(rangeLabel).lineLimit(1)
++        }
++        .dashboardTypography(DashboardStyle.TypographyRole.label)
++    }
++}
+diff --git a/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift b/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
+new file mode 100644
+index 0000000..52ea99f
+--- /dev/null
++++ b/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
+@@ -0,0 +1,205 @@
++import AppKit
++import SwiftUI
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++struct ResourceRateGraphRenderingTests {
++    private let now = ContinuousClock().now
++    private let width: CGFloat = 248
++
++    private func history() -> [RateHistoryPoint] {
++        [
++            (-560, 300.0, 800.0, UInt64(1)),
++            (-555, 1_800.0, 400.0, UInt64(1)),
++            (-550, 400.0, 1_400.0, UInt64(1)),
++            (-130, 600.0, 1_000.0, UInt64(2)),
++            (-125, 1_500.0, 200.0, UInt64(2)),
++            (-120, 100.0, 1_700.0, UInt64(2))
++        ].map { offset, received, sent, segment in
++            RateHistoryPoint(timestamp: now.advanced(by: .seconds(offset)),
++                rate: RatePair(receivedBytesPerSecond: received, sentBytesPerSecond: sent)!,
++                collectionEpoch: 0, rateSegment: segment)
++        }
++    }
++
++    private func extendedHistory() -> [RateHistoryPoint] {
++        let left = (0...40).map { index -> RateHistoryPoint in
++            let peak = index == 20 ? 4_000.0 : 250 + Double(index % 8) * 140
++            return RateHistoryPoint(timestamp: now.advanced(by: .seconds(-590 + index * 5)),
++                rate: RatePair(receivedBytesPerSecond: peak, sentBytesPerSecond: 500)!,
++                collectionEpoch: 0, rateSegment: 1)
++        }
++        let right = (0...40).map { index -> RateHistoryPoint in
++            let write = index == 30 ? 3_000.0 : 500 + Double(index % 10) * 80
++            return RateHistoryPoint(timestamp: now.advanced(by: .seconds(-210 + index * 5)),
++                rate: RatePair(receivedBytesPerSecond: index < 15 ? 0 : 700,
++                    sentBytesPerSecond: write)!,
++                collectionEpoch: 0, rateSegment: 2)
++        }
++        return left + right
++    }
++
++    private func render(_ kind: ResourceRateGraphSlotView.Kind, placeholder: Bool,
++                        appearance name: NSAppearance.Name) throws -> NSBitmapImageRep {
++        let appearance = try #require(NSAppearance(named: name))
++        let view = ResourceRateGraphSlotView(kind: kind,
++            history: placeholder ? [] : history(),
++            firstHistoryPointAt: placeholder ? nil : now.advanced(by: .seconds(-560)),
++            fixedNow: now)
++            .frame(width: width, height: HistoryGraphLayout.slotHeight)
++            .background(DashboardColorPalette.cardSurface)
++            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
++        var rendered: NSBitmapImageRep?
++        appearance.performAsCurrentDrawingAppearance {
++            let renderer = ImageRenderer(content: view)
++            renderer.scale = 1
++            rendered = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
++        }
++        let bitmap = try #require(rendered)
++        let mode = name == .darkAqua ? "dark" : "light"
++        let resource = kind == .network ? "network" : "disk"
++        let state = placeholder ? "placeholder" : "normal"
++        let png = try #require(bitmap.representation(using: .png, properties: [:]))
++        Attachment.record(png, named: "\(resource)-\(state)-\(mode).png")
++        return try #require(NSBitmapImageRep(data: png))
++    }
++
++    private func renderHeader(_ kind: ResourceRateGraphSlotView.Kind, placeholder: Bool,
++                              appearance name: NSAppearance.Name) throws {
++        let graph = ResourceRateGraph.make(history: placeholder ? [] : history(),
++            firstHistoryPointAt: placeholder ? nil : now.advanced(by: .seconds(-560)),
++            currentTimestamp: now)
++        let view = ResourceRateGraphHeaderView(kind: kind, rangeLabel: graph.rangeLabel)
++            .frame(width: width, height: 14)
++            .background(DashboardColorPalette.cardSurface)
++            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
++        let appearance = try #require(NSAppearance(named: name))
++        var rendered: NSBitmapImageRep?
++        appearance.performAsCurrentDrawingAppearance {
++            let renderer = ImageRenderer(content: view)
++            renderer.scale = 1
++            rendered = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
++        }
++        let bitmap = try #require(rendered)
++        #expect(bitmap.pixelsWide == Int(width))
++        #expect(bitmap.pixelsHigh == 14)
++        let mode = name == .darkAqua ? "dark" : "light"
++        let resource = kind == .network ? "network" : "disk"
++        let state = placeholder ? "placeholder" : "normal"
++        Attachment.record(try #require(bitmap.representation(using: .png, properties: [:])),
++            named: "\(resource)-header-\(state)-\(mode).png")
++    }
++
++    private func renderExtended(_ kind: ResourceRateGraphSlotView.Kind,
++                                appearance name: NSAppearance.Name) throws -> NSBitmapImageRep {
++        let appearance = try #require(NSAppearance(named: name))
++        let view = ResourceRateGraphSlotView(kind: kind, history: extendedHistory(),
++            firstHistoryPointAt: now.advanced(by: .seconds(-590)), fixedNow: now)
++            .frame(width: width, height: HistoryGraphLayout.slotHeight)
++            .background(DashboardColorPalette.cardSurface)
++            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
++        var rendered: NSBitmapImageRep?
++        appearance.performAsCurrentDrawingAppearance {
++            let renderer = ImageRenderer(content: view)
++            renderer.scale = 1
++            rendered = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
++        }
++        let bitmap = try #require(rendered)
++        let mode = name == .darkAqua ? "dark" : "light"
++        let resource = kind == .network ? "network" : "disk"
++        let png = try #require(bitmap.representation(using: .png, properties: [:]))
++        Attachment.record(png, named: "\(resource)-extended-\(mode).png")
++        return try #require(NSBitmapImageRep(data: png))
++    }
++
++    private func color(_ bitmap: NSBitmapImageRep, x: Int, y: Int) throws -> NSColor {
++        try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
++    }
++
++    private func resolved(_ color: Color, appearance name: NSAppearance.Name) throws -> NSColor {
++        let appearance = try #require(NSAppearance(named: name))
++        var resolved: NSColor?
++        appearance.performAsCurrentDrawingAppearance {
++            resolved = NSColor(color).usingColorSpace(.sRGB)
++        }
++        return try #require(resolved)
++    }
++
++    private func distance(_ a: NSColor, _ b: NSColor) -> CGFloat {
++        abs(a.redComponent - b.redComponent) + abs(a.greenComponent - b.greenComponent)
++            + abs(a.blueComponent - b.blueComponent)
++    }
++
++    @Test func lightAndDarkNormalAndPlaceholderShareFrameSurfaceAndRealGap() throws {
++        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++            let surface = try resolved(DashboardColorPalette.graphPlotSurface, appearance: appearance)
++            let card = try resolved(DashboardColorPalette.cardSurface, appearance: appearance)
++            #expect(distance(surface, card) > 0.05)
++            for kind: ResourceRateGraphSlotView.Kind in [.network, .disk] {
++                let normal = try render(kind, placeholder: false, appearance: appearance)
++                let empty = try render(kind, placeholder: true, appearance: appearance)
++                try renderHeader(kind, placeholder: false, appearance: appearance)
++                try renderHeader(kind, placeholder: true, appearance: appearance)
++                #expect(normal.pixelsWide == Int(width))
++                #expect(empty.pixelsWide == Int(width))
++                #expect(normal.pixelsHigh == Int(HistoryGraphLayout.slotHeight))
++                #expect(empty.pixelsHigh == normal.pixelsHigh)
++                // 두 연속 구간 사이에는 그려진 선·음영이 없이 동일한 판 면이 남습니다.
++                let bare = try color(normal, x: 125, y: 75)
++                let placeholderBare = try color(empty, x: 125, y: 75)
++                #expect(distance(bare, placeholderBare) < 0.03)
++                let outside = try color(empty, x: 125, y: 116)
++                #expect(distance(outside, placeholderBare) > 0.04)
++                // 판 경계에 윤곽선·세로 눈금을 추가하지 않습니다.
++                #expect(distance(try color(empty, x: 0, y: 75), placeholderBare) < 0.03)
++                #expect(distance(try color(empty, x: 247, y: 75), placeholderBare) < 0.03)
++                let gridline = try color(empty, x: 125, y: 50)
++                #expect(distance(gridline, placeholderBare) > 0.005)
++            }
++        }
++    }
++
++    @Test func renderStylesAndPaletteRolesMatchTheLegendAndGraph() throws {
++        #expect(ResourceRateGraphSlotView.Series.received.style.dash == [4, 3])
++        #expect(ResourceRateGraphSlotView.Series.sent.style.dash.isEmpty)
++        #expect(ResourceRateGraphSlotView.Series.received.style.lineWidth ==
++            ResourceRateGraphSlotView.Series.sent.style.lineWidth)
++        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++            #expect(distance(try resolved(DashboardColorPalette.networkReceived, appearance: appearance),
++                try resolved(DashboardColorPalette.cpu(.step3), appearance: appearance)) < 0.001)
++            #expect(distance(try resolved(DashboardColorPalette.networkSent, appearance: appearance),
++                try resolved(DashboardColorPalette.cpu(.step1), appearance: appearance)) < 0.001)
++            #expect(distance(try resolved(DashboardColorPalette.diskRead, appearance: appearance),
++                try resolved(DashboardColorPalette.memoryComposition(.compressed), appearance: appearance)) < 0.001)
++            #expect(distance(try resolved(DashboardColorPalette.diskWritten, appearance: appearance),
++                try resolved(DashboardColorPalette.memoryComposition(.cached), appearance: appearance)) < 0.001)
++        }
++        #expect(HistoryGraphLayout.plotHeight == 100)
++        #expect(HistoryGraphLayout.slotHeight == 118)
++        #expect(HistoryGraphGridline.lineWidth == 1)
++    }
++
++    @Test func wideConnectedRunsExposeDashSolidZeroAndBothPeaksWithoutPaintingGap() throws {
++        let graph = ResourceRateGraph.make(history: extendedHistory(),
++            firstHistoryPointAt: now.advanced(by: .seconds(-590)), currentTimestamp: now)
++        #expect(graph.visibleSegments.map(\.count) == [41, 41])
++        #expect(graph.upperBound == 5_000)
++        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++            for kind: ResourceRateGraphSlotView.Kind in [.network, .disk] {
++                let bitmap = try renderExtended(kind, appearance: appearance)
++                #expect(bitmap.pixelsWide == Int(width))
++                #expect(bitmap.pixelsHigh == Int(HistoryGraphLayout.slotHeight))
++                let bare = try color(bitmap, x: 125, y: 75)
++                #expect(distance(try color(bitmap, x: 120, y: 75), bare) < 0.03)
++                #expect(distance(try color(bitmap, x: 130, y: 75), bare) < 0.03)
++                // 왼쪽 실선과 오른쪽 0선의 실제 픽셀이 판 면과 다릅니다.
++                #expect(distance(try color(bitmap, x: 45, y: 90), bare) > 0.02)
++                let zeroInk = try (165..<195).filter {
++                    distance(try color(bitmap, x: $0, y: 99), bare) > 0.02
++                }.count
++                #expect(zeroInk > 0)
++            }
++        }
++    }
++}
+diff --git a/ResourceRunnerTests/ResourceRateGraphTests.swift b/ResourceRunnerTests/ResourceRateGraphTests.swift
+new file mode 100644
+index 0000000..8bce607
+--- /dev/null
++++ b/ResourceRunnerTests/ResourceRateGraphTests.swift
+@@ -0,0 +1,134 @@
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++struct ResourceRateGraphTests {
++    private let now = ContinuousClock().now
++
++    private func point(_ ago: Int, _ first: Double, _ second: Double,
++                       epoch: Int = 0, segment: UInt64 = 1) -> RateHistoryPoint {
++        RateHistoryPoint(timestamp: now.advanced(by: .seconds(-ago)),
++            rate: RatePair(receivedBytesPerSecond: first, sentBytesPerSecond: second)!,
++            collectionEpoch: epoch, rateSegment: segment)
++    }
++
++    @Test func originalPeaksOfBothSeriesSetOnePositiveAxisBeforeDownsampling() {
++        var points = (0..<240).map { index in point(599 - index * 2, 20, 30) }
++        points[37] = point(599 - 37 * 2, 8_000, 30)
++        points[181] = point(599 - 181 * 2, 20, 18_000)
++        let graph = ResourceRateGraph.make(history: points, firstHistoryPointAt: now.advanced(by: .seconds(-599)),
++            currentTimestamp: now)
++        #expect(graph.upperBound == 20_000)
++        #expect(graph.rangeLabel == "0–19.5 KB/s")
++        let sampled = graph.downsampledSegments(bucketCount: 5).flatMap { $0 }
++        #expect(sampled.contains { $0.rate.receivedBytesPerSecond == 8_000 })
++        #expect(sampled.contains { $0.rate.sentBytesPerSecond == 18_000 })
++        #expect(sampled.count < points.count)
++        #expect(sampled.map(\.timestamp) == sampled.map(\.timestamp).sorted())
++        #expect(graph.normalizedY(0) == 1)
++        #expect(graph.normalizedY(20_000) == 0)
++        #expect(graph.normalizedX(now.advanced(by: .seconds(-600))) == 0)
++        #expect(graph.normalizedX(now) == 1)
++    }
++
++    @Test func zeroAndAxisBoundariesAndPlaceholderNeverInventPeak() {
++        let empty = ResourceRateGraph.make(history: [], firstHistoryPointAt: nil, currentTimestamp: now)
++        #expect(empty.visibleSegments.isEmpty)
++        #expect(empty.upperBound == nil)
++        #expect(empty.rangeLabel == "속도 범위 대기 · B/s")
++        #expect(empty.progressLabel == "데이터 수집 중 · 00:00 / 10:00")
++        let zero = ResourceRateGraph.make(history: [point(1, 0, 0)],
++            firstHistoryPointAt: now.advanced(by: .seconds(-1)), currentTimestamp: now)
++        #expect(zero.upperBound == 1_024)
++        #expect(zero.rangeLabel == "0–1.0 KB/s")
++        #expect(ResourceRateGraph.niceUpperBound(for: 1_024) == 1_024)
++        #expect(ResourceRateGraph.niceUpperBound(for: 1_025) == 2_000)
++        #expect(ResourceRateGraph.niceUpperBound(for: 2_001) == 5_000)
++        #expect(ResourceRateGraph.niceUpperBound(for: 5_001) == 10_000)
++        #expect(ResourceRateGraph.niceUpperBound(for: .infinity) == 1_024)
++    }
++
++    @Test func epochSegmentAndMoreThanTenSecondsSplitBeforeSamplingWithoutFakeZero() {
++        let points = [
++            point(100, 12, 20), point(99, 15, 25),
++            point(98, 17, 27, segment: 2), point(97, 20, 30, segment: 2),
++            point(96, 21, 31, epoch: 1, segment: 3),
++            point(80, 22, 32, epoch: 1, segment: 3),
++            point(70, 23, 33, epoch: 1, segment: 3)
++        ]
++        let graph = ResourceRateGraph.make(history: points, firstHistoryPointAt: points[0].timestamp,
++            currentTimestamp: now)
++        #expect(graph.visibleSegments.map(\.count) == [2, 2, 1, 2])
++        #expect(graph.downsampledSegments(bucketCount: 1).map(\.count) == [2, 2, 1, 2])
++        #expect(graph.visibleSegments.flatMap { $0 }.count == points.count)
++        #expect(!graph.visibleSegments.flatMap { $0 }.contains { $0.rate.receivedBytesPerSecond == 0 })
++    }
++
++    @Test func stoppedWindowMovesAndProgressDoesNotRestartAfterOldPointsLeave() {
++        let started = now.advanced(by: .seconds(-601))
++        let early = point(599, 50, 60)
++        let recent = point(2, 10, 20)
++        let first = ResourceRateGraph.make(history: [early, recent], firstHistoryPointAt: started,
++            currentTimestamp: now)
++        #expect(first.progressLabel == "")
++        #expect(first.visibleSegments.count == 2)
++        let later = ResourceRateGraph.make(history: [early, recent], firstHistoryPointAt: started,
++            currentTimestamp: now.advanced(by: .seconds(700)))
++        #expect(later.visibleSegments.isEmpty)
++        #expect(later.upperBound == nil)
++        #expect(later.progressLabel == "")
++        let stopping = ResourceRateGraph.make(history: [early, recent], firstHistoryPointAt: started,
++            currentTimestamp: now.advanced(by: .seconds(30)))
++        #expect(stopping.visibleSegments.count == 1)
++        #expect(stopping.normalizedX(recent.timestamp) < first.normalizedX(recent.timestamp))
++    }
++
++    @Test func initialProgressUsesIndependentFirstPointEvenWhenRecentHistoryWasFiltered() {
++        let started = now.advanced(by: .seconds(-600))
++        let onlyRecent = [point(1, 12, 13)]
++        let graph = ResourceRateGraph.make(history: onlyRecent, firstHistoryPointAt: started,
++            currentTimestamp: now)
++        #expect(graph.progressLabel == "")
++        #expect(graph.visibleSegments.count == 1)
++        let incomplete = ResourceRateGraph.make(history: onlyRecent,
++            firstHistoryPointAt: now.advanced(by: .seconds(-60)), currentTimestamp: now)
++        #expect(incomplete.progressLabel == "데이터 수집 중 · 01:00 / 10:00")
++    }
++
++    @Test func activityStoresKeepFirstValidPointOutsideTheirRecentWindow() async {
++        let networkStore = NetworkActivityStore()
++        let diskStore = DiskActivityStore()
++        for ago in [601, 1] {
++            let timestamp = now.advanced(by: .seconds(-ago))
++            let measured = RatePair(receivedBytesPerSecond: Double(ago),
++                sentBytesPerSecond: Double(ago + 1))!
++            let network = NetworkActivitySample(readAt: timestamp, topologyRevision: 1,
++                interfaces: [], knownPhysicalRates: measured, representative: measured,
++                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
++            let disk = DiskActivitySample(readAt: timestamp, topologyRevision: 1,
++                devices: [], knownPhysicalRates: measured, representative: measured,
++                knownPhysicalOperations: nil, representativeOperations: nil,
++                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
++            await networkStore.append(TimestampedSample(timestamp: timestamp, value: network))
++            await diskStore.append(TimestampedSample(timestamp: timestamp, value: disk))
++        }
++        let network = await networkStore.snapshot(at: now)
++        let disk = await diskStore.snapshot(at: now)
++        #expect(network.recentHistory.count == 1)
++        #expect(disk.recentHistory.count == 1)
++        #expect(network.firstHistoryPointAt == now.advanced(by: .seconds(-601)))
++        #expect(disk.firstHistoryPointAt == now.advanced(by: .seconds(-601)))
++        #expect(ResourceRateGraph.make(history: network.recentHistory,
++            firstHistoryPointAt: network.firstHistoryPointAt, currentTimestamp: now).progressLabel == "")
++        #expect(ResourceRateGraph.make(history: disk.recentHistory,
++            firstHistoryPointAt: disk.firstHistoryPointAt, currentTimestamp: now).progressLabel == "")
++        let networkCard = NetworkCardPresentation.assemble(activity: network,
++            metadata: nil, epoch: 0, wasStopped: false).stopping()
++        let diskCard = DiskCardPresentation.assemble(activity: disk,
++            metadata: nil, epoch: 0, wasStopped: false).stopping()
++        #expect(networkCard.recentHistory == network.recentHistory)
++        #expect(diskCard.recentHistory == disk.recentHistory)
++        #expect(networkCard.firstHistoryPointAt == network.firstHistoryPointAt)
++        #expect(diskCard.firstHistoryPointAt == disk.firstHistoryPointAt)
++    }
++}

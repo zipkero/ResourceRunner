@@ -48,12 +48,14 @@ nonisolated struct NetworkCardPresentation: Sendable {
     let latestReadAt: ContinuousClock.Instant?
     let lastKnownRate: LastKnownRate?
     let topologyRevision: UInt64?
+    let recentHistory: [RateHistoryPoint]
+    let firstHistoryPointAt: ContinuousClock.Instant?
     let interfaces: [NetworkInterfacePresentation]
     let supplemental: NetworkSupplementalPresentation
 
     static let collecting = NetworkCardPresentation(phase: .collecting, currentRate: nil,
         currentRateIsPartial: false, latestReadAt: nil, lastKnownRate: nil,
-        topologyRevision: nil, interfaces: [],
+        topologyRevision: nil, recentHistory: [], firstHistoryPointAt: nil, interfaces: [],
         supplemental: NetworkSupplementalPresentation(phase: .collecting, readAt: nil,
             records: [], isLastKnown: false))
 
@@ -104,7 +106,10 @@ nonisolated struct NetworkCardPresentation: Sendable {
             currentRate: current?.representative ?? current?.knownPhysicalRates,
             currentRateIsPartial: partial,
             latestReadAt: current?.readAt, lastKnownRate: lastKnown,
-            topologyRevision: current?.topologyRevision, interfaces: interfaces,
+            topologyRevision: current?.topologyRevision,
+            recentHistory: activity?.recentHistory ?? [],
+            firstHistoryPointAt: activity?.firstHistoryPointAt,
+            interfaces: interfaces,
             supplemental: supplemental)
     }
 
@@ -181,6 +186,7 @@ nonisolated struct NetworkCardPresentation: Sendable {
             currentRateIsPartial: false, latestReadAt: latestReadAt,
             lastKnownRate: lastKnownRate,
             topologyRevision: topologyRevision,
+            recentHistory: recentHistory, firstHistoryPointAt: firstHistoryPointAt,
             interfaces: interfaces.map { item in
                 NetworkInterfacePresentation(key: item.key, kind: item.kind,
                     classificationReason: item.classificationReason, linkActive: item.linkActive,
@@ -234,12 +240,14 @@ nonisolated struct DiskCardPresentation: Sendable {
     let latestReadAt: ContinuousClock.Instant?
     let lastKnownRate: LastKnownRate?
     let topologyRevision: UInt64?
+    let recentHistory: [RateHistoryPoint]
+    let firstHistoryPointAt: ContinuousClock.Instant?
     let devices: [DiskDevicePresentation]
     let supplemental: StorageSupplementalPresentation
 
     static let collecting = DiskCardPresentation(phase: .collecting, currentRate: nil,
         currentRateIsPartial: false, latestReadAt: nil, lastKnownRate: nil,
-        topologyRevision: nil, devices: [],
+        topologyRevision: nil, recentHistory: [], firstHistoryPointAt: nil, devices: [],
         supplemental: StorageSupplementalPresentation(phase: .collecting, readAt: nil,
             capacity: nil, volumes: [], externalDevicesAbsent: nil, isLastKnown: false))
 
@@ -297,7 +305,10 @@ nonisolated struct DiskCardPresentation: Sendable {
             currentRate: current?.representative ?? current?.knownPhysicalRates,
             currentRateIsPartial: partial,
             latestReadAt: current?.readAt, lastKnownRate: lastKnown,
-            topologyRevision: current?.topologyRevision, devices: devices,
+            topologyRevision: current?.topologyRevision,
+            recentHistory: activity?.recentHistory ?? [],
+            firstHistoryPointAt: activity?.firstHistoryPointAt,
+            devices: devices,
             supplemental: supplemental)
     }
 
@@ -363,6 +374,7 @@ nonisolated struct DiskCardPresentation: Sendable {
             currentRateIsPartial: false, latestReadAt: latestReadAt,
             lastKnownRate: lastKnownRate,
             topologyRevision: topologyRevision,
+            recentHistory: recentHistory, firstHistoryPointAt: firstHistoryPointAt,
             devices: devices.map { item in
                 DiskDevicePresentation(registryID: item.registryID, bsdNames: item.bsdNames,
                     readBytes: item.readBytes, writtenBytes: item.writtenBytes,

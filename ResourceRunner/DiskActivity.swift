@@ -258,6 +258,17 @@ nonisolated struct DiskActivityDisplayValue: Sendable {
     let latest: TimestampedSample<DiskActivitySample>?
     let lastSuccess: TimestampedSample<DiskActivitySample>?
     let recentHistory: [RateHistoryPoint]
+    let firstHistoryPointAt: ContinuousClock.Instant?
+
+    init(latest: TimestampedSample<DiskActivitySample>?,
+         lastSuccess: TimestampedSample<DiskActivitySample>?,
+         recentHistory: [RateHistoryPoint],
+         firstHistoryPointAt: ContinuousClock.Instant? = nil) {
+        self.latest = latest
+        self.lastSuccess = lastSuccess
+        self.recentHistory = recentHistory
+        self.firstHistoryPointAt = firstHistoryPointAt
+    }
 }
 
 actor DiskActivityStore: MonitoringSampleSink {
@@ -265,6 +276,7 @@ actor DiskActivityStore: MonitoringSampleSink {
     private let topology: DiskTopologyTracker?
     private var latest: TimestampedSample<DiskActivitySample>?
     private var lastSuccess: TimestampedSample<DiskActivitySample>?
+    private var firstHistoryPointAt: ContinuousClock.Instant?
     private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
     nonisolated let updates: AsyncStream<DiskActivityDisplayValue>
     private let continuation: AsyncStream<DiskActivityDisplayValue>.Continuation
@@ -280,6 +292,7 @@ actor DiskActivityStore: MonitoringSampleSink {
     func append(_ sample: TimestampedSample<DiskActivitySample>) {
         latest = sample
         if let rate = sample.value.representative {
+            if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
             lastSuccess = sample
             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
@@ -305,7 +318,8 @@ actor DiskActivityStore: MonitoringSampleSink {
     func snapshot(at now: ContinuousClock.Instant) -> DiskActivityDisplayValue {
         let threshold = now.advanced(by: .seconds(-600))
         return DiskActivityDisplayValue(latest: latest, lastSuccess: lastSuccess,
-            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now })
+            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now },
+            firstHistoryPointAt: firstHistoryPointAt)
     }
 
     var storedHistoryCount: Int { history.count }

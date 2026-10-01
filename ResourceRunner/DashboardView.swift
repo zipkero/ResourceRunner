@@ -566,7 +566,7 @@ struct HistoryGraphView: View {
     /// 두 밴드 중 어느 쪽인지. 아래(User)와 위(System)가 색이 아니라 채움 밀도·경계선 모양으로도
     /// 구분되도록 이 값에서 스타일을 유도합니다(SPEC §5.5, ANALYSIS §5 DP9).
     /// 요약 줄 스와치(`CPUSeriesSwatchView`)가 같은 유도 함수를 써서 그래프와 스와치의 모양이 어긋나지 않습니다.
-    enum BandRole {
+    nonisolated enum BandRole: Sendable {
         case lower
         case upper
     }
@@ -744,14 +744,8 @@ private struct HistoryGraphSlotView: View {
                         GraphPlaceholderView()
                     }
                 }
-                .frame(height: HistoryGraphLayout.plotHeight)
-                // 판 틀의 네 변이 곧 100%·0%와 시간 창 양끝이라, 틀 전체를 각진 면으로 덮어 판의 범위를 면의 가장자리로 보입니다.
-                // `points`를 읽지 않아 수집되지 않은 구간도 같은 면이고, 윤곽선을 긋지 않아 판 위의 선은 기준선 하나로 남습니다.
-                .background(DashboardColorPalette.graphPlotSurface)
-                // 두 `Canvas`는 스스로 잘리지 않아, 창 양끝 밴드 경계선이 틀 밖 카드 면으로 번집니다 —
-                // 오른쪽은 지금 시각의 점에서 선 두께 절반이, 왼쪽은 tick 사이 막 창을 벗어난 점이 음수 x에 그려집니다.
-                // 같은 틀에서 한 번 잘라 면의 가장자리가 곧 그림의 끝이 되게 합니다.
-                .clipped()
+                // 값 있음·자리표시와 속도 그래프가 같은 판 면·클리핑을 사용합니다.
+                .modifier(DashboardGraphPlotSurface())
 
                 ZStack {
                     HStack(spacing: 0) {

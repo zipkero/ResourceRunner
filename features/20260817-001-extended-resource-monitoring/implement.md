@@ -178,7 +178,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `90204a1`의 Network activity/metadata/topology·native 격리·reader phase/admission·DEBUG probe와 직접 테스트 diff를 검증했고 관련 소스 8개 SHA-256이 `evidence/task-005/source-sha256.txt`와 일치합니다. 실제 읽기 시각 차분·모든 기준점 단절·5→1초 정상 변경·0 B/s·물리/VPN 집계·부분 실패·대상 제거/재사용/누적revision·캐시불일치·늦은 native/source/store·601링/600초/segment 조건을 집중24/24로 확인했고 전체unit552/552·Release·별도서명Debug빌드가 통과했습니다. Sandbox PID36178에서 첫baseline→약1초뒤 en0 knownPhysical 18485/17512 B/s, llw0 unknown에 따른 partial/representative nil을 확인하고 종료했습니다. 기존 native 격리 경고를 해소했으며 task-001·003·004의 의미와 승인을 유지합니다. 전체scheme UIrunner가 기동후 무진행으로 중단됐고 unit은 별도552/552 완료했습니다. production 배선·실제NIC/VPN·최종UI는 후속 관문이며 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
-- [ ] task-006: Disk 속도·장치 수명·용량 캐시와 최근 이력
+- [x] task-006: Disk 속도·장치 수명·용량 캐시와 최근 이력
   - 목적: 현재 물리 장치의 Read·Write와 조건부 IOPS를 계산하고
     느린 볼륨 용량·장치 관계와 빠른 활동을 서로 지연시키지 않게 합니다.
   - 접근: task-002의 reader를 독립 Disk 활동 source와 storage 보조 source에 연결합니다.
@@ -205,6 +205,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
     SPEC §5.10, SPEC §5.11, SPEC §5.17, SPEC §5.18,
     DESIGN §1.1, DESIGN §1.3, DESIGN §1.4, DESIGN §2.2, DESIGN §2.3,
     DESIGN §2.4, DESIGN §2.5, DESIGN §3.1, DESIGN §3.2
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `854c97d`의 변경 소스 7개 SHA-256과 최종 patch가 `evidence/task-006/`의 실행 근거와 일치합니다. 물리 드라이버의 실제 시각 Bytes/Operations 차분, 필수 Bytes partial/부분속도, 조건부 IOPS 기준점, 장치·마운트 수명과 관계 캐시, 모든 연속성 경계, 601링/600초/짧은 실패 segment, 늦은 reader/source/store 폐기와 느린 storage 중 빠른 Disk 진행을 집중27/27로 확인했습니다. 전체unit572/572·Release·서명Debug빌드가 통과했고 Sandbox PID43148에서 disk0 ID4294969732·볼륨8개·시스템용량/관계·첫baseline 이후 Read/Write189012.39/13691584.82 B/s와 IOPS11.54/28.84회/s를 확인했습니다. 기존 승인과 SPEC·DESIGN 의미를 유지하며 완료된 SPEC 조건은 없습니다. production 배선과 실제 외장 전환은 task-007·014의 후속 관문입니다.
 
 - [ ] task-007: production 여섯 축 배선과 실패 격리
   - 목적: 앱 한 세션에서 네 카드의 수집 흐름과 두 보조 흐름이 독립적으로 작동하고

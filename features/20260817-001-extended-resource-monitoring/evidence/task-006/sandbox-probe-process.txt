@@ -1,0 +1,6 @@
+Command cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+RR_DISK_PROBE=1 /tmp/ResourceRunner-M3-task006-sandbox/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+PID: 43148
+Initial ps: 43148 SN /tmp/ResourceRunner-M3-task006-sandbox/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+After 6 seconds: kill 43148; wait exit 143; subsequent ps returned no process.
+Unified log captured with /usr/bin/log show --last 5m --style compact --predicate 'subsystem == "com.zipkero.ResourceRunner" AND category == "DiskNativeProbe"'. PID 43148 identifies the final run; earlier PID 36516 is previous probe retained for chronology.

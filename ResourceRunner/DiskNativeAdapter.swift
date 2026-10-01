@@ -6,28 +6,30 @@ import Darwin
 nonisolated enum DiskNativeError: Error, CustomStringConvertible {
     case native(String, Int32)
     case invalid(String)
+    case stale(String)
 
     var description: String {
         switch self {
         case .native(let call, let code): "\(call) code=\(code)"
         case .invalid(let reason): "invalid disk data: \(reason)"
+        case .stale(let reason): "stale disk read: \(reason)"
         }
     }
 }
 
-nonisolated enum DiskDeviceKind: String {
+nonisolated enum DiskDeviceKind: String, Sendable {
     case physical, virtual, unknown
 }
 
-nonisolated enum DiskExternalKind: String {
+nonisolated enum DiskExternalKind: String, Sendable {
     case internalDevice, externalDevice, unknown
 }
 
-nonisolated enum DiskVolumeScope: String {
+nonisolated enum DiskVolumeScope: String, Sendable, Hashable {
     case physical, virtual, unconfirmed
 }
 
-nonisolated struct DiskDriverReading {
+nonisolated struct DiskDriverReading: Sendable {
     let registryID: UInt64
     let bsdNames: Set<String>
     let kind: DiskDeviceKind
@@ -44,7 +46,7 @@ nonisolated struct DiskDriverReading {
     let connection: String?
 }
 
-nonisolated struct DiskVolumeReading {
+nonisolated struct DiskVolumeReading: Sendable {
     let identity: String
     let mountPaths: Set<String>
     let bsdName: String?
@@ -59,7 +61,7 @@ nonisolated struct DiskVolumeReading {
     var usedBytes: UInt64 { totalBytes - availableBytes }
 }
 
-nonisolated struct DiskNativeSnapshot {
+nonisolated struct DiskNativeSnapshot: Sendable {
     let drivers: [DiskDriverReading]
     let volumes: [DiskVolumeReading]
     let systemVolume: DiskVolumeReading
@@ -151,6 +153,53 @@ nonisolated enum DiskNativeRules {
 
 nonisolated struct DiskNativeAdapter {
     nonisolated init() {}
+
+    /// 빠른 경로에서는 드라이버 통계와 물리 분류만 읽습니다. DA·볼륨·용량 탐색은 보조 축의 read()가 담당합니다.
+    nonisolated func readCounters() throws -> [DiskCounterDevice] {
+        guard let matching = IOServiceMatching("IOBlockStorageDriver") else {
+            throw DiskNativeError.invalid("IOServiceMatching IOBlockStorageDriver=nil")
+        }
+        var iterator: io_iterator_t = 0
+        let code = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator)
+        guard code == KERN_SUCCESS else { throw DiskNativeError.native("IOServiceGetMatchingServices", code) }
+        defer { IOObjectRelease(iterator) }
+        var result: [DiskCounterDevice] = []
+        while case let driver = IOIteratorNext(iterator), driver != 0 {
+            defer { IOObjectRelease(driver) }
+            var id: UInt64 = 0
+            let idCode = IORegistryEntryGetRegistryEntryID(driver, &id)
+            guard idCode == KERN_SUCCESS else { throw DiskNativeError.native("IORegistryEntryGetRegistryEntryID", idCode) }
+            let media = try directWholeMedia(driver)
+            guard !media.isEmpty else { continue }
+            defer { media.forEach { IOObjectRelease($0) } }
+            let names = Set(media.compactMap { property($0, "BSD Name") as? String })
+            let ancestry = try parentClasses(driver)
+            let path = ancestry.joined(separator: "/")
+            let virtual = path.contains("IOHDIX") || path.contains("IODiskImage") || path.contains("IOVirtual") || path.contains("AppleRAID")
+            let hardware = path.contains("IOPlatformDevice") || path.contains("IOPCIDevice") || path.contains("IOUSB") || path.contains("IOThunderbolt") || path.contains("AppleANS")
+            let kind: DiskDeviceKind = virtual ? .virtual : (hardware ? .physical : .unknown)
+            let stats = property(driver, "Statistics") as? [String: Any]
+            let read = try? DiskNativeRules.unsigned(stats?["Bytes (Read)"], key: "driver \(id) Bytes (Read)")
+            let write = try? DiskNativeRules.unsigned(stats?["Bytes (Write)"], key: "driver \(id) Bytes (Write)")
+            let (readOps, writeOps, opsReason) = stats.map(DiskNativeRules.operations) ??
+                (nil, nil, "unsupported: driver Statistics absent")
+            result.append(DiskCounterDevice(registryID: id, bsdNames: names, kind: kind,
+                kindReason: "provider=\(path)", readBytes: read, writtenBytes: write,
+                readOperations: readOps, writeOperations: writeOps,
+                operationsReason: opsReason,
+                bytesReason: read == nil || write == nil ? "driver \(id) required Bytes missing or invalid" : "IOBlockStorageDriver Statistics bytes"))
+        }
+        var unique: [UInt64: DiskCounterDevice] = [:]
+        for item in result {
+            if let prior = unique[item.registryID] {
+                guard prior.readBytes == item.readBytes, prior.writtenBytes == item.writtenBytes,
+                      prior.kind == item.kind else {
+                    throw DiskNativeError.invalid("conflicting driver registry ID \(item.registryID)")
+                }
+            } else { unique[item.registryID] = item }
+        }
+        return unique.values.sorted { $0.registryID < $1.registryID }
+    }
 
     nonisolated func read() throws -> DiskNativeSnapshot {
         guard let session = DASessionCreate(kCFAllocatorDefault) else {

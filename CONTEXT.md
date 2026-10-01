@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 21:06 +0900
+저장: 2026-10-01 22:02 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-005 검증 기준 HEAD `90204a1`. task-001~005 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~005 `[x]`, task-006~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-006다.
+branch `main`, task-006 검증 기준 HEAD `854c97d`. task-001~006 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~006 `[x]`, task-007~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-007이다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-005/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-006/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -25,7 +25,7 @@ async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완�
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
 Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network activity/metadata source·store는 구현됐고 Disk source·store와 네 축 production 배선·카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+Network·Disk activity/metadata source·store는 구현됐고 새 네 축 production 배선·카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
 
 task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
 즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
@@ -37,6 +37,15 @@ task-005는 Network fast/slow native reader·activity/metadata source/store와 t
 두 reader의 late/역순 tracker 부수효과와 metadata await 중 topology 변경도 현재 gate·revision으로 차단한다.
 집중24/24·전체unit552/552·Release/별도서명Debug·Sandbox baseline/부분속도 probe 통과, PID 종료 확인.
 전체scheme UIrunner는 기동후 진행이 없어 중단했으며 UI 성공 근거는 아직 없다.
+
+
+task-006 독립 verify approved를 main이 확정했다. 기준 HEAD `854c97d`의
+DiskNativeAdapter·AppDelegate·DiskActivity·DiskTopology·StorageMetadata·직접 테스트 2개를 검증했다.
+최종 집중27/27·전체unit572/572·Release/서명Debug·Sandbox PID43148 두 tick이 통과했고
+소스7개 해시 일치와 원자료는 `evidence/task-006/`에 보존했다.
+필수 Bytes 누락의 partial/부분속도, Ops 감소의 IOPS만 기준점 처리,
+전체 관계 미확인과 미마운트 구분, 같은 ID의 마운트 관계 변화 revision을 보완했다.
+task-006 `[x]`이며 상태·CONTEXT를 커밋한 뒤 task-007로 진행한다.
 
 ## 현재 작업 문서
 
@@ -67,8 +76,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-006 Disk 속도·장치 수명·용량 캐시와 최근 이력을 worker로 구현하고 독립 verify한다.
-- 완료 기준: 물리 드라이버 Read/Write·조건부Operations 실제 차분과 기준점·대상 수명·보조 관계/용량·늦은 결과·601링/600초/segment·느린storage중 빠른Disk 갱신을 결정적으로 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-007로 진행한다.
+- 작업: M3 task-007 production 여섯 축 배선과 실패 격리를 worker로 구현하고 독립 verify한다.
+- 완료 기준: production과 같은 구성에서 지표별 실패·보조 suspension·취소 무시·중지/복귀·초기 lifecycle 이후 시작·single-flight·메뉴바 진행을 확인하고 실제 앱 최초 요청·팝오버/전력 일정 배선을 관찰한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-008로 진행한다.
 
 ## 먼저 읽을 파일
 

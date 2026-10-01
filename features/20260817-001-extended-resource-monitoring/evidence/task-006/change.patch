@@ -1,0 +1,1482 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 1c966be..0462811 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -68,6 +68,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+                     for volume in snapshot.volumes {
+                         logger.notice("volume=\(volume.identity, privacy: .public) mounts=\(volume.mountPaths.sorted().joined(separator: ","), privacy: .public) bsd=\(volume.bsdName ?? "unknown", privacy: .public) fs=\(volume.fileSystem ?? "unknown", privacy: .public) total=\(volume.totalBytes) available=\(volume.availableBytes) used=\(volume.usedBytes) drivers=\(volume.driverIDs.sorted().map(String.init).joined(separator: ","), privacy: .public) scope=\(volume.scope.rawValue, privacy: .public) sharedCapacity=\(volume.sharedCapacity) relation=\(volume.relationReason, privacy: .public)")
+                     }
++                    let fast = try DiskNativeAdapter().readCounters()
++                    logger.notice("fastDriverCount=\(fast.count) fastIDs=\(fast.map(\.registryID).map(String.init).joined(separator: ","), privacy: .public)")
++                    let topology = DiskTopologyTracker()
++                    let admission = CollectionAdmission()
++                    admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++                    _ = admission.advance(.storageMetadata)
++                    _ = admission.advance(.diskActivity)
++                    let storageSource = StorageMetadataSource(reader: SystemStorageMetadataReader(topology: topology), admission: admission)
++                    let storageStore = StorageMetadataStore(admission: admission, topology: topology)
++                    if let context = admission.issue(.storageMetadata),
++                       let value = await storageSource.sample(context: context) {
++                        _ = await storageStore.append(TimestampedSample(timestamp: ContinuousClock().now,
++                            value: value, collectionEpoch: context.epoch, context: context), context: context)
++                        switch value {
++                        case .available(let metadata):
++                            logger.notice("storageRevision=\(metadata.topologyRevision) systemTotal=\(metadata.systemVolume.totalBytes) systemAvailable=\(metadata.systemVolume.availableBytes) volumes=\(metadata.volumes.count) relationsComplete=\(metadata.relationshipsComplete) externalAbsent=\(metadata.externalDevicesAbsent)")
++                        case .failure(let reason, _):
++                            logger.error("storageFailure=\(reason, privacy: .public)")
++                        }
++                    }
++                    let activitySource = DiskActivitySource(reader: SystemDiskCounterReader(topology: topology), admission: admission)
++                    for tick in 0..<2 {
++                        if tick > 0 { try await Task.sleep(for: .seconds(1)) }
++                        guard let context = admission.issue(.diskActivity),
++                              let value = await activitySource.sample(context: context) else { continue }
++                        logger.notice("diskActivityTick=\(tick) status=\(String(describing: value.status), privacy: .public) revision=\(value.topologyRevision) knownPhysical=\(String(describing: value.knownPhysicalRates), privacy: .public) representative=\(String(describing: value.representative), privacy: .public) knownIOPS=\(String(describing: value.knownPhysicalOperations), privacy: .public) representativeIOPS=\(String(describing: value.representativeOperations), privacy: .public) devices=\(value.devices.count)")
++                    }
+                 } catch {
+                     logger.error("pid=\(getpid()) failed=\(String(describing: error), privacy: .public)")
+                 }
+diff --git a/ResourceRunner/DiskNativeAdapter.swift b/ResourceRunner/DiskNativeAdapter.swift
+index 2012c52..8118833 100644
+--- a/ResourceRunner/DiskNativeAdapter.swift
++++ b/ResourceRunner/DiskNativeAdapter.swift
+@@ -6,28 +6,30 @@ import Darwin
+ nonisolated enum DiskNativeError: Error, CustomStringConvertible {
+     case native(String, Int32)
+     case invalid(String)
++    case stale(String)
+ 
+     var description: String {
+         switch self {
+         case .native(let call, let code): "\(call) code=\(code)"
+         case .invalid(let reason): "invalid disk data: \(reason)"
++        case .stale(let reason): "stale disk read: \(reason)"
+         }
+     }
+ }
+ 
+-nonisolated enum DiskDeviceKind: String {
++nonisolated enum DiskDeviceKind: String, Sendable {
+     case physical, virtual, unknown
+ }
+ 
+-nonisolated enum DiskExternalKind: String {
++nonisolated enum DiskExternalKind: String, Sendable {
+     case internalDevice, externalDevice, unknown
+ }
+ 
+-nonisolated enum DiskVolumeScope: String {
++nonisolated enum DiskVolumeScope: String, Sendable, Hashable {
+     case physical, virtual, unconfirmed
+ }
+ 
+-nonisolated struct DiskDriverReading {
++nonisolated struct DiskDriverReading: Sendable {
+     let registryID: UInt64
+     let bsdNames: Set<String>
+     let kind: DiskDeviceKind
+@@ -44,7 +46,7 @@ nonisolated struct DiskDriverReading {
+     let connection: String?
+ }
+ 
+-nonisolated struct DiskVolumeReading {
++nonisolated struct DiskVolumeReading: Sendable {
+     let identity: String
+     let mountPaths: Set<String>
+     let bsdName: String?
+@@ -59,7 +61,7 @@ nonisolated struct DiskVolumeReading {
+     var usedBytes: UInt64 { totalBytes - availableBytes }
+ }
+ 
+-nonisolated struct DiskNativeSnapshot {
++nonisolated struct DiskNativeSnapshot: Sendable {
+     let drivers: [DiskDriverReading]
+     let volumes: [DiskVolumeReading]
+     let systemVolume: DiskVolumeReading
+@@ -152,6 +154,53 @@ nonisolated enum DiskNativeRules {
+ nonisolated struct DiskNativeAdapter {
+     nonisolated init() {}
+ 
++    /// 빠른 경로에서는 드라이버 통계와 물리 분류만 읽습니다. DA·볼륨·용량 탐색은 보조 축의 read()가 담당합니다.
++    nonisolated func readCounters() throws -> [DiskCounterDevice] {
++        guard let matching = IOServiceMatching("IOBlockStorageDriver") else {
++            throw DiskNativeError.invalid("IOServiceMatching IOBlockStorageDriver=nil")
++        }
++        var iterator: io_iterator_t = 0
++        let code = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator)
++        guard code == KERN_SUCCESS else { throw DiskNativeError.native("IOServiceGetMatchingServices", code) }
++        defer { IOObjectRelease(iterator) }
++        var result: [DiskCounterDevice] = []
++        while case let driver = IOIteratorNext(iterator), driver != 0 {
++            defer { IOObjectRelease(driver) }
++            var id: UInt64 = 0
++            let idCode = IORegistryEntryGetRegistryEntryID(driver, &id)
++            guard idCode == KERN_SUCCESS else { throw DiskNativeError.native("IORegistryEntryGetRegistryEntryID", idCode) }
++            let media = try directWholeMedia(driver)
++            guard !media.isEmpty else { continue }
++            defer { media.forEach { IOObjectRelease($0) } }
++            let names = Set(media.compactMap { property($0, "BSD Name") as? String })
++            let ancestry = try parentClasses(driver)
++            let path = ancestry.joined(separator: "/")
++            let virtual = path.contains("IOHDIX") || path.contains("IODiskImage") || path.contains("IOVirtual") || path.contains("AppleRAID")
++            let hardware = path.contains("IOPlatformDevice") || path.contains("IOPCIDevice") || path.contains("IOUSB") || path.contains("IOThunderbolt") || path.contains("AppleANS")
++            let kind: DiskDeviceKind = virtual ? .virtual : (hardware ? .physical : .unknown)
++            let stats = property(driver, "Statistics") as? [String: Any]
++            let read = try? DiskNativeRules.unsigned(stats?["Bytes (Read)"], key: "driver \(id) Bytes (Read)")
++            let write = try? DiskNativeRules.unsigned(stats?["Bytes (Write)"], key: "driver \(id) Bytes (Write)")
++            let (readOps, writeOps, opsReason) = stats.map(DiskNativeRules.operations) ??
++                (nil, nil, "unsupported: driver Statistics absent")
++            result.append(DiskCounterDevice(registryID: id, bsdNames: names, kind: kind,
++                kindReason: "provider=\(path)", readBytes: read, writtenBytes: write,
++                readOperations: readOps, writeOperations: writeOps,
++                operationsReason: opsReason,
++                bytesReason: read == nil || write == nil ? "driver \(id) required Bytes missing or invalid" : "IOBlockStorageDriver Statistics bytes"))
++        }
++        var unique: [UInt64: DiskCounterDevice] = [:]
++        for item in result {
++            if let prior = unique[item.registryID] {
++                guard prior.readBytes == item.readBytes, prior.writtenBytes == item.writtenBytes,
++                      prior.kind == item.kind else {
++                    throw DiskNativeError.invalid("conflicting driver registry ID \(item.registryID)")
++                }
++            } else { unique[item.registryID] = item }
++        }
++        return unique.values.sorted { $0.registryID < $1.registryID }
++    }
++
+     nonisolated func read() throws -> DiskNativeSnapshot {
+         guard let session = DASessionCreate(kCFAllocatorDefault) else {
+             throw DiskNativeError.invalid("DASessionCreate=nil")
+diff --git a/ResourceRunner/DiskActivity.swift b/ResourceRunner/DiskActivity.swift
+new file mode 100644
+index 0000000..e5d00ee
+--- /dev/null
++++ b/ResourceRunner/DiskActivity.swift
+@@ -0,0 +1,312 @@
++import Foundation
++
++nonisolated struct DiskOperationRates: Sendable, Equatable {
++    let readsPerSecond: Double
++    let writesPerSecond: Double
++
++    init?(readsPerSecond: Double, writesPerSecond: Double) {
++        guard readsPerSecond.isFinite, writesPerSecond.isFinite,
++              readsPerSecond >= 0, writesPerSecond >= 0 else { return nil }
++        self.readsPerSecond = readsPerSecond
++        self.writesPerSecond = writesPerSecond
++    }
++}
++
++nonisolated enum DiskBaselineReason: Sendable, Equatable {
++    case first, newEpoch, topologyChanged, afterFailure, newTarget
++    case nonpositiveElapsed, excessiveGap, counterDecrease, invalidRate, requiredBytesMissing
++}
++
++nonisolated enum DiskActivityStatus: Sendable, Equatable {
++    case rate, baselineOnly(DiskBaselineReason), partial(String), noPhysicalDevice, failure(String)
++}
++
++nonisolated struct DiskDeviceActivity: Sendable {
++    let registryID: UInt64
++    let bsdNames: Set<String>
++    let kind: DiskDeviceKind
++    let kindReason: String
++    let readBytes: UInt64?
++    let writtenBytes: UInt64?
++    let readOperations: UInt64?
++    let writeOperations: UInt64?
++    let operationsReason: String
++    let bytesReason: String
++    let rate: RatePair?
++    let operationsRate: DiskOperationRates?
++}
++
++nonisolated struct DiskActivitySample: Sendable {
++    let readAt: ContinuousClock.Instant
++    let topologyRevision: UInt64
++    let devices: [DiskDeviceActivity]
++    let knownPhysicalRates: RatePair?
++    let representative: RatePair?
++    let knownPhysicalOperations: DiskOperationRates?
++    let representativeOperations: DiskOperationRates?
++    let physicalTotalsComplete: Bool
++    let status: DiskActivityStatus
++    let rateSegment: UInt64
++}
++
++/// 드라이버의 원시 누적값과 실제 native 읽기 시각을 기준점으로 유지합니다.
++actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
++    private struct Baseline {
++        let read: UInt64
++        let write: UInt64
++        let readOps: UInt64?
++        let writeOps: UInt64?
++        let readAt: ContinuousClock.Instant
++    }
++    private struct State {
++        var epoch: Int?
++        var revision: UInt64?
++        var observedIDs: Set<UInt64> = []
++        var baselines: [UInt64: Baseline] = [:]
++        var afterFailure = false
++        var segment: UInt64 = 0
++    }
++
++    private let reader: Reader
++    private let admission: CollectionAdmission?
++    private let beforeCommit: (@Sendable () async -> Void)?
++    private let now: @Sendable () -> ContinuousClock.Instant
++    private var state = State()
++
++    init(reader: Reader, admission: CollectionAdmission? = nil,
++         beforeCommit: (@Sendable () async -> Void)? = nil,
++         now: @escaping @Sendable () -> ContinuousClock.Instant = { ContinuousClock().now }) {
++        self.reader = reader
++        self.admission = admission
++        self.beforeCommit = beforeCommit
++        self.now = now
++    }
++
++    func sample(collectionEpoch: Int) async -> DiskActivitySample? {
++        await read(epoch: collectionEpoch, context: nil)
++    }
++
++    func sample(context: CollectionRunContext) async -> DiskActivitySample? {
++        await read(epoch: context.epoch, context: context)
++    }
++
++    private func read(epoch: Int, context: CollectionRunContext?) async -> DiskActivitySample? {
++        if let context, admission?.isCurrent(context) != true { return nil }
++        let startRevision = reader.currentTopologyRevision
++        let snapshot: DiskCounterSnapshot
++        do { snapshot = try reader.read(context: context, admission: admission) }
++        catch DiskNativeError.stale(_) { return nil }
++        catch {
++            guard reader.currentTopologyRevision == startRevision else { return nil }
++            var next = state
++            next.baselines.removeAll()
++            next.afterFailure = true
++            next.segment &+= 1
++            let sample = DiskActivitySample(readAt: now(),
++                topologyRevision: startRevision ?? next.revision ?? 0, devices: [], knownPhysicalRates: nil,
++                representative: nil, knownPhysicalOperations: nil, representativeOperations: nil,
++                physicalTotalsComplete: false, status: .failure(String(describing: error)),
++                rateSegment: next.segment)
++            if let beforeCommit { await beforeCommit() }
++            return commit(sample, next: next, context: context, expectedTopologyRevision: startRevision)
++        }
++        let (sample, next) = calculate(snapshot, epoch: epoch)
++        if let beforeCommit { await beforeCommit() }
++        return commit(sample, next: next, context: context,
++                      expectedTopologyRevision: snapshot.topologyRevision)
++    }
++
++    private func commit(_ sample: DiskActivitySample, next: State,
++                        context: CollectionRunContext?, expectedTopologyRevision: UInt64?) -> DiskActivitySample? {
++        if let context, let admission {
++            return admission.admitOptional(context, phase: .source, timestamp: sample.readAt) {
++                if let expectedTopologyRevision {
++                    return reader.withCurrentTopologyRevision(expectedTopologyRevision) {
++                        state = next
++                        return sample
++                    }
++                }
++                state = next
++                return sample
++            }
++        }
++        if let expectedTopologyRevision {
++            return reader.withCurrentTopologyRevision(expectedTopologyRevision) {
++                state = next
++                return sample
++            }
++        }
++        state = next
++        return sample
++    }
++
++    private func calculate(_ snapshot: DiskCounterSnapshot, epoch: Int) -> (DiskActivitySample, State) {
++        var next = state
++        let globalReason: DiskBaselineReason? = if next.epoch == nil { .first }
++            else if next.epoch != epoch { .newEpoch }
++            else if next.afterFailure { .afterFailure }
++            else if next.revision != snapshot.topologyRevision { .topologyChanged }
++            else if next.observedIDs != Set(snapshot.devices.map(\.registryID)) { .newTarget }
++            else { nil }
++        if globalReason != nil { next.baselines.removeAll() }
++        next.epoch = epoch
++        next.revision = snapshot.topologyRevision
++        next.observedIDs = Set(snapshot.devices.map(\.registryID))
++        next.afterFailure = false
++
++        var baselines: [UInt64: Baseline] = [:]
++        var details: [DiskDeviceActivity] = []
++        var physicalRates: [RatePair] = []
++        var operationsRates: [DiskOperationRates] = []
++        var physicalCount = 0
++        var incomplete = false
++        var requiredPhysicalBytesMissing = false
++        var operationsComplete = true
++        var firstGap = globalReason
++        var ids = Set<UInt64>()
++        for device in snapshot.devices {
++            guard ids.insert(device.registryID).inserted else {
++                incomplete = true
++                continue
++            }
++            let physical = device.kind == .physical
++            if physical { physicalCount += 1 }
++            if device.kind == .unknown { incomplete = true }
++            var rate: RatePair?
++            var operationsRate: DiskOperationRates?
++            var gap: DiskBaselineReason?
++            if let read = device.readBytes, let write = device.writtenBytes {
++                let previous = next.baselines[device.registryID]
++                if globalReason == nil {
++                    if let previous {
++                        let elapsed = previous.readAt.duration(to: snapshot.readAt)
++                        let (seconds, attoseconds) = elapsed.components
++                        let duration = Double(seconds) + Double(attoseconds) / 1e18
++                        if duration <= 0 { gap = .nonpositiveElapsed }
++                        else if duration > 10 { gap = .excessiveGap }
++                        else if read < previous.read || write < previous.write { gap = .counterDecrease }
++                        else {
++                            rate = RatePair(receivedBytesPerSecond: Double(read - previous.read) / duration,
++                                            sentBytesPerSecond: Double(write - previous.write) / duration)
++                            if rate == nil { gap = .invalidRate }
++                            if let currentReadOps = device.readOperations,
++                               let currentWriteOps = device.writeOperations,
++                               let oldReadOps = previous.readOps, let oldWriteOps = previous.writeOps,
++                               currentReadOps >= oldReadOps, currentWriteOps >= oldWriteOps {
++                                operationsRate = DiskOperationRates(
++                                    readsPerSecond: Double(currentReadOps - oldReadOps) / duration,
++                                    writesPerSecond: Double(currentWriteOps - oldWriteOps) / duration)
++                            }
++                        }
++                    } else { gap = .newTarget }
++                }
++                baselines[device.registryID] = Baseline(read: read, write: write,
++                    readOps: device.readOperations, writeOps: device.writeOperations,
++                    readAt: snapshot.readAt)
++            } else {
++                gap = .requiredBytesMissing
++                if physical { requiredPhysicalBytesMissing = true }
++            }
++            if physical {
++                if let rate { physicalRates.append(rate) } else { incomplete = true }
++                if let operationsRate { operationsRates.append(operationsRate) }
++                else { operationsComplete = false }
++                if let gap, firstGap == nil { firstGap = gap }
++            }
++            details.append(DiskDeviceActivity(registryID: device.registryID,
++                bsdNames: device.bsdNames, kind: device.kind, kindReason: device.kindReason,
++                readBytes: device.readBytes, writtenBytes: device.writtenBytes,
++                readOperations: device.readOperations, writeOperations: device.writeOperations,
++                operationsReason: device.operationsReason, bytesReason: device.bytesReason,
++                rate: rate, operationsRate: operationsRate))
++        }
++        next.baselines = baselines
++        let knownRates = physicalRates.isEmpty ? nil : RatePair(
++            receivedBytesPerSecond: physicalRates.reduce(0) { $0 + $1.receivedBytesPerSecond },
++            sentBytesPerSecond: physicalRates.reduce(0) { $0 + $1.sentBytesPerSecond })
++        let knownOps = operationsRates.isEmpty ? nil : DiskOperationRates(
++            readsPerSecond: operationsRates.reduce(0) { $0 + $1.readsPerSecond },
++            writesPerSecond: operationsRates.reduce(0) { $0 + $1.writesPerSecond })
++        let representative: RatePair?
++        let status: DiskActivityStatus
++        if snapshot.devices.isEmpty || (physicalCount == 0 && !incomplete) {
++            representative = nil
++            status = .noPhysicalDevice
++        } else if requiredPhysicalBytesMissing {
++            representative = nil
++            status = .partial("물리 드라이버의 필수 바이트 또는 분류 일부를 확인하지 못했습니다")
++        } else if let firstGap, firstGap != .requiredBytesMissing {
++            representative = nil
++            status = .baselineOnly(firstGap)
++        } else if incomplete || physicalRates.count != physicalCount {
++            representative = nil
++            status = .partial("물리 드라이버의 필수 바이트 또는 분류 일부를 확인하지 못했습니다")
++        } else {
++            representative = knownRates
++            status = representative == nil ? .partial("물리 속도 합계가 유한 범위를 벗어났습니다") : .rate
++        }
++        if representative == nil { next.segment &+= 1 }
++        return (DiskActivitySample(readAt: snapshot.readAt, topologyRevision: snapshot.topologyRevision,
++            devices: details, knownPhysicalRates: knownRates, representative: representative,
++            knownPhysicalOperations: knownOps,
++            representativeOperations: representative != nil && operationsComplete ? knownOps : nil,
++            physicalTotalsComplete: representative != nil, status: status, rateSegment: next.segment), next)
++    }
++}
++
++nonisolated struct DiskActivityDisplayValue: Sendable {
++    let latest: TimestampedSample<DiskActivitySample>?
++    let lastSuccess: TimestampedSample<DiskActivitySample>?
++    let recentHistory: [RateHistoryPoint]
++}
++
++actor DiskActivityStore: MonitoringSampleSink {
++    private let admission: CollectionAdmission?
++    private let topology: DiskTopologyTracker?
++    private var latest: TimestampedSample<DiskActivitySample>?
++    private var lastSuccess: TimestampedSample<DiskActivitySample>?
++    private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
++    nonisolated let updates: AsyncStream<DiskActivityDisplayValue>
++    private let continuation: AsyncStream<DiskActivityDisplayValue>.Continuation
++
++    init(admission: CollectionAdmission? = nil, topology: DiskTopologyTracker? = nil) {
++        self.admission = admission
++        self.topology = topology
++        var continuation: AsyncStream<DiskActivityDisplayValue>.Continuation!
++        self.updates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
++        self.continuation = continuation
++    }
++
++    func append(_ sample: TimestampedSample<DiskActivitySample>) {
++        latest = sample
++        if let rate = sample.value.representative {
++            lastSuccess = sample
++            history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
++                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
++        }
++        continuation.yield(snapshot(at: sample.value.readAt))
++    }
++
++    func append(_ sample: TimestampedSample<DiskActivitySample>,
++                context: CollectionRunContext) async -> Bool {
++        guard let admission else { append(sample); return true }
++        return admission.admitOptional(context, phase: .store, timestamp: sample.value.readAt) {
++            if let topology {
++                return topology.withCurrentRevision(sample.value.topologyRevision) {
++                    append(sample)
++                    return true
++                }
++            }
++            append(sample)
++            return true
++        } ?? false
++    }
++
++    func snapshot(at now: ContinuousClock.Instant) -> DiskActivityDisplayValue {
++        let threshold = now.advanced(by: .seconds(-600))
++        return DiskActivityDisplayValue(latest: latest, lastSuccess: lastSuccess,
++            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now })
++    }
++
++    var storedHistoryCount: Int { history.count }
++}
+diff --git a/ResourceRunner/DiskTopology.swift b/ResourceRunner/DiskTopology.swift
+new file mode 100644
+index 0000000..f00a068
+--- /dev/null
++++ b/ResourceRunner/DiskTopology.swift
+@@ -0,0 +1,147 @@
++import Foundation
++
++nonisolated struct DiskCounterDevice: Sendable {
++    let registryID: UInt64
++    let bsdNames: Set<String>
++    let kind: DiskDeviceKind
++    let kindReason: String
++    let readBytes: UInt64?
++    let writtenBytes: UInt64?
++    let readOperations: UInt64?
++    let writeOperations: UInt64?
++    let operationsReason: String
++    let bytesReason: String
++}
++
++nonisolated struct DiskCounterSnapshot: Sendable {
++    let readAt: ContinuousClock.Instant
++    let devices: [DiskCounterDevice]
++    let topologyRevision: UInt64
++}
++
++/// 드라이버 ID 집합과 물리 분류의 변화를 누적합니다. 별도 변경 알림은 다음 관측 전에 revision을 전진시킵니다.
++nonisolated final class DiskTopologyTracker: @unchecked Sendable {
++    private struct Identity: Equatable {
++        let bsdNames: Set<String>
++        let kind: DiskDeviceKind
++    }
++    private struct VolumeIdentity: Hashable {
++        let identity: String
++        let mountPaths: Set<String>
++        let driverIDs: Set<UInt64>
++        let scope: DiskVolumeScope
++    }
++    private let lock = NSLock()
++    private var entries: [UInt64: Identity] = [:]
++    private var volumes: Set<VolumeIdentity>?
++    private var revision: UInt64 = 0
++
++    var currentRevision: UInt64 { lock.withLock { revision } }
++
++    func noteChange() {
++        lock.withLock { revision &+= 1; entries.removeAll(); volumes = nil }
++    }
++
++    @discardableResult
++    func withCurrentRevision<T>(_ expected: UInt64, _ apply: () -> T) -> T? {
++        lock.withLock {
++            guard expected == revision else { return nil }
++            return apply()
++        }
++    }
++
++    func observeIfCurrent(_ devices: [DiskCounterDevice], expectedRevision: UInt64) -> UInt64? {
++        lock.withLock {
++            guard expectedRevision == revision else { return nil }
++            guard let current = identities(devices) else { return nil }
++            if current != entries { revision &+= 1; entries = current }
++            return revision
++        }
++    }
++
++    /// 마운트·해제는 드라이버 ID가 같아도 관계 캐시의 수명을 바꿉니다.
++    func observeMetadataIfCurrent(_ devices: [DiskCounterDevice],
++                                  mountedVolumes: [DiskVolumeReading],
++                                  expectedRevision: UInt64) -> UInt64? {
++        lock.withLock {
++            guard expectedRevision == revision, let current = identities(devices) else { return nil }
++            let currentVolumes = Set(mountedVolumes.map {
++                VolumeIdentity(identity: $0.identity, mountPaths: $0.mountPaths,
++                    driverIDs: $0.driverIDs, scope: $0.scope)
++            })
++            if current != entries || (volumes != nil && currentVolumes != volumes) {
++                revision &+= 1
++            }
++            entries = current
++            volumes = currentVolumes
++            return revision
++        }
++    }
++
++    private func identities(_ devices: [DiskCounterDevice]) -> [UInt64: Identity]? {
++        var current: [UInt64: Identity] = [:]
++        for device in devices {
++            let identity = Identity(bsdNames: device.bsdNames, kind: device.kind)
++            if let prior = current[device.registryID], prior != identity { return nil }
++            current[device.registryID] = identity
++        }
++        return current
++    }
++}
++
++nonisolated protocol DiskCounterReading: Sendable {
++    var currentTopologyRevision: UInt64? { get }
++    func read() throws -> DiskCounterSnapshot
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> DiskCounterSnapshot
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T?
++}
++
++nonisolated extension DiskCounterReading {
++    var currentTopologyRevision: UInt64? { nil }
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> DiskCounterSnapshot {
++        try read()
++    }
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T? { apply() }
++}
++
++/// 빠른 조회는 IOKit 드라이버 Statistics만 읽고 Disk Arbitration·Foundation 용량 조회를 하지 않습니다.
++nonisolated struct SystemDiskCounterReader: DiskCounterReading {
++    private let nativeRead: @Sendable () throws -> [DiskCounterDevice]
++    let topology: DiskTopologyTracker
++    var currentTopologyRevision: UInt64? { topology.currentRevision }
++
++    init(topology: DiskTopologyTracker,
++         nativeRead: @escaping @Sendable () throws -> [DiskCounterDevice] = { try DiskNativeAdapter().readCounters() }) {
++        self.topology = topology
++        self.nativeRead = nativeRead
++    }
++
++    func read() throws -> DiskCounterSnapshot { try read(context: nil, admission: nil) }
++
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> DiskCounterSnapshot {
++        for _ in 0..<3 {
++            let expected = topology.currentRevision
++            let devices = try nativeRead()
++            let readAt = ContinuousClock().now
++            let observed: UInt64?
++            if let context, let admission {
++                var topologyRace = false
++                observed = admission.admitOptional(context, phase: .reader, timestamp: readAt) {
++                    let revision = topology.observeIfCurrent(devices, expectedRevision: expected)
++                    if revision == nil { topologyRace = true }
++                    return revision
++                }
++                if observed == nil && !topologyRace { throw DiskNativeError.stale("counter reader context or request order") }
++            } else {
++                observed = topology.observeIfCurrent(devices, expectedRevision: expected)
++            }
++            guard let observed else { continue }
++            return DiskCounterSnapshot(readAt: readAt, devices: devices, topologyRevision: observed)
++        }
++        throw DiskNativeError.invalid("topology changed during counter read")
++    }
++
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T? {
++        topology.withCurrentRevision(revision, apply)
++    }
++}
+diff --git a/ResourceRunner/StorageMetadata.swift b/ResourceRunner/StorageMetadata.swift
+new file mode 100644
+index 0000000..591bfe3
+--- /dev/null
++++ b/ResourceRunner/StorageMetadata.swift
+@@ -0,0 +1,207 @@
++import Foundation
++
++nonisolated enum StorageMountState: Sendable, Equatable {
++    case mounted, unmounted, relationUnconfirmed
++}
++
++nonisolated struct StorageDeviceRecord: Sendable {
++    let registryID: UInt64
++    let bsdNames: Set<String>
++    let external: DiskExternalKind
++    let externalReason: String
++    let removable: Bool?
++    let ejectable: Bool?
++    let connection: String?
++    let mountState: StorageMountState
++}
++
++nonisolated struct StorageMetadataSnapshot: Sendable {
++    let readAt: ContinuousClock.Instant
++    let topologyRevision: UInt64
++    let volumes: [DiskVolumeReading]
++    let systemVolume: DiskVolumeReading
++    let devices: [StorageDeviceRecord]
++    let relationshipsComplete: Bool
++    let externalDevicesAbsent: Bool
++    let nativeStatus: String
++}
++
++nonisolated enum StorageMetadataResult: Sendable {
++    case available(StorageMetadataSnapshot)
++    case failure(String, revision: UInt64?)
++}
++
++nonisolated protocol StorageMetadataReading: Sendable {
++    var currentTopologyRevision: UInt64? { get }
++    func read() throws -> StorageMetadataSnapshot
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> StorageMetadataSnapshot
++}
++
++nonisolated extension StorageMetadataReading {
++    var currentTopologyRevision: UInt64? { nil }
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> StorageMetadataSnapshot {
++        try read()
++    }
++}
++
++/// 느린 보조 경로가 용량·마운트·DA 관계를 소유합니다. 빠른 드라이버 통계 조회에는 영향을 주지 않습니다.
++nonisolated struct SystemStorageMetadataReader: StorageMetadataReading {
++    private let nativeRead: @Sendable () throws -> DiskNativeSnapshot
++    let topology: DiskTopologyTracker
++    var currentTopologyRevision: UInt64? { topology.currentRevision }
++
++    init(topology: DiskTopologyTracker,
++         nativeRead: @escaping @Sendable () throws -> DiskNativeSnapshot = { try DiskNativeAdapter().read() }) {
++        self.topology = topology
++        self.nativeRead = nativeRead
++    }
++
++    func read() throws -> StorageMetadataSnapshot { try read(context: nil, admission: nil) }
++
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> StorageMetadataSnapshot {
++        for _ in 0..<3 {
++            let expected = topology.currentRevision
++            let native = try nativeRead()
++            let readAt = ContinuousClock().now
++            let counterDevices = native.drivers.map { driver in
++                DiskCounterDevice(registryID: driver.registryID, bsdNames: driver.bsdNames,
++                    kind: driver.kind, kindReason: driver.kindReason,
++                    readBytes: driver.readBytes, writtenBytes: driver.writtenBytes,
++                    readOperations: driver.readOperations, writeOperations: driver.writeOperations,
++                    operationsReason: driver.operationsReason, bytesReason: "IOBlockStorageDriver Statistics bytes")
++            }
++            let observed: UInt64?
++            if let context, let admission {
++                var topologyRace = false
++                observed = admission.admitOptional(context, phase: .reader, timestamp: readAt) {
++                    let revision = topology.observeMetadataIfCurrent(counterDevices,
++                        mountedVolumes: native.volumes, expectedRevision: expected)
++                    if revision == nil { topologyRace = true }
++                    return revision
++                }
++                if observed == nil && !topologyRace { throw DiskNativeError.stale("storage reader context or request order") }
++            } else {
++                observed = topology.observeMetadataIfCurrent(counterDevices,
++                    mountedVolumes: native.volumes, expectedRevision: expected)
++            }
++            guard let observed else { continue }
++            let mountedIDs = native.volumes.reduce(into: Set<UInt64>()) { $0.formUnion($1.driverIDs) }
++            let unresolvedMountedVolume = !native.relationshipsComplete ||
++                native.volumes.contains { $0.scope == .unconfirmed }
++            let devices = native.drivers.map { driver in
++                StorageDeviceRecord(registryID: driver.registryID, bsdNames: driver.bsdNames,
++                    external: driver.external, externalReason: driver.externalReason,
++                    removable: driver.removable, ejectable: driver.ejectable,
++                    connection: driver.connection,
++                    mountState: mountedIDs.contains(driver.registryID) ? .mounted :
++                        (unresolvedMountedVolume ? .relationUnconfirmed : .unmounted))
++            }
++            return StorageMetadataSnapshot(readAt: readAt, topologyRevision: observed,
++                volumes: native.volumes, systemVolume: native.systemVolume, devices: devices,
++                relationshipsComplete: native.relationshipsComplete,
++                externalDevicesAbsent: !native.drivers.contains { driver in
++                    driver.kind != .virtual && driver.external != .internalDevice
++                },
++                nativeStatus: "\(native.driverLookup); \(native.volumeLookup)")
++        }
++        throw DiskNativeError.invalid("topology changed during storage read")
++    }
++}
++
++actor StorageMetadataSource<Reader: StorageMetadataReading>: ScheduledSampleSource {
++    private let reader: Reader
++    private let admission: CollectionAdmission?
++
++    init(reader: Reader, admission: CollectionAdmission? = nil) {
++        self.reader = reader
++        self.admission = admission
++    }
++
++    func sample(collectionEpoch: Int) -> StorageMetadataResult? {
++        do { return .available(try reader.read(context: nil, admission: admission)) }
++        catch { return .failure(String(describing: error), revision: reader.currentTopologyRevision) }
++    }
++
++    func sample(context: CollectionRunContext) async -> StorageMetadataResult? {
++        guard admission?.isCurrent(context) != false else { return nil }
++        let startRevision = reader.currentTopologyRevision
++        let result: StorageMetadataResult
++        do { result = .available(try reader.read(context: context, admission: admission)) }
++        catch DiskNativeError.stale(_) { return nil }
++        catch {
++            guard reader.currentTopologyRevision == startRevision else { return nil }
++            result = .failure(String(describing: error), revision: startRevision)
++        }
++        guard admission?.isCurrent(context) != false else { return nil }
++        return result
++    }
++}
++
++nonisolated struct StorageMetadataStatus: Sendable {
++    let latest: TimestampedSample<StorageMetadataResult>?
++    let lastKnown: StorageMetadataSnapshot?
++}
++
++nonisolated struct StorageRelationshipView: Sendable {
++    let devices: [UInt64: StorageDeviceRecord]
++    let systemVolume: DiskVolumeReading?
++    let volumes: [DiskVolumeReading]
++    let complete: Bool
++}
++
++actor StorageMetadataStore: MonitoringSampleSink {
++    private let admission: CollectionAdmission?
++    private let topology: DiskTopologyTracker?
++    private var latest: TimestampedSample<StorageMetadataResult>?
++    private var lastKnown: StorageMetadataSnapshot?
++    nonisolated let updates: AsyncStream<StorageMetadataStatus>
++    private let continuation: AsyncStream<StorageMetadataStatus>.Continuation
++
++    init(admission: CollectionAdmission? = nil, topology: DiskTopologyTracker? = nil) {
++        self.admission = admission
++        self.topology = topology
++        var continuation: AsyncStream<StorageMetadataStatus>.Continuation!
++        self.updates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
++        self.continuation = continuation
++    }
++
++    func append(_ sample: TimestampedSample<StorageMetadataResult>) {
++        latest = sample
++        if case .available(let snapshot) = sample.value { lastKnown = snapshot }
++        continuation.yield(status())
++    }
++
++    func append(_ sample: TimestampedSample<StorageMetadataResult>,
++                context: CollectionRunContext) async -> Bool {
++        guard let admission else { append(sample); return true }
++        return admission.admitOptional(context, phase: .store, timestamp: sample.timestamp) {
++            if let topology {
++                let revision: UInt64?
++                switch sample.value {
++                case .available(let snapshot): revision = snapshot.topologyRevision
++                case .failure(_, let failureRevision): revision = failureRevision
++                }
++                if let revision { return topology.withCurrentRevision(revision) {
++                    append(sample)
++                    return true
++                } }
++            }
++            append(sample)
++            return true
++        } ?? false
++    }
++
++    func status() -> StorageMetadataStatus { StorageMetadataStatus(latest: latest, lastKnown: lastKnown) }
++
++    func relationship(for snapshot: DiskCounterSnapshot) -> StorageRelationshipView {
++        guard let lastKnown, lastKnown.topologyRevision == snapshot.topologyRevision else {
++            return StorageRelationshipView(devices: [:], systemVolume: nil, volumes: [], complete: false)
++        }
++        let ids = Set(snapshot.devices.map(\.registryID))
++        let devices = Dictionary(uniqueKeysWithValues: lastKnown.devices.compactMap { item in
++            ids.contains(item.registryID) ? (item.registryID, item) : nil
++        })
++        return StorageRelationshipView(devices: devices, systemVolume: lastKnown.systemVolume,
++            volumes: lastKnown.volumes, complete: lastKnown.relationshipsComplete)
++    }
++}
+diff --git a/ResourceRunnerTests/DiskActivityTests.swift b/ResourceRunnerTests/DiskActivityTests.swift
+new file mode 100644
+index 0000000..911e13d
+--- /dev/null
++++ b/ResourceRunnerTests/DiskActivityTests.swift
+@@ -0,0 +1,343 @@
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++final class DiskScriptedReader: DiskCounterReading, @unchecked Sendable {
++    private let lock = NSLock()
++    private var results: [Result<DiskCounterSnapshot, DiskNativeError>]
++    let topology: DiskTopologyTracker?
++    init(_ results: [Result<DiskCounterSnapshot, DiskNativeError>], topology: DiskTopologyTracker? = nil) {
++        self.results = results
++        self.topology = topology
++    }
++    func read() throws -> DiskCounterSnapshot {
++        try lock.withLock {
++            guard !results.isEmpty else { throw DiskNativeError.invalid("script exhausted") }
++            return try results.removeFirst().get()
++        }
++    }
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T? {
++        if let topology { return topology.withCurrentRevision(revision, apply) }
++        return apply()
++    }
++}
++
++private actor DiskReadHold {
++    private var continuation: CheckedContinuation<Void, Never>?
++    private var calls = 0
++    private(set) var entered = false
++    func pause() async {
++        calls += 1
++        guard calls == 1 else { return }
++        entered = true
++        await withCheckedContinuation { continuation = $0 }
++    }
++    func resume() { continuation?.resume(); continuation = nil }
++}
++
++private func diskWait(_ condition: () async -> Bool) async {
++    for _ in 0..<10_000 {
++        if await condition() { return }
++        await Task.yield()
++    }
++}
++
++struct DiskActivityTests {
++    private let origin = ContinuousClock().now
++
++    private func device(_ id: UInt64 = 1, kind: DiskDeviceKind = .physical,
++                        read: UInt64? = 100, write: UInt64? = 200,
++                        readOps: UInt64? = 10, writeOps: UInt64? = 20) -> DiskCounterDevice {
++        DiskCounterDevice(registryID: id, bsdNames: ["disk\(id)"], kind: kind,
++            kindReason: "test provider", readBytes: read, writtenBytes: write,
++            readOperations: readOps, writeOperations: writeOps,
++            operationsReason: readOps == nil ? "unsupported" : "Statistics operations",
++            bytesReason: read == nil || write == nil ? "required bytes missing" : "Statistics bytes")
++    }
++    private func snapshot(_ second: Int, revision: UInt64 = 1,
++                          _ devices: [DiskCounterDevice]) -> DiskCounterSnapshot {
++        DiskCounterSnapshot(readAt: origin.advanced(by: .seconds(second)),
++            devices: devices, topologyRevision: revision)
++    }
++    private func gate(_ axis: CollectionAxis = .diskActivity) -> CollectionAdmission {
++        let admission = CollectionAdmission()
++        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        _ = admission.advance(axis)
++        return admission
++    }
++
++    @Test func realReadTimeAndFiveToOneSecondChangeKeepBytesAndOperationsBaseline() async throws {
++        let admission = gate()
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device()])),
++            .success(snapshot(5, [device(read: 150, write: 225, readOps: 20, writeOps: 30)])),
++            .success(snapshot(6, [device(read: 160, write: 230, readOps: 23, writeOps: 32)]))
++        ]), admission: admission)
++        let firstContext = try #require(admission.issue(.diskActivity))
++        let first = try #require(await source.sample(context: firstContext))
++        #expect(first.status == .baselineOnly(.first))
++        #expect(first.devices[0].readBytes == 100)
++        let secondContext = try #require(admission.issue(.diskActivity))
++        let second = try #require(await source.sample(context: secondContext))
++        #expect(second.status == .rate)
++        #expect(second.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++        #expect(second.representativeOperations == DiskOperationRates(readsPerSecond: 2, writesPerSecond: 2))
++        _ = admission.advance(.diskActivity)
++        let thirdContext = try #require(admission.issue(.diskActivity))
++        let third = try #require(await source.sample(context: thirdContext))
++        #expect(third.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++        #expect(third.representativeOperations == DiskOperationRates(readsPerSecond: 3, writesPerSecond: 2))
++        #expect(third.rateSegment == second.rateSegment)
++    }
++
++    @Test func multiplePhysicalDriversCountOnceWhileVirtualAndAPFSDoNotAddTraffic() async throws {
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device(1), device(2, read: 200, write: 300),
++                device(3, kind: .virtual, read: 1000, write: 1000)])),
++            .success(snapshot(1, [device(1, read: 110, write: 220),
++                device(2, read: 230, write: 340),
++                device(3, kind: .virtual, read: 5000, write: 6000)])),
++            .success(snapshot(2, [device(1, read: 120, write: 230),
++                device(2, read: 240, write: 350),
++                device(3, kind: .virtual, read: 0, write: 0)]))
++        ]))
++        _ = await source.sample(collectionEpoch: 0)
++        let second = try #require(await source.sample(collectionEpoch: 0))
++        #expect(second.representative == RatePair(receivedBytesPerSecond: 40, sentBytesPerSecond: 60))
++        #expect(second.devices.count == 3)
++        let third = try #require(await source.sample(collectionEpoch: 0))
++        #expect(third.representative == RatePair(receivedBytesPerSecond: 20, sentBytesPerSecond: 20))
++        #expect(third.devices.first { $0.registryID == 3 }?.rate == nil)
++    }
++
++    @Test func requiredBytesMissingIsPartialAndOperationsUnsupportedDoesNotBlockBytes() async throws {
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device(), device(2, read: nil, write: 10)])),
++            .success(snapshot(1, [device(read: 110, write: 220, readOps: nil, writeOps: nil),
++                                  device(2, read: nil, write: 20)]))
++        ]))
++        _ = await source.sample(collectionEpoch: 0)
++        let result = try #require(await source.sample(collectionEpoch: 0))
++        #expect(result.knownPhysicalRates == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 20))
++        #expect(result.representative == nil)
++        #expect(result.status == .partial("물리 드라이버의 필수 바이트 또는 분류 일부를 확인하지 못했습니다"))
++        #expect(result.devices.first?.operationsRate == nil)
++        let only = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device(readOps: nil, writeOps: nil)])),
++            .success(snapshot(1, [device(read: 110, write: 220, readOps: nil, writeOps: nil)]))
++        ]))
++        _ = await only.sample(collectionEpoch: 0)
++        let supportedBytes = try #require(await only.sample(collectionEpoch: 0))
++        #expect(supportedBytes.status == .rate)
++        #expect(supportedBytes.representativeOperations == nil)
++    }
++
++    @Test func newlyMissingRequiredBytesRemainPartialEvenWhenBaselineSetChanges() async throws {
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device(1), device(2)])),
++            .success(snapshot(1, [device(1, read: 110, write: 220),
++                                  device(2, read: nil, write: 220)]))
++        ]))
++        _ = await source.sample(collectionEpoch: 0)
++        let result = try #require(await source.sample(collectionEpoch: 0))
++        if case .partial = result.status {} else { Issue.record("required Bytes must stay partial") }
++        #expect(result.representative == nil)
++        #expect(result.knownPhysicalRates == RatePair(receivedBytesPerSecond: 10,
++                                                       sentBytesPerSecond: 20))
++        #expect(result.devices.first { $0.registryID == 2 }?.bytesReason == "required bytes missing")
++        #expect(result.devices.first { $0.registryID == 2 }?.readBytes == nil)
++    }
++
++    @Test func optionalOperationsResetDropsOnlyIOPSForThatInterval() async throws {
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device()])),
++            .success(snapshot(1, [device(read: 110, write: 220, readOps: 1, writeOps: 2)])),
++            .success(snapshot(2, [device(read: 120, write: 240, readOps: 4, writeOps: 6)]))
++        ]))
++        _ = await source.sample(collectionEpoch: 0)
++        let reset = try #require(await source.sample(collectionEpoch: 0))
++        #expect(reset.status == .rate)
++        #expect(reset.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 20))
++        #expect(reset.representativeOperations == nil)
++        let resumed = try #require(await source.sample(collectionEpoch: 0))
++        #expect(resumed.representativeOperations == DiskOperationRates(readsPerSecond: 3, writesPerSecond: 4))
++    }
++
++    @Test func zeroDeltaIsMeasuredZeroRatherThanNoDeviceOrMissingSample() async throws {
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device()])),
++            .success(snapshot(1, [device()]))
++        ]))
++        _ = await source.sample(collectionEpoch: 0)
++        let idle = try #require(await source.sample(collectionEpoch: 0))
++        #expect(idle.status == .rate)
++        #expect(idle.representative == RatePair(receivedBytesPerSecond: 0,
++                                                 sentBytesPerSecond: 0))
++        #expect(idle.representativeOperations == DiskOperationRates(readsPerSecond: 0,
++                                                                    writesPerSecond: 0))
++    }
++
++    @Test func allContinuityGapsAndFailureRestartHaveNoRate() async throws {
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device()])),
++            .success(snapshot(0, [device(read: 110, write: 210)])),
++            .success(snapshot(11, [device(read: 120, write: 220)])),
++            .success(snapshot(12, [device(read: 1, write: 1)])),
++            .failure(.invalid("read failed")),
++            .success(snapshot(13, [device(read: 2, write: 2)])),
++            .success(snapshot(14, [device(read: 3, write: 3)]))
++        ]))
++        #expect((await source.sample(collectionEpoch: 0))?.status == .baselineOnly(.first))
++        #expect((await source.sample(collectionEpoch: 0))?.status == .baselineOnly(.nonpositiveElapsed))
++        #expect((await source.sample(collectionEpoch: 0))?.status == .baselineOnly(.excessiveGap))
++        #expect((await source.sample(collectionEpoch: 0))?.status == .baselineOnly(.counterDecrease))
++        let failed = try #require(await source.sample(collectionEpoch: 0))
++        if case .failure = failed.status {} else { Issue.record("failure expected") }
++        #expect((await source.sample(collectionEpoch: 0))?.status == .baselineOnly(.afterFailure))
++        #expect((await source.sample(collectionEpoch: 0))?.representative ==
++                RatePair(receivedBytesPerSecond: 1, sentBytesPerSecond: 1))
++    }
++
++    @Test func epochIdReplacementRemovalAndShortNotificationsBreakContinuity() async throws {
++        let topology = DiskTopologyTracker()
++        let a = device()
++        let b = device(2)
++        #expect(topology.observeIfCurrent([a], expectedRevision: 0) == 1)
++        topology.noteChange()
++        topology.noteChange()
++        #expect(topology.currentRevision == 3)
++        #expect(topology.observeIfCurrent([a], expectedRevision: 3) == 4)
++        #expect(topology.observeIfCurrent([b], expectedRevision: 4) == 5)
++        #expect(topology.observeIfCurrent([], expectedRevision: 5) == 6)
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, revision: 1, [a])),
++            .success(snapshot(1, revision: 1, [device(read: 110, write: 210)])),
++            .success(snapshot(2, revision: 2, [b])),
++            .success(snapshot(3, revision: 2, [device(2, read: 110, write: 210)])),
++            .success(snapshot(4, revision: 2, [])),
++            .success(snapshot(5, revision: 3, [a]))
++        ]))
++        _ = await source.sample(collectionEpoch: 0)
++        #expect((await source.sample(collectionEpoch: 0))?.status == .rate)
++        let replaced = try #require(await source.sample(collectionEpoch: 0))
++        #expect(replaced.status == .baselineOnly(.topologyChanged))
++        #expect(replaced.devices.map(\.registryID) == [2])
++        #expect((await source.sample(collectionEpoch: 1))?.status == .baselineOnly(.newEpoch))
++        let removed = try #require(await source.sample(collectionEpoch: 1))
++        #expect(removed.devices.isEmpty)
++        #expect(removed.status == .noPhysicalDevice)
++        #expect((await source.sample(collectionEpoch: 1))?.status == .baselineOnly(.topologyChanged))
++    }
++
++    @Test func historyHas601ValidPairsAnd600SecondMovingWindowWithShortGap() async throws {
++        var scripts: [Result<DiskCounterSnapshot, DiskNativeError>] = []
++        for index in 0...603 {
++            scripts.append(.success(snapshot(index, [device(read: UInt64(100 + index),
++                write: UInt64(200 + index))])))
++        }
++        let admission = gate()
++        let source = DiskActivitySource(reader: DiskScriptedReader(scripts), admission: admission)
++        let store = DiskActivityStore(admission: admission)
++        for _ in 0...603 {
++            let context = try #require(admission.issue(.diskActivity))
++            let value = try #require(await source.sample(context: context))
++            #expect(await store.append(TimestampedSample(timestamp: value.readAt, value: value,
++                collectionEpoch: context.epoch), context: context))
++        }
++        #expect(await store.storedHistoryCount == 601)
++        let current = await store.snapshot(at: origin.advanced(by: .seconds(603)))
++        #expect(current.recentHistory.count == 601)
++        #expect(current.recentHistory.first?.timestamp == origin.advanced(by: .seconds(3)))
++        let future = await store.snapshot(at: origin.advanced(by: .seconds(610)))
++        #expect(future.recentHistory.count == 594)
++        let failContext = try #require(admission.issue(.diskActivity))
++        let failed = DiskActivitySample(readAt: origin.advanced(by: .seconds(611)),
++            topologyRevision: 1, devices: [], knownPhysicalRates: nil, representative: nil,
++            knownPhysicalOperations: nil, representativeOperations: nil,
++            physicalTotalsComplete: false, status: .failure("brief"), rateSegment: 1)
++        #expect(await store.append(TimestampedSample(timestamp: failed.readAt, value: failed,
++            collectionEpoch: 0), context: failContext))
++        #expect(await store.storedHistoryCount == 601)
++    }
++
++    @Test func briefFailureAndRecoveryCreateDistinctStoredRateSegmentsWithoutZeroPoints() async throws {
++        let admission = gate()
++        let failureAt = origin.advanced(by: .milliseconds(1500))
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device()])),
++            .success(snapshot(1, [device(read: 110, write: 220)])),
++            .failure(.invalid("brief IOKit failure")),
++            .success(snapshot(2, [device(read: 120, write: 240)])),
++            .success(snapshot(3, [device(read: 130, write: 260)]))
++        ]), admission: admission, now: { failureAt })
++        let store = DiskActivityStore(admission: admission)
++        for _ in 0..<5 {
++            let context = try #require(admission.issue(.diskActivity))
++            let sample = try #require(await source.sample(context: context))
++            #expect(await store.append(TimestampedSample(timestamp: sample.readAt, value: sample,
++                collectionEpoch: context.epoch), context: context))
++        }
++        let display = await store.snapshot(at: origin + .seconds(3))
++        #expect(display.recentHistory.count == 2)
++        #expect(display.recentHistory[0].rateSegment != display.recentHistory[1].rateSegment)
++        #expect(display.recentHistory[0].rate == RatePair(receivedBytesPerSecond: 10,
++                                                          sentBytesPerSecond: 20))
++        #expect(display.recentHistory[1].rate == RatePair(receivedBytesPerSecond: 10,
++                                                          sentBytesPerSecond: 20))
++    }
++
++    @Test func sourceAndStoreRejectBoundaryOrTopologyChangedDuringSuspension() async throws {
++        let topology = DiskTopologyTracker()
++        let a = device()
++        _ = topology.observeIfCurrent([a], expectedRevision: 0)
++        let admission = gate()
++        let hold = DiskReadHold()
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [a]))
++        ], topology: topology), admission: admission, beforeCommit: { await hold.pause() })
++        let context = try #require(admission.issue(.diskActivity))
++        let pending = Task { await source.sample(context: context) }
++        await diskWait { await hold.entered }
++        _ = topology.observeIfCurrent([device(2)], expectedRevision: 1)
++        await hold.resume()
++        #expect(await pending.value == nil)
++        let store = DiskActivityStore(admission: admission, topology: topology)
++        let stale = DiskActivitySample(readAt: origin, topologyRevision: 1, devices: [],
++            knownPhysicalRates: nil, representative: nil, knownPhysicalOperations: nil,
++            representativeOperations: nil, physicalTotalsComplete: false,
++            status: .baselineOnly(.first), rateSegment: 1)
++        #expect(await store.append(TimestampedSample(timestamp: origin, value: stale,
++            collectionEpoch: 0), context: context) == false)
++        #expect(await store.statusLatestIsEmpty())
++    }
++
++    @Test func lateBoundaryRejectsSourceBaselineAndStoreHistory() async throws {
++        let admission = gate()
++        let hold = DiskReadHold()
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device()])),
++            .success(snapshot(1, [device(read: 110, write: 220)]))
++        ]), admission: admission, beforeCommit: { await hold.pause() })
++        let oldContext = try #require(admission.issue(.diskActivity))
++        let old = Task { await source.sample(context: oldContext) }
++        await diskWait { await hold.entered }
++        admission.transition(CollectionBoundary(revision: 1, sequence: 1, epoch: 1, stopped: true))
++        await hold.resume()
++        #expect(await old.value == nil)
++        admission.transition(CollectionBoundary(revision: 2, sequence: 2, epoch: 2, stopped: false))
++        let currentContext = try #require(admission.issue(.diskActivity))
++        let current = try #require(await source.sample(context: currentContext))
++        #expect(current.status == .baselineOnly(.first))
++        let store = DiskActivityStore(admission: admission)
++        #expect(await store.append(TimestampedSample(timestamp: origin, value: current,
++            collectionEpoch: oldContext.epoch), context: oldContext) == false)
++        #expect(await store.storedHistoryCount == 0)
++        #expect(await store.append(TimestampedSample(timestamp: current.readAt, value: current,
++            collectionEpoch: currentContext.epoch), context: currentContext))
++        #expect(await store.storedHistoryCount == 0)
++    }
++}
++
++private extension DiskActivityStore {
++    func statusLatestIsEmpty() -> Bool { snapshot(at: ContinuousClock().now).latest == nil }
++}
+diff --git a/ResourceRunnerTests/StorageMetadataTests.swift b/ResourceRunnerTests/StorageMetadataTests.swift
+new file mode 100644
+index 0000000..dad0fe3
+--- /dev/null
++++ b/ResourceRunnerTests/StorageMetadataTests.swift
+@@ -0,0 +1,294 @@
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++private final class StorageNativeScript: @unchecked Sendable {
++    private let lock = NSLock()
++    private var calls = 0
++    let callback: @Sendable (Int) -> DiskNativeSnapshot
++    init(_ callback: @escaping @Sendable (Int) -> DiskNativeSnapshot) { self.callback = callback }
++    func read() -> DiskNativeSnapshot {
++        let call = lock.withLock { calls += 1; return calls }
++        return callback(call)
++    }
++}
++
++private final class DiskFastScript: @unchecked Sendable {
++    private let lock = NSLock()
++    private var calls = 0
++    let callback: @Sendable (Int) -> [DiskCounterDevice]
++    init(_ callback: @escaping @Sendable (Int) -> [DiskCounterDevice]) { self.callback = callback }
++    func read() -> [DiskCounterDevice] {
++        let call = lock.withLock { calls += 1; return calls }
++        return callback(call)
++    }
++}
++
++private final class BlockingStorageReader: StorageMetadataReading, @unchecked Sendable {
++    private let lock = NSLock()
++    private var didEnter = false
++    private let releaseSemaphore = DispatchSemaphore(value: 0)
++    var entered: Bool { lock.withLock { didEnter } }
++    func release() { releaseSemaphore.signal() }
++    func read() throws -> StorageMetadataSnapshot {
++        lock.withLock { didEnter = true }
++        releaseSemaphore.wait()
++        throw DiskNativeError.invalid("scripted slow query failed")
++    }
++}
++
++private func storageDriver(_ id: UInt64, external: DiskExternalKind = .internalDevice) -> DiskDriverReading {
++    DiskDriverReading(registryID: id, bsdNames: ["disk\(id)"], kind: .physical,
++        kindReason: "hardware", readBytes: 100, writtenBytes: 200,
++        readOperations: 10, writeOperations: 20, operationsReason: "Statistics",
++        external: external, externalReason: "DA DeviceInternal", removable: false,
++        ejectable: false, connection: "PCI-Express")
++}
++private func storageVolume(_ id: String, paths: Set<String>, drivers: Set<UInt64>,
++                           scope: DiskVolumeScope = .physical, total: UInt64 = 1000,
++                           available: UInt64 = 400) -> DiskVolumeReading {
++    DiskVolumeReading(identity: id, mountPaths: paths, bsdName: "disk3s1", fileSystem: "apfs",
++        totalBytes: total, availableBytes: available, driverIDs: drivers, scope: scope,
++        relationReason: scope == .unconfirmed ? "relation unavailable" : "ancestor drivers",
++        sharedCapacity: true)
++}
++private func storageNative(drivers: [DiskDriverReading], volumes: [DiskVolumeReading]) -> DiskNativeSnapshot {
++    DiskNativeSnapshot(drivers: drivers, volumes: volumes,
++        systemVolume: volumes.first { $0.mountPaths.contains("/") } ?? volumes[0],
++        driverLookup: "IOKit=0", volumeLookup: "DA=0", physicalTotalsComplete: true,
++        relationshipsComplete: volumes.allSatisfy { $0.scope != .unconfirmed })
++}
++private func storageCounter(_ id: UInt64) -> DiskCounterDevice {
++    DiskCounterDevice(registryID: id, bsdNames: ["disk\(id)"], kind: .physical,
++        kindReason: "hardware", readBytes: 100, writtenBytes: 200,
++        readOperations: 10, writeOperations: 20, operationsReason: "Statistics",
++        bytesReason: "Statistics")
++}
++private func storageGate(_ axis: CollectionAxis) -> CollectionAdmission {
++    let admission = CollectionAdmission()
++    admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++    _ = admission.advance(axis)
++    return admission
++}
++
++struct StorageMetadataTests {
++    private let origin = ContinuousClock().now
++
++    @Test func manyToManyRelationsSharedCapacityAndUnmountedExternalStayDistinct() async throws {
++        let topology = DiskTopologyTracker()
++        let system = storageVolume("system", paths: ["/"], drivers: [1, 2])
++        let data = storageVolume("data", paths: ["/System/Volumes/Data"], drivers: [1, 2])
++        let unknown = storageVolume("unknown", paths: ["/Volumes/Unknown"], drivers: [], scope: .unconfirmed)
++        let native = storageNative(drivers: [storageDriver(1), storageDriver(2),
++            storageDriver(3, external: .externalDevice)], volumes: [system, data, unknown])
++        let reader = SystemStorageMetadataReader(topology: topology, nativeRead: { native })
++        let result = try reader.read()
++        #expect(result.volumes.count == 3)
++        #expect(result.volumes[0].driverIDs == [1, 2] || result.volumes[1].driverIDs == [1, 2])
++        #expect(result.systemVolume.identity == "system")
++        #expect(result.systemVolume.usedBytes == 600)
++        #expect(result.systemVolume.sharedCapacity)
++        #expect(result.relationshipsComplete == false)
++        #expect(result.externalDevicesAbsent == false)
++        #expect(result.devices.first { $0.registryID == 3 }?.mountState == .relationUnconfirmed)
++        let store = StorageMetadataStore(topology: topology)
++        await store.append(TimestampedSample(timestamp: result.readAt, value: .available(result)))
++        let counter = DiskCounterSnapshot(readAt: origin,
++            devices: [storageCounter(1), storageCounter(2), storageCounter(3)],
++            topologyRevision: result.topologyRevision)
++        let view = await store.relationship(for: counter)
++        #expect(view.systemVolume?.identity == "system")
++        #expect(view.volumes.count == 3)
++        #expect(view.devices[3]?.mountState == .relationUnconfirmed)
++        #expect(view.complete == false)
++        #expect(await store.relationship(for: DiskCounterSnapshot(readAt: origin,
++            devices: counter.devices, topologyRevision: result.topologyRevision + 1)).devices.isEmpty)
++        #expect(await store.relationship(for: DiskCounterSnapshot(readAt: origin,
++            devices: [storageCounter(9)], topologyRevision: result.topologyRevision)).devices.isEmpty)
++    }
++
++    @Test func noExternalAndFailureAreDifferentFromUnmountedOrUnknownRelation() async throws {
++        let system = storageVolume("system", paths: ["/"], drivers: [1])
++        let topology = DiskTopologyTracker()
++        let result = try SystemStorageMetadataReader(topology: topology,
++            nativeRead: { storageNative(drivers: [storageDriver(1), storageDriver(2)], volumes: [system]) }).read()
++        #expect(result.externalDevicesAbsent)
++        #expect(result.devices[0].mountState == .mounted)
++        #expect(result.devices[1].mountState == .unmounted)
++        let incompleteNative = DiskNativeSnapshot(drivers: [storageDriver(1), storageDriver(2)],
++            volumes: [system], systemVolume: system, driverLookup: "IOKit=0",
++            volumeLookup: "DA relation incomplete", physicalTotalsComplete: true,
++            relationshipsComplete: false)
++        let incomplete = try SystemStorageMetadataReader(topology: DiskTopologyTracker(),
++            nativeRead: { incompleteNative }).read()
++        #expect(incomplete.devices[1].mountState == .relationUnconfirmed)
++        let store = StorageMetadataStore()
++        await store.append(TimestampedSample(timestamp: origin, value: .available(result)))
++        await store.append(TimestampedSample(timestamp: origin + .seconds(1),
++            value: .failure("DA query failed", revision: result.topologyRevision)))
++        let status = await store.status()
++        if case .failure(let reason, _) = status.latest?.value { #expect(reason == "DA query failed") }
++        else { Issue.record("failure state expected") }
++        #expect(status.lastKnown?.systemVolume.identity == "system")
++    }
++
++    @Test func fastAndSlowReadersRejectBoundaryAndOlderRequestBeforeTrackerMutation() throws {
++        let native = storageNative(drivers: [storageDriver(1)],
++            volumes: [storageVolume("system", paths: ["/"], drivers: [1])])
++        for axis in [CollectionAxis.diskActivity, .storageMetadata] {
++            let topology = DiskTopologyTracker()
++            let admission = storageGate(axis)
++            let old = try #require(admission.issue(axis))
++            let new = try #require(admission.issue(axis))
++            if axis == .diskActivity {
++                let reader = SystemDiskCounterReader(topology: topology,
++                    nativeRead: { [storageCounter(1)] })
++                _ = try reader.read(context: new, admission: admission)
++                let revision = topology.currentRevision
++                #expect(throws: DiskNativeError.self) {
++                    try reader.read(context: old, admission: admission)
++                }
++                #expect(topology.currentRevision == revision)
++            } else {
++                let reader = SystemStorageMetadataReader(topology: topology,
++                    nativeRead: { native })
++                _ = try reader.read(context: new, admission: admission)
++                let revision = topology.currentRevision
++                #expect(throws: DiskNativeError.self) {
++                    try reader.read(context: old, admission: admission)
++                }
++                #expect(topology.currentRevision == revision)
++            }
++        }
++        let topology = DiskTopologyTracker()
++        let admission = storageGate(.diskActivity)
++        let context = try #require(admission.issue(.diskActivity))
++        let reader = SystemDiskCounterReader(topology: topology, nativeRead: {
++            admission.transition(CollectionBoundary(revision: 1, sequence: 1, epoch: 1, stopped: true))
++            return [storageCounter(1)]
++        })
++        #expect(throws: DiskNativeError.self) { try reader.read(context: context, admission: admission) }
++        #expect(topology.currentRevision == 0)
++        let slowTopology = DiskTopologyTracker()
++        let slowGate = storageGate(.storageMetadata)
++        let slowContext = try #require(slowGate.issue(.storageMetadata))
++        let slowReader = SystemStorageMetadataReader(topology: slowTopology, nativeRead: {
++            slowGate.transition(CollectionBoundary(revision: 1, sequence: 1, epoch: 1, stopped: true))
++            return native
++        })
++        #expect(throws: DiskNativeError.self) {
++            try slowReader.read(context: slowContext, admission: slowGate)
++        }
++        #expect(slowTopology.currentRevision == 0)
++    }
++
++    @Test func fastReadRetriesConcurrentTopologyChangeWithoutRestoringOldDevice() throws {
++        let topology = DiskTopologyTracker()
++        _ = topology.observeIfCurrent([storageCounter(1)], expectedRevision: 0)
++        let script = DiskFastScript { call in
++            if call == 1 {
++                _ = topology.observeIfCurrent([storageCounter(2)], expectedRevision: 1)
++                return [storageCounter(1)]
++            }
++            return [storageCounter(2)]
++        }
++        let result = try SystemDiskCounterReader(topology: topology,
++            nativeRead: { script.read() }).read()
++        #expect(result.devices.map(\.registryID) == [2])
++        #expect(result.topologyRevision == topology.currentRevision)
++    }
++
++    @Test func slowNativeReadRetriesTopologyRaceAndCannotRestoreOldSet() throws {
++        let topology = DiskTopologyTracker()
++        _ = topology.observeIfCurrent([storageCounter(1)], expectedRevision: 0)
++        let old = storageNative(drivers: [storageDriver(1)],
++            volumes: [storageVolume("system", paths: ["/"], drivers: [1])])
++        let new = storageNative(drivers: [storageDriver(2)],
++            volumes: [storageVolume("system", paths: ["/"], drivers: [2])])
++        let script = StorageNativeScript { call in
++            if call == 1 {
++                _ = topology.observeIfCurrent([storageCounter(2)], expectedRevision: 1)
++                return old
++            }
++            return new
++        }
++        let reader = SystemStorageMetadataReader(topology: topology, nativeRead: { script.read() })
++        let result = try reader.read()
++        #expect(result.devices.map(\.registryID) == [2])
++        #expect(result.topologyRevision == topology.currentRevision)
++    }
++
++    @Test func mountChangeAdvancesTopologyRevisionAndInvalidatesOldCapacityCache() async throws {
++        let topology = DiskTopologyTracker()
++        let system = storageVolume("system", paths: ["/"], drivers: [1])
++        let external = storageVolume("external", paths: ["/Volumes/External"], drivers: [2])
++        let firstNative = storageNative(drivers: [storageDriver(1), storageDriver(2)],
++            volumes: [system])
++        let secondNative = storageNative(drivers: [storageDriver(1), storageDriver(2)],
++            volumes: [system, external])
++        let script = StorageNativeScript { call in call == 1 ? firstNative : secondNative }
++        let reader = SystemStorageMetadataReader(topology: topology, nativeRead: { script.read() })
++        let first = try reader.read()
++        let store = StorageMetadataStore()
++        await store.append(TimestampedSample(timestamp: first.readAt, value: .available(first)))
++        let second = try reader.read()
++        #expect(second.topologyRevision == first.topologyRevision + 1)
++        let current = DiskCounterSnapshot(readAt: origin, devices: [storageCounter(1), storageCounter(2)],
++            topologyRevision: second.topologyRevision)
++        #expect(await store.relationship(for: current).devices.isEmpty)
++        await store.append(TimestampedSample(timestamp: second.readAt, value: .available(second)))
++        #expect(await store.relationship(for: current).volumes.count == 2)
++    }
++
++    @Test func slowStorageSuspensionDoesNotBlockFastDiskSamples() async throws {
++        let hold = BlockingStorageReader()
++        let slow = StorageMetadataSource(reader: hold)
++        let slowTask = Task { await slow.sample(collectionEpoch: 0) }
++        for _ in 0..<10_000 where !hold.entered { await Task.yield() }
++        #expect(hold.entered)
++        let fast = DiskActivitySource(reader: DiskScriptedReader([
++            .success(DiskCounterSnapshot(readAt: origin, devices: [storageCounter(1)], topologyRevision: 1)),
++            .success(DiskCounterSnapshot(readAt: origin + .seconds(1), devices: [
++                DiskCounterDevice(registryID: 1, bsdNames: ["disk1"], kind: .physical,
++                    kindReason: "hardware", readBytes: 110, writtenBytes: 220,
++                    readOperations: 11, writeOperations: 22,
++                    operationsReason: "Statistics", bytesReason: "Statistics")], topologyRevision: 1))
++        ]))
++        _ = await fast.sample(collectionEpoch: 0)
++        #expect((await fast.sample(collectionEpoch: 0))?.representative ==
++            RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 20))
++        hold.release()
++        _ = await slowTask.value
++    }
++
++    @Test func failureFromOlderTopologyCannotOverwriteStorageLatestAfterSourceOrSinkDelay() async throws {
++        let topology = DiskTopologyTracker()
++        _ = topology.observeIfCurrent([storageCounter(1)], expectedRevision: 0)
++        let admission = storageGate(.storageMetadata)
++        let context = try #require(admission.issue(.storageMetadata))
++        let reader = TopologyChangingFailureReader(topology: topology)
++        let source = StorageMetadataSource(reader: reader, admission: admission)
++        #expect(await source.sample(context: context) == nil)
++        #expect(topology.currentRevision == 2)
++        let store = StorageMetadataStore(admission: admission, topology: topology)
++        #expect(await store.append(TimestampedSample(timestamp: origin,
++            value: .failure("old query failed", revision: 1),
++            collectionEpoch: context.epoch), context: context) == false)
++        let system = storageVolume("system", paths: ["/"], drivers: [1])
++        let oldSnapshot = StorageMetadataSnapshot(readAt: origin, topologyRevision: 1,
++            volumes: [system], systemVolume: system, devices: [],
++            relationshipsComplete: true, externalDevicesAbsent: true, nativeStatus: "old")
++        #expect(await store.append(TimestampedSample(timestamp: origin,
++            value: .available(oldSnapshot), collectionEpoch: context.epoch), context: context) == false)
++        #expect(await store.status().latest == nil)
++    }
++}
++
++private struct TopologyChangingFailureReader: StorageMetadataReading {
++    let topology: DiskTopologyTracker
++    var currentTopologyRevision: UInt64? { topology.currentRevision }
++    func read() throws -> StorageMetadataSnapshot {
++        _ = topology.observeIfCurrent([storageCounter(2)], expectedRevision: 1)
++        throw DiskNativeError.invalid("old query failed")
++    }
++}

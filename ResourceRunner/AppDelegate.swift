@@ -68,6 +68,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     for volume in snapshot.volumes {
                         logger.notice("volume=\(volume.identity, privacy: .public) mounts=\(volume.mountPaths.sorted().joined(separator: ","), privacy: .public) bsd=\(volume.bsdName ?? "unknown", privacy: .public) fs=\(volume.fileSystem ?? "unknown", privacy: .public) total=\(volume.totalBytes) available=\(volume.availableBytes) used=\(volume.usedBytes) drivers=\(volume.driverIDs.sorted().map(String.init).joined(separator: ","), privacy: .public) scope=\(volume.scope.rawValue, privacy: .public) sharedCapacity=\(volume.sharedCapacity) relation=\(volume.relationReason, privacy: .public)")
                     }
+                    let fast = try DiskNativeAdapter().readCounters()
+                    logger.notice("fastDriverCount=\(fast.count) fastIDs=\(fast.map(\.registryID).map(String.init).joined(separator: ","), privacy: .public)")
+                    let topology = DiskTopologyTracker()
+                    let admission = CollectionAdmission()
+                    admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
+                    _ = admission.advance(.storageMetadata)
+                    _ = admission.advance(.diskActivity)
+                    let storageSource = StorageMetadataSource(reader: SystemStorageMetadataReader(topology: topology), admission: admission)
+                    let storageStore = StorageMetadataStore(admission: admission, topology: topology)
+                    if let context = admission.issue(.storageMetadata),
+                       let value = await storageSource.sample(context: context) {
+                        _ = await storageStore.append(TimestampedSample(timestamp: ContinuousClock().now,
+                            value: value, collectionEpoch: context.epoch, context: context), context: context)
+                        switch value {
+                        case .available(let metadata):
+                            logger.notice("storageRevision=\(metadata.topologyRevision) systemTotal=\(metadata.systemVolume.totalBytes) systemAvailable=\(metadata.systemVolume.availableBytes) volumes=\(metadata.volumes.count) relationsComplete=\(metadata.relationshipsComplete) externalAbsent=\(metadata.externalDevicesAbsent)")
+                        case .failure(let reason, _):
+                            logger.error("storageFailure=\(reason, privacy: .public)")
+                        }
+                    }
+                    let activitySource = DiskActivitySource(reader: SystemDiskCounterReader(topology: topology), admission: admission)
+                    for tick in 0..<2 {
+                        if tick > 0 { try await Task.sleep(for: .seconds(1)) }
+                        guard let context = admission.issue(.diskActivity),
+                              let value = await activitySource.sample(context: context) else { continue }
+                        logger.notice("diskActivityTick=\(tick) status=\(String(describing: value.status), privacy: .public) revision=\(value.topologyRevision) knownPhysical=\(String(describing: value.knownPhysicalRates), privacy: .public) representative=\(String(describing: value.representative), privacy: .public) knownIOPS=\(String(describing: value.knownPhysicalOperations), privacy: .public) representativeIOPS=\(String(describing: value.representativeOperations), privacy: .public) devices=\(value.devices.count)")
+                    }
                 } catch {
                     logger.error("pid=\(getpid()) failed=\(String(describing: error), privacy: .public)")
                 }

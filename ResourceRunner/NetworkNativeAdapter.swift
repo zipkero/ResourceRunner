@@ -206,7 +206,7 @@ enum NetworkClassification {
     }
 }
 
-struct NetworkNativeAdapter: Sendable {
+nonisolated struct NetworkNativeAdapter: Sendable {
     let routeReader = NetworkRouteReader()
 
     func read() throws -> NetworkNativeSnapshot {

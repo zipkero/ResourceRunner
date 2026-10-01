@@ -34,6 +34,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+        if ProcessInfo.processInfo.environment["RR_DISK_PROBE"] == "1" {
+            Task.detached {
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "DiskNativeProbe")
+                do {
+                    let snapshot = try DiskNativeAdapter().read()
+                    logger.notice("pid=\(getpid()) driverLookup=\(snapshot.driverLookup, privacy: .public) volumeLookup=\(snapshot.volumeLookup, privacy: .public) physicalComplete=\(snapshot.physicalTotalsComplete) relationshipsComplete=\(snapshot.relationshipsComplete)")
+                    for driver in snapshot.drivers {
+                        logger.notice("driverID=\(driver.registryID) bsd=\(driver.bsdNames.sorted().joined(separator: ","), privacy: .public) kind=\(driver.kind.rawValue, privacy: .public) kindReason=\(driver.kindReason, privacy: .public) readBytes=\(driver.readBytes) writtenBytes=\(driver.writtenBytes) readOperations=\(driver.readOperations.map(String.init) ?? "unsupported", privacy: .public) writeOperations=\(driver.writeOperations.map(String.init) ?? "unsupported", privacy: .public) operationsReason=\(driver.operationsReason, privacy: .public) external=\(driver.external.rawValue, privacy: .public) externalReason=\(driver.externalReason, privacy: .public) removable=\(driver.removable.map(String.init) ?? "unknown", privacy: .public) ejectable=\(driver.ejectable.map(String.init) ?? "unknown", privacy: .public) connection=\(driver.connection ?? "unknown", privacy: .public)")
+                    }
+                    for volume in snapshot.volumes {
+                        logger.notice("volume=\(volume.identity, privacy: .public) mounts=\(volume.mountPaths.sorted().joined(separator: ","), privacy: .public) bsd=\(volume.bsdName ?? "unknown", privacy: .public) fs=\(volume.fileSystem ?? "unknown", privacy: .public) total=\(volume.totalBytes) available=\(volume.availableBytes) used=\(volume.usedBytes) drivers=\(volume.driverIDs.sorted().map(String.init).joined(separator: ","), privacy: .public) scope=\(volume.scope.rawValue, privacy: .public) sharedCapacity=\(volume.sharedCapacity) relation=\(volume.relationReason, privacy: .public)")
+                    }
+                } catch {
+                    logger.error("pid=\(getpid()) failed=\(String(describing: error), privacy: .public)")
+                }
+            }
+        }
 #endif
     }
 }

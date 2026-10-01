@@ -1,0 +1,70 @@
+Build cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+Build: xcodebuild -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/ResourceRunner-M3-task002-build build CODE_SIGNING_ALLOWED=YES
+Build result: BUILD SUCCEEDED (build.log)
+Test cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+Test: xcodebuild -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/ResourceRunner-M3-task002-tests -only-testing:ResourceRunnerTests/DiskNativeAdapterTests -only-testing:ResourceRunnerTests/NetworkNativeAdapterTests test CODE_SIGNING_ALLOWED=YES
+Test result: TEST SUCCEEDED; 7 Disk and 6 Network tests (native-adapter-tests.log)
+Probe cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+Probe: RR_DISK_PROBE=1 /tmp/ResourceRunner-M3-task002-build/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Probe: signed build-only app; PID 20826, terminated after log; ps -p 20826 returned no process
+Probe log: /usr/bin/log show --last 40s --style compact --predicate subsystem/category DiskNativeProbe
+Probe outcome: physicalComplete=true relationshipsComplete=true; / and seven other APFS mounts linked to driver 4294969732
+External device transition: not observed; task-014 owns it
+HEAD and working tree:
+eed1f5334c3625049f359e1be0151a52ebe43f07
+ M ResourceRunner/AppDelegate.swift
+ M ResourceRunner/NetworkNativeAdapter.swift
+?? ResourceRunner/DiskNativeAdapter.swift
+?? ResourceRunnerTests/DiskNativeAdapterTests.swift
+?? features/20260817-001-extended-resource-monitoring/evidence/task-002/
+Source SHA-256:
+75fe5f1749b0082f439bb174858f5a26401738dd3fc4b71c753b864e91c302f4  ResourceRunner/DiskNativeAdapter.swift
+1bb520889d0a022328afb1d4953a88c3cc6d80784def204f59ce69604e6a3809  ResourceRunner/NetworkNativeAdapter.swift
+3cb19400d6cfb96da76ce5bda52bb347f0519f3f21cd6ce4c03d0cd307aff13d  ResourceRunner/AppDelegate.swift
+c460e5cd042db4a7837d44c5622ff4ec18e42bc840f4112af9102d49d5adf7dd  ResourceRunnerTests/DiskNativeAdapterTests.swift
+OS, architecture, Xcode:
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+arm64
+Xcode 26.6
+Build version 17F113
+Build-only app signature:
+Executable=/private/tmp/ResourceRunner-M3-task002-build/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Identifier=com.zipkero.ResourceRunner
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=435 flags=0x2(adhoc) hashes=3+7 location=embedded
+VersionPlatform=1
+VersionMin=1705216
+VersionSDK=1705216
+Hash type=sha256 size=32
+CandidateCDHash sha256=5081d2ec1fb3bc9fa4e2eb259a3ec10f397d4be5
+CandidateCDHashFull sha256=5081d2ec1fb3bc9fa4e2eb259a3ec10f397d4be56f230b4e3dce66d14fc7bc18
+Hash choices=sha256
+CMSDigest=5081d2ec1fb3bc9fa4e2eb259a3ec10f397d4be56f230b4e3dce66d14fc7bc18
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=16384
+Executable Segment flags=0x1
+Page size=16384
+CDHash=5081d2ec1fb3bc9fa4e2eb259a3ec10f397d4be5
+Signature=adhoc
+Info.plist entries=20
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12
+Build-only app entitlements:
+Executable=/private/tmp/ResourceRunner-M3-task002-build/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+[Dict]
+	[Key] com.apple.security.app-sandbox
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.files.user-selected.read-only
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.get-task-allow
+	[Value]
+		[Bool] true
+Build-only executable architecture and SHA-256:
+arm64
+540b8dbf64e84a86d1019b28449be020bbce0fc81818c18d1bbf8f5d32f1da35  /tmp/ResourceRunner-M3-task002-build/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner

@@ -58,7 +58,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verifier의 approved 후보를 main이 원본·실행 근거와 대조해 approved로 확정했습니다. 검증 기준 HEAD `002414b`의 NetworkNativeAdapter·AppDelegate DEBUG probe·직접 테스트 미커밋 상태이며, `evidence/task-001/environment.txt`의 세 소스 SHA-256이 현재 파일과 일치합니다. 결정적 테스트 6개 통과와 별도 build-only arm64 Sandbox 앱의 실제 RX·TX·IPv4/IPv6·provider·Link Active 조회를 확인했습니다. 새 temporary-exception 없이 실행했고 llw0의 unknown·합계 complete=false를 보존했습니다. 원자료는 같은 evidence 디렉터리의 sandbox-network-probe.log·network-native-adapter-tests.log입니다. 실제 VPN·연결 전환은 task-014에 남으며 이번 승인으로 마지막 매핑이 끝난 SPEC 완료 조건은 없습니다. Swift 6 격리 경고는 후속 source·격리 배선에서 확인할 품질 위험으로 남깁니다.
 
-- [ ] task-002: Disk·볼륨 native adapter와 실제 Sandbox 접근 관문
+- [x] task-002: Disk·볼륨 native adapter와 실제 Sandbox 접근 관문
   - 목적: 물리 저장 장치의 Read·Write 바이트 통계, 시스템 볼륨 용량과
     장치·볼륨 관계를 Sandbox 앱 내부에서 실제로 읽는 원본 경로를 확보합니다.
   - 접근: 물리 whole media에 대응하는 `IOBlockStorageDriver`의 `Statistics`를 읽고
@@ -86,6 +86,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       실제 외장 연결·해제 관찰은 task-014에서 이어 확인합니다.
   - 참조: SPEC §5.2, SPEC §5.4, SPEC §5.7, SPEC §5.9, SPEC §5.10, SPEC §5.13, SPEC §5.18,
     DESIGN §1.1, DESIGN §1.3, DESIGN §1.4, DESIGN §3.1, DESIGN §4.1, DESIGN §4.3
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `eed1f53`의 DiskNativeAdapter·직접 테스트·AppDelegate Disk probe와 Network nonisolated 선언 diff를 검증했고 `evidence/task-002/environment.txt`의 소스 4개 SHA-256이 현재 파일과 일치합니다. Disk 테스트 7개와 Network 회귀 6개 통과, 별도 build-only arm64 Sandbox 앱 PID 20826에서 물리 disk0 드라이버 ID 4294969732의 Read·Write 바이트·Operations, `/` 용량과 APFS 볼륨 8개의 관계를 확인했습니다. physicalComplete·relationshipsComplete가 true이며 새 예외가 없습니다. verifier가 같은 빌드의 Network probe PID 24040을 직접 재실행해 task-001 동작·complete=false 보존을 확인하고 종료했습니다. 실제 외장 전환은 task-014에 남고 마지막 매핑이 끝난 SPEC 조건은 없습니다. NetworkRouteReader 생성의 Swift 6 격리 경고는 현재 Swift 5 빌드·실행 통과와 별도로 후속 배선의 품질 위험으로 남깁니다.
 
 - [ ] task-003: 공통 수집 경계와 source·store·표시의 원자적 admission
   - 목적: 짧은 중지·복귀와 취소를 무시하는 늦은 응답이

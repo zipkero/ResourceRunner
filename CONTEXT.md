@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 19:36 +0900
+저장: 2026-10-01 19:49 +0900
 
 ## 현재 목표
 
@@ -10,14 +10,16 @@
 
 ## 현재 상태
 
-branch `main`, task-001 검증 기준 HEAD `002414b`. task-001 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001 `[x]`, task-002~018 `[ ]`다.
-선행 문서와 task-001 구현·근거를 첫 커밋에 포함하며 다음은 task-002다.
+branch `main`, task-002 검증 기준 HEAD `eed1f53`. task-001·002 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001·002 `[x]`, task-003~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-003이다.
 
-Network 원자료는 feature `evidence/task-001/`에 있다. 세 소스 SHA-256 일치,
-테스트 6개 통과, 별도 build-only arm64 Sandbox 앱의 원본 접근·새 예외 없음이 승인 근거다.
-llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스 전환은 task-014에서 확인한다.
-Swift 6 격리 경고는 후속 source·격리 배선에서 확인할 품질 위험으로 남는다.
+Network 원자료는 feature `evidence/task-001/`, Disk 원자료는 `evidence/task-002/`다.
+Disk 7개·Network 6개 테스트 통과, 별도 build-only arm64 Sandbox 앱에서 물리 disk0 Read·Write·Operations,
+`/` 용량과 APFS 볼륨 8개의 물리 드라이버 관계를 확인했다. source 해시 일치·새 예외 없음을 확인했다.
+Network nonisolated 인접 변경의 영향은 verifier가 같은 빌드 Network probe를 재실행해 회귀 없음을 확인했다.
+llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
+NetworkRouteReader 생성의 Swift 6 격리 경고는 후속 source·격리 배선에서 확인할 품질 위험이다.
 Network·Disk Collector와 카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
 
 ## 현재 작업 문서
@@ -49,8 +51,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-002 Disk·볼륨 native adapter와 실제 Sandbox 접근 관문을 worker로 구현하고 독립 verify한다.
-- 완료 기준: implement.md task-002의 필수 물리 Read·Write·시스템 용량·장치/볼륨 관계와 결정적 테스트·실제 Sandbox 원자료를 확보한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-003으로 진행한다. 미확보 필수 항목은 완료로 처리하지 않는다.
+- 작업: M3 task-003 공통 수집 경계와 source·store·표시의 원자적 admission을 worker로 구현하고 독립 verify한다.
+- 완료 기준: 승인된 task-003의 병합된 짧은 중지·취소 무시·역순 응답·sink suspension·표시 역순을 결정적으로 재현해 기준점·현재값·이력·카드 상태 불변성과 CPU·Memory·프로세스·메뉴바 회귀를 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-004로 진행한다.
 
 ## 먼저 읽을 파일
 

@@ -28,3 +28,5 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 - 2026-10-01: `implement-loop M3`의 task-001 구현 완료 후보와 테스트 6개 통과 근거를 인수했습니다. 초기 XCTest 호스트의 임시 Sandbox 예외를 발견해 테스트와 분리한 build-only 앱으로 관문을 재확인했습니다. 최종 앱에는 새 예외가 없고 물리 Wi-Fi 카운터·주소·provider·Link Active를 확인했으며 미확정 대상·불완전성은 보존합니다. 그러나 독립 verifier 호출이 `agent thread limit reached`로 반복 실패해 최종 판정 전 중단했습니다. SPEC·DESIGN 승인을 유지하고 task-001~018 및 IMPLEMENT는 `[ ]`이며 승인 취소나 최종 reject는 없습니다. 사용자의 Task별 승인 후 커밋 지시에 따라 아직 커밋하지 않았습니다. 재개 지점은 현재 코드·evidence/task-001의 독립 verify이며, 승인되면 커밋 후 task-002로 진행합니다.
 
 - 2026-10-01: 새 세션에서 task-001 독립 verify 호출이 성공했고 main이 approved로 확정했습니다. 현재 소스 해시와 테스트 6개·임시 예외 없는 build-only Sandbox 실행 원자료를 대조했습니다. task-001만 `[x]`로 전환하며 SPEC·DESIGN 승인과 나머지 Task를 유지합니다. 완료 조건의 마지막 매핑 Task는 없어 IMPLEMENT는 `[ ]`입니다. 선행 문서와 task-001을 첫 커밋에 포함한 뒤 task-002를 진행합니다.
+
+- 2026-10-01: task-002 독립 verify approved를 확정했습니다. 필수 물리 Disk 바이트·Operations·시스템 용량·APFS 관계의 실제 Sandbox 근거, 결정적 Disk 7개·Network 6개 테스트와 현재 소스 해시를 확인했습니다. Network 격리 선언 보완의 영향은 verifier의 같은 빌드 probe 재실행으로 회귀 없음을 확인해 task-001 승인을 유지합니다. task-002만 `[x]`, 나머지 Task와 IMPLEMENT는 `[ ]`로 유지하며 커밋 후 task-003으로 진행합니다. 요구사항·설계·완료 기준 변경과 승인 취소는 없습니다.

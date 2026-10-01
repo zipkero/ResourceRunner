@@ -1,0 +1,19 @@
+ M CONTEXT.md
+ M ResourceRunner/AppDelegate.swift
+ M ResourceRunner/ApplicationCoordinator.swift
+ M ResourceRunner/ApplicationRanking.swift
+ M ResourceRunner/AuxiliaryCollectionScheduler.swift
+ M ResourceRunner/MonitoringScheduler.swift
+ M ResourceRunner/NetworkActivity.swift
+ M ResourceRunner/NetworkMetadata.swift
+ M ResourceRunner/ProcessHistoryStore.swift
+ M ResourceRunner/StorageMetadata.swift
+ M ResourceRunner/SystemLifecycleObserver.swift
+ M ResourceRunnerTests/NetworkMetadataTests.swift
+ M features/20260817-001-extended-resource-monitoring/README.md
+ M features/20260817-001-extended-resource-monitoring/implement.md
+?? ResourceRunner/CollectionDeliveryStore.swift
+?? ResourceRunner/CollectionPipelines.swift
+?? ResourceRunner/ResourceTopologyObserver.swift
+?? ResourceRunnerTests/CollectionPipelinesTests.swift
+?? features/20260817-001-extended-resource-monitoring/evidence/task-007/

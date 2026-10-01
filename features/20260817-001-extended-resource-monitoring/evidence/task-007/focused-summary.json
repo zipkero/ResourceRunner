@@ -1,0 +1,46 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "25G83",
+        "osVersion" : "26.6.2",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 0,
+      "passedTests" : 23,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "ResourceRunner · Built with macOS 26.6.2",
+  "expectedFailures" : 0,
+  "failedTests" : 0,
+  "finishTime" : 1790862244.184,
+  "passedTests" : 23,
+  "result" : "Passed",
+  "skippedTests" : 0,
+  "startTime" : 1790862241.762,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+
+  ],
+  "title" : "Test - ResourceRunner",
+  "topInsights" : [
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "94% of duration",
+      "text" : "1 longest test run with outlier durations exceeding 0.47s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 23
+}

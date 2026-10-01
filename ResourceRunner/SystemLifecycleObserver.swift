@@ -381,6 +381,13 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
 
         return SystemLifecycleSubscription(initial: initial, updates: updates)
     }
+
+#if DEBUG
+    /// 실기기 probe에서 OS 전력 설정을 바꾸지 않고 동일한 snapshot 생산·소비 경로를 관찰합니다.
+    func injectProbeLowPowerMode(_ enabled: Bool) {
+        producer?.apply(.lowPowerMode(enabled))
+    }
+#endif
 }
 
 extension SystemLifecycleObserver {

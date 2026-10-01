@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 22:02 +0900
+저장: 2026-10-01 22:48 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-006 검증 기준 HEAD `854c97d`. task-001~006 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~006 `[x]`, task-007~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-007이다.
+branch `main`, task-007 검증 기준 HEAD `c61f76e`. task-001~007 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~007 `[x]`, task-008~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-008이다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-006/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-007/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -25,7 +25,7 @@ async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완�
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
 Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network·Disk activity/metadata source·store는 구현됐고 새 네 축 production 배선·카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+Network·Disk activity/metadata source·store와 여섯 축 production 배선은 구현됐고 새 표시 모델·카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
 
 task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
 즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
@@ -45,10 +45,16 @@ DiskNativeAdapter·AppDelegate·DiskActivity·DiskTopology·StorageMetadata·직
 소스7개 해시 일치와 원자료는 `evidence/task-006/`에 보존했다.
 필수 Bytes 누락의 partial/부분속도, Ops 감소의 IOPS만 기준점 처리,
 전체 관계 미확인과 미마운트 구분, 같은 ID의 마운트 관계 변화 revision을 보완했다.
-task-006 `[x]`이며 상태·CONTEXT를 커밋한 뒤 task-007로 진행한다.
+task-006 `[x]`이며 `c61f76e`로 커밋했다.
+
+task-007은 실제 앱 저전력 일정 로그 부족의 evidence reject를 보완한 뒤 독립 재verify approved로 확정했다.
+여섯 축 factory·독립 소비·순위 경계·topology 알림·보조 cache replay를 배선했고,
+집중23/23·전체unit579/579·Release/서명Debug·실제Sandbox PID31677과 소스15개 해시를 확인했다.
+실제 OS lowPower=false에서 DEBUG observer snapshot을 true/false로 전달해
+여섯 축 닫힘5/10/120초·열림2/4/60초·일반 복원을 관찰했다. OS 전력 설정은 변경하지 않았다.
+task-008 표시 조립을 이어 진행하며 실제 OS 전환·장치 전환·최종 UI 관문은 미완료다.
 
 ## 현재 작업 문서
-
 - [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md) — 승인된 요구사항과 완료 조건 18개
 - [features/20260817-001-extended-resource-monitoring/design.md](./features/20260817-001-extended-resource-monitoring/design.md) — 구조·데이터 흐름·인터페이스·영향 범위와 채택한 DP1~DP7
 - [features/20260817-001-extended-resource-monitoring/implement.md](./features/20260817-001-extended-resource-monitoring/implement.md) — Task 18개와 검증 조건, 완료 조건 매핑
@@ -76,8 +82,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-007 production 여섯 축 배선과 실패 격리를 worker로 구현하고 독립 verify한다.
-- 완료 기준: production과 같은 구성에서 지표별 실패·보조 suspension·취소 무시·중지/복귀·초기 lifecycle 이후 시작·single-flight·메뉴바 진행을 확인하고 실제 앱 최초 요청·팝오버/전력 일정 배선을 관찰한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-008로 진행한다.
+- 작업: M3 task-008 활동·보조 상태 조립과 지표별 단위를 worker로 구현하고 독립 verify한다.
+- 완료 기준: 활동/보조 상태 조합·부분 실패·정상0·baseline·lastKnown 시각·단위/로케일·조건부 의미·접근성·늦은 반영을 직접 테스트하고 CPU·Memory 회귀를 유지한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-009로 진행한다.
 
 ## 먼저 읽을 파일
 

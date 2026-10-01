@@ -20,6 +20,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         coordinator = ApplicationCoordinator()
 #if DEBUG
+        if ProcessInfo.processInfo.environment["RR_COLLECTION_PROBE"] == "1" {
+            Task { @MainActor [weak self] in
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
+                logger.notice("probe initial actualOSLowPower=\(ProcessInfo.processInfo.isLowPowerModeEnabled) popover=false")
+                try? await Task.sleep(for: .seconds(3))
+                guard let coordinator = self?.coordinator else { return }
+                coordinator.systemLifecycleObserver.injectProbeLowPowerMode(true)
+                logger.notice("probe injected lifecycleLowPower=true actualOSLowPower=\(ProcessInfo.processInfo.isLowPowerModeEnabled)")
+                try? await Task.sleep(for: .seconds(1))
+                if !coordinator.statusBarController.popover.isShown {
+                    coordinator.statusBarController.togglePopover()
+                }
+                logger.notice("probe requested actual popover open isShown=\(coordinator.statusBarController.popover.isShown)")
+                try? await Task.sleep(for: .seconds(3))
+                if coordinator.statusBarController.popover.isShown {
+                    coordinator.statusBarController.togglePopover()
+                }
+                logger.notice("probe requested actual popover closed isShown=\(coordinator.statusBarController.popover.isShown)")
+                try? await Task.sleep(for: .seconds(1))
+                coordinator.systemLifecycleObserver.injectProbeLowPowerMode(false)
+                logger.notice("probe restored lifecycleLowPower=false actualOSLowPower=\(ProcessInfo.processInfo.isLowPowerModeEnabled)")
+            }
+        }
         if ProcessInfo.processInfo.environment["RR_NETWORK_PROBE"] == "1" {
             Task.detached {
                 let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "NetworkNativeProbe")

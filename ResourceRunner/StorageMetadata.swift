@@ -191,6 +191,11 @@ actor StorageMetadataStore: MonitoringSampleSink {
         } ?? false
     }
 
+    func replayCached(_ sample: TimestampedSample<StorageMetadataResult>,
+                      context: CollectionRunContext) async -> Bool {
+        await append(sample, context: context)
+    }
+
     func status() -> StorageMetadataStatus { StorageMetadataStatus(latest: latest, lastKnown: lastKnown) }
 
     func relationship(for snapshot: DiskCounterSnapshot) -> StorageRelationshipView {

@@ -21,15 +21,17 @@ nonisolated struct NetworkMetadataSnapshot: Sendable {
 
 nonisolated enum NetworkMetadataResult: Sendable {
     case available(NetworkMetadataSnapshot)
-    case failure(String)
+    case failure(String, revision: UInt64?)
 }
 
 nonisolated protocol NetworkMetadataReading: Sendable {
+    var currentTopologyRevision: UInt64? { get }
     func read() throws -> NetworkMetadataSnapshot
     func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkMetadataSnapshot
 }
 
 nonisolated extension NetworkMetadataReading {
+    var currentTopologyRevision: UInt64? { nil }
     func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkMetadataSnapshot {
         try read()
     }
@@ -39,6 +41,7 @@ nonisolated extension NetworkMetadataReading {
 nonisolated struct SystemNetworkMetadataReader: NetworkMetadataReading {
     private let nativeRead: @Sendable () throws -> NetworkNativeSnapshot
     let topology: NetworkTopologyTracker
+    var currentTopologyRevision: UInt64? { topology.currentRevision }
 
     init(topology: NetworkTopologyTracker,
          nativeRead: @escaping @Sendable () throws -> NetworkNativeSnapshot = { try NetworkNativeAdapter().read() }) {
@@ -117,15 +120,19 @@ actor NetworkMetadataSource<Reader: NetworkMetadataReading>: ScheduledSampleSour
 
     func sample(collectionEpoch: Int) -> NetworkMetadataResult? {
         do { return .available(try reader.read(context: nil, admission: admission)) }
-        catch { return .failure(String(describing: error)) }
+        catch { return .failure(String(describing: error), revision: reader.currentTopologyRevision) }
     }
 
     func sample(context: CollectionRunContext) async -> NetworkMetadataResult? {
         guard admission?.isCurrent(context) != false else { return nil }
+        let startRevision = reader.currentTopologyRevision
         let result: NetworkMetadataResult
         do { result = .available(try reader.read(context: context, admission: admission)) }
         catch NetworkNativeError.stale(_) { return nil }
-        catch { result = .failure(String(describing: error)) }
+        catch {
+            guard reader.currentTopologyRevision == startRevision else { return nil }
+            result = .failure(String(describing: error), revision: startRevision)
+        }
         guard admission?.isCurrent(context) != false else { return nil }
         return result
     }
@@ -144,6 +151,7 @@ nonisolated struct NetworkClassificationView: Sendable {
 /// 실패에서는 마지막 성공을 보존하되 현재 identity·revision과 다르면 분류 캐시로 돌려주지 않습니다.
 actor NetworkMetadataStore: MonitoringSampleSink {
     private let admission: CollectionAdmission?
+    private let topology: NetworkTopologyTracker?
     private let beforeClassification: (@Sendable () async -> Void)?
     private var latest: TimestampedSample<NetworkMetadataResult>?
     private var lastKnown: NetworkMetadataSnapshot?
@@ -151,8 +159,10 @@ actor NetworkMetadataStore: MonitoringSampleSink {
     private let continuation: AsyncStream<NetworkMetadataStatus>.Continuation
 
     init(admission: CollectionAdmission? = nil,
+         topology: NetworkTopologyTracker? = nil,
          beforeClassification: (@Sendable () async -> Void)? = nil) {
         self.admission = admission
+        self.topology = topology
         self.beforeClassification = beforeClassification
         var continuation: AsyncStream<NetworkMetadataStatus>.Continuation!
         self.updates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
@@ -168,10 +178,26 @@ actor NetworkMetadataStore: MonitoringSampleSink {
     func append(_ sample: TimestampedSample<NetworkMetadataResult>,
                 context: CollectionRunContext) async -> Bool {
         guard let admission else { append(sample); return true }
-        return admission.admit(context, phase: .store, timestamp: sample.timestamp) {
+        return admission.admitOptional(context, phase: .store, timestamp: sample.timestamp) {
+            if let topology {
+                let revision: UInt64?
+                switch sample.value {
+                case .available(let snapshot): revision = snapshot.topologyRevision
+                case .failure(_, let failureRevision): revision = failureRevision
+                }
+                if let revision { return topology.withCurrentRevision(revision) {
+                    append(sample)
+                    return true
+                } }
+            }
             append(sample)
             return true
         } ?? false
+    }
+
+    func replayCached(_ sample: TimestampedSample<NetworkMetadataResult>,
+                      context: CollectionRunContext) async -> Bool {
+        await append(sample, context: context)
     }
 
     func status() -> NetworkMetadataStatus {

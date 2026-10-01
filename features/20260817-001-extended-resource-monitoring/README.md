@@ -19,6 +19,10 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 
 ## 이력
 
+- 2026-10-01: task-007의 실제 앱 저전력 일정 근거를 보완하고 독립 재verify approved를 main이 확정했습니다. 서명 앱 observer에 DEBUG snapshot을 주입해 여섯 축 닫힘5/10/120초·열림2/4/60초·일반 복원을 관찰했으며 실제 OS 전력 설정은 변경하지 않았습니다. 최종 집중23/23·전체unit579/579·Release/서명Debug와 소스15개 해시를 대조했습니다. task-007만 `[x]`로 전환하고 기존 승인을 유지합니다. 요구사항·설계·완료 기준 변경이나 승인 취소는 없으며 IMPLEMENT와 task-008 이후는 `[ ]`입니다. 커밋 후 task-008을 진행합니다.
+
+- 2026-10-01: task-007 completed 후보의 독립 verify에서 실제 앱 저전력 일정 관찰 근거가 부족해 `evidence` rejected를 확정했습니다. 같은 production factory의 저전력 테스트와 일반 전력 실제 앱 로그는 확보했으며, 실제 앱 DEBUG lifecycle 입력에 저전력 snapshot을 주입해 로그를 보완합니다. 승인 계약·선행 승인 변경은 없고 task-007 및 IMPLEMENT는 `[ ]`입니다.
+
 - 2026-10-01: task-006 독립 verify approved를 main이 확정했습니다. Disk 활동·저장소 metadata source/store와 수명·이력을 구현하고 필수 Bytes partial, 조건부 Operations 감소, 관계 미확인과 같은 ID의 마운트 캐시 수명을 보완했습니다. 집중27/27·전체unit572/572·Release/서명Debug·실제Sandbox 두 tick 관찰이 통과했습니다. task-006만 `[x]`로 전환하며 SPEC·DESIGN·기존 Task 승인을 유지합니다. 의미 변경·승인 취소는 없고 IMPLEMENT와 task-007 이후는 `[ ]`입니다. 커밋 후 task-007을 진행합니다.
 
 - 2026-08-17: SPEC 작성. 물리 인터페이스 합계·VPN 터널 상세 전용, 프로세스별 Disk I/O 제외를 확정했습니다.

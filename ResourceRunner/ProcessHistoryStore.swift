@@ -57,6 +57,14 @@ nonisolated struct ProcessHistorySnapshot: Sendable, Equatable {
     var isTranslated: Bool = false
 }
 
+nonisolated struct ProcessRankingInput: Sendable {
+    let timestamp: ContinuousClock.Instant
+    let context: CollectionRunContext?
+    let snapshots: [ProcessHistorySnapshot]
+    let unreadableCount: Int
+    let surveyFailed: Bool
+}
+
 /// 프로세스 조사 tick 사이 간격 판정 기준과 메모리 기준점 링 정책.
 nonisolated enum ProcessHistorySampling {
     /// 직전 조사와의 간격이 이 값을 넘으면 CPU 누적 시간을 차분하지 않고 기준점만 갱신합니다.
@@ -93,10 +101,15 @@ nonisolated enum ProcessHistorySampling {
 actor ProcessHistoryStore: MonitoringSampleSink {
     private let admission: CollectionAdmission?
     private let beforeRankingInput: (@Sendable () async -> Void)?
+    nonisolated let rankingUpdates: AsyncStream<ProcessRankingInput>
+    private let rankingContinuation: AsyncStream<ProcessRankingInput>.Continuation
     init(admission: CollectionAdmission? = nil,
          beforeRankingInput: (@Sendable () async -> Void)? = nil) {
         self.admission = admission
         self.beforeRankingInput = beforeRankingInput
+        var continuation: AsyncStream<ProcessRankingInput>.Continuation!
+        self.rankingUpdates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
+        self.rankingContinuation = continuation
     }
     private var entries: [ProcessIdentity: ProcessHistoryEntry] = [:]
     /// 마지막 조사에서 읽지 못한 프로세스 수.
@@ -119,6 +132,7 @@ actor ProcessHistoryStore: MonitoringSampleSink {
 
         guard case .success(let report) = sample.value.result else {
             latestSurveyFailed = true
+            publishRankingInput(for: sample)
             return
         }
 
@@ -160,6 +174,13 @@ actor ProcessHistoryStore: MonitoringSampleSink {
 
         // 이번 조사에서 관찰되지 않은 정체성은 이미 사라진 프로세스이므로 이력에서 바로 지웁니다.
         entries = entries.filter { observed.contains($0.key) }
+        publishRankingInput(for: sample)
+    }
+
+    private func publishRankingInput(for sample: TimestampedSample<ProcessSurveySample>) {
+        rankingContinuation.yield(ProcessRankingInput(timestamp: sample.timestamp,
+            context: sample.context, snapshots: snapshot(), unreadableCount: latestUnreadableCount,
+            surveyFailed: latestSurveyFailed))
     }
 
     func append(_ sample: TimestampedSample<ProcessSurveySample>, context: CollectionRunContext) async -> Bool {

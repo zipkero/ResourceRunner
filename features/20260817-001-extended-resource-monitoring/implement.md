@@ -208,7 +208,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `854c97d`의 변경 소스 7개 SHA-256과 최종 patch가 `evidence/task-006/`의 실행 근거와 일치합니다. 물리 드라이버의 실제 시각 Bytes/Operations 차분, 필수 Bytes partial/부분속도, 조건부 IOPS 기준점, 장치·마운트 수명과 관계 캐시, 모든 연속성 경계, 601링/600초/짧은 실패 segment, 늦은 reader/source/store 폐기와 느린 storage 중 빠른 Disk 진행을 집중27/27로 확인했습니다. 전체unit572/572·Release·서명Debug빌드가 통과했고 Sandbox PID43148에서 disk0 ID4294969732·볼륨8개·시스템용량/관계·첫baseline 이후 Read/Write189012.39/13691584.82 B/s와 IOPS11.54/28.84회/s를 확인했습니다. 기존 승인과 SPEC·DESIGN 의미를 유지하며 완료된 SPEC 조건은 없습니다. production 배선과 실제 외장 전환은 task-007·014의 후속 관문입니다.
 
-- [ ] task-007: production 여섯 축 배선과 실패 격리
+- [x] task-007: production 여섯 축 배선과 실패 격리
   - 목적: 앱 한 세션에서 네 카드의 수집 흐름과 두 보조 흐름이 독립적으로 작동하고
     한 source·소비 경로의 실패나 지연이 다른 리소스와 메뉴바를 막지 않게 합니다.
   - 접근: `ApplicationCoordinator`가 여섯 축의 source·scheduler·store와
@@ -230,6 +230,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       실제 앱에서 여섯 축의 최초 요청·팝오버 개폐·전력별 일정 배선을 관찰합니다.
   - 참조: SPEC §5.10, SPEC §5.11, SPEC §5.13,
     DESIGN §1.1, DESIGN §2.1, DESIGN §2.4, DESIGN §3.1, DESIGN §4.1, DESIGN §4.2
+
+  - 승인 근거: 2026-10-01 독립 verify 재검증 approved를 main이 확정했습니다. 기준 HEAD `c61f76e`의 production 여섯 축 factory·독립 소비·순위 경계·topology 알림·보조 cache replay와 직접 테스트 15개 소스 해시 및 최종 patch가 `evidence/task-007/`과 일치합니다. 초기 lifecycle 전 무호출, 지표별 실패 원인 보존, 느린 보조/순위 중 카드·메뉴바 진행, 취소 무시 결과·늦은 실패·역순 cache replay·epoch/topology 폐기를 확인했습니다. 집중23/23·전체unit579/579·Release/서명Debug빌드가 통과했습니다. 실제 Sandbox PID31677에서 최초 여섯 축 전달·팝오버 개폐·알림 등록, DEBUG observer의 저전력 snapshot revision1에 따른 닫힘5/10/120초·열림2/4/60초·닫힘 전환과 revision2 일반 복원을 관찰했습니다. 실제 OS lowPower는 false였고 OS 설정 변경·실제 OS 전환으로 주장하지 않습니다. 최초 evidence reject의 앱 저전력 로그 부족은 보완됐으며 기존 SPEC·DESIGN·task-001~006 승인을 유지합니다. 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
 - [ ] task-008: 활동·보조 상태 조립과 지표별 단위
   - 목적: Network·Disk의 현재 속도·누적량·저장 공간을 구분하고

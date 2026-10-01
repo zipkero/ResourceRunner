@@ -185,4 +185,28 @@ struct NetworkMetadataTests {
             collectionEpoch: old.epoch, context: old), context: old) == false)
         #expect((await store.status()).lastKnown?.records.count == 1)
     }
+
+    @Test func topologyChangeDuringFailedMetadataReadOrBeforeStoreCommitRejectsOldFailure() async throws {
+        let topology = NetworkTopologyTracker()
+        let admission = CollectionAdmission()
+        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
+        _ = admission.advance(.networkMetadata)
+        let old = try #require(admission.issue(.networkMetadata))
+        let reader = SystemNetworkMetadataReader(topology: topology, nativeRead: {
+            topology.noteChange()
+            throw NetworkNativeError.malformed("injected metadata failure")
+        })
+        let source = NetworkMetadataSource(reader: reader, admission: admission)
+        #expect(try await throughScheduledProtocol(source, context: old) == nil)
+
+        let store = NetworkMetadataStore(admission: admission, topology: topology)
+        let timestamp = ContinuousClock().now
+        let current = try #require(admission.issue(.networkMetadata))
+        let revision = topology.currentRevision
+        let stale = NetworkMetadataResult.failure("old metadata failure", revision: revision)
+        topology.noteChange()
+        #expect(await store.append(TimestampedSample(timestamp: timestamp, value: stale,
+            collectionEpoch: current.epoch, context: current), context: current) == false)
+        #expect((await store.status()).latest == nil)
+    }
 }

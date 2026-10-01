@@ -261,14 +261,16 @@ nonisolated struct NetworkActivityDisplayValue: Sendable {
 /// 유효한 대표 두 속도만 601개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
 actor NetworkActivityStore: MonitoringSampleSink {
     private let admission: CollectionAdmission?
+    private let topology: NetworkTopologyTracker?
     private var latest: TimestampedSample<NetworkActivitySample>?
     private var lastSuccess: TimestampedSample<NetworkActivitySample>?
     private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
     nonisolated let updates: AsyncStream<NetworkActivityDisplayValue>
     private let continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation
 
-    init(admission: CollectionAdmission? = nil) {
+    init(admission: CollectionAdmission? = nil, topology: NetworkTopologyTracker? = nil) {
         self.admission = admission
+        self.topology = topology
         var continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation!
         self.updates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
         self.continuation = continuation
@@ -287,7 +289,13 @@ actor NetworkActivityStore: MonitoringSampleSink {
     func append(_ sample: TimestampedSample<NetworkActivitySample>,
                 context: CollectionRunContext) async -> Bool {
         guard let admission else { append(sample); return true }
-        return admission.admit(context, phase: .store, timestamp: sample.value.readAt) {
+        return admission.admitOptional(context, phase: .store, timestamp: sample.value.readAt) {
+            if let topology {
+                return topology.withCurrentRevision(sample.value.topologyRevision) {
+                    append(sample)
+                    return true
+                }
+            }
             append(sample)
             return true
         } ?? false

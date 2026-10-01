@@ -1,4 +1,11 @@
 import Foundation
+import OSLog
+
+#if DEBUG
+nonisolated enum AuxiliarySchedulerDebugLog {
+    static let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "AuxiliaryScheduler")
+}
+#endif
 
 /// 보조 정보는 일정 외에 topology·마운트 변경의 명시적 갱신 요청을 받습니다.
 nonisolated protocol AuxiliaryCollectionTarget: CollectionScheduleTarget {
@@ -54,6 +61,12 @@ where Sink.Value == Source.Value {
         collectionEpoch = admission.currentBoundary.epoch
         admittedGeneration = admission.advance(axis)
         admittedPlanRevision = admission.planRevision(for: axis)
+#if DEBUG
+        let debugAxis = String(describing: axis)
+        let debugSchedule = String(describing: next)
+        let debugEpoch = collectionEpoch
+        AuxiliarySchedulerDebugLog.logger.notice("apply axis=\(debugAxis, privacy: .public) schedule=\(debugSchedule, privacy: .public) epoch=\(debugEpoch)")
+#endif
         timer?.cancel()
         timer = nil
         // 취소를 무시하는 source도 있으므로 inFlight는 실제 완료까지 유지합니다.
@@ -69,6 +82,17 @@ where Sink.Value == Source.Value {
         let now = await clock.now()
         guard localGeneration == generation,
               admission.planRevision(for: axis) == admittedPlanRevision else { return }
+
+        // 일정만 바뀐 경우 새 조회 없이 캐시를 새 실행권으로 다시 전달합니다.
+        // 이전 stream 항목이 표시 대기 중 무효화돼도 첫 화면이 빈 상태로 남지 않습니다.
+        if let cachedSample, cachedSample.collectionEpoch == collectionEpoch,
+           let replayContext = admission.issue(axis, expectedEpoch: collectionEpoch,
+                expectedGeneration: admittedGeneration,
+                expectedPlanRevision: admittedPlanRevision) {
+            let replay = TimestampedSample(timestamp: cachedSample.timestamp,
+                value: cachedSample.value, collectionEpoch: collectionEpoch, context: replayContext)
+            Task { [sink] in _ = await sink.replayCached(replay, context: replayContext) }
+        }
 
         // 기존 캐시를 즉시 유지하고, 새 주기 기준으로 오래된 경우만 별도 조회합니다.
         if pendingRefresh || (startedQueryCount == queryCountBeforeClock &&
@@ -115,6 +139,11 @@ where Sink.Value == Source.Value {
         inFlight = true
         lastQueryStartedAt = timestamp
         startedQueryCount += 1
+#if DEBUG
+        let debugAxis = String(describing: axis)
+        let debugCount = startedQueryCount
+        AuxiliarySchedulerDebugLog.logger.notice("start axis=\(debugAxis, privacy: .public) query=\(debugCount)")
+#endif
         query = Task { [weak self, source, clock] in
             let value: Source.Value?
             do { value = try await source.sample(context: context) }
@@ -136,5 +165,10 @@ where Sink.Value == Source.Value {
                                        collectionEpoch: context.epoch, context: context)
         guard await sink.append(sample, context: context), admission.isCurrent(context) else { return }
         cachedSample = sample
+#if DEBUG
+        let debugAxis = String(describing: axis)
+        let debugCount = startedQueryCount
+        AuxiliarySchedulerDebugLog.logger.notice("stored axis=\(debugAxis, privacy: .public) query=\(debugCount)")
+#endif
     }
 }

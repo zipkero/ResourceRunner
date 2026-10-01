@@ -51,12 +51,16 @@ nonisolated protocol MonitoringSampleSink: Sendable {
     associatedtype Value: Sendable
     func append(_ sample: TimestampedSample<Value>) async
     func append(_ sample: TimestampedSample<Value>, context: CollectionRunContext) async -> Bool
+    func replayCached(_ sample: TimestampedSample<Value>, context: CollectionRunContext) async -> Bool
 }
 
 nonisolated extension MonitoringSampleSink {
     func append(_ sample: TimestampedSample<Value>, context: CollectionRunContext) async -> Bool {
         await append(sample)
         return true
+    }
+    func replayCached(_ sample: TimestampedSample<Value>, context: CollectionRunContext) async -> Bool {
+        false
     }
 }
 

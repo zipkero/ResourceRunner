@@ -1,0 +1,84 @@
+2026-10-01 22:43:23.955 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:TopologyObserver] registered network=true workspaceTokens=3
+2026-10-01 22:43:23.955 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:SystemLifecycle] initial snapshot: SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] probe initial actualOSLowPower=false popover=false
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558ef] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558cc] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:AuxiliaryScheduler] start axis=networkMetadata query=1
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-01 22:43:23.959 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:AuxiliaryScheduler] start axis=storageMetadata query=1
+2026-10-01 22:43:23.965 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:AuxiliaryScheduler] stored axis=storageMetadata query=1
+2026-10-01 22:43:23.965 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-01 22:43:23.969 Df ResourceRunner[31677:2b558cc] [com.zipkero.ResourceRunner:AuxiliaryScheduler] stored axis=networkMetadata query=1
+2026-10-01 22:43:23.969 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=28 records=28
+2026-10-01 22:43:26.012 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=baselineOnly(ResourceRunner.DiskBaselineReason.first)
+2026-10-01 22:43:26.013 Df ResourceRunner[31677:2b558db] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=1 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:26.013 Df ResourceRunner[31677:2b558cb] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=1 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:26.013 Df ResourceRunner[31677:2b558cb] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=1 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:26.013 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=baselineOnly(ResourceRunner.NetworkBaselineReason.first)
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] probe injected lifecycleLowPower=true actualOSLowPower=false
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:SystemLifecycle] snapshot changed: SystemLifecycleSnapshot(revision: 1, lowPowerMode: true, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(120.0 seconds) epoch=0
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558ef] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558cc] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(10.0 seconds) generation=2 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558ef] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558cb] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=28 records=28
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(120.0 seconds) epoch=0
+2026-10-01 22:43:27.098 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-01 22:43:28.195 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] probe requested actual popover open isShown=true
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=3 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(4.0 seconds) generation=3 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=3 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=3 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=28 records=28
+2026-10-01 22:43:28.707 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-01 22:43:30.842 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CPUActivityState] usage=16.674110 collectionEpoch=0 displayedState=low
+2026-10-01 22:43:30.842 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:30.842 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:30.843 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:30.853 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-01 22:43:30.853 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-01 22:43:31.374 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] probe requested actual popover closed isShown=true
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558db] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(10.0 seconds) generation=4 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(120.0 seconds) epoch=0
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558db] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(5.0 seconds) generation=4 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(120.0 seconds) epoch=0
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558cc] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(5.0 seconds) generation=4 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(5.0 seconds) generation=4 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=28 records=28
+2026-10-01 22:43:31.903 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-01 22:43:32.385 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] probe restored lifecycleLowPower=false actualOSLowPower=false
+2026-10-01 22:43:32.385 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:SystemLifecycle] snapshot changed: SystemLifecycleSnapshot(revision: 2, lowPowerMode: false, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=5 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558ef] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=5 collectionEpoch=0 appendedTotal=0
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=5 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=5 collectionEpoch=0 appendedTotal=2
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558ef] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=28 records=28
+2026-10-01 22:43:32.386 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-01 22:43:34.460 Df ResourceRunner[31677:2b558cc] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=5 collectionEpoch=0 appendedTotal=3
+2026-10-01 22:43:34.461 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CPUActivityState] usage=15.431976 collectionEpoch=0 displayedState=low
+2026-10-01 22:43:34.461 Df ResourceRunner[31677:2b558cc] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=5 collectionEpoch=0 appendedTotal=3
+2026-10-01 22:43:34.462 Df ResourceRunner[31677:2b558d7] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=5 collectionEpoch=0 appendedTotal=3
+2026-10-01 22:43:34.469 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-01 22:43:34.470 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-01 22:43:36.497 Df ResourceRunner[31677:2b558f0] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=5 collectionEpoch=0 appendedTotal=4
+2026-10-01 22:43:36.497 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CPUActivityState] usage=15.808045 collectionEpoch=0 displayedState=low
+2026-10-01 22:43:36.498 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=5 collectionEpoch=0 appendedTotal=4
+2026-10-01 22:43:36.499 Df ResourceRunner[31677:2b558db] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=5 collectionEpoch=0 appendedTotal=4
+2026-10-01 22:43:36.504 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-01 22:43:36.504 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-01 22:43:37.622 Df ResourceRunner[31677:2b558ef] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=ProcessSurveySampleSource generation=5 collectionEpoch=0 appendedTotal=1
+2026-10-01 22:43:37.646 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=processSurvey epoch=0 failed=false
+2026-10-01 22:43:38.400 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=5 collectionEpoch=0 appendedTotal=5
+2026-10-01 22:43:38.406 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CPUActivityState] usage=15.181269 collectionEpoch=0 displayedState=low
+2026-10-01 22:43:38.406 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=5 collectionEpoch=0 appendedTotal=5
+2026-10-01 22:43:38.406 Df ResourceRunner[31677:2b558f1] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=5 collectionEpoch=0 appendedTotal=5
+2026-10-01 22:43:38.439 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-01 22:43:38.439 Df ResourceRunner[31677:2b558be] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")

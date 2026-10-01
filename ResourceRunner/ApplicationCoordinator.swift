@@ -8,33 +8,9 @@
 import AppKit
 import OSLog
 
-/// production 시스템 지표 수집 축의 구체 타입.
-/// source·scheduler·생명주기 store가 모두 제네릭이라 저장 속성 표기가 길어지므로 여기서 한 번만 묶습니다.
-typealias ProductionSystemMetricsSource = SystemMetricsSampleSource<
-    CPUSystemMetricsCollector<HostCPUTickReader>,
-    MemorySystemMetricsCollector,
-    SystemMonotonicClock
->
-
-typealias ProductionSystemMetricsScheduler = MonitoringScheduler<
-    SystemMonotonicClock,
-    ProductionSystemMetricsSource,
-    MonitoringSampleStore
->
-
-/// production 프로세스 조사 축의 구체 타입.
-typealias ProductionProcessSurveySource = ProcessSurveySampleSource<ProcessSurveyCollector<HostProcessSurveyReader>>
-
-typealias ProductionProcessSurveyScheduler = MonitoringScheduler<
-    SystemMonotonicClock,
-    ProductionProcessSurveySource,
-    ProcessHistoryStore
->
-
 /// 앱 수명 동안 필요한 객체를 한 번만 구성하고 소유하는 경계.
 /// 표시 흐름(`StatusBarController`, `CharacterStateSource`)과 생명주기·수집 흐름
-/// (`SystemLifecycleObserver`, `MonitoringLifecycleStore`, 두 축의 `MonitoringScheduler`,
-/// `MonitoringSampleStore`, `ProcessHistoryStore`)을
+/// (`SystemLifecycleObserver`, 여섯 축 `CollectionPipelines`)을
 /// 각각 한 번만 만들어 앱 종료까지 강하게 보유합니다. 두 흐름은 이 타입에서만 만나며,
 /// 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다.
 @MainActor
@@ -42,17 +18,25 @@ final class ApplicationCoordinator {
     let statusBarController: StatusBarController
     let characterStateSource: CharacterStateSource
     let systemLifecycleObserver: SystemLifecycleObserver
-    let monitoringSampleStore: MonitoringSampleStore
-    let processHistoryStore: ProcessHistoryStore
-    let systemMetricsScheduler: ProductionSystemMetricsScheduler
-    let processSurveyScheduler: ProductionProcessSurveyScheduler
-    let monitoringLifecycleStore: MonitoringLifecycleStore
+    let collectionPipelines: CollectionPipelines
+    let topologyObserver: ResourceTopologyObserver
     let dashboardPresentationStore: DashboardPresentationStore
-    let collectionAdmission: CollectionAdmission
+    let collectionDeliveryStore: CollectionDeliveryStore
+    let processRankingCache: ProcessRankingDeliveryCache
+
+    var monitoringSampleStore: MonitoringSampleStore { collectionPipelines.systemStore }
+    var processHistoryStore: ProcessHistoryStore { collectionPipelines.processStore }
+    var monitoringLifecycleStore: MonitoringLifecycleStore { collectionPipelines.lifecycle }
+    var collectionAdmission: CollectionAdmission { collectionPipelines.admission }
 
     private var characterStateTask: Task<Void, Never>?
     private var monitoringTask: Task<Void, Never>?
     private var cpuActivityTask: Task<Void, Never>?
+    private var processRankingTask: Task<Void, Never>?
+    private var networkActivityTask: Task<Void, Never>?
+    private var diskActivityTask: Task<Void, Never>?
+    private var networkMetadataTask: Task<Void, Never>?
+    private var storageMetadataTask: Task<Void, Never>?
     private var collectionBoundaryTask: Task<Void, Never>?
 
 #if DEBUG
@@ -61,6 +45,7 @@ final class ApplicationCoordinator {
     private static let debugLifecycleLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "SystemLifecycle")
     // task-007 실기기 확인: 사용률과 판정 전이를 Console.app에서 관찰하기 위한 로그 경계입니다.
     private static let debugCPUActivityLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CPUActivityState")
+    private static let debugPipelineLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
 #endif
 
     init() {
@@ -75,46 +60,34 @@ final class ApplicationCoordinator {
         )
         characterStateSource = CharacterStateSource()
 
-        // 생명주기·수집 흐름: SystemLifecycleObserver → MonitoringLifecycleStore → 두 MonitoringScheduler →
-        // 각 축의 저장 대상. 저장 대상은 구체 타입이 아니라 `MonitoringSampleSink` 계약으로,
-        // 수집 축은 `CollectionScheduleTarget` 계약으로 연결되므로 두 축이 서로의 타입에 묶이지 않습니다.
+        // 여섯 축 모두 같은 구성 함수를 지나며, 빠른 counter와 느린 metadata는 각각 별도 actor·scheduler입니다.
         let clock = SystemMonotonicClock()
         let admission = CollectionAdmission()
-        collectionAdmission = admission
-        let sampleStore = MonitoringSampleStore(admission: admission)
-        let systemScheduler = MonitoringScheduler(
-            clock: clock,
-            source: SystemMetricsSampleSource(
+        let networkTopology = NetworkTopologyTracker()
+        let diskTopology = DiskTopologyTracker()
+        let pipelines = CollectionPipelines.make(clock: clock, admission: admission,
+            networkTopology: networkTopology, diskTopology: diskTopology,
+            systemSource: SystemMetricsSampleSource(
                 cpuCollector: CPUSystemMetricsCollector(reader: HostCPUTickReader()),
                 memoryCollector: MemorySystemMetricsCollector(),
-                clock: clock,
-                admission: admission
-            ),
-            sink: sampleStore,
-            admission: admission,
-            axis: .systemMetrics
-        )
-        let processStore = ProcessHistoryStore(admission: admission)
-        let processScheduler = MonitoringScheduler(
-            clock: clock,
-            source: ProcessSurveySampleSource(
+                clock: clock, admission: admission),
+            processSource: ProcessSurveySampleSource(
                 collector: ProcessSurveyCollector(reader: HostProcessSurveyReader()),
-                admission: admission
-            ),
-            sink: processStore,
-            admission: admission,
-            axis: .processSurvey
-        )
-        monitoringSampleStore = sampleStore
-        processHistoryStore = processStore
-        systemMetricsScheduler = systemScheduler
-        processSurveyScheduler = processScheduler
-        monitoringLifecycleStore = MonitoringLifecycleStore(
-            definition: .m2,
-            systemMetricsTarget: systemScheduler,
-            processSurveyTarget: processScheduler,
-            admission: admission
-        )
+                admission: admission),
+            networkSource: { metadata in NetworkActivitySource(
+                reader: SystemNetworkCounterReader(topology: networkTopology),
+                metadata: metadata, admission: admission) },
+            diskSource: DiskActivitySource(
+                reader: SystemDiskCounterReader(topology: diskTopology), admission: admission),
+            networkMetadataSource: NetworkMetadataSource(
+                reader: SystemNetworkMetadataReader(topology: networkTopology), admission: admission),
+            storageMetadataSource: StorageMetadataSource(
+                reader: SystemStorageMetadataReader(topology: diskTopology), admission: admission))
+        collectionPipelines = pipelines
+        collectionDeliveryStore = CollectionDeliveryStore()
+        processRankingCache = ProcessRankingDeliveryCache()
+        topologyObserver = ResourceTopologyObserver(networkTopology: networkTopology,
+            diskTopology: diskTopology, lifecycle: pipelines.lifecycle)
         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
 
         // 모든 저장 속성이 준비된 뒤에야 `self`를 다른 객체에 넘길 수 있으므로,
@@ -132,15 +105,26 @@ final class ApplicationCoordinator {
         let sink: CharacterPresentationSink = statusBarController
         characterStateTask = Self.consume(characterStateSource, into: sink)
 
-        monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: monitoringLifecycleStore)
+        processRankingTask = Self.consumeProcessRanking(pipelines.processStore,
+            into: processRankingCache, admission: admission)
         cpuActivityTask = Self.consumeSystemMetrics(
-            sampleStore,
+            pipelines.systemStore,
             into: characterStateSource,
             dashboard: dashboard,
-            processHistory: processStore,
+            rankingCache: processRankingCache,
             admission: admission
         )
-        collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(monitoringLifecycleStore, dashboard: dashboard, admission: admission)
+        networkActivityTask = Self.consumeNetworkActivity(pipelines.networkStore,
+            into: collectionDeliveryStore, admission: admission)
+        diskActivityTask = Self.consumeDiskActivity(pipelines.diskStore,
+            into: collectionDeliveryStore, admission: admission)
+        networkMetadataTask = Self.consumeNetworkMetadata(pipelines.networkMetadataStore,
+            into: collectionDeliveryStore, admission: admission)
+        storageMetadataTask = Self.consumeStorageMetadata(pipelines.storageMetadataStore,
+            into: collectionDeliveryStore, admission: admission)
+        collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(pipelines.lifecycle, dashboard: dashboard, admission: admission)
+        // 모든 소비 경로가 준비된 뒤 초기 lifecycle을 적용해야 최초 수집을 잃지 않습니다.
+        monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle)
     }
 
     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
@@ -163,10 +147,9 @@ final class ApplicationCoordinator {
     /// CPU 지표가 실패했거나(`.failure`) 값을 만들지 못한 tick(`.success(nil)`)에서는 판정 자체를 건너뛰어
     /// 마지막 표시 상태를 그대로 유지합니다(ANALYSIS §2 「메뉴바 표시 상태 판정」).
     /// 같은 소비 지점에서 `dashboard`의 CPU·Memory 카드도 매 tick 갱신합니다(ANALYSIS §5 DP10).
-    /// 앱 단위 순위는 이 지점에서 `processHistory`의 마지막 조사 이력을 읽어 계산합니다 —
-    /// 카드 조립에는 시스템 지표 tick의 값과 순위가 함께 필요하고, 두 축의 주기가 서로 달라
-    /// 조립 시점을 하나로 정해야 하기 때문입니다. 앱 키 유도 캐시는 계산이 순수 함수라
-    /// 이 소비 Task가 이어서 들고 다음 tick에 넘깁니다(ANALYSIS §1 「계산 경계」).
+    /// production에서는 독립 프로세스 소비 경로가 계산한 순위 캐시를 읽습니다.
+    /// 새 collection epoch의 시스템 tick은 이전 epoch 순위를 사용하지 않습니다.
+    /// 기존 테스트의 `processHistory` 직접 조회 경로는 별도 주입점으로 유지합니다.
     /// `processHistory`가 없으면 순위는 빈 목록이 되고, 그 자체가 "5개 미만이면 있는 만큼만 표시"의 한 경우입니다.
     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
     static func consumeSystemMetrics(
@@ -174,6 +157,7 @@ final class ApplicationCoordinator {
         into characterStateSource: CharacterStateSource,
         dashboard: DashboardPresentationStore,
         processHistory: ProcessHistoryStore? = nil,
+        rankingCache: ProcessRankingDeliveryCache? = nil,
         admission: CollectionAdmission? = nil
     ) -> Task<Void, Never> {
         let displayValues = store.displayValues
@@ -187,7 +171,12 @@ final class ApplicationCoordinator {
                 var processGroups: [ApplicationProcessGroup] = []
                 var nextResolver: ApplicationIdentityResolver?
                 var surveyFailed = false
-                if let processHistory {
+                if let rankingCache {
+                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch)
+                    ranking = current.ranking
+                    processGroups = current.groups
+                    surveyFailed = current.surveyFailed
+                } else if let processHistory {
                     let input = await processHistory.rankingInput()
                     surveyFailed = input.surveyFailed
                     let computed = ApplicationRanking.compute(
@@ -256,6 +245,122 @@ final class ApplicationCoordinator {
                         return true
                     }) == true else { continue }
                 } else { updateDisplay() }
+            }
+        }
+    }
+
+    /// 프로세스 순위의 actor 조회·집계를 시스템 tick에서 분리해 CPU·Memory와 메뉴바 소비를 기다리게 하지 않습니다.
+    static func consumeProcessRanking(_ store: ProcessHistoryStore,
+                                      into cache: ProcessRankingDeliveryCache,
+                                      admission: CollectionAdmission? = nil,
+                                      beforeRankingCompute: (@Sendable () async -> Void)? = nil) -> Task<Void, Never> {
+        let updates = store.rankingUpdates
+        return Task.detached(priority: .utility) {
+            var resolver = ApplicationIdentityResolver()
+            for await input in updates {
+                if let beforeRankingCompute { await beforeRankingCompute() }
+                let computed = ApplicationRanking.compute(snapshots: input.snapshots,
+                    currentTimestamp: input.timestamp, unreadableCount: input.unreadableCount,
+                    resolver: resolver)
+                let grouped = ApplicationRanking.groupByApplication(snapshots: input.snapshots,
+                    resolver: computed.resolver)
+                let accepted = await MainActor.run { () -> Bool in
+                    if let context = input.context, let admission {
+                        return admission.admitDisplay(context, timestamp: input.timestamp) {
+                            cache.update(ranking: computed.sample, groups: grouped.groups,
+                                surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+                                collectionEpoch: context.epoch)
+#if DEBUG
+                            debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)")
+#endif
+                            return true
+                        } ?? false
+                    } else {
+                        cache.update(ranking: computed.sample, groups: grouped.groups,
+                            surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+                            collectionEpoch: input.context?.epoch)
+                        return true
+                    }
+                }
+                if accepted { resolver = grouped.resolver }
+            }
+        }
+    }
+
+    static func consumeNetworkActivity(_ store: NetworkActivityStore,
+                                       into delivery: CollectionDeliveryStore,
+                                       admission: CollectionAdmission) -> Task<Void, Never> {
+        let updates = store.updates
+        return Task { @MainActor in
+            for await value in updates {
+                guard let latest = value.latest, let context = latest.context else { continue }
+                _ = admission.admitDisplay(context, timestamp: latest.value.readAt) {
+                    delivery.updateNetwork(value)
+#if DEBUG
+                    debugPipelineLogger.notice("delivered axis=networkActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
+#endif
+                }
+            }
+        }
+    }
+
+    static func consumeDiskActivity(_ store: DiskActivityStore,
+                                    into delivery: CollectionDeliveryStore,
+                                    admission: CollectionAdmission) -> Task<Void, Never> {
+        let updates = store.updates
+        return Task { @MainActor in
+            for await value in updates {
+                guard let latest = value.latest, let context = latest.context else { continue }
+                _ = admission.admitDisplay(context, timestamp: latest.value.readAt) {
+                    delivery.updateDisk(value)
+#if DEBUG
+                    debugPipelineLogger.notice("delivered axis=diskActivity epoch=\(context.epoch) status=\(String(describing: latest.value.status), privacy: .public)")
+#endif
+                }
+            }
+        }
+    }
+
+    static func consumeNetworkMetadata(_ store: NetworkMetadataStore,
+                                       into delivery: CollectionDeliveryStore,
+                                       admission: CollectionAdmission) -> Task<Void, Never> {
+        let updates = store.updates
+        return Task { @MainActor in
+            for await value in updates {
+                guard let latest = value.latest, let context = latest.context else { continue }
+                _ = admission.admitDisplay(context, timestamp: latest.timestamp) {
+                    delivery.updateNetworkMetadata(value)
+#if DEBUG
+                    let result: String
+                    switch latest.value {
+                    case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) records=\(snapshot.records.count)"
+                    case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
+                    }
+                    debugPipelineLogger.notice("delivered axis=networkMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
+#endif
+                }
+            }
+        }
+    }
+
+    static func consumeStorageMetadata(_ store: StorageMetadataStore,
+                                       into delivery: CollectionDeliveryStore,
+                                       admission: CollectionAdmission) -> Task<Void, Never> {
+        let updates = store.updates
+        return Task { @MainActor in
+            for await value in updates {
+                guard let latest = value.latest, let context = latest.context else { continue }
+                _ = admission.admitDisplay(context, timestamp: latest.timestamp) {
+                    delivery.updateStorageMetadata(value)
+#if DEBUG
+                    let result: String
+                    switch latest.value {
+                    case .available(let snapshot): result = "available revision=\(snapshot.topologyRevision) devices=\(snapshot.devices.count)"
+                    case .failure(let reason, let revision): result = "failure revision=\(revision.map(String.init) ?? "unknown") reason=\(reason)"
+                    }
+                    debugPipelineLogger.notice("delivered axis=storageMetadata epoch=\(context.epoch) result=\(result, privacy: .public)")
+#endif
+                }
             }
         }
     }

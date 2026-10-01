@@ -356,7 +356,7 @@ extension ApplicationRanking {
     /// 프로세스별 값도 `smoothedRecentValues(for:)`로 `compute(_:)`와 같은 평활화 규칙을 공유합니다 —
     /// 카드 순위와 상세 목록이 순간값·평활화 값을 섞어 쓰면 같은 앱이 서로 다른 순서로 보입니다.
     /// - Returns: 관찰 순서를 보존한 그룹 목록(정렬하지 않음 — 정렬된 순위는 `compute(_:)`가 이미 담당)과 갱신된 resolver.
-    static func groupByApplication(
+    nonisolated static func groupByApplication(
         snapshots: [ProcessHistorySnapshot],
         resolver: ApplicationIdentityResolver
     ) -> (groups: [ApplicationProcessGroup], resolver: ApplicationIdentityResolver) {

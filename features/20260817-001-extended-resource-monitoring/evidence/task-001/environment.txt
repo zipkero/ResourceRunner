@@ -1,0 +1,34 @@
+Build command: xcodebuild -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/ResourceRunner-M3-task001-clean-probe build CODE_SIGNING_ALLOWED=YES
+Build result: BUILD SUCCEEDED (/tmp/rr-m3-task001-clean-build.log)
+Probe command: RR_NETWORK_PROBE=1 <clean build app executable>; /usr/bin/log show --last 20s --style compact --predicate subsystem/category NetworkNativeProbe
+Test command: xcodebuild -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/ResourceRunner-M3-task001 -only-testing:ResourceRunnerTests/NetworkNativeAdapterTests test CODE_SIGNING_ALLOWED=YES
+Test result: TEST SUCCEEDED, six distinct tests; test build used separate DerivedData (/tmp/rr-m3-task001-test-final.log)
+HEAD: 002414b13524606096ef9f4f41057dcbf9005fe0
+--- source SHA-256 ---
+526750bfc15469cdb5f9d28a188c2be53360c519331352a2d1288c31e82590bf  ResourceRunner/NetworkNativeAdapter.swift
+1ecfb97c583e64ed363cb31737d071cf36f0cc4e11a5899a4d2ba8f4bf86f2c4  ResourceRunner/AppDelegate.swift
+f2f4c7035d63e90f8f600bf6b4050ac1f627102940d68049ca792191a6b6d092  ResourceRunnerTests/NetworkNativeAdapterTests.swift
+--- operating system and architecture ---
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+arm64
+--- clean build signature ---
+Executable=/private/tmp/ResourceRunner-M3-task001-clean-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Identifier=com.zipkero.ResourceRunner
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=435 flags=0x2(adhoc) hashes=3+7 location=embedded
+Signature=adhoc
+Info.plist entries=20
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12
+--- clean build entitlements ---
+Executable=/private/tmp/ResourceRunner-M3-task001-clean-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+warning: Specifying ':' in the path is deprecated and will not work in a future release
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.app-sandbox</key><true/><key>com.apple.security.files.user-selected.read-only</key><true/><key>com.apple.security.get-task-allow</key><true/></dict></plist>
+--- clean build binary ---
+e0626341cf955dd2d2be67e271d2a5b320c81eca0a554d5bb71d573668847517  /tmp/ResourceRunner-M3-task001-clean-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+arm64
+probe_pid=26245
+probe_state=exited

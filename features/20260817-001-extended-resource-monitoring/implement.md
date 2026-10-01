@@ -119,7 +119,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `d03fe7a`의 공통 CollectionAdmission, observer/lifecycle/scheduler/source/store/coordinator/display 배선과 직접 테스트 diff를 확인했으며 변경 소스 12개 SHA-256이 `evidence/task-003/environment.raw.txt`와 일치합니다. 누적 boundarySequence의 병합 중지·복귀, sleep/wake 알림, 첫 await 전 실행권 무효화, 이전 scheduler의 새 token 발급 방지, 늦은 target 일정 적용, CPU 실제 baseline·store suspension·coordinator 순위 await 뒤 표시 역전 차단을 전용 테스트로 확인했습니다. 정상 주기 변경의 epoch·baseline 보존과 기존 CPU·Memory·프로세스·메뉴바 회귀를 포함해 전체 단위 테스트 528/528 통과, Release BUILD SUCCEEDED, diff-check clean입니다. 원자료와 최종 change.patch는 같은 evidence 디렉터리에 있습니다. task-001·002 native adapter 변경이 없어 해당 승인을 유지합니다. 실제 OS 전환·UI 통합은 task-015·018에 남으며 이번에 완료되는 마지막 매핑 SPEC 조건은 없습니다.
 
-- [ ] task-004: 여섯 축 일정과 보조 조회의 독립 실행
+- [x] task-004: 여섯 축 일정과 보조 조회의 독립 실행
   - 목적: 빠른 속도와 느린 보조 조회가 설계의 주기로 독립 실행되고
     조회 지연·중지·갱신 요청이 작업 중복이나 다른 축의 대기를 만들지 않게 합니다.
   - 접근: M3 일정 정의에 CPU·Memory, 프로세스, Network 활동, Disk 활동,
@@ -142,6 +142,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       독립 target·source로 확인합니다.
   - 참조: SPEC §5.8, SPEC §5.10, SPEC §5.11,
     DESIGN §1.1, DESIGN §2.1, DESIGN §2.4, DESIGN §4.2
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `855c5e8`의 CollectionAdmission 축 확장, MonitoringLifecycle 여섯 축 .m3 정책·배선 및 AuxiliaryCollectionScheduler·직접 테스트 diff와 변경 소스 4개 SHA-256이 `evidence/task-004/environment.raw.txt`와 일치합니다. lifecycle 96개 조합에서 정확한 주기·중지를 대조했고 실제 보조 scheduler의 최초 즉시 조회·cache-first/stale-open·요청 병합·중지중 요청 재개1회·단일 inFlight·누락deadline 중복 방지, 느린 보조 source 동안 빠른4축의 실행을 확인했습니다. 집중6개×5회 30/30, 전체 단위534/534, Release BUILD SUCCEEDED와 diff-check clean입니다. 최종patch·원시로그·xcresult요약은 같은 evidence에 보존했습니다. task-003 admission·정상주기 epoch 보존과 기존 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. native source/store와 production 여섯 축 구성은 task-005~007에서 이어 확인합니다.
 
 - [ ] task-005: Network 속도·identity·보조 캐시와 최근 이력
   - 목적: 물리 대표 RX·TX와 현재 인터페이스별 속도·누적량을 정확한 연속 구간으로 계산하고

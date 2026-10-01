@@ -1,7 +1,7 @@
 import Foundation
 
 nonisolated enum CollectionAxis: Hashable, Sendable {
-    case systemMetrics, processSurvey
+    case systemMetrics, processSurvey, networkActivity, diskActivity, networkMetadata, storageMetadata
 }
 
 nonisolated enum CollectionAdmissionPhase: Hashable, Sendable {

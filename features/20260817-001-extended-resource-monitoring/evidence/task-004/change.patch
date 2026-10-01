@@ -1,0 +1,645 @@
+diff --git a/ResourceRunner/CollectionAdmission.swift b/ResourceRunner/CollectionAdmission.swift
+index c9fa657..c1b4a5f 100644
+--- a/ResourceRunner/CollectionAdmission.swift
++++ b/ResourceRunner/CollectionAdmission.swift
+@@ -1,7 +1,7 @@
+ import Foundation
+ 
+ nonisolated enum CollectionAxis: Hashable, Sendable {
+-    case systemMetrics, processSurvey
++    case systemMetrics, processSurvey, networkActivity, diskActivity, networkMetadata, storageMetadata
+ }
+ 
+ nonisolated enum CollectionAdmissionPhase: Hashable, Sendable {
+diff --git a/ResourceRunner/MonitoringLifecycle.swift b/ResourceRunner/MonitoringLifecycle.swift
+index 58f4721..62ff310 100644
+--- a/ResourceRunner/MonitoringLifecycle.swift
++++ b/ResourceRunner/MonitoringLifecycle.swift
+@@ -28,7 +28,7 @@ nonisolated struct MonitoringLifecycle: Sendable, Equatable {
+         self.systemAsleep = systemAsleep
+     }
+ 
+-    /// 화면을 볼 수 없는 상태. 잠금·화면·세션·시스템 sleep 중 하나라도 성립하면 두 축이 중지됩니다.
++    /// 화면을 볼 수 없는 상태. 잠금·화면·세션·시스템 sleep 중 하나라도 성립하면 모든 축이 중지됩니다.
+     /// 잠금 상태가 `unknown`일 때도 중지하는 M1 규칙을 그대로 둡니다.
+     var screenUnobservable: Bool {
+         screenLockState != .unlocked || displayAsleep || !sessionActive || systemAsleep
+@@ -48,16 +48,42 @@ nonisolated enum CollectionSchedule: Sendable, Equatable {
+     case paused
+ }
+ 
+-/// 시스템 지표와 프로세스 조사 두 축의 일정을 묶는 계산 결과.
++/// 여섯 수집 축의 일정을 묶는 계산 결과.
+ /// 축마다 값이 따로이므로 한 축만 바뀌는 변경을 다른 축에 옮기지 않고 구분할 수 있습니다.
+ nonisolated struct CollectionSchedulePlan: Sendable, Equatable {
+     let systemMetrics: CollectionSchedule
+     let processSurvey: CollectionSchedule
++    let networkActivity: CollectionSchedule
++    let diskActivity: CollectionSchedule
++    let networkMetadata: CollectionSchedule
++    let storageMetadata: CollectionSchedule
++
++    init(systemMetrics: CollectionSchedule, processSurvey: CollectionSchedule,
++         networkActivity: CollectionSchedule = .paused, diskActivity: CollectionSchedule = .paused,
++         networkMetadata: CollectionSchedule = .paused, storageMetadata: CollectionSchedule = .paused) {
++        self.systemMetrics = systemMetrics
++        self.processSurvey = processSurvey
++        self.networkActivity = networkActivity
++        self.diskActivity = diskActivity
++        self.networkMetadata = networkMetadata
++        self.storageMetadata = storageMetadata
++    }
++
++    subscript(axis: CollectionAxis) -> CollectionSchedule {
++        switch axis {
++        case .systemMetrics: systemMetrics
++        case .processSurvey: processSurvey
++        case .networkActivity: networkActivity
++        case .diskActivity: diskActivity
++        case .networkMetadata: networkMetadata
++        case .storageMetadata: storageMetadata
++        }
++    }
+ 
+     static let paused = CollectionSchedulePlan(systemMetrics: .paused, processSurvey: .paused)
+ }
+ 
+-/// 두 수집 축 각각의 전력·팝오버 조합별 interval 여덟 값을 담는 일정 정의.
++/// 각 수집 축의 전력·팝오버 조합별 interval을 담는 일정 정의.
+ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
+     /// 한 수집 축의 전력·팝오버 조합 넷.
+     nonisolated struct AxisIntervals: Sendable, Equatable {
+@@ -78,6 +104,21 @@ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
+ 
+     let systemMetrics: AxisIntervals
+     let processSurvey: AxisIntervals
++    let networkActivity: AxisIntervals?
++    let diskActivity: AxisIntervals?
++    let networkMetadata: AxisIntervals?
++    let storageMetadata: AxisIntervals?
++
++    init(systemMetrics: AxisIntervals, processSurvey: AxisIntervals,
++         networkActivity: AxisIntervals? = nil, diskActivity: AxisIntervals? = nil,
++         networkMetadata: AxisIntervals? = nil, storageMetadata: AxisIntervals? = nil) {
++        self.systemMetrics = systemMetrics
++        self.processSurvey = processSurvey
++        self.networkActivity = networkActivity
++        self.diskActivity = diskActivity
++        self.networkMetadata = networkMetadata
++        self.storageMetadata = storageMetadata
++    }
+ 
+     /// ANALYSIS §2 「수집 중지와 재개」의 표: 시스템 지표는 normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5초,
+     /// 프로세스 조사는 normal 열림 2초·닫힘 5초, lowPower 열림 4초·닫힘 10초.
+@@ -95,11 +136,25 @@ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
+             lowPowerDismissed: .seconds(10)
+         )
+     )
++
++    /// DESIGN §2.1의 여섯 축 주기. 아직 배선되지 않은 축도 같은 순수 정책에서 계산합니다.
++    static let m3 = CollectionScheduleDefinition(
++        systemMetrics: m2.systemMetrics,
++        processSurvey: m2.processSurvey,
++        networkActivity: AxisIntervals(normalPresented: .seconds(1), normalDismissed: .seconds(2),
++                                       lowPowerPresented: .seconds(2), lowPowerDismissed: .seconds(5)),
++        diskActivity: AxisIntervals(normalPresented: .seconds(1), normalDismissed: .seconds(2),
++                                    lowPowerPresented: .seconds(2), lowPowerDismissed: .seconds(5)),
++        networkMetadata: AxisIntervals(normalPresented: .seconds(30), normalDismissed: .seconds(60),
++                                       lowPowerPresented: .seconds(60), lowPowerDismissed: .seconds(120)),
++        storageMetadata: AxisIntervals(normalPresented: .seconds(30), normalDismissed: .seconds(60),
++                                       lowPowerPresented: .seconds(60), lowPowerDismissed: .seconds(120))
++    )
+ }
+ 
+-/// 일정 정의와 최종 snapshot에서 두 축의 일정을 함께 계산하는 순수 정책.
++/// 일정 정의와 최종 snapshot에서 여섯 축의 일정을 함께 계산하는 순수 정책.
+ /// 화면을 볼 수 없는 신호(잠금·`unknown`, 디스플레이·시스템 sleep, 세션 비활성) 중 하나라도 성립하면
+-/// 팝오버·전력과 무관하게 두 축이 모두 `paused`입니다.
++/// 팝오버·전력과 무관하게 모든 축이 `paused`입니다.
+ nonisolated enum CollectionSchedulePolicy {
+     static func plan(
+         for lifecycle: MonitoringLifecycle,
+@@ -121,13 +176,24 @@ nonisolated enum CollectionSchedulePolicy {
+                     lowPowerMode: lifecycle.lowPowerMode,
+                     popoverPresented: lifecycle.popoverPresented
+                 )
+-            )
++            ),
++            networkActivity: schedule(definition.networkActivity, lifecycle),
++            diskActivity: schedule(definition.diskActivity, lifecycle),
++            networkMetadata: schedule(definition.networkMetadata, lifecycle),
++            storageMetadata: schedule(definition.storageMetadata, lifecycle)
+         )
+     }
++
++    private static func schedule(_ intervals: CollectionScheduleDefinition.AxisIntervals?,
++                                 _ lifecycle: MonitoringLifecycle) -> CollectionSchedule {
++        guard let intervals else { return .paused }
++        return .running(intervals.interval(lowPowerMode: lifecycle.lowPowerMode,
++                                           popoverPresented: lifecycle.popoverPresented))
++    }
+ }
+ 
+ /// 계산된 일정 하나를 적용받는 수집 축의 계약.
+-/// `MonitoringLifecycleStore`가 두 Scheduler를 구체 타입 대신 이 계약으로 보유하므로,
++/// `MonitoringLifecycleStore`가 수집 Scheduler를 구체 타입 대신 이 계약으로 보유하므로,
+ /// 축마다 서로 다른 source·sink 타입을 가져도 생명주기 계층에 제네릭이 전파되지 않습니다.
+ nonisolated protocol CollectionScheduleTarget: Sendable {
+     func apply(_ schedule: CollectionSchedule) async
+@@ -140,12 +206,16 @@ nonisolated extension CollectionScheduleTarget {
+ 
+ /// 팝오버·저전력과 화면을 볼 수 없는 신호를 `update(_:)` 하나로 직렬화해 최종 snapshot과
+ /// 마지막 system revision, 마지막 적용 일정을 단독 소유하는 actor.
+-/// 두 수집 축을 `CollectionScheduleTarget`으로 보유하고, 계산 결과가 마지막 적용 결과와 다른 축에만
++/// 활성 수집 축을 `CollectionScheduleTarget`으로 보유하고, 계산 결과가 마지막 적용 결과와 다른 축에만
+ /// `apply(_:)`를 호출해 중복 수집과 불필요한 재시작을 막습니다.
+ actor MonitoringLifecycleStore {
+     private let definition: CollectionScheduleDefinition
+     private let systemMetricsTarget: any CollectionScheduleTarget
+     private let processSurveyTarget: any CollectionScheduleTarget
++    private let networkActivityTarget: (any CollectionScheduleTarget)?
++    private let diskActivityTarget: (any CollectionScheduleTarget)?
++    private let networkMetadataTarget: (any AuxiliaryCollectionTarget)?
++    private let storageMetadataTarget: (any AuxiliaryCollectionTarget)?
+ 
+     /// system snapshot이 한 번도 도착하지 않은 시작 상태는 화면 상태를 알 수 없으므로
+     /// 가장 안전한 `paused` 쪽(`unknown`)을 기본값으로 둡니다.
+@@ -174,11 +244,19 @@ actor MonitoringLifecycleStore {
+         definition: CollectionScheduleDefinition,
+         systemMetricsTarget: any CollectionScheduleTarget,
+         processSurveyTarget: any CollectionScheduleTarget,
++        networkActivityTarget: (any CollectionScheduleTarget)? = nil,
++        diskActivityTarget: (any CollectionScheduleTarget)? = nil,
++        networkMetadataTarget: (any AuxiliaryCollectionTarget)? = nil,
++        storageMetadataTarget: (any AuxiliaryCollectionTarget)? = nil,
+         admission: CollectionAdmission = CollectionAdmission()
+     ) {
+         self.definition = definition
+         self.systemMetricsTarget = systemMetricsTarget
+         self.processSurveyTarget = processSurveyTarget
++        self.networkActivityTarget = networkActivityTarget
++        self.diskActivityTarget = diskActivityTarget
++        self.networkMetadataTarget = networkMetadataTarget
++        self.storageMetadataTarget = storageMetadataTarget
+         self.admission = admission
+ 
+         var continuation: AsyncStream<CollectionBoundary>.Continuation!
+@@ -186,6 +264,16 @@ actor MonitoringLifecycleStore {
+         self.collectionBoundaryContinuation = continuation
+     }
+ 
++    /// 변경 알림이 있는 topology·마운트·해제는 해당 축에 요청을 전달합니다.
++    /// 알림이 없는 주소·상태는 보조 scheduler의 주기 조회가 맡습니다.
++    func requestAuxiliaryRefresh(_ axis: CollectionAxis) async {
++        switch axis {
++        case .networkMetadata: await networkMetadataTarget?.requestRefresh()
++        case .storageMetadata: await storageMetadataTarget?.requestRefresh()
++        default: break
++        }
++    }
++
+     /// 입력 이벤트 하나를 반영합니다. `systemSnapshot`은 최초 revision은 항상 적용하고
+     /// 이후에는 마지막 system revision보다 작거나 같은 snapshot을 거부합니다.
+     /// 계산된 일정이 마지막 적용 결과와 같은 축에는 `apply(_:)`를 호출하지 않으므로,
+@@ -246,9 +334,21 @@ actor MonitoringLifecycleStore {
+         let revisionForTargets = planRevision
+         let applySystem = plan.systemMetrics != previousPlan?.systemMetrics || boundaryChanged
+         let applyProcess = plan.processSurvey != previousPlan?.processSurvey || boundaryChanged
++        let applyNetwork = networkActivityTarget != nil &&
++            (plan.networkActivity != previousPlan?.networkActivity || boundaryChanged)
++        let applyDisk = diskActivityTarget != nil &&
++            (plan.diskActivity != previousPlan?.diskActivity || boundaryChanged)
++        let applyNetworkMetadata = networkMetadataTarget != nil &&
++            (plan.networkMetadata != previousPlan?.networkMetadata || boundaryChanged)
++        let applyStorageMetadata = storageMetadataTarget != nil &&
++            (plan.storageMetadata != previousPlan?.storageMetadata || boundaryChanged)
+         // actor의 첫 await 전에 축별 계획을 확정해 이전 update의 늦은 apply와 tick을 거부합니다.
+         if applySystem { admission.setPlanRevision(revisionForTargets, for: .systemMetrics) }
+         if applyProcess { admission.setPlanRevision(revisionForTargets, for: .processSurvey) }
++        if applyNetwork { admission.setPlanRevision(revisionForTargets, for: .networkActivity) }
++        if applyDisk { admission.setPlanRevision(revisionForTargets, for: .diskActivity) }
++        if applyNetworkMetadata { admission.setPlanRevision(revisionForTargets, for: .networkMetadata) }
++        if applyStorageMetadata { admission.setPlanRevision(revisionForTargets, for: .storageMetadata) }
+         if applySystem {
+             await systemMetricsTarget.apply(plan.systemMetrics, revision: revisionForTargets)
+         }
+@@ -256,5 +356,21 @@ actor MonitoringLifecycleStore {
+         if applyProcess {
+             await processSurveyTarget.apply(plan.processSurvey, revision: revisionForTargets)
+         }
++        guard revisionForTargets == planRevision else { return }
++        if applyNetwork {
++            await networkActivityTarget?.apply(plan.networkActivity, revision: revisionForTargets)
++        }
++        guard revisionForTargets == planRevision else { return }
++        if applyDisk {
++            await diskActivityTarget?.apply(plan.diskActivity, revision: revisionForTargets)
++        }
++        guard revisionForTargets == planRevision else { return }
++        if applyNetworkMetadata {
++            await networkMetadataTarget?.apply(plan.networkMetadata, revision: revisionForTargets)
++        }
++        guard revisionForTargets == planRevision else { return }
++        if applyStorageMetadata {
++            await storageMetadataTarget?.apply(plan.storageMetadata, revision: revisionForTargets)
++        }
+     }
+ }
+diff --git a/ResourceRunner/AuxiliaryCollectionScheduler.swift b/ResourceRunner/AuxiliaryCollectionScheduler.swift
+new file mode 100644
+index 0000000..cbecede
+--- /dev/null
++++ b/ResourceRunner/AuxiliaryCollectionScheduler.swift
+@@ -0,0 +1,140 @@
++import Foundation
++
++/// 보조 정보는 일정 외에 topology·마운트 변경의 명시적 갱신 요청을 받습니다.
++nonisolated protocol AuxiliaryCollectionTarget: CollectionScheduleTarget {
++    func requestRefresh() async
++}
++
++/// 느린 보조 조회 한 축의 타이머·요청 병합·단일 실행을 소유합니다.
++/// 빠른 수집 축과 actor나 작업을 공유하지 않으며, 결과 반영은 공통 admission에 맡깁니다.
++actor AuxiliaryCollectionScheduler<Clock: MonotonicClock, Source: ScheduledSampleSource,
++                                   Sink: MonitoringSampleSink>: AuxiliaryCollectionTarget
++where Sink.Value == Source.Value {
++    private let clock: Clock
++    private let source: Source
++    private let sink: Sink
++    private let admission: CollectionAdmission
++    private let axis: CollectionAxis
++
++    private var schedule: CollectionSchedule = .paused
++    private var lastRevision = -1
++    private var generation = 0
++    private var admittedGeneration = 0
++    private var admittedPlanRevision = 0
++    private var collectionEpoch = 0
++    private var timer: Task<Void, Never>?
++    private var query: Task<Void, Never>?
++    private var inFlight = false
++    private var pendingRefresh = false
++    private var lastQueryStartedAt: ContinuousClock.Instant?
++    private(set) var cachedSample: TimestampedSample<Source.Value>?
++    private(set) var startedQueryCount = 0
++
++    init(clock: Clock, source: Source, sink: Sink, admission: CollectionAdmission,
++         axis: CollectionAxis) {
++        precondition(axis == .networkMetadata || axis == .storageMetadata)
++        self.clock = clock
++        self.source = source
++        self.sink = sink
++        self.admission = admission
++        self.axis = axis
++    }
++
++    func apply(_ next: CollectionSchedule, revision: Int) async {
++        guard revision >= lastRevision,
++              admission.planRevision(for: axis) == revision else { return }
++        lastRevision = revision
++        await apply(next)
++    }
++
++    func apply(_ next: CollectionSchedule) async {
++        generation += 1
++        let localGeneration = generation
++        schedule = next
++        collectionEpoch = admission.currentBoundary.epoch
++        admittedGeneration = admission.advance(axis)
++        admittedPlanRevision = admission.planRevision(for: axis)
++        timer?.cancel()
++        timer = nil
++        // 취소를 무시하는 source도 있으므로 inFlight는 실제 완료까지 유지합니다.
++        query?.cancel()
++        if inFlight { pendingRefresh = true }
++
++        guard case .running(let interval) = next else {
++            if inFlight { pendingRefresh = true }
++            return
++        }
++
++        let queryCountBeforeClock = startedQueryCount
++        let now = await clock.now()
++        guard localGeneration == generation,
++              admission.planRevision(for: axis) == admittedPlanRevision else { return }
++
++        // 기존 캐시를 즉시 유지하고, 새 주기 기준으로 오래된 경우만 별도 조회합니다.
++        if pendingRefresh || (startedQueryCount == queryCountBeforeClock &&
++            (cachedSample == nil || cachedSample.map({ $0.timestamp.duration(to: now) >= interval }) == true)) {
++            pendingRefresh = true
++            startIfPossible(at: now)
++        }
++        timer = Task { [weak self] in
++            guard let self else { return }
++            var deadline = now.advanced(by: interval)
++            while !Task.isCancelled {
++                do { try await clock.sleep(until: deadline) }
++                catch { return }
++                if Task.isCancelled { return }
++                let current = await clock.now()
++                await self.periodicDue(generation: localGeneration, deadline: deadline, now: current)
++                // 지나간 deadline 수만큼 보충 tick을 만들지 않습니다.
++                deadline = current.advanced(by: interval)
++            }
++        }
++    }
++
++    func requestRefresh() async {
++        pendingRefresh = true
++        let now = await clock.now()
++        startIfPossible(at: now)
++    }
++
++    private func periodicDue(generation expected: Int,
++                             deadline: ContinuousClock.Instant, now: ContinuousClock.Instant) {
++        guard expected == generation else { return }
++        // 대기 중 병합 요청으로 이미 이 deadline 이후 조회가 시작됐으면 보충하지 않습니다.
++        if let lastQueryStartedAt, lastQueryStartedAt >= deadline { return }
++        pendingRefresh = true
++        startIfPossible(at: now)
++    }
++
++    private func startIfPossible(at timestamp: ContinuousClock.Instant) {
++        guard pendingRefresh, !inFlight, case .running = schedule else { return }
++        guard let context = admission.issue(axis, expectedEpoch: collectionEpoch,
++            expectedGeneration: admittedGeneration,
++            expectedPlanRevision: admittedPlanRevision) else { return }
++        pendingRefresh = false
++        inFlight = true
++        lastQueryStartedAt = timestamp
++        startedQueryCount += 1
++        query = Task { [weak self, source, clock] in
++            let value: Source.Value?
++            do { value = try await source.sample(context: context) }
++            catch { value = nil }
++            let timestamp = await clock.now()
++            await self?.finish(value, context: context, timestamp: timestamp)
++        }
++    }
++
++    private func finish(_ value: Source.Value?, context: CollectionRunContext,
++                        timestamp: ContinuousClock.Instant) async {
++        defer {
++            inFlight = false
++            query = nil
++            startIfPossible(at: timestamp)
++        }
++        guard let value, admission.isCurrent(context) else { return }
++        let sample = TimestampedSample(timestamp: timestamp, value: value,
++                                       collectionEpoch: context.epoch, context: context)
++        guard await sink.append(sample, context: context), admission.isCurrent(context) else { return }
++        cachedSample = sample
++    }
++}
+diff --git a/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift b/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift
+new file mode 100644
+index 0000000..86d10ca
+--- /dev/null
++++ b/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift
+@@ -0,0 +1,246 @@
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++private actor AuxiliaryIntSource: ScheduledSampleSource {
++    private let blockFirst: Bool
++    private var first: CheckedContinuation<Void, Never>?
++    private(set) var calls = 0
++
++    init(blockFirst: Bool = false) { self.blockFirst = blockFirst }
++
++    func sample(collectionEpoch: Int) async -> Int? {
++        calls += 1
++        if blockFirst && calls == 1 {
++            await withCheckedContinuation { first = $0 }
++        }
++        return calls
++    }
++
++    func releaseFirst() {
++        first?.resume()
++        first = nil
++    }
++}
++
++private actor AuxiliaryIntSink: MonitoringSampleSink {
++    private let admission: CollectionAdmission
++    private(set) var samples: [TimestampedSample<Int>] = []
++
++    init(admission: CollectionAdmission) { self.admission = admission }
++
++    func append(_ sample: TimestampedSample<Int>) { samples.append(sample) }
++    func append(_ sample: TimestampedSample<Int>, context: CollectionRunContext) async -> Bool {
++        admission.admit(context, phase: .store, timestamp: sample.timestamp) {
++            samples.append(sample)
++            return true
++        } ?? false
++    }
++}
++
++private actor AxisScheduleRecorder: CollectionScheduleTarget {
++    private(set) var schedules: [CollectionSchedule] = []
++    func apply(_ schedule: CollectionSchedule) { schedules.append(schedule) }
++}
++
++private func awaitCondition(_ condition: () async -> Bool) async {
++    for _ in 0..<10_000 {
++        if await condition() { return }
++        await Task.yield()
++    }
++}
++
++struct AuxiliaryCollectionSchedulerTests {
++    private func runningGate() -> CollectionAdmission {
++        let gate = CollectionAdmission()
++        gate.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        return gate
++    }
++
++    @Test func allSixAxisSchedulesMatchTheApprovedTable() {
++        let expected: [(Bool, Bool, [Duration])] = [
++            (false, true, [.seconds(1), .seconds(2), .seconds(1), .seconds(1), .seconds(30), .seconds(30)]),
++            (false, false, [.seconds(2), .seconds(5), .seconds(2), .seconds(2), .seconds(60), .seconds(60)]),
++            (true, true, [.seconds(2), .seconds(4), .seconds(2), .seconds(2), .seconds(60), .seconds(60)]),
++            (true, false, [.seconds(5), .seconds(10), .seconds(5), .seconds(5), .seconds(120), .seconds(120)])
++        ]
++        let axes: [CollectionAxis] = [.systemMetrics, .processSurvey, .networkActivity,
++                                      .diskActivity, .networkMetadata, .storageMetadata]
++        var checked = 0
++        for (lowPower, presented, intervals) in expected {
++            for lock in [ScreenLockState.unlocked, .locked, .unknown] {
++                for displayAsleep in [false, true] {
++                    for sessionActive in [false, true] {
++                        for systemAsleep in [false, true] {
++                            let lifecycle = MonitoringLifecycle(popoverPresented: presented,
++                                lowPowerMode: lowPower, screenLockState: lock,
++                                displayAsleep: displayAsleep, sessionActive: sessionActive,
++                                systemAsleep: systemAsleep)
++                            let plan = CollectionSchedulePolicy.plan(for: lifecycle, definition: .m3)
++                            let observable = lock == .unlocked && !displayAsleep && sessionActive && !systemAsleep
++                            for (index, axis) in axes.enumerated() {
++                                #expect(plan[axis] == (observable ? .running(intervals[index]) : .paused))
++                            }
++                            checked += 1
++                        }
++                    }
++                }
++            }
++        }
++        #expect(checked == 96)
++    }
++
++    @Test func lifecycleAppliesSixTargetsAndRoutesRefreshWithoutNewBoundary() async {
++        let gate = CollectionAdmission()
++        let clock = ManualMonotonicClock()
++        let fast = (0..<4).map { _ in AxisScheduleRecorder() }
++        let networkSource = AuxiliaryIntSource()
++        let storageSource = AuxiliaryIntSource()
++        let networkSink = AuxiliaryIntSink(admission: gate)
++        let storageSink = AuxiliaryIntSink(admission: gate)
++        let network = AuxiliaryCollectionScheduler(clock: clock, source: networkSource,
++            sink: networkSink, admission: gate, axis: .networkMetadata)
++        let storage = AuxiliaryCollectionScheduler(clock: clock, source: storageSource,
++            sink: storageSink, admission: gate, axis: .storageMetadata)
++        let lifecycle = MonitoringLifecycleStore(definition: .m3,
++            systemMetricsTarget: fast[0], processSurveyTarget: fast[1],
++            networkActivityTarget: fast[2], diskActivityTarget: fast[3],
++            networkMetadataTarget: network, storageMetadataTarget: storage, admission: gate)
++        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false,
++            screenLockState: .unlocked, displayAsleep: false, sessionActive: true)
++        await lifecycle.update(.systemSnapshot(initial))
++        await awaitCondition {
++            let networkCount = await networkSink.samples.count
++            let storageCount = await storageSink.samples.count
++            return networkCount == 1 && storageCount == 1
++        }
++        #expect(await fast[0].schedules == [.running(.seconds(2))])
++        #expect(await fast[1].schedules == [.running(.seconds(5))])
++        #expect(await fast[2].schedules == [.running(.seconds(2))])
++        #expect(await fast[3].schedules == [.running(.seconds(2))])
++        await lifecycle.requestAuxiliaryRefresh(.networkMetadata)
++        await lifecycle.requestAuxiliaryRefresh(.storageMetadata)
++        await awaitCondition {
++            let networkCount = await networkSink.samples.count
++            let storageCount = await storageSink.samples.count
++            return networkCount == 2 && storageCount == 2
++        }
++        await lifecycle.update(.popoverPresented(true))
++        #expect(await fast[0].schedules.last == .running(.seconds(1)))
++        #expect(await fast[1].schedules.last == .running(.seconds(2)))
++        #expect(await fast[2].schedules.last == .running(.seconds(1)))
++        #expect(await fast[3].schedules.last == .running(.seconds(1)))
++        #expect(gate.currentBoundary.epoch == 0)
++        #expect(await networkSink.samples.count == 2)
++        await lifecycle.update(.popoverPresented(true))
++        #expect(await fast[0].schedules.count == 2)
++        await lifecycle.update(.systemSnapshot(SystemLifecycleSnapshot(revision: 1,
++            lowPowerMode: false, screenLockState: .locked, displayAsleep: false,
++            sessionActive: true, boundarySequence: 1)))
++    }
++
++    @Test func immediateCacheFirstAndStaleOpenRefresh() async {
++        let gate = runningGate()
++        let clock = ManualMonotonicClock()
++        let source = AuxiliaryIntSource()
++        let sink = AuxiliaryIntSink(admission: gate)
++        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
++            admission: gate, axis: .networkMetadata)
++        await scheduler.apply(.running(.seconds(60)))
++        await awaitCondition { await sink.samples.count == 1 }
++        #expect(await sink.samples.count == 1)
++        #expect(await scheduler.cachedSample?.value == 1)
++
++        await clock.advance(by: .seconds(20))
++        await scheduler.apply(.running(.seconds(30)))
++        #expect(await source.calls == 1)
++        #expect(await scheduler.cachedSample?.value == 1)
++
++        await scheduler.apply(.running(.seconds(60)))
++        await clock.advance(by: .seconds(20))
++        await scheduler.apply(.running(.seconds(30)))
++        await awaitCondition { await sink.samples.count == 2 }
++        #expect(await sink.samples.map(\.value) == [1, 2])
++        #expect(await scheduler.cachedSample?.value == 2)
++        await scheduler.apply(.paused)
++    }
++
++    @Test func mergedRequestsAndMissedDeadlinesNeverOverlap() async {
++        let gate = runningGate()
++        let clock = ManualMonotonicClock()
++        let source = AuxiliaryIntSource(blockFirst: true)
++        let sink = AuxiliaryIntSink(admission: gate)
++        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
++            admission: gate, axis: .storageMetadata)
++        await scheduler.apply(.running(.seconds(30)))
++        await awaitCondition { await source.calls == 1 }
++        await scheduler.requestRefresh()
++        await scheduler.requestRefresh()
++        await clock.advance(by: .seconds(200))
++        await scheduler.requestRefresh()
++        #expect(await scheduler.startedQueryCount == 1)
++        await source.releaseFirst()
++        await awaitCondition { await sink.samples.count == 2 }
++        #expect(await scheduler.startedQueryCount == 2)
++        #expect(await sink.samples.map(\.value) == [1, 2])
++        await scheduler.apply(.paused)
++    }
++
++    @Test func pausedRequestsRunOnceAfterResumeAndOldResultIsDiscarded() async {
++        let gate = runningGate()
++        let clock = ManualMonotonicClock()
++        let source = AuxiliaryIntSource(blockFirst: true)
++        let sink = AuxiliaryIntSink(admission: gate)
++        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
++            admission: gate, axis: .networkMetadata)
++        await scheduler.apply(.running(.seconds(30)))
++        await awaitCondition { await source.calls == 1 }
++        gate.transition(CollectionBoundary(revision: 1, sequence: 1, epoch: 1, stopped: true))
++        await scheduler.apply(.paused)
++        await scheduler.requestRefresh()
++        await scheduler.requestRefresh()
++        await source.releaseFirst()
++        await awaitCondition { await scheduler.startedQueryCount == 1 }
++        #expect(await sink.samples.isEmpty)
++        gate.transition(CollectionBoundary(revision: 2, sequence: 2, epoch: 2, stopped: false))
++        await scheduler.apply(.running(.seconds(30)))
++        await awaitCondition { await sink.samples.count == 1 }
++        #expect(await sink.samples.map(\.value) == [2])
++        #expect(await scheduler.startedQueryCount == 2)
++        await scheduler.apply(.paused)
++    }
++
++    @Test func slowMetadataSourceDoesNotDelayFourFastAxes() async {
++        let gate = runningGate()
++        let clock = ManualMonotonicClock()
++        let slow = AuxiliaryIntSource(blockFirst: true)
++        let slowSink = AuxiliaryIntSink(admission: gate)
++        let metadata = AuxiliaryCollectionScheduler(clock: clock, source: slow, sink: slowSink,
++            admission: gate, axis: .networkMetadata)
++        let fastSources = (0..<4).map { _ in AuxiliaryIntSource() }
++        let fastSinks = (0..<4).map { _ in AuxiliaryIntSink(admission: gate) }
++        let axes: [CollectionAxis] = [.systemMetrics, .processSurvey, .networkActivity, .diskActivity]
++        let schedulers = (0..<4).map { index in
++            MonitoringScheduler(clock: clock, source: fastSources[index], sink: fastSinks[index],
++                admission: gate, axis: axes[index])
++        }
++        gate.setPlanRevision(1, for: .networkMetadata)
++        for axis in axes { gate.setPlanRevision(1, for: axis) }
++        await metadata.apply(.running(.seconds(30)), revision: 1)
++        for (index, scheduler) in schedulers.enumerated() {
++            await scheduler.apply(.running(index == 1 ? .seconds(2) : .seconds(1)), revision: 1)
++        }
++        await awaitCondition { await slow.calls == 1 }
++        await clock.advance(by: .seconds(2))
++        await awaitCondition {
++            for sink in fastSinks where await sink.samples.isEmpty { return false }
++            return true
++        }
++        #expect(await slowSink.samples.isEmpty)
++        for sink in fastSinks { #expect(await sink.samples.count >= 1) }
++        await slow.releaseFirst()
++        await awaitCondition { await slowSink.samples.count == 1 }
++        await metadata.apply(.paused)
++        for scheduler in schedulers { await scheduler.apply(.paused) }
++    }
++}

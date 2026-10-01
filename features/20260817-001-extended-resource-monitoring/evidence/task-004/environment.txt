@@ -1,0 +1,12 @@
+cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+HEAD: 855c5e8e24a126f2886753d771cb04da11c8cc9f
+Commands (cwd above):
+  xcodebuild test -project ResourceRunner.xcodeproj -scheme ResourceRunner -destination 'platform=macOS' -only-testing:ResourceRunnerTests/AuxiliaryCollectionSchedulerTests -test-iterations 5 -derivedDataPath /tmp/ResourceRunner-M3-task004-tests CODE_SIGNING_ALLOWED=NO
+  xcodebuild test -project ResourceRunner.xcodeproj -scheme ResourceRunner -destination 'platform=macOS' -only-testing:ResourceRunnerTests -derivedDataPath /tmp/ResourceRunner-M3-task004-all-tests CODE_SIGNING_ALLOWED=NO
+  xcodebuild build -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Release -destination 'platform=macOS' -derivedDataPath /tmp/ResourceRunner-M3-task004-release CODE_SIGNING_ALLOWED=NO
+Results: focused 6 tests x 5 iterations = 30 passed / 0 failed; all unit 534 passed / 0 failed; Release BUILD SUCCEEDED; git diff --check clean.
+Focused xcresult: /tmp/ResourceRunner-M3-task004-tests/Logs/Test/Test-ResourceRunner-2026.10.01_20-26-27-+0900.xcresult
+All-unit xcresult: /tmp/ResourceRunner-M3-task004-all-tests/Logs/Test/Test-ResourceRunner-2026.10.01_20-26-27-+0900.xcresult
+Source hashes, working tree, OS, architecture and Xcode: environment.raw.txt.
+Change snapshot: change.patch. Source policy and target/source tests are test-host only; actual native Network/Disk source/store and production six-axis wiring belong to task-005~007.
+Not run: UI suite, actual hardware topology/mount notifications, actual app six-axis probe.

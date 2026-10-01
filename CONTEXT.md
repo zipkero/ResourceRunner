@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 20:18 +0900
+저장: 2026-10-01 20:30 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-003 검증 기준 HEAD `d03fe7a`. task-001~003 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~003 `[x]`, task-004~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-004다.
+branch `main`, task-004 검증 기준 HEAD `855c5e8`. task-001~004 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~004 `[x]`, task-005~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-005다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-003/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-004/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -54,12 +54,19 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 실제 배포 Sandbox에서 필수 API 접근이 불가능하면 근거와 영향을 정리해 SPEC 소유 단계로 반환한다.
 구현 중 카드 프레임·실제 화면 관문을 만족하지 못해 설계 변경이 필요하면 DESIGN으로 반환한다.
 
+task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
+즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
+전용6개×5회·전체534/534·Release빌드 통과, 변경소스4개 해시와 원자료는 evidence/task-004에 있다.
+
 ## 다음 작업
 
-- 작업: M3 task-004 여섯 축 일정과 보조 조회의 독립 실행을 worker로 구현하고 독립 verify한다.
-- 완료 기준: lifecycle 조합/여섯 축 주기·최초 즉시 조회·캐시 신선도·요청 병합·중지중 요청·재개·느린 보조 조회와 빠른 축 독립 실행을 결정적으로 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-005로 진행한다.
+- 작업: M3 task-005 Network 속도·identity·보조 캐시와 최근 이력을 worker로 구현하고 독립 verify한다.
+- 완료 기준: 실제 native 읽기 시각의 차분·모든 baseline-only 원인·대상 수명과 변경revision·물리합계/부분실패·캐시 일치·601개 이력과 segment 단절·늦은 결과 불변성을 결정적으로 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-006로 진행한다.
 
 ## 먼저 읽을 파일
+
+- [ResourceRunner/CollectionAdmission.swift](./ResourceRunner/CollectionAdmission.swift)
+- [ResourceRunner/AuxiliaryCollectionScheduler.swift](./ResourceRunner/AuxiliaryCollectionScheduler.swift)
 
 - [ResourceRunner/NetworkNativeAdapter.swift](./ResourceRunner/NetworkNativeAdapter.swift)
 - [ResourceRunner/AppDelegate.swift](./ResourceRunner/AppDelegate.swift)

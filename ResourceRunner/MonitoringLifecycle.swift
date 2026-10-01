@@ -28,7 +28,7 @@ nonisolated struct MonitoringLifecycle: Sendable, Equatable {
         self.systemAsleep = systemAsleep
     }
 
-    /// 화면을 볼 수 없는 상태. 잠금·화면·세션·시스템 sleep 중 하나라도 성립하면 두 축이 중지됩니다.
+    /// 화면을 볼 수 없는 상태. 잠금·화면·세션·시스템 sleep 중 하나라도 성립하면 모든 축이 중지됩니다.
     /// 잠금 상태가 `unknown`일 때도 중지하는 M1 규칙을 그대로 둡니다.
     var screenUnobservable: Bool {
         screenLockState != .unlocked || displayAsleep || !sessionActive || systemAsleep
@@ -48,16 +48,42 @@ nonisolated enum CollectionSchedule: Sendable, Equatable {
     case paused
 }
 
-/// 시스템 지표와 프로세스 조사 두 축의 일정을 묶는 계산 결과.
+/// 여섯 수집 축의 일정을 묶는 계산 결과.
 /// 축마다 값이 따로이므로 한 축만 바뀌는 변경을 다른 축에 옮기지 않고 구분할 수 있습니다.
 nonisolated struct CollectionSchedulePlan: Sendable, Equatable {
     let systemMetrics: CollectionSchedule
     let processSurvey: CollectionSchedule
+    let networkActivity: CollectionSchedule
+    let diskActivity: CollectionSchedule
+    let networkMetadata: CollectionSchedule
+    let storageMetadata: CollectionSchedule
+
+    init(systemMetrics: CollectionSchedule, processSurvey: CollectionSchedule,
+         networkActivity: CollectionSchedule = .paused, diskActivity: CollectionSchedule = .paused,
+         networkMetadata: CollectionSchedule = .paused, storageMetadata: CollectionSchedule = .paused) {
+        self.systemMetrics = systemMetrics
+        self.processSurvey = processSurvey
+        self.networkActivity = networkActivity
+        self.diskActivity = diskActivity
+        self.networkMetadata = networkMetadata
+        self.storageMetadata = storageMetadata
+    }
+
+    subscript(axis: CollectionAxis) -> CollectionSchedule {
+        switch axis {
+        case .systemMetrics: systemMetrics
+        case .processSurvey: processSurvey
+        case .networkActivity: networkActivity
+        case .diskActivity: diskActivity
+        case .networkMetadata: networkMetadata
+        case .storageMetadata: storageMetadata
+        }
+    }
 
     static let paused = CollectionSchedulePlan(systemMetrics: .paused, processSurvey: .paused)
 }
 
-/// 두 수집 축 각각의 전력·팝오버 조합별 interval 여덟 값을 담는 일정 정의.
+/// 각 수집 축의 전력·팝오버 조합별 interval을 담는 일정 정의.
 nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
     /// 한 수집 축의 전력·팝오버 조합 넷.
     nonisolated struct AxisIntervals: Sendable, Equatable {
@@ -78,6 +104,21 @@ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
 
     let systemMetrics: AxisIntervals
     let processSurvey: AxisIntervals
+    let networkActivity: AxisIntervals?
+    let diskActivity: AxisIntervals?
+    let networkMetadata: AxisIntervals?
+    let storageMetadata: AxisIntervals?
+
+    init(systemMetrics: AxisIntervals, processSurvey: AxisIntervals,
+         networkActivity: AxisIntervals? = nil, diskActivity: AxisIntervals? = nil,
+         networkMetadata: AxisIntervals? = nil, storageMetadata: AxisIntervals? = nil) {
+        self.systemMetrics = systemMetrics
+        self.processSurvey = processSurvey
+        self.networkActivity = networkActivity
+        self.diskActivity = diskActivity
+        self.networkMetadata = networkMetadata
+        self.storageMetadata = storageMetadata
+    }
 
     /// ANALYSIS §2 「수집 중지와 재개」의 표: 시스템 지표는 normal 열림 1초·닫힘 2초, lowPower 열림 2초·닫힘 5초,
     /// 프로세스 조사는 normal 열림 2초·닫힘 5초, lowPower 열림 4초·닫힘 10초.
@@ -95,11 +136,25 @@ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
             lowPowerDismissed: .seconds(10)
         )
     )
+
+    /// DESIGN §2.1의 여섯 축 주기. 아직 배선되지 않은 축도 같은 순수 정책에서 계산합니다.
+    static let m3 = CollectionScheduleDefinition(
+        systemMetrics: m2.systemMetrics,
+        processSurvey: m2.processSurvey,
+        networkActivity: AxisIntervals(normalPresented: .seconds(1), normalDismissed: .seconds(2),
+                                       lowPowerPresented: .seconds(2), lowPowerDismissed: .seconds(5)),
+        diskActivity: AxisIntervals(normalPresented: .seconds(1), normalDismissed: .seconds(2),
+                                    lowPowerPresented: .seconds(2), lowPowerDismissed: .seconds(5)),
+        networkMetadata: AxisIntervals(normalPresented: .seconds(30), normalDismissed: .seconds(60),
+                                       lowPowerPresented: .seconds(60), lowPowerDismissed: .seconds(120)),
+        storageMetadata: AxisIntervals(normalPresented: .seconds(30), normalDismissed: .seconds(60),
+                                       lowPowerPresented: .seconds(60), lowPowerDismissed: .seconds(120))
+    )
 }
 
-/// 일정 정의와 최종 snapshot에서 두 축의 일정을 함께 계산하는 순수 정책.
+/// 일정 정의와 최종 snapshot에서 여섯 축의 일정을 함께 계산하는 순수 정책.
 /// 화면을 볼 수 없는 신호(잠금·`unknown`, 디스플레이·시스템 sleep, 세션 비활성) 중 하나라도 성립하면
-/// 팝오버·전력과 무관하게 두 축이 모두 `paused`입니다.
+/// 팝오버·전력과 무관하게 모든 축이 `paused`입니다.
 nonisolated enum CollectionSchedulePolicy {
     static func plan(
         for lifecycle: MonitoringLifecycle,
@@ -121,13 +176,24 @@ nonisolated enum CollectionSchedulePolicy {
                     lowPowerMode: lifecycle.lowPowerMode,
                     popoverPresented: lifecycle.popoverPresented
                 )
-            )
+            ),
+            networkActivity: schedule(definition.networkActivity, lifecycle),
+            diskActivity: schedule(definition.diskActivity, lifecycle),
+            networkMetadata: schedule(definition.networkMetadata, lifecycle),
+            storageMetadata: schedule(definition.storageMetadata, lifecycle)
         )
+    }
+
+    private static func schedule(_ intervals: CollectionScheduleDefinition.AxisIntervals?,
+                                 _ lifecycle: MonitoringLifecycle) -> CollectionSchedule {
+        guard let intervals else { return .paused }
+        return .running(intervals.interval(lowPowerMode: lifecycle.lowPowerMode,
+                                           popoverPresented: lifecycle.popoverPresented))
     }
 }
 
 /// 계산된 일정 하나를 적용받는 수집 축의 계약.
-/// `MonitoringLifecycleStore`가 두 Scheduler를 구체 타입 대신 이 계약으로 보유하므로,
+/// `MonitoringLifecycleStore`가 수집 Scheduler를 구체 타입 대신 이 계약으로 보유하므로,
 /// 축마다 서로 다른 source·sink 타입을 가져도 생명주기 계층에 제네릭이 전파되지 않습니다.
 nonisolated protocol CollectionScheduleTarget: Sendable {
     func apply(_ schedule: CollectionSchedule) async
@@ -140,12 +206,16 @@ nonisolated extension CollectionScheduleTarget {
 
 /// 팝오버·저전력과 화면을 볼 수 없는 신호를 `update(_:)` 하나로 직렬화해 최종 snapshot과
 /// 마지막 system revision, 마지막 적용 일정을 단독 소유하는 actor.
-/// 두 수집 축을 `CollectionScheduleTarget`으로 보유하고, 계산 결과가 마지막 적용 결과와 다른 축에만
+/// 활성 수집 축을 `CollectionScheduleTarget`으로 보유하고, 계산 결과가 마지막 적용 결과와 다른 축에만
 /// `apply(_:)`를 호출해 중복 수집과 불필요한 재시작을 막습니다.
 actor MonitoringLifecycleStore {
     private let definition: CollectionScheduleDefinition
     private let systemMetricsTarget: any CollectionScheduleTarget
     private let processSurveyTarget: any CollectionScheduleTarget
+    private let networkActivityTarget: (any CollectionScheduleTarget)?
+    private let diskActivityTarget: (any CollectionScheduleTarget)?
+    private let networkMetadataTarget: (any AuxiliaryCollectionTarget)?
+    private let storageMetadataTarget: (any AuxiliaryCollectionTarget)?
 
     /// system snapshot이 한 번도 도착하지 않은 시작 상태는 화면 상태를 알 수 없으므로
     /// 가장 안전한 `paused` 쪽(`unknown`)을 기본값으로 둡니다.
@@ -174,16 +244,34 @@ actor MonitoringLifecycleStore {
         definition: CollectionScheduleDefinition,
         systemMetricsTarget: any CollectionScheduleTarget,
         processSurveyTarget: any CollectionScheduleTarget,
+        networkActivityTarget: (any CollectionScheduleTarget)? = nil,
+        diskActivityTarget: (any CollectionScheduleTarget)? = nil,
+        networkMetadataTarget: (any AuxiliaryCollectionTarget)? = nil,
+        storageMetadataTarget: (any AuxiliaryCollectionTarget)? = nil,
         admission: CollectionAdmission = CollectionAdmission()
     ) {
         self.definition = definition
         self.systemMetricsTarget = systemMetricsTarget
         self.processSurveyTarget = processSurveyTarget
+        self.networkActivityTarget = networkActivityTarget
+        self.diskActivityTarget = diskActivityTarget
+        self.networkMetadataTarget = networkMetadataTarget
+        self.storageMetadataTarget = storageMetadataTarget
         self.admission = admission
 
         var continuation: AsyncStream<CollectionBoundary>.Continuation!
         self.collectionBoundaryEvents = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
         self.collectionBoundaryContinuation = continuation
+    }
+
+    /// 변경 알림이 있는 topology·마운트·해제는 해당 축에 요청을 전달합니다.
+    /// 알림이 없는 주소·상태는 보조 scheduler의 주기 조회가 맡습니다.
+    func requestAuxiliaryRefresh(_ axis: CollectionAxis) async {
+        switch axis {
+        case .networkMetadata: await networkMetadataTarget?.requestRefresh()
+        case .storageMetadata: await storageMetadataTarget?.requestRefresh()
+        default: break
+        }
     }
 
     /// 입력 이벤트 하나를 반영합니다. `systemSnapshot`은 최초 revision은 항상 적용하고
@@ -246,15 +334,43 @@ actor MonitoringLifecycleStore {
         let revisionForTargets = planRevision
         let applySystem = plan.systemMetrics != previousPlan?.systemMetrics || boundaryChanged
         let applyProcess = plan.processSurvey != previousPlan?.processSurvey || boundaryChanged
+        let applyNetwork = networkActivityTarget != nil &&
+            (plan.networkActivity != previousPlan?.networkActivity || boundaryChanged)
+        let applyDisk = diskActivityTarget != nil &&
+            (plan.diskActivity != previousPlan?.diskActivity || boundaryChanged)
+        let applyNetworkMetadata = networkMetadataTarget != nil &&
+            (plan.networkMetadata != previousPlan?.networkMetadata || boundaryChanged)
+        let applyStorageMetadata = storageMetadataTarget != nil &&
+            (plan.storageMetadata != previousPlan?.storageMetadata || boundaryChanged)
         // actor의 첫 await 전에 축별 계획을 확정해 이전 update의 늦은 apply와 tick을 거부합니다.
         if applySystem { admission.setPlanRevision(revisionForTargets, for: .systemMetrics) }
         if applyProcess { admission.setPlanRevision(revisionForTargets, for: .processSurvey) }
+        if applyNetwork { admission.setPlanRevision(revisionForTargets, for: .networkActivity) }
+        if applyDisk { admission.setPlanRevision(revisionForTargets, for: .diskActivity) }
+        if applyNetworkMetadata { admission.setPlanRevision(revisionForTargets, for: .networkMetadata) }
+        if applyStorageMetadata { admission.setPlanRevision(revisionForTargets, for: .storageMetadata) }
         if applySystem {
             await systemMetricsTarget.apply(plan.systemMetrics, revision: revisionForTargets)
         }
         guard revisionForTargets == planRevision else { return }
         if applyProcess {
             await processSurveyTarget.apply(plan.processSurvey, revision: revisionForTargets)
+        }
+        guard revisionForTargets == planRevision else { return }
+        if applyNetwork {
+            await networkActivityTarget?.apply(plan.networkActivity, revision: revisionForTargets)
+        }
+        guard revisionForTargets == planRevision else { return }
+        if applyDisk {
+            await diskActivityTarget?.apply(plan.diskActivity, revision: revisionForTargets)
+        }
+        guard revisionForTargets == planRevision else { return }
+        if applyNetworkMetadata {
+            await networkMetadataTarget?.apply(plan.networkMetadata, revision: revisionForTargets)
+        }
+        guard revisionForTargets == planRevision else { return }
+        if applyStorageMetadata {
+            await storageMetadataTarget?.apply(plan.storageMetadata, revision: revisionForTargets)
         }
     }
 }

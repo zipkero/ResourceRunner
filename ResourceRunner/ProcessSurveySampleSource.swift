@@ -16,9 +16,11 @@ import Foundation
 /// 던지면 `MonitoringScheduler`가 그 tick을 건너뛰어 실패가 저장소와 표시 계층에 도달하지 못합니다.
 actor ProcessSurveySampleSource<Collector: ProcessSurveyCollecting>: ScheduledSampleSource {
     private var collector: Collector
+    private let admission: CollectionAdmission?
 
-    init(collector: Collector) {
+    init(collector: Collector, admission: CollectionAdmission? = nil) {
         self.collector = collector
+        self.admission = admission
     }
 
     func sample() -> ProcessSurveySample {
@@ -30,7 +32,15 @@ actor ProcessSurveySampleSource<Collector: ProcessSurveyCollecting>: ScheduledSa
     }
 
     /// 프로세스 조사는 순간 조회이므로 구간 식별자를 계산에 사용하지 않습니다.
+    /// context 경로에서는 조사 뒤 현재 실행권을 다시 확인합니다.
     func sample(collectionEpoch: Int) -> ProcessSurveySample? {
         sample()
+    }
+
+    func sample(context: CollectionRunContext) async -> ProcessSurveySample? {
+        guard let admission else { return sample() }
+        guard admission.isCurrent(context) else { return nil }
+        let value = sample()
+        return admission.admit(context, phase: .source, timestamp: ContinuousClock().now) { value }
     }
 }

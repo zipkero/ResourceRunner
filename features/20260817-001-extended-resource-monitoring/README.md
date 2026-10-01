@@ -30,3 +30,5 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 - 2026-10-01: 새 세션에서 task-001 독립 verify 호출이 성공했고 main이 approved로 확정했습니다. 현재 소스 해시와 테스트 6개·임시 예외 없는 build-only Sandbox 실행 원자료를 대조했습니다. task-001만 `[x]`로 전환하며 SPEC·DESIGN 승인과 나머지 Task를 유지합니다. 완료 조건의 마지막 매핑 Task는 없어 IMPLEMENT는 `[ ]`입니다. 선행 문서와 task-001을 첫 커밋에 포함한 뒤 task-002를 진행합니다.
 
 - 2026-10-01: task-002 독립 verify approved를 확정했습니다. 필수 물리 Disk 바이트·Operations·시스템 용량·APFS 관계의 실제 Sandbox 근거, 결정적 Disk 7개·Network 6개 테스트와 현재 소스 해시를 확인했습니다. Network 격리 선언 보완의 영향은 verifier의 같은 빌드 probe 재실행으로 회귀 없음을 확인해 task-001 승인을 유지합니다. task-002만 `[x]`, 나머지 Task와 IMPLEMENT는 `[ ]`로 유지하며 커밋 후 task-003으로 진행합니다. 요구사항·설계·완료 기준 변경과 승인 취소는 없습니다.
+
+- 2026-10-01: task-003 독립 verify approved를 확정했습니다. 공통 실행권과 누적 경계·sleep/wake·축별 계획 순서 검사를 source 기준점/실제 저장/표시 반영에 배선했습니다. 구현 중 async protocol 기본 구현 우회, 오래된 tick의 새 token 발급, 늦은 target 일정 적용을 발견해 승인 계약 안에서 보완하고 결정적 통합 테스트로 확인했습니다. 전체 단위 테스트 528/528와 Release 빌드가 통과했습니다. task-003만 `[x]`로 전환하고 기존 SPEC·DESIGN·task-001·002 승인을 유지하며 IMPLEMENT와 task-004 이후는 `[ ]`입니다. 의미 변경·완료 기준 변경·승인 취소는 없습니다. 커밋 후 task-004를 진행합니다.

@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 19:49 +0900
+저장: 2026-10-01 20:18 +0900
 
 ## 현재 목표
 
@@ -10,16 +10,21 @@
 
 ## 현재 상태
 
-branch `main`, task-002 검증 기준 HEAD `eed1f53`. task-001·002 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001·002 `[x]`, task-003~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-003이다.
+branch `main`, task-003 검증 기준 HEAD `d03fe7a`. task-001~003 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~003 `[x]`, task-004~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-004다.
 
-Network 원자료는 feature `evidence/task-001/`, Disk 원자료는 `evidence/task-002/`다.
-Disk 7개·Network 6개 테스트 통과, 별도 build-only arm64 Sandbox 앱에서 물리 disk0 Read·Write·Operations,
-`/` 용량과 APFS 볼륨 8개의 물리 드라이버 관계를 확인했다. source 해시 일치·새 예외 없음을 확인했다.
-Network nonisolated 인접 변경의 영향은 verifier가 같은 빌드 Network probe를 재실행해 회귀 없음을 확인했다.
-llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
-NetworkRouteReader 생성의 Swift 6 격리 경고는 후속 source·격리 배선에서 확인할 품질 위험이다.
+실행 원자료는 feature `evidence/task-001/`~`task-003/`에 있다.
+Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
+Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
+Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
+
+task-003은 공통 CollectionAdmission의 동기 무효화/반영 검사, 누적 경계·sleep/wake,
+axis planRevision·epoch·generation·request 순서를 기존 두 축과 표시까지 배선했다.
+async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완했고 전용 통합 테스트와
+전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
+실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
+NetworkRouteReader 생성의 Swift 6 격리 경고는 기존 품질 위험으로 남는다.
 Network·Disk Collector와 카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
 
 ## 현재 작업 문서
@@ -51,8 +56,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-003 공통 수집 경계와 source·store·표시의 원자적 admission을 worker로 구현하고 독립 verify한다.
-- 완료 기준: 승인된 task-003의 병합된 짧은 중지·취소 무시·역순 응답·sink suspension·표시 역순을 결정적으로 재현해 기준점·현재값·이력·카드 상태 불변성과 CPU·Memory·프로세스·메뉴바 회귀를 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-004로 진행한다.
+- 작업: M3 task-004 여섯 축 일정과 보조 조회의 독립 실행을 worker로 구현하고 독립 verify한다.
+- 완료 기준: lifecycle 조합/여섯 축 주기·최초 즉시 조회·캐시 신선도·요청 병합·중지중 요청·재개·느린 보조 조회와 빠른 축 독립 실행을 결정적으로 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-005로 진행한다.
 
 ## 먼저 읽을 파일
 

@@ -89,7 +89,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `eed1f53`의 DiskNativeAdapter·직접 테스트·AppDelegate Disk probe와 Network nonisolated 선언 diff를 검증했고 `evidence/task-002/environment.txt`의 소스 4개 SHA-256이 현재 파일과 일치합니다. Disk 테스트 7개와 Network 회귀 6개 통과, 별도 build-only arm64 Sandbox 앱 PID 20826에서 물리 disk0 드라이버 ID 4294969732의 Read·Write 바이트·Operations, `/` 용량과 APFS 볼륨 8개의 관계를 확인했습니다. physicalComplete·relationshipsComplete가 true이며 새 예외가 없습니다. verifier가 같은 빌드의 Network probe PID 24040을 직접 재실행해 task-001 동작·complete=false 보존을 확인하고 종료했습니다. 실제 외장 전환은 task-014에 남고 마지막 매핑이 끝난 SPEC 조건은 없습니다. NetworkRouteReader 생성의 Swift 6 격리 경고는 현재 Swift 5 빌드·실행 통과와 별도로 후속 배선의 품질 위험으로 남깁니다.
 
-- [ ] task-003: 공통 수집 경계와 source·store·표시의 원자적 admission
+- [x] task-003: 공통 수집 경계와 source·store·표시의 원자적 admission
   - 목적: 짧은 중지·복귀와 취소를 무시하는 늦은 응답이
     기준점·현재값·이력·카드 상태를 되돌리지 못하는 공통 실행 계약을 완성합니다.
   - 접근: lifecycle snapshot에 누적 boundary sequence를 담고
@@ -116,6 +116,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       새 Network·Disk 경로의 동일 계약은 task-005~task-008에서 확인합니다.
   - 참조: SPEC §5.8, SPEC §5.9, SPEC §5.11, SPEC §5.15,
     DESIGN §2.1, DESIGN §2.4, DESIGN §3.1, DESIGN §4.1, DESIGN §4.2
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `d03fe7a`의 공통 CollectionAdmission, observer/lifecycle/scheduler/source/store/coordinator/display 배선과 직접 테스트 diff를 확인했으며 변경 소스 12개 SHA-256이 `evidence/task-003/environment.raw.txt`와 일치합니다. 누적 boundarySequence의 병합 중지·복귀, sleep/wake 알림, 첫 await 전 실행권 무효화, 이전 scheduler의 새 token 발급 방지, 늦은 target 일정 적용, CPU 실제 baseline·store suspension·coordinator 순위 await 뒤 표시 역전 차단을 전용 테스트로 확인했습니다. 정상 주기 변경의 epoch·baseline 보존과 기존 CPU·Memory·프로세스·메뉴바 회귀를 포함해 전체 단위 테스트 528/528 통과, Release BUILD SUCCEEDED, diff-check clean입니다. 원자료와 최종 change.patch는 같은 evidence 디렉터리에 있습니다. task-001·002 native adapter 변경이 없어 해당 승인을 유지합니다. 실제 OS 전환·UI 통합은 task-015·018에 남으며 이번에 완료되는 마지막 매핑 SPEC 조건은 없습니다.
 
 - [ ] task-004: 여섯 축 일정과 보조 조회의 독립 실행
   - 목적: 빠른 속도와 느린 보조 조회가 설계의 주기로 독립 실행되고

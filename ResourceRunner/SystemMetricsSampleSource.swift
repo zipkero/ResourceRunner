@@ -30,6 +30,7 @@ actor SystemMetricsSampleSource<
     private var cpuCollector: CPUCollector
     private let memoryCollector: MemoryCollector
     private let clock: Clock
+    private let admission: CollectionAdmission?
     private var lastProcessedCollectionEpoch: Int?
 
 #if DEBUG
@@ -38,10 +39,12 @@ actor SystemMetricsSampleSource<
     private var debugPreviousTimestamp: ContinuousClock.Instant?
 #endif
 
-    init(cpuCollector: CPUCollector, memoryCollector: MemoryCollector, clock: Clock) {
+    init(cpuCollector: CPUCollector, memoryCollector: MemoryCollector, clock: Clock,
+         admission: CollectionAdmission? = nil) {
         self.cpuCollector = cpuCollector
         self.memoryCollector = memoryCollector
         self.clock = clock
+        self.admission = admission
     }
 
     /// 두 Collector를 한 번의 시각 읽기 아래에서 차례로 호출해 지표별 성공·실패를 담은 샘플 하나를 만듭니다.
@@ -50,31 +53,37 @@ actor SystemMetricsSampleSource<
         // Scheduler의 epoch 전달이 배선되기 전 기존 호출 경로를 유지합니다.
         // 시각 조회 중 epoch가 전진하면 지난 호출은 폐기되므로 현재 epoch로 다시 시도합니다.
         while true {
-            if let sample = await sample(collectionEpoch: lastProcessedCollectionEpoch ?? 0) {
-                return sample
-            }
+            if let sample = await sample(collectionEpoch: lastProcessedCollectionEpoch ?? 0) { return sample }
         }
     }
 
-    /// 새 수집 구간의 첫 tick은 CPU 기준점만 잡고, 지난 구간의 늦은 호출은 조회하지 않습니다.
+    /// 새 수집 구간의 첫 tick은 CPU 기준점만 잡습니다. native 조회는 복사한 Collector에서
+    /// 실행하고 현재 token을 확인한 뒤에만 그 기준점을 소유 상태로 반영합니다.
     func sample(collectionEpoch: Int) async -> SystemMetricsSample? {
+        await sample(collectionEpoch: collectionEpoch, context: nil)
+    }
+
+    func sample(context: CollectionRunContext) async -> SystemMetricsSample? {
+        await sample(collectionEpoch: context.epoch, context: context)
+    }
+
+    private func sample(collectionEpoch: Int, context: CollectionRunContext?) async -> SystemMetricsSample? {
         guard collectionEpoch >= (lastProcessedCollectionEpoch ?? collectionEpoch) else { return nil }
+        if let context, admission?.isCurrent(context) != true { return nil }
         let timestamp = await clock.now()
 #if DEBUG
         let debugPreviousCollectionEpoch = lastProcessedCollectionEpoch
 #endif
-        // clock suspension 동안 새 epoch가 처리됐을 수도 있으므로 조회 직전에 다시 판정합니다.
-        if let lastProcessedCollectionEpoch {
-            guard collectionEpoch >= lastProcessedCollectionEpoch else { return nil }
-            if collectionEpoch > lastProcessedCollectionEpoch {
-                cpuCollector.resetBaseline()
-            }
+        guard collectionEpoch >= (lastProcessedCollectionEpoch ?? collectionEpoch) else { return nil }
+        if let context, admission?.isCurrent(context) != true { return nil }
+        var candidate = cpuCollector
+        if let lastProcessedCollectionEpoch, collectionEpoch > lastProcessedCollectionEpoch {
+            candidate.resetBaseline()
         }
-        lastProcessedCollectionEpoch = collectionEpoch
 
         let cpu: Result<CPUSystemMetrics?, CollectorFailure>
         do {
-            cpu = .success(try cpuCollector.collect(at: timestamp))
+            cpu = .success(try candidate.collect(at: timestamp))
         } catch {
             cpu = .failure(error)
         }
@@ -84,6 +93,17 @@ actor SystemMetricsSampleSource<
             memory = .success(try memoryCollector.collect())
         } catch {
             memory = .failure(error)
+        }
+
+        if let context, let admission {
+            guard admission.admit(context, phase: .source, timestamp: timestamp, {
+                cpuCollector = candidate
+                lastProcessedCollectionEpoch = collectionEpoch
+                return true
+            }) == true else { return nil }
+        } else {
+            cpuCollector = candidate
+            lastProcessedCollectionEpoch = collectionEpoch
         }
 
 #if DEBUG

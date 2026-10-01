@@ -17,8 +17,8 @@ nonisolated enum ScreenLockState: Sendable, Equatable {
     case unknown
 }
 
-/// 저전력 모드와 화면을 볼 수 없는 세 신호(화면 잠금·디스플레이 슬립·세션 비활성)를 하나로 묶은 combined snapshot.
-/// `revision`은 initial에서 0으로 시작해 필드 값이 실제로 바뀔 때마다 증가합니다.
+/// 저전력 모드와 화면 잠금·디스플레이 슬립·세션·시스템 sleep을 묶은 snapshot.
+/// `revision`은 값이 바뀔 때, `boundarySequence`는 중지·재개 및 sleep/wake 경계에서 증가합니다.
 nonisolated struct SystemLifecycleSnapshot: Sendable, Equatable {
     let revision: Int
     let lowPowerMode: Bool
@@ -27,6 +27,20 @@ nonisolated struct SystemLifecycleSnapshot: Sendable, Equatable {
     let displayAsleep: Bool
     /// 이 GUI 세션이 활성인지 여부. 빠른 사용자 전환으로 다른 세션이 앞에 오면 `false`입니다.
     let sessionActive: Bool
+    let systemAsleep: Bool
+    let boundarySequence: Int
+
+    init(revision: Int, lowPowerMode: Bool, screenLockState: ScreenLockState,
+         displayAsleep: Bool, sessionActive: Bool, systemAsleep: Bool = false,
+         boundarySequence: Int = 0) {
+        self.revision = revision
+        self.lowPowerMode = lowPowerMode
+        self.screenLockState = screenLockState
+        self.displayAsleep = displayAsleep
+        self.sessionActive = sessionActive
+        self.systemAsleep = systemAsleep
+        self.boundarySequence = boundarySequence
+    }
 }
 
 /// initial snapshot과 `.bufferingNewest(1)`인 이후 update stream을 묶는 값.
@@ -50,13 +64,15 @@ nonisolated enum SystemLifecycleFieldChange: Sendable {
     case screenLock(ScreenLockState)
     case displayAsleep(Bool)
     case sessionActive(Bool)
+    case willSleep
+    case didWake
 }
 
 /// 등록 뒤 도착한 이벤트를 도착 순서대로 병합해 combined snapshot을 만드는 내부 직렬 생산자.
 /// `MainActor`에서 현재 snapshot을 소유하며, 다른 queue에서 도착한 시스템 callback은
 /// 이 타입을 직접 호출하지 않고 `AsyncStream` continuation을 거쳐 여기로 들어옵니다.
-/// 갱신마다 항상 현재 snapshot 전체를 기준으로 바뀐 필드만 교체하므로, 한 필드의 갱신이
-/// 다른 필드의 최신값을 이전 값으로 되돌리지 않습니다. 값이 같은 연속 snapshot은 만들지 않습니다.
+/// 갱신마다 현재 snapshot 전체에서 필드 하나만 교체합니다. 값이 같아도 sleep/wake는
+/// 기준점을 끊는 경계로 남기며, 최신 하나만 소비해도 누적 sequence가 그 사실을 보존합니다.
 final class CombinedSnapshotProducer {
     private(set) var currentSnapshot: SystemLifecycleSnapshot
     private let continuation: AsyncStream<SystemLifecycleSnapshot>.Continuation
@@ -74,6 +90,10 @@ final class CombinedSnapshotProducer {
         var screenLockState = currentSnapshot.screenLockState
         var displayAsleep = currentSnapshot.displayAsleep
         var sessionActive = currentSnapshot.sessionActive
+        var systemAsleep = currentSnapshot.systemAsleep
+        let previousStopped = currentSnapshot.screenLockState != .unlocked || currentSnapshot.displayAsleep ||
+            !currentSnapshot.sessionActive || currentSnapshot.systemAsleep
+        var forcedBoundary = false
 
         switch change {
         case .lowPowerMode(let value):
@@ -84,12 +104,22 @@ final class CombinedSnapshotProducer {
             displayAsleep = value
         case .sessionActive(let value):
             sessionActive = value
+        case .willSleep:
+            systemAsleep = true
+            forcedBoundary = true
+        case .didWake:
+            systemAsleep = false
+            forcedBoundary = true
         }
+
+        let stopped = screenLockState != .unlocked || displayAsleep || !sessionActive || systemAsleep
+        let boundarySequence = currentSnapshot.boundarySequence + ((forcedBoundary || previousStopped != stopped) ? 1 : 0)
 
         guard lowPowerMode != currentSnapshot.lowPowerMode
             || screenLockState != currentSnapshot.screenLockState
             || displayAsleep != currentSnapshot.displayAsleep
-            || sessionActive != currentSnapshot.sessionActive else {
+            || sessionActive != currentSnapshot.sessionActive
+            || boundarySequence != currentSnapshot.boundarySequence else {
             return
         }
 
@@ -98,7 +128,9 @@ final class CombinedSnapshotProducer {
             lowPowerMode: lowPowerMode,
             screenLockState: screenLockState,
             displayAsleep: displayAsleep,
-            sessionActive: sessionActive
+            sessionActive: sessionActive,
+            systemAsleep: systemAsleep,
+            boundarySequence: boundarySequence
         )
         currentSnapshot = updated
         continuation.yield(updated)
@@ -236,7 +268,7 @@ final class ScreenLockObservationAdapter {
     }
 }
 
-/// 저전력 모드와 화면을 볼 수 없는 세 신호를 하나의 관찰 지점에서 읽는 production 어댑터.
+/// 저전력 모드와 화면을 볼 수 없는 신호를 하나의 관찰 지점에서 읽는 production 어댑터.
 /// 저전력은 `NSNotification.Name.NSProcessInfoPowerStateDidChange`로 변경을 관찰하고,
 /// 실제 값 조회는 `readLowPowerMode` 클로저로 주입받습니다(기본값은 `ProcessInfo.isLowPowerModeEnabled`).
 /// 화면 잠금과 마찬가지로 자동 테스트가 실제 시스템 상태를 바꿀 수 없으므로,
@@ -323,6 +355,8 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
             (NSWorkspace.screensDidWakeNotification, .displayAsleep(false)),
             (NSWorkspace.sessionDidResignActiveNotification, .sessionActive(false)),
             (NSWorkspace.sessionDidBecomeActiveNotification, .sessionActive(true)),
+            (NSWorkspace.willSleepNotification, .willSleep),
+            (NSWorkspace.didWakeNotification, .didWake),
         ].map { name, change in
             workspaceNotificationCenter.addObserver(forName: name, object: nil, queue: nil) { _ in
                 rawContinuation.yield(change)
@@ -421,4 +455,7 @@ final class MemorySystemLifecycleSource: SystemLifecycleSource {
     func sendSessionActive(_ value: Bool) {
         producer?.apply(.sessionActive(value))
     }
+
+    func sendWillSleep() { producer?.apply(.willSleep) }
+    func sendDidWake() { producer?.apply(.didWake) }
 }

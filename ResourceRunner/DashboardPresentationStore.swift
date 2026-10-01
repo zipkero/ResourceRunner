@@ -15,6 +15,20 @@ import Foundation
 final class DashboardPresentationStore: ObservableObject {
     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
+    private var lastCollectionBoundarySequence = 0
+
+    func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
+        admission.withCurrentBoundary(boundary) {
+            guard boundary.sequence >= lastCollectionBoundarySequence else { return }
+            let missedStop = !boundary.stopped && boundary.sequence - lastCollectionBoundarySequence > 1
+            lastCollectionBoundarySequence = boundary.sequence
+            if boundary.stopped || missedStop { markCollectionStopped() }
+        }
+    }
+
+    func recordSampleBoundary(_ context: CollectionRunContext) {
+        lastCollectionBoundarySequence = max(lastCollectionBoundarySequence, context.boundarySequence)
+    }
     /// 어느 카드 옆에 상세 팝업이 열려 있는지. `selectCard(_:)`를 거쳐서만 바뀌므로 `updateCPUCard`·`updateMemoryCard`가
     /// 매 tick 호출되어도 선택 상태는 그대로 유지됩니다(task-010 검증 조건, ANALYSIS §2 「팝오버 열림과 카드 선택」).
     /// 이 값이 바로 카드 옆 상세 팝업의 표시 여부를 유도하는 바인딩 원본입니다 —

@@ -1,0 +1,10 @@
+cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+HEAD: d03fe7a1b8ecf827a0f84746d07d900468169e27
+Final commands (cwd above):
+  xcodebuild test -project ResourceRunner.xcodeproj -scheme ResourceRunner -destination 'platform=macOS' -only-testing:ResourceRunnerTests -derivedDataPath /tmp/ResourceRunner-M3-task003-tests CODE_SIGNING_ALLOWED=NO
+  xcodebuild build -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Release -destination 'platform=macOS' -derivedDataPath /tmp/ResourceRunner-M3-task003-release CODE_SIGNING_ALLOWED=NO
+Results: TEST SUCCEEDED (528 passed / 0 failed), BUILD SUCCEEDED; see raw logs and test-summary.json.
+Result bundle: /tmp/ResourceRunner-M3-task003-tests/Logs/Test/Test-ResourceRunner-2026.10.01_20-13-50-+0900.xcresult
+Source hashes, working tree, OS, architecture, Xcode: environment.raw.txt.
+Change snapshot: change.patch. git diff --check: clean.
+Not run: UI suite or real system sleep/wake. Unit tests inject NSWorkspace sleep/wake and controlled suspensions; real transitions belong to later integration tasks.

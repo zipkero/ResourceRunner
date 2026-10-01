@@ -35,6 +35,13 @@ nonisolated protocol ScheduledSampleSource: Sendable {
     associatedtype Value: Sendable
     /// 지난 수집 구간의 늦은 호출은 `nil`로 폐기할 수 있습니다.
     func sample(collectionEpoch: Int) async throws -> Value?
+    func sample(context: CollectionRunContext) async throws -> Value?
+}
+
+nonisolated extension ScheduledSampleSource {
+    func sample(context: CollectionRunContext) async throws -> Value? {
+        try await sample(collectionEpoch: context.epoch)
+    }
 }
 
 /// 수집한 샘플을 받는 저장 대상 계약.
@@ -43,6 +50,14 @@ nonisolated protocol ScheduledSampleSource: Sendable {
 nonisolated protocol MonitoringSampleSink: Sendable {
     associatedtype Value: Sendable
     func append(_ sample: TimestampedSample<Value>) async
+    func append(_ sample: TimestampedSample<Value>, context: CollectionRunContext) async -> Bool
+}
+
+nonisolated extension MonitoringSampleSink {
+    func append(_ sample: TimestampedSample<Value>, context: CollectionRunContext) async -> Bool {
+        await append(sample)
+        return true
+    }
 }
 
 #if DEBUG
@@ -57,7 +72,7 @@ nonisolated enum MonitoringSchedulerDebugLog {
 #endif
 
 /// 적용 일정, 단일 Task와 generation별 실행을 직렬화하는 actor.
-/// 일정, 취소와 generation만 소유하고 이력 보관은 `MonitoringSampleSink` 구현에만 맡깁니다.
+/// 일정·취소·generation을 소유하고, 공유 admission의 실행권을 source와 sink에 전달합니다.
 /// `apply(_:)` 호출마다 기존 작업을 취소하고 새 generation 하나만 시작하며,
 /// interval은 마지막 실행 완료 시점이 아니라 기준 deadline을 전진시켜 계산합니다.
 actor MonitoringScheduler<
@@ -68,13 +83,16 @@ actor MonitoringScheduler<
     private let clock: Clock
     private let source: Source
     private let sink: Sink
+    private let admission: CollectionAdmission?
+    private let axis: CollectionAxis?
+    private var lastRevision = -1
 
     private var task: Task<Void, Never>?
     private var appliedSchedule: CollectionSchedule?
     private(set) var collectionEpoch = 0
 
     /// `apply(_:)`가 새 작업을 시작할 때만 전진하는 세대 번호.
-    /// `appendIfCurrentGeneration`이 이전 세대의 실행 결과를 걸러내는 근거이며,
+    /// `appendIfCurrentGeneration`과 token 발급이 이전 세대 결과를 걸러내는 근거이며,
     /// `Task.isCancelled` 검사와 별개로 남겨 두는 방어선이라 테스트에서 직접 관찰할 수 있게 노출합니다.
     private(set) var generation = 0
 
@@ -94,10 +112,21 @@ actor MonitoringScheduler<
     private var debugAppendedSampleCount = 0
 #endif
 
-    init(clock: Clock, source: Source, sink: Sink) {
+    init(clock: Clock, source: Source, sink: Sink,
+         admission: CollectionAdmission? = nil, axis: CollectionAxis? = nil) {
         self.clock = clock
         self.source = source
         self.sink = sink
+        self.admission = admission
+        self.axis = axis
+    }
+
+    func apply(_ schedule: CollectionSchedule, revision: Int) async {
+        guard revision >= lastRevision else { return }
+        if let admission, let axis,
+           admission.planRevision(for: axis) != revision { return }
+        lastRevision = revision
+        await apply(schedule)
     }
 
     /// 계산된 일정을 적용합니다.
@@ -109,10 +138,11 @@ actor MonitoringScheduler<
     func apply(_ schedule: CollectionSchedule) async {
         applyCallCount += 1
 
-        // 실제 실행에서 중지로 넘어갈 때만 새 수집 구간을 시작합니다.
-        if case .some(.running) = appliedSchedule, case .paused = schedule {
+        // 공유 admission이 없는 기존 직접 호출 경로만 자체 epoch를 관리합니다.
+        if admission == nil, case .some(.running) = appliedSchedule, case .paused = schedule {
             collectionEpoch += 1
         }
+        if let admission { collectionEpoch = admission.currentBoundary.epoch }
         appliedSchedule = schedule
 
         task?.cancel()
@@ -122,6 +152,10 @@ actor MonitoringScheduler<
         // actor 차례를 기다리던 `appendIfCurrentGeneration` 호출이 끼어들었을 때 아직 갱신 전인
         // generation과 우연히 일치해 이전 세대 결과가 저장될 수 있습니다.
         generation += 1
+        let admittedGeneration: Int? = if let admission, let axis { admission.advance(axis) } else { nil }
+        let admittedPlanRevision: Int? = if let admission, let axis {
+            admission.planRevision(for: axis)
+        } else { nil }
 
 #if DEBUG
         // 로그 자체는 실기기 관찰에만 필요하고 이 actor의 임계 구간에 영향을 주면 안 되므로,
@@ -148,12 +182,18 @@ actor MonitoringScheduler<
             let clock = clock
             let source = source
             let sink = sink
+            let admission = admission
+            let axis = axis
+            let expectedAdmissionGeneration = admittedGeneration
+            let expectedPlanRevision = admittedPlanRevision
             // 기준 deadline은 apply(_:)가 실행되는 이 시점에 고정합니다. Task 본문 안에서 다시 now()를
             // 읽으면 비동기 스케줄링 시점에 따라 anchor가 달라질 수 있어(수동 시계 테스트에서는 호출자의
             // 이후 전진과 경쟁), 매 tick이 이 고정된 기준에서만 전진하도록 보장할 수 없습니다.
             let startInstant = await clock.now()
             // 기준 시각을 기다리는 동안 중지·일정 교체가 적용됐으면 지난 실행을 시작하지 않습니다.
             guard currentGeneration == generation else { return }
+            if let admission, let axis, let expectedPlanRevision,
+               admission.planRevision(for: axis) != expectedPlanRevision { return }
 
             task = Task { [weak self] in
                 var deadline = startInstant
@@ -171,9 +211,17 @@ actor MonitoringScheduler<
                     if Task.isCancelled { return }
 
                     let timestamp = await clock.now()
+                    let context: CollectionRunContext? = if let admission, let axis,
+                        let expectedAdmissionGeneration, let expectedPlanRevision {
+                        admission.issue(axis, expectedEpoch: currentCollectionEpoch,
+                            expectedGeneration: expectedAdmissionGeneration,
+                            expectedPlanRevision: expectedPlanRevision)
+                    } else { nil }
+                    if admission != nil && context == nil { continue }
                     let value: Source.Value?
                     do {
-                        value = try await source.sample(collectionEpoch: currentCollectionEpoch)
+                        if let context { value = try await source.sample(context: context) }
+                        else { value = try await source.sample(collectionEpoch: currentCollectionEpoch) }
                     } catch {
                         // 공급자 실패는 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
                         continue
@@ -184,8 +232,9 @@ actor MonitoringScheduler<
                     guard let self else { return }
                     await self.appendIfCurrentGeneration(
                         currentGeneration,
-                        sample: TimestampedSample(timestamp: timestamp, value: value, collectionEpoch: currentCollectionEpoch),
-                        into: sink
+                        sample: TimestampedSample(timestamp: timestamp, value: value,
+                            collectionEpoch: currentCollectionEpoch, context: context),
+                        context: context, into: sink
                     )
                 }
             }
@@ -196,6 +245,7 @@ actor MonitoringScheduler<
     private func appendIfCurrentGeneration(
         _ resultGeneration: Int,
         sample: TimestampedSample<Source.Value>,
+        context: CollectionRunContext?,
         into sink: Sink
     ) async {
         guard resultGeneration == generation else {
@@ -208,7 +258,15 @@ actor MonitoringScheduler<
 #endif
             return
         }
-        await sink.append(sample)
+        let appended: Bool
+        if let context, let admission {
+            guard admission.isCurrent(context) else { return }
+            appended = await sink.append(sample, context: context)
+        } else {
+            await sink.append(sample)
+            appended = true
+        }
+        guard appended else { return }
 #if DEBUG
         debugAppendedSampleCount += 1
         let debugAxis = debugAxisLabel

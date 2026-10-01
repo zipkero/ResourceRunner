@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// 팝오버 열림·저전력 모드와 화면을 볼 수 없는 세 신호를 하나로 묶은 수집 일정 결정용 최종 snapshot.
+/// 팝오버 열림·저전력 모드와 화면을 볼 수 없는 신호를 묶은 수집 일정 결정용 최종 snapshot.
 /// `MonitoringLifecycleStore`가 단독 소유하며, 값 타입이라 어느 격리에서도 전달할 수 있어야 하므로
 /// `nonisolated`로 선언합니다.
 nonisolated struct MonitoringLifecycle: Sendable, Equatable {
@@ -16,11 +16,22 @@ nonisolated struct MonitoringLifecycle: Sendable, Equatable {
     let screenLockState: ScreenLockState
     let displayAsleep: Bool
     let sessionActive: Bool
+    let systemAsleep: Bool
 
-    /// 화면을 볼 수 없는 상태. 셋 중 하나라도 성립하면 두 수집 축이 모두 중지됩니다.
+    init(popoverPresented: Bool, lowPowerMode: Bool, screenLockState: ScreenLockState,
+         displayAsleep: Bool, sessionActive: Bool, systemAsleep: Bool = false) {
+        self.popoverPresented = popoverPresented
+        self.lowPowerMode = lowPowerMode
+        self.screenLockState = screenLockState
+        self.displayAsleep = displayAsleep
+        self.sessionActive = sessionActive
+        self.systemAsleep = systemAsleep
+    }
+
+    /// 화면을 볼 수 없는 상태. 잠금·화면·세션·시스템 sleep 중 하나라도 성립하면 두 축이 중지됩니다.
     /// 잠금 상태가 `unknown`일 때도 중지하는 M1 규칙을 그대로 둡니다.
     var screenUnobservable: Bool {
-        screenLockState != .unlocked || displayAsleep || !sessionActive
+        screenLockState != .unlocked || displayAsleep || !sessionActive || systemAsleep
     }
 }
 
@@ -87,7 +98,7 @@ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
 }
 
 /// 일정 정의와 최종 snapshot에서 두 축의 일정을 함께 계산하는 순수 정책.
-/// 화면을 볼 수 없는 세 신호(잠금·`unknown` 포함, 디스플레이 슬립, 세션 비활성) 중 하나라도 성립하면
+/// 화면을 볼 수 없는 신호(잠금·`unknown`, 디스플레이·시스템 sleep, 세션 비활성) 중 하나라도 성립하면
 /// 팝오버·전력과 무관하게 두 축이 모두 `paused`입니다.
 nonisolated enum CollectionSchedulePolicy {
     static func plan(
@@ -120,9 +131,14 @@ nonisolated enum CollectionSchedulePolicy {
 /// 축마다 서로 다른 source·sink 타입을 가져도 생명주기 계층에 제네릭이 전파되지 않습니다.
 nonisolated protocol CollectionScheduleTarget: Sendable {
     func apply(_ schedule: CollectionSchedule) async
+    func apply(_ schedule: CollectionSchedule, revision: Int) async
 }
 
-/// 팝오버·저전력과 화면을 볼 수 없는 세 신호를 `update(_:)` 하나로 직렬화해 최종 snapshot과
+nonisolated extension CollectionScheduleTarget {
+    func apply(_ schedule: CollectionSchedule, revision: Int) async { await apply(schedule) }
+}
+
+/// 팝오버·저전력과 화면을 볼 수 없는 신호를 `update(_:)` 하나로 직렬화해 최종 snapshot과
 /// 마지막 system revision, 마지막 적용 일정을 단독 소유하는 actor.
 /// 두 수집 축을 `CollectionScheduleTarget`으로 보유하고, 계산 결과가 마지막 적용 결과와 다른 축에만
 /// `apply(_:)`를 호출해 중복 수집과 불필요한 재시작을 막습니다.
@@ -140,31 +156,34 @@ actor MonitoringLifecycleStore {
         lowPowerMode: false,
         screenLockState: .unknown,
         displayAsleep: SystemLifecycleObserver.initialDisplayAsleep,
-        sessionActive: SystemLifecycleObserver.initialSessionActive
+        sessionActive: SystemLifecycleObserver.initialSessionActive,
+        systemAsleep: false
     )
     private var lastSystemRevision: Int?
     private var lastAppliedPlan: CollectionSchedulePlan?
+    private var planRevision = 0
+    private var lastBoundary = CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: true)
+    let admission: CollectionAdmission
 
-    /// 시스템 지표 일정이 새로 멈춘 순간만 알리는 stream. 일정이 멈춘 사실은 수집 결과가 아니라
-    /// 이 store의 일정 결정이 산물이라 여기서만 알 수 있고, 표시 계층은 이 store를 호출하지 않으므로
-    /// 이 stream이 생명주기 → coordinator → 표시로 가는 유일한 방향입니다(ANALYSIS §1 「생명주기 경계」, §5 DP16).
-    /// 재개는 표시 저장소가 다음 tick의 조립 결과로 스스로 대체하므로(`DashboardPresentationStore.markCollectionStopped()`)
-    /// 이 stream에 재개 전이를 따로 담지 않습니다. 최신 전이 하나만 보존해도 충분합니다.
-    nonisolated let collectionStoppedEvents: AsyncStream<Void>
-    private let collectionStoppedContinuation: AsyncStream<Void>.Continuation
+    /// 중지·재개와 누적 경계를 함께 전달합니다. 최신 값 하나만 남아도 sequence가
+    /// 짧은 중지·재개를 보존하고 표시 계층이 늦은 이벤트를 거부할 수 있습니다.
+    nonisolated let collectionBoundaryEvents: AsyncStream<CollectionBoundary>
+    private let collectionBoundaryContinuation: AsyncStream<CollectionBoundary>.Continuation
 
     init(
         definition: CollectionScheduleDefinition,
         systemMetricsTarget: any CollectionScheduleTarget,
-        processSurveyTarget: any CollectionScheduleTarget
+        processSurveyTarget: any CollectionScheduleTarget,
+        admission: CollectionAdmission = CollectionAdmission()
     ) {
         self.definition = definition
         self.systemMetricsTarget = systemMetricsTarget
         self.processSurveyTarget = processSurveyTarget
+        self.admission = admission
 
-        var collectionStoppedContinuation: AsyncStream<Void>.Continuation!
-        self.collectionStoppedEvents = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { collectionStoppedContinuation = $0 }
-        self.collectionStoppedContinuation = collectionStoppedContinuation
+        var continuation: AsyncStream<CollectionBoundary>.Continuation!
+        self.collectionBoundaryEvents = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
+        self.collectionBoundaryContinuation = continuation
     }
 
     /// 입력 이벤트 하나를 반영합니다. `systemSnapshot`은 최초 revision은 항상 적용하고
@@ -179,7 +198,8 @@ actor MonitoringLifecycleStore {
                 lowPowerMode: lifecycle.lowPowerMode,
                 screenLockState: lifecycle.screenLockState,
                 displayAsleep: lifecycle.displayAsleep,
-                sessionActive: lifecycle.sessionActive
+                sessionActive: lifecycle.sessionActive,
+                systemAsleep: lifecycle.systemAsleep
             )
         case .systemSnapshot(let snapshot):
             if let lastSystemRevision, snapshot.revision <= lastSystemRevision {
@@ -191,26 +211,50 @@ actor MonitoringLifecycleStore {
                 lowPowerMode: snapshot.lowPowerMode,
                 screenLockState: snapshot.screenLockState,
                 displayAsleep: snapshot.displayAsleep,
-                sessionActive: snapshot.sessionActive
+                sessionActive: snapshot.sessionActive,
+                systemAsleep: snapshot.systemAsleep
             )
         }
 
         let plan = CollectionSchedulePolicy.plan(for: lifecycle, definition: definition)
-        guard plan != lastAppliedPlan else { return }
-
         let previousPlan = lastAppliedPlan
+        let stopped = plan.systemMetrics == .paused
+        let changedStop = previousPlan != nil && stopped != lastBoundary.stopped
+        let snapshotSequence: Int
+        if case .systemSnapshot(let snapshot) = event { snapshotSequence = snapshot.boundarySequence }
+        else { snapshotSequence = lastBoundary.sequence }
+        let sequence = max(snapshotSequence, lastBoundary.sequence + (changedStop ? 1 : 0))
+        let boundaryChanged = sequence != lastBoundary.sequence || changedStop
+        let revision = lastSystemRevision ?? lastBoundary.revision
+        if boundaryChanged {
+            let boundary = CollectionBoundary(revision: revision, sequence: sequence,
+                epoch: lastBoundary.epoch + max(1, sequence - lastBoundary.sequence), stopped: stopped)
+            lastBoundary = boundary
+            // 취소나 target의 await보다 먼저 모든 축의 실행권을 끊습니다.
+            admission.transition(boundary)
+            collectionBoundaryContinuation.yield(boundary)
+        } else if previousPlan == nil {
+            let boundary = CollectionBoundary(revision: revision, sequence: sequence,
+                epoch: lastBoundary.epoch, stopped: stopped)
+            lastBoundary = boundary
+            admission.transition(boundary)
+            if stopped { collectionBoundaryContinuation.yield(boundary) }
+        }
+        guard plan != previousPlan || boundaryChanged else { return }
         lastAppliedPlan = plan
-        if plan.systemMetrics != previousPlan?.systemMetrics {
-            await systemMetricsTarget.apply(plan.systemMetrics)
+        planRevision += 1
+        let revisionForTargets = planRevision
+        let applySystem = plan.systemMetrics != previousPlan?.systemMetrics || boundaryChanged
+        let applyProcess = plan.processSurvey != previousPlan?.processSurvey || boundaryChanged
+        // actor의 첫 await 전에 축별 계획을 확정해 이전 update의 늦은 apply와 tick을 거부합니다.
+        if applySystem { admission.setPlanRevision(revisionForTargets, for: .systemMetrics) }
+        if applyProcess { admission.setPlanRevision(revisionForTargets, for: .processSurvey) }
+        if applySystem {
+            await systemMetricsTarget.apply(plan.systemMetrics, revision: revisionForTargets)
         }
-        if plan.processSurvey != previousPlan?.processSurvey {
-            await processSurveyTarget.apply(plan.processSurvey)
-        }
-
-        // 시스템 지표 일정이 이번에 새로 멈췄을 때만 알립니다 — 이미 멈춰 있던 채로 다른 필드가 바뀐 경우나
-        // 재개는 표시 계층에 별도로 알릴 필요가 없습니다(§5 DP16).
-        if plan.systemMetrics == .paused, previousPlan?.systemMetrics != .paused {
-            collectionStoppedContinuation.yield(())
+        guard revisionForTargets == planRevision else { return }
+        if applyProcess {
+            await processSurveyTarget.apply(plan.processSurvey, revision: revisionForTargets)
         }
     }
 }

@@ -48,11 +48,12 @@ final class ApplicationCoordinator {
     let processSurveyScheduler: ProductionProcessSurveyScheduler
     let monitoringLifecycleStore: MonitoringLifecycleStore
     let dashboardPresentationStore: DashboardPresentationStore
+    let collectionAdmission: CollectionAdmission
 
     private var characterStateTask: Task<Void, Never>?
     private var monitoringTask: Task<Void, Never>?
     private var cpuActivityTask: Task<Void, Never>?
-    private var collectionStoppedTask: Task<Void, Never>?
+    private var collectionBoundaryTask: Task<Void, Never>?
 
 #if DEBUG
     // 생명주기 관찰용 observer는 여기 하나만 둡니다.
@@ -78,23 +79,31 @@ final class ApplicationCoordinator {
         // 각 축의 저장 대상. 저장 대상은 구체 타입이 아니라 `MonitoringSampleSink` 계약으로,
         // 수집 축은 `CollectionScheduleTarget` 계약으로 연결되므로 두 축이 서로의 타입에 묶이지 않습니다.
         let clock = SystemMonotonicClock()
-        let sampleStore = MonitoringSampleStore()
+        let admission = CollectionAdmission()
+        collectionAdmission = admission
+        let sampleStore = MonitoringSampleStore(admission: admission)
         let systemScheduler = MonitoringScheduler(
             clock: clock,
             source: SystemMetricsSampleSource(
                 cpuCollector: CPUSystemMetricsCollector(reader: HostCPUTickReader()),
                 memoryCollector: MemorySystemMetricsCollector(),
-                clock: clock
+                clock: clock,
+                admission: admission
             ),
-            sink: sampleStore
+            sink: sampleStore,
+            admission: admission,
+            axis: .systemMetrics
         )
-        let processStore = ProcessHistoryStore()
+        let processStore = ProcessHistoryStore(admission: admission)
         let processScheduler = MonitoringScheduler(
             clock: clock,
             source: ProcessSurveySampleSource(
-                collector: ProcessSurveyCollector(reader: HostProcessSurveyReader())
+                collector: ProcessSurveyCollector(reader: HostProcessSurveyReader()),
+                admission: admission
             ),
-            sink: processStore
+            sink: processStore,
+            admission: admission,
+            axis: .processSurvey
         )
         monitoringSampleStore = sampleStore
         processHistoryStore = processStore
@@ -103,7 +112,8 @@ final class ApplicationCoordinator {
         monitoringLifecycleStore = MonitoringLifecycleStore(
             definition: .m2,
             systemMetricsTarget: systemScheduler,
-            processSurveyTarget: processScheduler
+            processSurveyTarget: processScheduler,
+            admission: admission
         )
         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
 
@@ -127,9 +137,10 @@ final class ApplicationCoordinator {
             sampleStore,
             into: characterStateSource,
             dashboard: dashboard,
-            processHistory: processStore
+            processHistory: processStore,
+            admission: admission
         )
-        collectionStoppedTask = Self.consumeCollectionStoppedEvents(monitoringLifecycleStore, dashboard: dashboard)
+        collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(monitoringLifecycleStore, dashboard: dashboard, admission: admission)
     }
 
     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
@@ -162,7 +173,8 @@ final class ApplicationCoordinator {
         _ store: MonitoringSampleStore,
         into characterStateSource: CharacterStateSource,
         dashboard: DashboardPresentationStore,
-        processHistory: ProcessHistoryStore? = nil
+        processHistory: ProcessHistoryStore? = nil,
+        admission: CollectionAdmission? = nil
     ) -> Task<Void, Never> {
         let displayValues = store.displayValues
         return Task { @MainActor in
@@ -173,6 +185,7 @@ final class ApplicationCoordinator {
 
                 var ranking: ApplicationRankingSample?
                 var processGroups: [ApplicationProcessGroup] = []
+                var nextResolver: ApplicationIdentityResolver?
                 var surveyFailed = false
                 if let processHistory {
                     let input = await processHistory.rankingInput()
@@ -188,67 +201,78 @@ final class ApplicationCoordinator {
                         snapshots: input.snapshots,
                         resolver: computed.resolver
                     )
-                    resolver = grouped.resolver
+                    nextResolver = grouped.resolver
                     ranking = computed.sample
                     processGroups = grouped.groups
                 }
 
-                dashboard.updateCPUCard(
-                    with: displayValue,
-                    topApplications: ranking?.cpuUsage ?? [],
-                    topApplicationsFailed: surveyFailed,
-                    processGroups: processGroups,
-                    currentTimestamp: now
-                )
-                dashboard.updateMemoryCard(
-                    with: displayValue,
-                    topApplications: ranking?.memoryUsage ?? [],
-                    topApplicationsFailed: surveyFailed,
-                    memoryIncrease: ranking?.memoryIncrease ?? [],
-                    processGroups: processGroups,
-                    currentTimestamp: now
-                )
+                @MainActor func updateDisplay() {
+                    if let nextResolver { resolver = nextResolver }
+                    dashboard.updateCPUCard(
+                        with: displayValue,
+                        topApplications: ranking?.cpuUsage ?? [],
+                        topApplicationsFailed: surveyFailed,
+                        processGroups: processGroups,
+                        currentTimestamp: now
+                    )
+                    dashboard.updateMemoryCard(
+                        with: displayValue,
+                        topApplications: ranking?.memoryUsage ?? [],
+                        topApplicationsFailed: surveyFailed,
+                        memoryIncrease: ranking?.memoryIncrease ?? [],
+                        processGroups: processGroups,
+                        currentTimestamp: now
+                    )
+                    guard let latest = displayValue.latest,
+                          case .success(let cpu?) = latest.value.cpu else { return }
 
-                guard let latest = displayValue.latest,
-                      case .success(let cpu?) = latest.value.cpu else { continue }
-
-                let next = CPUActivityStateEvaluator.evaluate(
-                    usage: cpu.overallUsage,
-                    timestamp: latest.timestamp,
-                    state: state,
-                    collectionEpoch: latest.collectionEpoch
-                )
-                if next.displayedState != state.displayedState {
-                    characterStateSource.send(next.displayedState)
-                }
+                    let next = CPUActivityStateEvaluator.evaluate(
+                        usage: cpu.overallUsage,
+                        timestamp: latest.timestamp,
+                        state: state,
+                        collectionEpoch: latest.collectionEpoch
+                    )
+                    if next.displayedState != state.displayedState {
+                        characterStateSource.send(next.displayedState)
+                    }
 
 #if DEBUG
-                if let previousEpoch = state.lastCollectionEpoch, previousEpoch != latest.collectionEpoch {
+                    if let previousEpoch = state.lastCollectionEpoch, previousEpoch != latest.collectionEpoch {
+                        debugCPUActivityLogger.notice(
+                            "continuity reset previousEpoch=\(previousEpoch, privacy: .public) collectionEpoch=\(latest.collectionEpoch, privacy: .public) pendingRestarted=\(next.pendingSince == nil || next.pendingSince == latest.timestamp, privacy: .public) highStreakRestarted=\(next.highStreakStart == nil || next.highStreakStart == latest.timestamp, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
+                        )
+                    }
                     debugCPUActivityLogger.notice(
-                        "continuity reset previousEpoch=\(previousEpoch, privacy: .public) collectionEpoch=\(latest.collectionEpoch, privacy: .public) pendingRestarted=\(next.pendingSince == nil || next.pendingSince == latest.timestamp, privacy: .public) highStreakRestarted=\(next.highStreakStart == nil || next.highStreakStart == latest.timestamp, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
+                        "usage=\(cpu.overallUsage, privacy: .public) collectionEpoch=\(latest.collectionEpoch, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
                     )
-                }
-                debugCPUActivityLogger.notice(
-                    "usage=\(cpu.overallUsage, privacy: .public) collectionEpoch=\(latest.collectionEpoch, privacy: .public) displayedState=\(String(describing: next.displayedState), privacy: .public)"
-                )
 #endif
-                state = next
+                    state = next
+                }
+
+                if let context = displayValue.latest?.context, let admission {
+                    guard admission.admitDisplay(context, timestamp: displayValue.latest!.timestamp, {
+                        dashboard.recordSampleBoundary(context)
+                        updateDisplay()
+                        return true
+                    }) == true else { continue }
+                } else { updateDisplay() }
             }
         }
     }
 
-    /// 생명주기 store가 알리는 "시스템 지표 일정이 새로 멈췄다" 전이를 표시 저장소에 그대로 전달합니다.
-    /// 재개는 이 stream에 없으므로 별도 처리가 필요 없고, 값이 성립한 다음 tick의 조립 결과가
-    /// 표시 저장소 안에서 중지를 자연히 대체합니다(ANALYSIS §1 「생명주기 경계」, §5 DP16).
+    /// 생명주기 store의 중지·재개 경계를 표시 저장소에 전달합니다.
+    /// 표시 저장소는 최신 경계와 sequence를 확인해 늦은 중지를 버립니다.
     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
-    static func consumeCollectionStoppedEvents(
+    static func consumeCollectionBoundaryEvents(
         _ store: MonitoringLifecycleStore,
-        dashboard: DashboardPresentationStore
+        dashboard: DashboardPresentationStore,
+        admission: CollectionAdmission? = nil
     ) -> Task<Void, Never> {
-        let events = store.collectionStoppedEvents
+        let events = store.collectionBoundaryEvents
         return Task { @MainActor in
-            for await _ in events {
-                dashboard.markCollectionStopped()
+            for await boundary in events {
+                if let admission { dashboard.observe(boundary, admission: admission) }
+                else if boundary.stopped { dashboard.markCollectionStopped() }
             }
         }
     }

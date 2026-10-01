@@ -169,7 +169,7 @@ struct CombinedSnapshotProducerTests {
         var iterator = stream.makeAsyncIterator()
         let first = await iterator.next()
 
-        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true))
+        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true, boundarySequence: 1))
     }
 }
 
@@ -458,8 +458,8 @@ struct MemorySystemLifecycleSourceTests {
         collector.cancel()
 
         #expect(received == [
-            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .locked, displayAsleep: false, sessionActive: true),
-            SystemLifecycleSnapshot(revision: 2, lowPowerMode: true, screenLockState: .locked, displayAsleep: false, sessionActive: true),
+            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .locked, displayAsleep: false, sessionActive: true, boundarySequence: 1),
+            SystemLifecycleSnapshot(revision: 2, lowPowerMode: true, screenLockState: .locked, displayAsleep: false, sessionActive: true, boundarySequence: 1),
         ])
     }
 
@@ -486,8 +486,8 @@ struct MemorySystemLifecycleSourceTests {
         collector.cancel()
 
         #expect(received == [
-            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: true, sessionActive: true),
-            SystemLifecycleSnapshot(revision: 2, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: true, sessionActive: false),
+            SystemLifecycleSnapshot(revision: 1, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: true, sessionActive: true, boundarySequence: 1),
+            SystemLifecycleSnapshot(revision: 2, lowPowerMode: false, screenLockState: .unlocked, displayAsleep: true, sessionActive: false, boundarySequence: 1),
         ])
     }
 
@@ -513,7 +513,7 @@ struct MemorySystemLifecycleSourceTests {
         var iterator = subscription.updates.makeAsyncIterator()
         let first = await iterator.next()
 
-        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true))
+        #expect(first == SystemLifecycleSnapshot(revision: 3, lowPowerMode: true, screenLockState: .unknown, displayAsleep: false, sessionActive: true, boundarySequence: 1))
     }
 }
 

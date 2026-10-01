@@ -23,11 +23,14 @@ nonisolated struct TimestampedSample<Value: Sendable>: Sendable {
     let timestamp: ContinuousClock.Instant
     let value: Value
     let collectionEpoch: Int
+    let context: CollectionRunContext?
 
-    init(timestamp: ContinuousClock.Instant, value: Value, collectionEpoch: Int = 0) {
+    init(timestamp: ContinuousClock.Instant, value: Value, collectionEpoch: Int = 0,
+         context: CollectionRunContext? = nil) {
         self.timestamp = timestamp
         self.value = value
         self.collectionEpoch = collectionEpoch
+        self.context = context
     }
 }
 
@@ -145,6 +148,7 @@ nonisolated struct SystemMetricsDisplayValue: Sendable {
 /// 밖으로 나가는 경로는 `displayValues` stream과 `snapshot()`뿐이며, 샘플과 링은 프로세스 메모리에만 존재하고
 /// 재시작 복원 경로가 없습니다.
 actor MonitoringSampleStore: MonitoringSampleSink {
+    private let admission: CollectionAdmission?
     private let timeRange: Duration
     private var history: CircularBuffer<SystemMetricsHistoryPoint>
     private var latest: TimestampedSample<SystemMetricsSample>?
@@ -158,7 +162,9 @@ actor MonitoringSampleStore: MonitoringSampleSink {
 
     private let continuation: AsyncStream<SystemMetricsDisplayValue>.Continuation
 
-    init(timeRange: Duration = HistoryCapacity.defaultTimeRange) {
+    init(timeRange: Duration = HistoryCapacity.defaultTimeRange,
+         admission: CollectionAdmission? = nil) {
+        self.admission = admission
         self.timeRange = timeRange
         // `HistoryCapacity.capacity`가 돌려주는 개수(1초 주기에서 600)만 쓰면 항목이 정확히 그 주기로 채워질 때
         // 가장 오래된 값과 가장 최근 값 사이 구간이 `(개수 - 1) * 주기` = 599초에 그쳐 10분 창을 1초 못 미칩니다.
@@ -205,6 +211,15 @@ actor MonitoringSampleStore: MonitoringSampleSink {
         }
 #endif
     }
+
+    func append(_ sample: TimestampedSample<SystemMetricsSample>, context: CollectionRunContext) async -> Bool {
+        guard let admission else { append(sample); return true }
+        return admission.admit(context, phase: .store, timestamp: sample.timestamp) {
+            append(sample)
+            return true
+        } ?? false
+    }
+
 
     /// 현재 표시용 값을 반환합니다. 이력은 최신 샘플 시각 기준 시간 범위 안의 항목만 담깁니다.
     func snapshot() -> SystemMetricsDisplayValue {

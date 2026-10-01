@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 20:30 +0900
+저장: 2026-10-01 21:06 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-004 검증 기준 HEAD `855c5e8`. task-001~004 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~004 `[x]`, task-005~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-005다.
+branch `main`, task-005 검증 기준 HEAD `90204a1`. task-001~005 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~005 `[x]`, task-006~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-006다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-004/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-005/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -24,8 +24,19 @@ axis planRevision·epoch·generation·request 순서를 기존 두 축과 표시
 async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완했고 전용 통합 테스트와
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
-NetworkRouteReader 생성의 Swift 6 격리 경고는 기존 품질 위험으로 남는다.
-Network·Disk Collector와 카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
+Network activity/metadata source·store는 구현됐고 Disk source·store와 네 축 production 배선·카드는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+
+task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
+즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
+전용6개×5회·전체534/534·Release빌드 통과, 변경소스4개 해시와 원자료는 evidence/task-004에 있다.
+
+task-005는 Network fast/slow native reader·activity/metadata source/store와 topology 수명을 구현했다.
+확인된 물리 속도는 knownPhysicalRates에 보존하고 llw0 unknown 때문에 완전 representative는 nil/partial이다.
+유효 완전 합계만 601링에 들어가며, 불완전 속도는 완전한 그래프 점으로 보관하지 않는다.
+두 reader의 late/역순 tracker 부수효과와 metadata await 중 topology 변경도 현재 gate·revision으로 차단한다.
+집중24/24·전체unit552/552·Release/별도서명Debug·Sandbox baseline/부분속도 probe 통과, PID 종료 확인.
+전체scheme UIrunner는 기동후 진행이 없어 중단했으며 UI 성공 근거는 아직 없다.
 
 ## 현재 작업 문서
 
@@ -54,16 +65,17 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 실제 배포 Sandbox에서 필수 API 접근이 불가능하면 근거와 영향을 정리해 SPEC 소유 단계로 반환한다.
 구현 중 카드 프레임·실제 화면 관문을 만족하지 못해 설계 변경이 필요하면 DESIGN으로 반환한다.
 
-task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
-즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
-전용6개×5회·전체534/534·Release빌드 통과, 변경소스4개 해시와 원자료는 evidence/task-004에 있다.
-
 ## 다음 작업
 
-- 작업: M3 task-005 Network 속도·identity·보조 캐시와 최근 이력을 worker로 구현하고 독립 verify한다.
-- 완료 기준: 실제 native 읽기 시각의 차분·모든 baseline-only 원인·대상 수명과 변경revision·물리합계/부분실패·캐시 일치·601개 이력과 segment 단절·늦은 결과 불변성을 결정적으로 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-006로 진행한다.
+- 작업: M3 task-006 Disk 속도·장치 수명·용량 캐시와 최근 이력을 worker로 구현하고 독립 verify한다.
+- 완료 기준: 물리 드라이버 Read/Write·조건부Operations 실제 차분과 기준점·대상 수명·보조 관계/용량·늦은 결과·601링/600초/segment·느린storage중 빠른Disk 갱신을 결정적으로 확인한다. approved 뒤 상태·CONTEXT를 갱신하고 커밋 후 task-007로 진행한다.
 
 ## 먼저 읽을 파일
+
+- [ResourceRunner/DiskNativeAdapter.swift](./ResourceRunner/DiskNativeAdapter.swift)
+- [ResourceRunner/NetworkActivity.swift](./ResourceRunner/NetworkActivity.swift)
+- [ResourceRunner/NetworkMetadata.swift](./ResourceRunner/NetworkMetadata.swift)
+- [ResourceRunner/NetworkTopology.swift](./ResourceRunner/NetworkTopology.swift)
 
 - [ResourceRunner/CollectionAdmission.swift](./ResourceRunner/CollectionAdmission.swift)
 - [ResourceRunner/AuxiliaryCollectionScheduler.swift](./ResourceRunner/AuxiliaryCollectionScheduler.swift)

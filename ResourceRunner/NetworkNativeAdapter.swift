@@ -3,7 +3,7 @@ import Darwin
 import SystemConfiguration
 import IOKit
 
-struct NetworkRawInterface: Equatable, Sendable {
+nonisolated struct NetworkRawInterface: Equatable, Sendable {
     let name: String
     let index: UInt16
     let flags: Int32
@@ -13,20 +13,22 @@ struct NetworkRawInterface: Equatable, Sendable {
     let baudrate: UInt64
 }
 
-enum NetworkNativeError: Error, CustomStringConvertible, Sendable {
+nonisolated enum NetworkNativeError: Error, CustomStringConvertible, Sendable {
     case systemCall(String, Int32)
     case malformed(String)
+    case stale(String)
 
     var description: String {
         switch self {
         case .systemCall(let call, let code): "\(call) errno=\(code)"
         case .malformed(let reason): "malformed route data: \(reason)"
+        case .stale(let reason): "stale network read: \(reason)"
         }
     }
 }
 
 /// 라우팅 메시지는 길이가 가변이므로 구조체를 역참조하기 전에 각 경계를 검사합니다.
-enum NetworkRouteParser {
+nonisolated enum NetworkRouteParser {
     static func parse(_ bytes: [UInt8], nameForIndex: (UInt16) -> String?) throws -> [NetworkRawInterface] {
         var offset = 0
         var result: [NetworkRawInterface] = []
@@ -84,7 +86,7 @@ enum NetworkRouteParser {
     }
 }
 
-struct NetworkRouteReader: Sendable {
+nonisolated struct NetworkRouteReader: Sendable {
     func read() throws -> [NetworkRawInterface] {
         var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
         return try NetworkRouteReadLoop.read {
@@ -109,7 +111,7 @@ struct NetworkRouteReader: Sendable {
     }
 }
 
-enum NetworkRouteReadLoop {
+nonisolated enum NetworkRouteReadLoop {
     static func read(_ fetch: () throws -> [UInt8]) throws -> [UInt8] {
         for attempt in 0..<3 {
             do { return try fetch() }
@@ -119,7 +121,7 @@ enum NetworkRouteReadLoop {
     }
 }
 
-private extension Array where Element == UInt8 {
+nonisolated private extension Array where Element == UInt8 {
     func withParsedNames() throws -> [NetworkRawInterface] {
         try NetworkRouteParser.parse(self) { index in
             var name = [CChar](repeating: 0, count: Int(IF_NAMESIZE))
@@ -129,11 +131,11 @@ private extension Array where Element == UInt8 {
     }
 }
 
-enum NetworkInterfaceKind: String, Sendable {
+nonisolated enum NetworkInterfaceKind: String, Hashable, Sendable {
     case physicalWiFi, physicalEthernet, physicalOther, logical, virtual, tunnel, vpn, loopback, unknown
 }
 
-struct NetworkInterfaceReading: Sendable {
+nonisolated struct NetworkInterfaceReading: Sendable {
     let raw: NetworkRawInterface
     let kind: NetworkInterfaceKind
     let classificationReason: String
@@ -147,7 +149,7 @@ struct NetworkInterfaceReading: Sendable {
     let linkSpeed: String
 }
 
-struct NetworkNativeSnapshot: Sendable {
+nonisolated struct NetworkNativeSnapshot: Sendable {
     let interfaces: [NetworkInterfaceReading]
     let physicalTotalsComplete: Bool
     let routeLookup: String
@@ -157,14 +159,14 @@ struct NetworkNativeSnapshot: Sendable {
     let linkLookup: String
 }
 
-struct NetworkRegistryRecord: Sendable {
+nonisolated struct NetworkRegistryRecord: Sendable {
     let id: UInt64
     let path: [String]
     let builtIn: Bool?
     let role: String?
 }
 
-enum NetworkClassification {
+nonisolated enum NetworkClassification {
     static func classify(name: String, flags: Int32, linkType: UInt8, functionalType: UInt32?, type: String?, lower: String?, record: NetworkRegistryRecord?) -> (NetworkInterfaceKind, String) {
         if flags & Int32(IFF_LOOPBACK) != 0 { return (.loopback, "IFF_LOOPBACK") }
         if linkType == UInt8(IFT_BRIDGE) || linkType == UInt8(IFT_L2VLAN) {

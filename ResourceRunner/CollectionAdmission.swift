@@ -5,7 +5,7 @@ nonisolated enum CollectionAxis: Hashable, Sendable {
 }
 
 nonisolated enum CollectionAdmissionPhase: Hashable, Sendable {
-    case source, store, display
+    case reader, source, store, display
 }
 
 nonisolated struct CollectionBoundary: Sendable, Equatable {
@@ -118,6 +118,21 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
                context.requestSequence <= last.request || timestamp < last.timestamp { return nil }
             let result = apply()
             accepted[context.axis, default: [:]][phase] = Watermark(request: context.requestSequence, timestamp: timestamp)
+            return result
+        }
+    }
+
+    /// 추가 공유 상태의 원자 검사에서 거부되면 phase 순서 표식도 전진시키지 않습니다.
+    @discardableResult
+    func admitOptional<T>(_ context: CollectionRunContext, phase: CollectionAdmissionPhase,
+                          timestamp: ContinuousClock.Instant, _ apply: () -> T?) -> T? {
+        lock.withLock {
+            guard valid(context) else { return nil }
+            if let last = accepted[context.axis]?[phase],
+               context.requestSequence <= last.request || timestamp < last.timestamp { return nil }
+            guard let result = apply() else { return nil }
+            accepted[context.axis, default: [:]][phase] = Watermark(request: context.requestSequence,
+                                                                     timestamp: timestamp)
             return result
         }
     }

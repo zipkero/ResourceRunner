@@ -1,0 +1,6 @@
+Command cwd: /Users/zipkero/XcodeProjects/ResourceRunner
+RR_NETWORK_PROBE=1 /tmp/ResourceRunner-M3-task005-sandbox/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+PID: 36178
+Initial ps: 36178 SN /tmp/ResourceRunner-M3-task005-sandbox/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+After 6 seconds: kill 36178; wait exit 143; subsequent ps returned no process.
+Unified log captured with /usr/bin/log show --last 5m --style compact --predicate 'subsystem == "com.zipkero.ResourceRunner" AND category == "NetworkNativeProbe"'. Filter by PID 36178 for this final run; earlier PID 30831 is previous probe and retained for chronology.

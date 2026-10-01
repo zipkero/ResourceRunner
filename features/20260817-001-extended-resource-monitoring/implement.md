@@ -145,7 +145,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `855c5e8`의 CollectionAdmission 축 확장, MonitoringLifecycle 여섯 축 .m3 정책·배선 및 AuxiliaryCollectionScheduler·직접 테스트 diff와 변경 소스 4개 SHA-256이 `evidence/task-004/environment.raw.txt`와 일치합니다. lifecycle 96개 조합에서 정확한 주기·중지를 대조했고 실제 보조 scheduler의 최초 즉시 조회·cache-first/stale-open·요청 병합·중지중 요청 재개1회·단일 inFlight·누락deadline 중복 방지, 느린 보조 source 동안 빠른4축의 실행을 확인했습니다. 집중6개×5회 30/30, 전체 단위534/534, Release BUILD SUCCEEDED와 diff-check clean입니다. 최종patch·원시로그·xcresult요약은 같은 evidence에 보존했습니다. task-003 admission·정상주기 epoch 보존과 기존 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. native source/store와 production 여섯 축 구성은 task-005~007에서 이어 확인합니다.
 
-- [ ] task-005: Network 속도·identity·보조 캐시와 최근 이력
+- [x] task-005: Network 속도·identity·보조 캐시와 최근 이력
   - 목적: 물리 대표 RX·TX와 현재 인터페이스별 속도·누적량을 정확한 연속 구간으로 계산하고
     대상 변경·실패에서 다른 대상의 baseline이나 캐시를 이어 쓰지 않게 합니다.
   - 접근: task-001의 reader를 Network 활동 source와 보조 source에 연결합니다.
@@ -175,6 +175,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.1, SPEC §5.3, SPEC §5.5, SPEC §5.7, SPEC §5.8,
     SPEC §5.9, SPEC §5.11, SPEC §5.17,
     DESIGN §1.1, DESIGN §1.2, DESIGN §2.2, DESIGN §2.3, DESIGN §2.4, DESIGN §2.5, DESIGN §3.1
+
+  - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `90204a1`의 Network activity/metadata/topology·native 격리·reader phase/admission·DEBUG probe와 직접 테스트 diff를 검증했고 관련 소스 8개 SHA-256이 `evidence/task-005/source-sha256.txt`와 일치합니다. 실제 읽기 시각 차분·모든 기준점 단절·5→1초 정상 변경·0 B/s·물리/VPN 집계·부분 실패·대상 제거/재사용/누적revision·캐시불일치·늦은 native/source/store·601링/600초/segment 조건을 집중24/24로 확인했고 전체unit552/552·Release·별도서명Debug빌드가 통과했습니다. Sandbox PID36178에서 첫baseline→약1초뒤 en0 knownPhysical 18485/17512 B/s, llw0 unknown에 따른 partial/representative nil을 확인하고 종료했습니다. 기존 native 격리 경고를 해소했으며 task-001·003·004의 의미와 승인을 유지합니다. 전체scheme UIrunner가 기동후 무진행으로 중단됐고 unit은 별도552/552 완료했습니다. production 배선·실제NIC/VPN·최종UI는 후속 관문이며 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
 - [ ] task-006: Disk 속도·장치 수명·용량 캐시와 최근 이력
   - 목적: 현재 물리 장치의 Read·Write와 조건부 IOPS를 계산하고

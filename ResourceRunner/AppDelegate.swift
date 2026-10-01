@@ -29,6 +29,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     for item in snapshot.interfaces {
                         logger.notice("name=\(item.raw.name, privacy: .public) index=\(item.raw.index) flags=\(item.raw.flags) linkType=\(item.raw.linkType) functionalType=\(item.functionalType ?? 999) rx=\(item.raw.receivedBytes) tx=\(item.raw.sentBytes) kind=\(item.kind.rawValue, privacy: .public) registryID=\(item.registryID ?? 0) provider=\(item.providerPath.joined(separator: "/"), privacy: .public) reason=\(item.classificationReason, privacy: .public) IPv4=\(item.ipv4.joined(separator: ","), privacy: .public) IPv6=\(item.ipv6.joined(separator: ","), privacy: .public) status=\(item.status, privacy: .public) speed=\(item.linkSpeed, privacy: .public)")
                     }
+                    let fast = try SystemNetworkCounterReader(topology: NetworkTopologyTracker()).read()
+                    logger.notice("fastRouteInterfaces=\(fast.interfaces.count) fastRevision=\(fast.topologyRevision) fastReadAt=\(String(describing: fast.readAt), privacy: .public)")
+                    let topology = NetworkTopologyTracker()
+                    let admission = CollectionAdmission()
+                    admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
+                    _ = admission.advance(.networkMetadata)
+                    _ = admission.advance(.networkActivity)
+                    let metadataStore = NetworkMetadataStore(admission: admission)
+                    let metadataSource = NetworkMetadataSource(reader: SystemNetworkMetadataReader(topology: topology), admission: admission)
+                    if let context = admission.issue(.networkMetadata),
+                       let value = await metadataSource.sample(context: context) {
+                        _ = await metadataStore.append(TimestampedSample(timestamp: ContinuousClock().now,
+                            value: value, collectionEpoch: context.epoch, context: context), context: context)
+                    }
+                    let activitySource = NetworkActivitySource(reader: SystemNetworkCounterReader(topology: topology),
+                        metadata: metadataStore, admission: admission)
+                    for tick in 0..<2 {
+                        if tick > 0 { try await Task.sleep(for: .seconds(1)) }
+                        guard let context = admission.issue(.networkActivity),
+                              let value = await activitySource.sample(context: context) else { continue }
+                        logger.notice("activityTick=\(tick) status=\(String(describing: value.status), privacy: .public) revision=\(value.topologyRevision) knownPhysical=\(String(describing: value.knownPhysicalRates), privacy: .public) representative=\(String(describing: value.representative), privacy: .public) interfaces=\(value.interfaces.count)")
+                    }
                 } catch {
                     logger.error("pid=\(getpid()) failed=\(String(describing: error), privacy: .public)")
                 }

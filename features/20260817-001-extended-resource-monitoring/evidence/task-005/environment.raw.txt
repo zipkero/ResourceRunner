@@ -1,0 +1,17 @@
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+arm64
+Xcode 26.6
+Build version 17F113
+90204a1e4f6d6b958fd3792130af39f0fc917f97
+ M CONTEXT.md
+ M ResourceRunner/AppDelegate.swift
+ M ResourceRunner/CollectionAdmission.swift
+ M ResourceRunner/NetworkNativeAdapter.swift
+?? ResourceRunner/NetworkActivity.swift
+?? ResourceRunner/NetworkMetadata.swift
+?? ResourceRunner/NetworkTopology.swift
+?? ResourceRunnerTests/NetworkActivityTests.swift
+?? ResourceRunnerTests/NetworkMetadataTests.swift
+?? features/20260817-001-extended-resource-monitoring/evidence/task-005/

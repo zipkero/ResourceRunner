@@ -1,0 +1,1522 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 8359951..1c966be 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -29,6 +29,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+                     for item in snapshot.interfaces {
+                         logger.notice("name=\(item.raw.name, privacy: .public) index=\(item.raw.index) flags=\(item.raw.flags) linkType=\(item.raw.linkType) functionalType=\(item.functionalType ?? 999) rx=\(item.raw.receivedBytes) tx=\(item.raw.sentBytes) kind=\(item.kind.rawValue, privacy: .public) registryID=\(item.registryID ?? 0) provider=\(item.providerPath.joined(separator: "/"), privacy: .public) reason=\(item.classificationReason, privacy: .public) IPv4=\(item.ipv4.joined(separator: ","), privacy: .public) IPv6=\(item.ipv6.joined(separator: ","), privacy: .public) status=\(item.status, privacy: .public) speed=\(item.linkSpeed, privacy: .public)")
+                     }
++                    let fast = try SystemNetworkCounterReader(topology: NetworkTopologyTracker()).read()
++                    logger.notice("fastRouteInterfaces=\(fast.interfaces.count) fastRevision=\(fast.topologyRevision) fastReadAt=\(String(describing: fast.readAt), privacy: .public)")
++                    let topology = NetworkTopologyTracker()
++                    let admission = CollectionAdmission()
++                    admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++                    _ = admission.advance(.networkMetadata)
++                    _ = admission.advance(.networkActivity)
++                    let metadataStore = NetworkMetadataStore(admission: admission)
++                    let metadataSource = NetworkMetadataSource(reader: SystemNetworkMetadataReader(topology: topology), admission: admission)
++                    if let context = admission.issue(.networkMetadata),
++                       let value = await metadataSource.sample(context: context) {
++                        _ = await metadataStore.append(TimestampedSample(timestamp: ContinuousClock().now,
++                            value: value, collectionEpoch: context.epoch, context: context), context: context)
++                    }
++                    let activitySource = NetworkActivitySource(reader: SystemNetworkCounterReader(topology: topology),
++                        metadata: metadataStore, admission: admission)
++                    for tick in 0..<2 {
++                        if tick > 0 { try await Task.sleep(for: .seconds(1)) }
++                        guard let context = admission.issue(.networkActivity),
++                              let value = await activitySource.sample(context: context) else { continue }
++                        logger.notice("activityTick=\(tick) status=\(String(describing: value.status), privacy: .public) revision=\(value.topologyRevision) knownPhysical=\(String(describing: value.knownPhysicalRates), privacy: .public) representative=\(String(describing: value.representative), privacy: .public) interfaces=\(value.interfaces.count)")
++                    }
+                 } catch {
+                     logger.error("pid=\(getpid()) failed=\(String(describing: error), privacy: .public)")
+                 }
+diff --git a/ResourceRunner/CollectionAdmission.swift b/ResourceRunner/CollectionAdmission.swift
+index c1b4a5f..8da6139 100644
+--- a/ResourceRunner/CollectionAdmission.swift
++++ b/ResourceRunner/CollectionAdmission.swift
+@@ -5,7 +5,7 @@ nonisolated enum CollectionAxis: Hashable, Sendable {
+ }
+ 
+ nonisolated enum CollectionAdmissionPhase: Hashable, Sendable {
+-    case source, store, display
++    case reader, source, store, display
+ }
+ 
+ nonisolated struct CollectionBoundary: Sendable, Equatable {
+@@ -122,6 +122,21 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
+         }
+     }
+ 
++    /// 추가 공유 상태의 원자 검사에서 거부되면 phase 순서 표식도 전진시키지 않습니다.
++    @discardableResult
++    func admitOptional<T>(_ context: CollectionRunContext, phase: CollectionAdmissionPhase,
++                          timestamp: ContinuousClock.Instant, _ apply: () -> T?) -> T? {
++        lock.withLock {
++            guard valid(context) else { return nil }
++            if let last = accepted[context.axis]?[phase],
++               context.requestSequence <= last.request || timestamp < last.timestamp { return nil }
++            guard let result = apply() else { return nil }
++            accepted[context.axis, default: [:]][phase] = Watermark(request: context.requestSequence,
++                                                                     timestamp: timestamp)
++            return result
++        }
++    }
++
+     @MainActor
+     func admitDisplay<T>(_ context: CollectionRunContext, timestamp: ContinuousClock.Instant,
+                          _ apply: @MainActor () -> T) -> T? {
+diff --git a/ResourceRunner/NetworkNativeAdapter.swift b/ResourceRunner/NetworkNativeAdapter.swift
+index 4949ed8..0ca44b5 100644
+--- a/ResourceRunner/NetworkNativeAdapter.swift
++++ b/ResourceRunner/NetworkNativeAdapter.swift
+@@ -3,7 +3,7 @@ import Darwin
+ import SystemConfiguration
+ import IOKit
+ 
+-struct NetworkRawInterface: Equatable, Sendable {
++nonisolated struct NetworkRawInterface: Equatable, Sendable {
+     let name: String
+     let index: UInt16
+     let flags: Int32
+@@ -13,20 +13,22 @@ struct NetworkRawInterface: Equatable, Sendable {
+     let baudrate: UInt64
+ }
+ 
+-enum NetworkNativeError: Error, CustomStringConvertible, Sendable {
++nonisolated enum NetworkNativeError: Error, CustomStringConvertible, Sendable {
+     case systemCall(String, Int32)
+     case malformed(String)
++    case stale(String)
+ 
+     var description: String {
+         switch self {
+         case .systemCall(let call, let code): "\(call) errno=\(code)"
+         case .malformed(let reason): "malformed route data: \(reason)"
++        case .stale(let reason): "stale network read: \(reason)"
+         }
+     }
+ }
+ 
+ /// 라우팅 메시지는 길이가 가변이므로 구조체를 역참조하기 전에 각 경계를 검사합니다.
+-enum NetworkRouteParser {
++nonisolated enum NetworkRouteParser {
+     static func parse(_ bytes: [UInt8], nameForIndex: (UInt16) -> String?) throws -> [NetworkRawInterface] {
+         var offset = 0
+         var result: [NetworkRawInterface] = []
+@@ -84,7 +86,7 @@ enum NetworkRouteParser {
+     }
+ }
+ 
+-struct NetworkRouteReader: Sendable {
++nonisolated struct NetworkRouteReader: Sendable {
+     func read() throws -> [NetworkRawInterface] {
+         var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
+         return try NetworkRouteReadLoop.read {
+@@ -109,7 +111,7 @@ struct NetworkRouteReader: Sendable {
+     }
+ }
+ 
+-enum NetworkRouteReadLoop {
++nonisolated enum NetworkRouteReadLoop {
+     static func read(_ fetch: () throws -> [UInt8]) throws -> [UInt8] {
+         for attempt in 0..<3 {
+             do { return try fetch() }
+@@ -119,7 +121,7 @@ enum NetworkRouteReadLoop {
+     }
+ }
+ 
+-private extension Array where Element == UInt8 {
++nonisolated private extension Array where Element == UInt8 {
+     func withParsedNames() throws -> [NetworkRawInterface] {
+         try NetworkRouteParser.parse(self) { index in
+             var name = [CChar](repeating: 0, count: Int(IF_NAMESIZE))
+@@ -129,11 +131,11 @@ private extension Array where Element == UInt8 {
+     }
+ }
+ 
+-enum NetworkInterfaceKind: String, Sendable {
++nonisolated enum NetworkInterfaceKind: String, Hashable, Sendable {
+     case physicalWiFi, physicalEthernet, physicalOther, logical, virtual, tunnel, vpn, loopback, unknown
+ }
+ 
+-struct NetworkInterfaceReading: Sendable {
++nonisolated struct NetworkInterfaceReading: Sendable {
+     let raw: NetworkRawInterface
+     let kind: NetworkInterfaceKind
+     let classificationReason: String
+@@ -147,7 +149,7 @@ struct NetworkInterfaceReading: Sendable {
+     let linkSpeed: String
+ }
+ 
+-struct NetworkNativeSnapshot: Sendable {
++nonisolated struct NetworkNativeSnapshot: Sendable {
+     let interfaces: [NetworkInterfaceReading]
+     let physicalTotalsComplete: Bool
+     let routeLookup: String
+@@ -157,14 +159,14 @@ struct NetworkNativeSnapshot: Sendable {
+     let linkLookup: String
+ }
+ 
+-struct NetworkRegistryRecord: Sendable {
++nonisolated struct NetworkRegistryRecord: Sendable {
+     let id: UInt64
+     let path: [String]
+     let builtIn: Bool?
+     let role: String?
+ }
+ 
+-enum NetworkClassification {
++nonisolated enum NetworkClassification {
+     static func classify(name: String, flags: Int32, linkType: UInt8, functionalType: UInt32?, type: String?, lower: String?, record: NetworkRegistryRecord?) -> (NetworkInterfaceKind, String) {
+         if flags & Int32(IFF_LOOPBACK) != 0 { return (.loopback, "IFF_LOOPBACK") }
+         if linkType == UInt8(IFT_BRIDGE) || linkType == UInt8(IFT_L2VLAN) {
+diff --git a/ResourceRunner/NetworkActivity.swift b/ResourceRunner/NetworkActivity.swift
+new file mode 100644
+index 0000000..3363ad7
+--- /dev/null
++++ b/ResourceRunner/NetworkActivity.swift
+@@ -0,0 +1,303 @@
++import Foundation
++import Darwin
++
++nonisolated struct RatePair: Sendable, Equatable {
++    let receivedBytesPerSecond: Double
++    let sentBytesPerSecond: Double
++
++    init?(receivedBytesPerSecond: Double, sentBytesPerSecond: Double) {
++        guard receivedBytesPerSecond.isFinite, sentBytesPerSecond.isFinite,
++              receivedBytesPerSecond >= 0, sentBytesPerSecond >= 0 else { return nil }
++        self.receivedBytesPerSecond = receivedBytesPerSecond
++        self.sentBytesPerSecond = sentBytesPerSecond
++    }
++}
++
++nonisolated enum NetworkBaselineReason: Sendable, Equatable {
++    case first, newEpoch, topologyChanged, classificationChanged, afterFailure
++    case newTarget, nonpositiveElapsed, excessiveGap, counterDecrease, invalidRate
++}
++
++nonisolated enum NetworkActivityStatus: Sendable, Equatable {
++    case rate, baselineOnly(NetworkBaselineReason), partial(String), disconnected, failure(String)
++}
++
++nonisolated struct NetworkInterfaceActivity: Sendable {
++    let key: NetworkTargetKey
++    let kind: NetworkInterfaceKind
++    let classificationReason: String
++    let linkActive: Bool?
++    let receivedBytes: UInt64
++    let sentBytes: UInt64
++    let rate: RatePair?
++}
++
++nonisolated struct NetworkActivitySample: Sendable {
++    let readAt: ContinuousClock.Instant
++    let topologyRevision: UInt64
++    let interfaces: [NetworkInterfaceActivity]
++    /// 확인된 물리 대상만의 부분 합계. 대표값으로 표시할 때는 completeness를 함께 확인해야 합니다.
++    let knownPhysicalRates: RatePair?
++    let representative: RatePair?
++    let physicalTotalsComplete: Bool
++    let status: NetworkActivityStatus
++    let rateSegment: UInt64
++}
++
++/// 차분 기준점과 topology 지문을 한 actor가 소유합니다. native 조회와 metadata actor 접근 뒤
++/// 공통 admission이 허용할 때만 후보 기준점을 반영합니다.
++actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSource {
++    private struct CounterBaseline {
++        let received: UInt64
++        let sent: UInt64
++        let readAt: ContinuousClock.Instant
++    }
++    private struct Classification: Equatable {
++        let kind: NetworkInterfaceKind
++        let linkActive: Bool?
++        let hasAddress: Bool
++    }
++    private struct State {
++        var epoch: Int?
++        var revision: UInt64?
++        var baselines: [NetworkTargetKey: CounterBaseline] = [:]
++        var classifications: [NetworkTargetKey: Classification] = [:]
++        var afterFailure = false
++        var segment: UInt64 = 0
++    }
++
++    private let reader: Reader
++    private let metadata: NetworkMetadataStore?
++    private let admission: CollectionAdmission?
++    private var state = State()
++
++    init(reader: Reader, metadata: NetworkMetadataStore? = nil,
++         admission: CollectionAdmission? = nil) {
++        self.reader = reader
++        self.metadata = metadata
++        self.admission = admission
++    }
++
++    func sample(collectionEpoch: Int) async -> NetworkActivitySample? {
++        await read(collectionEpoch: collectionEpoch, context: nil)
++    }
++
++    func sample(context: CollectionRunContext) async -> NetworkActivitySample? {
++        await read(collectionEpoch: context.epoch, context: context)
++    }
++
++    private func read(collectionEpoch: Int, context: CollectionRunContext?) async -> NetworkActivitySample? {
++        if let context, admission?.isCurrent(context) != true { return nil }
++        let snapshot: NetworkCounterSnapshot
++        do { snapshot = try reader.read(context: context, admission: admission) }
++        catch NetworkNativeError.stale(_) { return nil }
++        catch {
++            var next = state
++            next.baselines.removeAll()
++            next.afterFailure = true
++            next.segment &+= 1
++            let timestamp = ContinuousClock().now
++            let sample = NetworkActivitySample(readAt: timestamp,
++                topologyRevision: next.revision ?? 0, interfaces: [],
++                knownPhysicalRates: nil, representative: nil,
++                physicalTotalsComplete: false, status: .failure(String(describing: error)),
++                rateSegment: next.segment)
++            return commit(sample, next: next, context: context, topologyRevision: nil)
++        }
++        let view = if let metadata { await metadata.classifications(for: snapshot) }
++            else { NetworkClassificationView(records: [:], complete: false) }
++        if let context, admission?.isCurrent(context) != true { return nil }
++        let (sample, next) = calculate(snapshot, view: view, epoch: collectionEpoch)
++        return commit(sample, next: next, context: context,
++                      topologyRevision: snapshot.topologyRevision)
++    }
++
++    private func commit(_ sample: NetworkActivitySample, next: State,
++                        context: CollectionRunContext?, topologyRevision: UInt64?) -> NetworkActivitySample? {
++        if let context, let admission {
++            return admission.admitOptional(context, phase: .source, timestamp: sample.readAt) {
++                if let topologyRevision {
++                    return reader.withCurrentTopologyRevision(topologyRevision) {
++                        state = next
++                        return sample
++                    }
++                }
++                state = next
++                return sample
++            }
++        }
++        if let topologyRevision {
++            return reader.withCurrentTopologyRevision(topologyRevision) {
++                state = next
++                return sample
++            }
++        }
++        state = next
++        return sample
++    }
++
++    private func calculate(_ snapshot: NetworkCounterSnapshot, view: NetworkClassificationView,
++                           epoch: Int) -> (NetworkActivitySample, State) {
++        var next = state
++        let classes = Dictionary(uniqueKeysWithValues: snapshot.interfaces.map { item in
++            let record = view.records[item.key]
++            return (item.key, Classification(kind: record?.kind ?? .unknown,
++                                             linkActive: record?.linkActive,
++                                             hasAddress: record.map { !$0.ipv4.isEmpty || !$0.ipv6.isEmpty } ?? false))
++        })
++        let globalReason: NetworkBaselineReason? = if next.epoch == nil { .first }
++            else if next.epoch != epoch { .newEpoch }
++            else if next.afterFailure { .afterFailure }
++            else if next.revision != snapshot.topologyRevision { .topologyChanged }
++            else if Set(next.baselines.keys) != Set(snapshot.interfaces.map(\.key)) { .newTarget }
++            else if next.classifications != classes { .classificationChanged }
++            else { nil }
++        if globalReason != nil { next.baselines.removeAll() }
++        next.epoch = epoch
++        next.revision = snapshot.topologyRevision
++        next.classifications = classes
++        next.afterFailure = false
++
++        var details: [NetworkInterfaceActivity] = []
++        var newBaselines: [NetworkTargetKey: CounterBaseline] = [:]
++        var physicalRates: [RatePair] = []
++        var activePhysical = 0
++        var incomplete = !view.complete
++        var firstGap = globalReason
++        for item in snapshot.interfaces {
++            let record = view.records[item.key]
++            let kind = record?.kind ?? .unknown
++            let up = item.raw.flags & Int32(IFF_UP) != 0
++            let activePhysicalCandidate = kind == .physicalWiFi || kind == .physicalEthernet || kind == .physicalOther
++            let hasAddress = record.map { !$0.ipv4.isEmpty || !$0.ipv6.isEmpty } ?? false
++            let activePhysicalTarget = activePhysicalCandidate && up &&
++                record?.linkActive == true && hasAddress
++            if activePhysicalTarget { activePhysical += 1 }
++            if up && (kind == .unknown ||
++                (activePhysicalCandidate && (record?.linkActive == nil ||
++                                             (record?.linkActive == true && !hasAddress)))) {
++                incomplete = true
++            }
++            let previous = next.baselines[item.key]
++            let (rate, gap) = Self.rate(item.raw, at: snapshot.readAt, previous: previous,
++                                        forcedBaseline: globalReason != nil)
++            // 비합산 대상의 카운터 이상은 해당 상세 속도만 비웁니다.
++            if let gap, firstGap == nil, activePhysicalTarget { firstGap = gap }
++            if activePhysicalTarget {
++                if let rate { physicalRates.append(rate) }
++                else { incomplete = true }
++            }
++            details.append(NetworkInterfaceActivity(key: item.key, kind: kind,
++                classificationReason: record?.classificationReason ?? "분류 캐시 없음 또는 identity/revision 불일치",
++                linkActive: record?.linkActive, receivedBytes: item.raw.receivedBytes,
++                sentBytes: item.raw.sentBytes, rate: rate))
++            newBaselines[item.key] = CounterBaseline(received: item.raw.receivedBytes,
++                sent: item.raw.sentBytes, readAt: snapshot.readAt)
++        }
++        next.baselines = newBaselines
++
++        let knownPhysicalRates: RatePair? = physicalRates.isEmpty ? nil : RatePair(
++            receivedBytesPerSecond: physicalRates.reduce(0) { $0 + $1.receivedBytesPerSecond },
++            sentBytesPerSecond: physicalRates.reduce(0) { $0 + $1.sentBytesPerSecond })
++
++        let representative: RatePair?
++        let status: NetworkActivityStatus
++        if snapshot.interfaces.isEmpty || (activePhysical == 0 && !incomplete) {
++            representative = nil
++            status = .disconnected
++        } else if let firstGap {
++            representative = nil
++            status = .baselineOnly(firstGap)
++        } else if incomplete || physicalRates.count != activePhysical {
++            representative = nil
++            status = .partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
++        } else {
++            representative = knownPhysicalRates
++            status = representative == nil ? .partial("대표 속도 합계가 유한 범위를 벗어났습니다") : .rate
++        }
++        if representative == nil { next.segment &+= 1 }
++        return (NetworkActivitySample(readAt: snapshot.readAt,
++            topologyRevision: snapshot.topologyRevision, interfaces: details,
++            knownPhysicalRates: knownPhysicalRates, representative: representative,
++            physicalTotalsComplete: representative != nil,
++            status: status, rateSegment: next.segment), next)
++    }
++
++    private static func rate(_ raw: NetworkRawInterface, at timestamp: ContinuousClock.Instant,
++                             previous: CounterBaseline?, forcedBaseline: Bool)
++        -> (RatePair?, NetworkBaselineReason?) {
++        guard !forcedBaseline else { return (nil, nil) }
++        guard let previous else { return (nil, .newTarget) }
++        let elapsed = previous.readAt.duration(to: timestamp)
++        let (seconds, attoseconds) = elapsed.components
++        let duration = Double(seconds) + Double(attoseconds) / 1e18
++        guard duration > 0 else { return (nil, .nonpositiveElapsed) }
++        guard duration <= 10 else { return (nil, .excessiveGap) }
++        guard raw.receivedBytes >= previous.received, raw.sentBytes >= previous.sent else {
++            return (nil, .counterDecrease)
++        }
++        let received = Double(raw.receivedBytes - previous.received) / duration
++        let sent = Double(raw.sentBytes - previous.sent) / duration
++        guard let rate = RatePair(receivedBytesPerSecond: received, sentBytesPerSecond: sent) else {
++            return (nil, .invalidRate)
++        }
++        return (rate, nil)
++    }
++}
++
++nonisolated struct RateHistoryPoint: Sendable, Equatable {
++    let timestamp: ContinuousClock.Instant
++    let rate: RatePair
++    let collectionEpoch: Int
++    let rateSegment: UInt64
++}
++
++nonisolated struct NetworkActivityDisplayValue: Sendable {
++    let latest: TimestampedSample<NetworkActivitySample>?
++    let lastSuccess: TimestampedSample<NetworkActivitySample>?
++    let recentHistory: [RateHistoryPoint]
++}
++
++/// 유효한 대표 두 속도만 601개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
++actor NetworkActivityStore: MonitoringSampleSink {
++    private let admission: CollectionAdmission?
++    private var latest: TimestampedSample<NetworkActivitySample>?
++    private var lastSuccess: TimestampedSample<NetworkActivitySample>?
++    private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
++    nonisolated let updates: AsyncStream<NetworkActivityDisplayValue>
++    private let continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation
++
++    init(admission: CollectionAdmission? = nil) {
++        self.admission = admission
++        var continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation!
++        self.updates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
++        self.continuation = continuation
++    }
++
++    func append(_ sample: TimestampedSample<NetworkActivitySample>) {
++        latest = sample
++        if let rate = sample.value.representative {
++            lastSuccess = sample
++            history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
++                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
++        }
++        continuation.yield(snapshot(at: sample.value.readAt))
++    }
++
++    func append(_ sample: TimestampedSample<NetworkActivitySample>,
++                context: CollectionRunContext) async -> Bool {
++        guard let admission else { append(sample); return true }
++        return admission.admit(context, phase: .store, timestamp: sample.value.readAt) {
++            append(sample)
++            return true
++        } ?? false
++    }
++
++    func snapshot(at now: ContinuousClock.Instant) -> NetworkActivityDisplayValue {
++        let threshold = now.advanced(by: .seconds(-600))
++        return NetworkActivityDisplayValue(latest: latest, lastSuccess: lastSuccess,
++            recentHistory: history.elements.filter { $0.timestamp >= threshold && $0.timestamp <= now })
++    }
++
++    var storedHistoryCount: Int { history.count }
++}
+diff --git a/ResourceRunner/NetworkMetadata.swift b/ResourceRunner/NetworkMetadata.swift
+new file mode 100644
+index 0000000..4051e75
+--- /dev/null
++++ b/ResourceRunner/NetworkMetadata.swift
+@@ -0,0 +1,192 @@
++import Foundation
++
++nonisolated struct NetworkMetadataRecord: Sendable {
++    let key: NetworkTargetKey
++    let kind: NetworkInterfaceKind
++    let classificationReason: String
++    let ipv4: [String]
++    let ipv6: [String]
++    let linkActive: Bool?
++    let status: String
++    let linkSpeed: String
++}
++
++nonisolated struct NetworkMetadataSnapshot: Sendable {
++    let readAt: ContinuousClock.Instant
++    let topologyRevision: UInt64
++    let records: [NetworkMetadataRecord]
++    let physicalTotalsComplete: Bool
++    let nativeStatus: String
++}
++
++nonisolated enum NetworkMetadataResult: Sendable {
++    case available(NetworkMetadataSnapshot)
++    case failure(String)
++}
++
++nonisolated protocol NetworkMetadataReading: Sendable {
++    func read() throws -> NetworkMetadataSnapshot
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkMetadataSnapshot
++}
++
++nonisolated extension NetworkMetadataReading {
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkMetadataSnapshot {
++        try read()
++    }
++}
++
++/// 느린 주소·서비스·provider 조회는 빠른 route 카운터 reader와 별도 실행 축에서 수행합니다.
++nonisolated struct SystemNetworkMetadataReader: NetworkMetadataReading {
++    private let nativeRead: @Sendable () throws -> NetworkNativeSnapshot
++    let topology: NetworkTopologyTracker
++
++    init(topology: NetworkTopologyTracker,
++         nativeRead: @escaping @Sendable () throws -> NetworkNativeSnapshot = { try NetworkNativeAdapter().read() }) {
++        self.nativeRead = nativeRead
++        self.topology = topology
++    }
++
++    func read() throws -> NetworkMetadataSnapshot {
++        try read(context: nil, admission: nil)
++    }
++
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkMetadataSnapshot {
++        for _ in 0..<3 {
++            let expectedRevision = topology.currentRevision
++            let native = try nativeRead()
++            let readAt = ContinuousClock().now
++            let registryIDs = Dictionary(uniqueKeysWithValues: native.interfaces.compactMap { item in
++                item.registryID.map { (item.raw.name, $0) }
++            })
++            let linkStates = Dictionary(uniqueKeysWithValues: native.interfaces.compactMap { item in
++                item.linkActive.map { (item.raw.name, $0) }
++            })
++            let classifications = Dictionary(uniqueKeysWithValues: native.interfaces.map {
++                ($0.raw.name, $0.kind)
++            })
++            let addressPresence = Dictionary(uniqueKeysWithValues: native.interfaces.map {
++                ($0.raw.name, !$0.ipv4.isEmpty || !$0.ipv6.isEmpty)
++            })
++            let observed: (interfaces: [NetworkCounterInterface], revision: UInt64)?
++            if let context, let admission {
++                var changedRevision = false
++                observed = admission.admitOptional(context, phase: .reader, timestamp: readAt) {
++                    let value = topology.observeIfCurrent(native.interfaces.map(\.raw),
++                        registryIDs: registryIDs, linkStates: linkStates,
++                        classifications: classifications, addressPresence: addressPresence,
++                        expectedRevision: expectedRevision)
++                    if value == nil { changedRevision = true }
++                    return value
++                }
++                if observed == nil && !changedRevision {
++                    throw NetworkNativeError.stale("metadata reader context or request order")
++                }
++            } else {
++                observed = topology.observeIfCurrent(native.interfaces.map(\.raw),
++                    registryIDs: registryIDs, linkStates: linkStates,
++                    classifications: classifications, addressPresence: addressPresence,
++                    expectedRevision: expectedRevision)
++            }
++            guard let observed else { continue }
++        let keys = Dictionary(uniqueKeysWithValues: observed.interfaces.map {
++            ($0.raw.name, $0.key)
++        })
++        let records = native.interfaces.compactMap { item -> NetworkMetadataRecord? in
++            guard let key = keys[item.raw.name] else { return nil }
++            return NetworkMetadataRecord(key: key, kind: item.kind,
++                classificationReason: item.classificationReason,
++                ipv4: item.ipv4, ipv6: item.ipv6, linkActive: item.linkActive,
++                status: item.status, linkSpeed: item.linkSpeed)
++        }
++        return NetworkMetadataSnapshot(readAt: readAt, topologyRevision: observed.revision,
++            records: records, physicalTotalsComplete: native.physicalTotalsComplete,
++            nativeStatus: "route=\(native.routeLookup); addresses=\(native.addressLookup); configuration=\(native.configurationLookup); registry=\(native.registryLookup); link=\(native.linkLookup)")
++        }
++        throw NetworkNativeError.malformed("topology changed during metadata read")
++    }
++}
++
++actor NetworkMetadataSource<Reader: NetworkMetadataReading>: ScheduledSampleSource {
++    private let reader: Reader
++    private let admission: CollectionAdmission?
++
++    init(reader: Reader, admission: CollectionAdmission? = nil) {
++        self.reader = reader
++        self.admission = admission
++    }
++
++    func sample(collectionEpoch: Int) -> NetworkMetadataResult? {
++        do { return .available(try reader.read(context: nil, admission: admission)) }
++        catch { return .failure(String(describing: error)) }
++    }
++
++    func sample(context: CollectionRunContext) async -> NetworkMetadataResult? {
++        guard admission?.isCurrent(context) != false else { return nil }
++        let result: NetworkMetadataResult
++        do { result = .available(try reader.read(context: context, admission: admission)) }
++        catch NetworkNativeError.stale(_) { return nil }
++        catch { result = .failure(String(describing: error)) }
++        guard admission?.isCurrent(context) != false else { return nil }
++        return result
++    }
++}
++
++nonisolated struct NetworkMetadataStatus: Sendable {
++    let latest: TimestampedSample<NetworkMetadataResult>?
++    let lastKnown: NetworkMetadataSnapshot?
++}
++
++nonisolated struct NetworkClassificationView: Sendable {
++    let records: [NetworkTargetKey: NetworkMetadataRecord]
++    let complete: Bool
++}
++
++/// 실패에서는 마지막 성공을 보존하되 현재 identity·revision과 다르면 분류 캐시로 돌려주지 않습니다.
++actor NetworkMetadataStore: MonitoringSampleSink {
++    private let admission: CollectionAdmission?
++    private let beforeClassification: (@Sendable () async -> Void)?
++    private var latest: TimestampedSample<NetworkMetadataResult>?
++    private var lastKnown: NetworkMetadataSnapshot?
++    nonisolated let updates: AsyncStream<NetworkMetadataStatus>
++    private let continuation: AsyncStream<NetworkMetadataStatus>.Continuation
++
++    init(admission: CollectionAdmission? = nil,
++         beforeClassification: (@Sendable () async -> Void)? = nil) {
++        self.admission = admission
++        self.beforeClassification = beforeClassification
++        var continuation: AsyncStream<NetworkMetadataStatus>.Continuation!
++        self.updates = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
++        self.continuation = continuation
++    }
++
++    func append(_ sample: TimestampedSample<NetworkMetadataResult>) {
++        latest = sample
++        if case .available(let value) = sample.value { lastKnown = value }
++        continuation.yield(NetworkMetadataStatus(latest: latest, lastKnown: lastKnown))
++    }
++
++    func append(_ sample: TimestampedSample<NetworkMetadataResult>,
++                context: CollectionRunContext) async -> Bool {
++        guard let admission else { append(sample); return true }
++        return admission.admit(context, phase: .store, timestamp: sample.timestamp) {
++            append(sample)
++            return true
++        } ?? false
++    }
++
++    func status() -> NetworkMetadataStatus {
++        NetworkMetadataStatus(latest: latest, lastKnown: lastKnown)
++    }
++
++    func classifications(for snapshot: NetworkCounterSnapshot) async -> NetworkClassificationView {
++        if let beforeClassification { await beforeClassification() }
++        guard let lastKnown, lastKnown.topologyRevision == snapshot.topologyRevision else {
++            return NetworkClassificationView(records: [:], complete: false)
++        }
++        let currentKeys = Set(snapshot.interfaces.map(\.key))
++        let records = Dictionary(uniqueKeysWithValues: lastKnown.records.compactMap { record in
++            currentKeys.contains(record.key) ? (record.key, record) : nil
++        })
++        return NetworkClassificationView(records: records, complete: lastKnown.physicalTotalsComplete)
++    }
++}
+diff --git a/ResourceRunner/NetworkTopology.swift b/ResourceRunner/NetworkTopology.swift
+new file mode 100644
+index 0000000..35fb47d
+--- /dev/null
++++ b/ResourceRunner/NetworkTopology.swift
+@@ -0,0 +1,200 @@
++import Foundation
++import Darwin
++
++/// 이름·index만 재사용돼도 이전 카운터와 보조 정보를 잇지 않는 현재 관측 대상의 키.
++nonisolated struct NetworkTargetKey: Hashable, Sendable {
++    let name: String
++    let index: UInt16
++    let registryID: UInt64?
++    let lifetime: UInt64
++}
++
++nonisolated struct NetworkCounterInterface: Sendable {
++    let key: NetworkTargetKey
++    let raw: NetworkRawInterface
++}
++
++nonisolated struct NetworkCounterSnapshot: Sendable {
++    let readAt: ContinuousClock.Instant
++    let interfaces: [NetworkCounterInterface]
++    let topologyRevision: UInt64
++}
++
++/// route 집합과 변경 알림을 함께 누적합니다. 알림 두 건이 다음 tick 전에 합쳐져도 revision은 두 번 전진합니다.
++nonisolated final class NetworkTopologyTracker: @unchecked Sendable {
++    private struct Base: Hashable {
++        let name: String
++        let index: UInt16
++    }
++    private struct Entry {
++        var registryID: UInt64?
++        var lifetime: UInt64
++        var activeFlags: Int32
++        var linkActive: Bool?
++        var kind: NetworkInterfaceKind?
++        var hasAddress: Bool?
++    }
++
++    private let lock = NSLock()
++    private var entries: [Base: Entry] = [:]
++    private var nextLifetime: UInt64 = 0
++    private var revision: UInt64 = 0
++
++    var currentRevision: UInt64 { lock.withLock { revision } }
++
++    @discardableResult
++    func withCurrentRevision<T>(_ expected: UInt64, _ apply: () -> T) -> T? {
++        lock.withLock {
++            guard revision == expected else { return nil }
++            return apply()
++        }
++    }
++
++    func noteChange() {
++        lock.withLock {
++            revision &+= 1
++            // 알림 뒤 같은 이름·index가 다시 보이더라도 새 관측 수명으로 취급합니다.
++            entries.removeAll()
++        }
++    }
++
++    func observe(_ raw: [NetworkRawInterface], registryIDs: [String: UInt64]? = nil,
++                 linkStates: [String: Bool]? = nil,
++                 classifications: [String: NetworkInterfaceKind]? = nil,
++                 addressPresence: [String: Bool]? = nil)
++        -> (interfaces: [NetworkCounterInterface], revision: UInt64) {
++        lock.withLock { observeLocked(raw, registryIDs: registryIDs, linkStates: linkStates,
++                                     classifications: classifications, addressPresence: addressPresence) }
++    }
++
++    /// 느린 metadata 조회가 시작한 뒤 빠른 route 관측이 전진했으면 과거 집합을 반영하지 않습니다.
++    func observeIfCurrent(_ raw: [NetworkRawInterface], registryIDs: [String: UInt64]? = nil,
++                          linkStates: [String: Bool]? = nil,
++                          classifications: [String: NetworkInterfaceKind]? = nil,
++                          addressPresence: [String: Bool]? = nil,
++                          expectedRevision: UInt64)
++        -> (interfaces: [NetworkCounterInterface], revision: UInt64)? {
++        lock.withLock {
++            guard revision == expectedRevision else { return nil }
++            return observeLocked(raw, registryIDs: registryIDs, linkStates: linkStates,
++                                 classifications: classifications, addressPresence: addressPresence)
++        }
++    }
++
++    private func observeLocked(_ raw: [NetworkRawInterface], registryIDs: [String: UInt64]?,
++                               linkStates: [String: Bool]?,
++                               classifications: [String: NetworkInterfaceKind]?,
++                               addressPresence: [String: Bool]?)
++        -> (interfaces: [NetworkCounterInterface], revision: UInt64) {
++            let current = raw.filter { $0.flags & Int32(IFF_LOOPBACK) == 0 }
++            let bases = Set(current.map { Base(name: $0.name, index: $0.index) })
++            let removed = entries.keys.filter { !bases.contains($0) }
++            if !removed.isEmpty {
++                revision &+= 1
++                for base in removed { entries.removeValue(forKey: base) }
++            }
++            var result: [NetworkCounterInterface] = []
++            for item in current {
++                let base = Base(name: item.name, index: item.index)
++                let activeFlags = item.flags & Int32(IFF_UP)
++                let observedRegistry = registryIDs?[item.name]
++                if var existing = entries[base] {
++                    if registryIDs != nil && existing.registryID != observedRegistry {
++                        revision &+= 1
++                        nextLifetime &+= 1
++                        existing.lifetime = nextLifetime
++                        existing.registryID = observedRegistry
++                    }
++                    if existing.activeFlags != activeFlags {
++                        revision &+= 1
++                        existing.activeFlags = activeFlags
++                    }
++                    if linkStates != nil && existing.linkActive != linkStates?[item.name] {
++                        revision &+= 1
++                        existing.linkActive = linkStates?[item.name]
++                    }
++                    if classifications != nil && existing.kind != classifications?[item.name] {
++                        revision &+= 1
++                        existing.kind = classifications?[item.name]
++                    }
++                    if addressPresence != nil && existing.hasAddress != addressPresence?[item.name] {
++                        revision &+= 1
++                        existing.hasAddress = addressPresence?[item.name]
++                    }
++                    entries[base] = existing
++                } else {
++                    revision &+= 1
++                    nextLifetime &+= 1
++                    entries[base] = Entry(registryID: observedRegistry,
++                                          lifetime: nextLifetime, activeFlags: activeFlags,
++                                          linkActive: linkStates?[item.name],
++                                          kind: classifications?[item.name],
++                                          hasAddress: addressPresence?[item.name])
++                }
++                let entry = entries[base]!
++                result.append(NetworkCounterInterface(key: NetworkTargetKey(name: item.name,
++                    index: item.index, registryID: entry.registryID, lifetime: entry.lifetime), raw: item))
++            }
++            return (result, revision)
++    }
++}
++
++nonisolated protocol NetworkCounterReading: Sendable {
++    func read() throws -> NetworkCounterSnapshot
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkCounterSnapshot
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T?
++}
++
++nonisolated extension NetworkCounterReading {
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkCounterSnapshot {
++        try read()
++    }
++
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T? { apply() }
++}
++
++/// 빠른 경로는 route 카운터·대상 집합만 읽습니다. 주소·서비스·provider 탐색은 보조 reader가 맡습니다.
++nonisolated struct SystemNetworkCounterReader: NetworkCounterReading {
++    private let routeRead: @Sendable () throws -> [NetworkRawInterface]
++    let topology: NetworkTopologyTracker
++
++    init(topology: NetworkTopologyTracker,
++         routeRead: @escaping @Sendable () throws -> [NetworkRawInterface] = { try NetworkRouteReader().read() }) {
++        self.topology = topology
++        self.routeRead = routeRead
++    }
++
++    func read() throws -> NetworkCounterSnapshot {
++        try read(context: nil, admission: nil)
++    }
++
++    func read(context: CollectionRunContext?, admission: CollectionAdmission?) throws -> NetworkCounterSnapshot {
++        for _ in 0..<3 {
++            let expectedRevision = topology.currentRevision
++            let raw = try routeRead()
++            let readAt = ContinuousClock().now
++            let observed: (interfaces: [NetworkCounterInterface], revision: UInt64)?
++            if let context, let admission {
++                var changedRevision = false
++                observed = admission.admitOptional(context, phase: .reader, timestamp: readAt) {
++                    let value = topology.observeIfCurrent(raw, expectedRevision: expectedRevision)
++                    if value == nil { changedRevision = true }
++                    return value
++                }
++                if observed == nil && !changedRevision {
++                    throw NetworkNativeError.stale("counter reader context or request order")
++                }
++            } else {
++                observed = topology.observeIfCurrent(raw, expectedRevision: expectedRevision)
++            }
++            guard let observed else { continue }
++            return NetworkCounterSnapshot(readAt: readAt, interfaces: observed.interfaces,
++                                          topologyRevision: observed.revision)
++        }
++        throw NetworkNativeError.malformed("topology changed during counter read")
++    }
++
++    func withCurrentTopologyRevision<T>(_ revision: UInt64, _ apply: () -> T) -> T? {
++        topology.withCurrentRevision(revision, apply)
++    }
++}
+diff --git a/ResourceRunnerTests/NetworkActivityTests.swift b/ResourceRunnerTests/NetworkActivityTests.swift
+new file mode 100644
+index 0000000..c6d212c
+--- /dev/null
++++ b/ResourceRunnerTests/NetworkActivityTests.swift
+@@ -0,0 +1,436 @@
++import Darwin
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++private final class ScriptedNetworkCounterReader: NetworkCounterReading, @unchecked Sendable {
++    private let lock = NSLock()
++    private var results: [Result<NetworkCounterSnapshot, NetworkNativeError>]
++    init(_ results: [Result<NetworkCounterSnapshot, NetworkNativeError>]) { self.results = results }
++    func read() throws -> NetworkCounterSnapshot {
++        try lock.withLock {
++            guard !results.isEmpty else { throw NetworkNativeError.malformed("script exhausted") }
++            return try results.removeFirst().get()
++        }
++    }
++}
++
++private actor NetworkReadHold {
++    private var continuation: CheckedContinuation<Void, Never>?
++    private var calls = 0
++    private(set) var entered = false
++    func pauseFirst() async {
++        calls += 1
++        guard calls == 1 else { return }
++        entered = true
++        await withCheckedContinuation { continuation = $0 }
++    }
++    func resume() {
++        continuation?.resume()
++        continuation = nil
++    }
++}
++
++private func networkWait(_ condition: () async -> Bool) async {
++    for _ in 0..<10_000 {
++        if await condition() { return }
++        await Task.yield()
++    }
++}
++
++struct NetworkActivityTests {
++    private let origin = ContinuousClock().now
++
++    private func key(_ name: String = "en0", _ index: UInt16 = 1,
++                     registry: UInt64? = 7, lifetime: UInt64 = 1) -> NetworkTargetKey {
++        NetworkTargetKey(name: name, index: index, registryID: registry, lifetime: lifetime)
++    }
++
++    private func raw(_ name: String = "en0", _ index: UInt16 = 1,
++                     rx: UInt64, tx: UInt64, up: Bool = true) -> NetworkRawInterface {
++        NetworkRawInterface(name: name, index: index, flags: up ? Int32(IFF_UP) : 0,
++            linkType: 6, receivedBytes: rx, sentBytes: tx, baudrate: 0)
++    }
++
++    private func snapshot(_ seconds: Int, revision: UInt64 = 1,
++                          _ entries: [(NetworkTargetKey, NetworkRawInterface)]) -> NetworkCounterSnapshot {
++        NetworkCounterSnapshot(readAt: origin.advanced(by: .seconds(seconds)),
++            interfaces: entries.map { NetworkCounterInterface(key: $0.0, raw: $0.1) },
++            topologyRevision: revision)
++    }
++
++    private func record(_ key: NetworkTargetKey, kind: NetworkInterfaceKind = .physicalEthernet,
++                        active: Bool? = true) -> NetworkMetadataRecord {
++        NetworkMetadataRecord(key: key, kind: kind, classificationReason: "test provider",
++            ipv4: ["192.0.2.1"], ipv6: [], linkActive: active,
++            status: "test", linkSpeed: "unsupported")
++    }
++
++    private func metadata(_ revision: UInt64, _ records: [NetworkMetadataRecord]) -> NetworkMetadataSnapshot {
++        NetworkMetadataSnapshot(readAt: origin, topologyRevision: revision,
++            records: records, physicalTotalsComplete: true, nativeStatus: "test")
++    }
++
++    private func metadataStore(_ revision: UInt64, _ records: [NetworkMetadataRecord]) async -> NetworkMetadataStore {
++        let store = NetworkMetadataStore()
++        await store.append(TimestampedSample(timestamp: origin,
++            value: .available(metadata(revision, records))))
++        return store
++    }
++
++    private func gate(_ axis: CollectionAxis = .networkActivity) -> CollectionAdmission {
++        let gate = CollectionAdmission()
++        gate.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        _ = gate.advance(axis)
++        return gate
++    }
++
++    @Test func actualReadTimeAndNormalFiveToOneSecondChangeKeepTheBaseline() async throws {
++        let target = key()
++        let store = await metadataStore(1, [record(target)])
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(target, raw(rx: 100, tx: 200))])),
++            .success(snapshot(5, [(target, raw(rx: 150, tx: 225))])),
++            .success(snapshot(6, [(target, raw(rx: 160, tx: 230))]))
++        ])
++        let admission = gate()
++        let source = NetworkActivitySource(reader: reader, metadata: store, admission: admission)
++        let firstContext = try #require(admission.issue(.networkActivity))
++        let first = try #require(await source.sample(context: firstContext))
++        #expect(first.status == .baselineOnly(.first))
++        #expect(first.interfaces[0].receivedBytes == 100)
++        let secondContext = try #require(admission.issue(.networkActivity))
++        let second = try #require(await source.sample(context: secondContext))
++        #expect(second.status == .rate)
++        #expect(second.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++        _ = admission.advance(.networkActivity)
++        let thirdContext = try #require(admission.issue(.networkActivity))
++        let third = try #require(await source.sample(context: thirdContext))
++        #expect(third.status == .rate)
++        #expect(third.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++        #expect(third.rateSegment == second.rateSegment)
++    }
++
++    @Test func negativeElapsedAndUnsignedExtremesNeverCreateInvalidRates() async throws {
++        let target = key()
++        let store = await metadataStore(1, [record(target)])
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(5, [(target, raw(rx: UInt64.max - 1, tx: 0))])),
++            .success(snapshot(4, [(target, raw(rx: UInt64.max, tx: 1))])),
++            .success(snapshot(5, [(target, raw(rx: UInt64.max, tx: 2))]))
++        ])
++        let source = NetworkActivitySource(reader: reader, metadata: store)
++        _ = await source.sample(collectionEpoch: 0)
++        let reversed = try #require(await source.sample(collectionEpoch: 0))
++        #expect(reversed.status == .baselineOnly(.nonpositiveElapsed))
++        let recovered = try #require(await source.sample(collectionEpoch: 0))
++        #expect(recovered.representative == RatePair(receivedBytesPerSecond: 0,
++                                                       sentBytesPerSecond: 1))
++        #expect(RatePair(receivedBytesPerSecond: .nan, sentBytesPerSecond: 0) == nil)
++        #expect(RatePair(receivedBytesPerSecond: .infinity, sentBytesPerSecond: 0) == nil)
++        #expect(RatePair(receivedBytesPerSecond: -1, sentBytesPerSecond: 0) == nil)
++    }
++
++    @Test func realZeroIsAValidRateAndVPNIsDetailedButNotSummed() async throws {
++        let physical = key()
++        let vpn = key("utun0", 2, registry: nil, lifetime: 2)
++        let virtual = key("vmenet0", 3, registry: 9, lifetime: 3)
++        let store = await metadataStore(1, [record(physical), record(vpn, kind: .vpn),
++            record(virtual, kind: .virtual)])
++        let entries1 = [(physical, raw(rx: 100, tx: 100)),
++                        (vpn, raw("utun0", 2, rx: 1000, tx: 1000)),
++                        (virtual, raw("vmenet0", 3, rx: 1000, tx: 1000))]
++        let entries2 = [(physical, raw(rx: 100, tx: 100)),
++                        (vpn, raw("utun0", 2, rx: 2000, tx: 2000)),
++                        (virtual, raw("vmenet0", 3, rx: 2000, tx: 2000))]
++        let entries3 = [(physical, raw(rx: 110, tx: 120)),
++                        (vpn, raw("utun0", 2, rx: 10, tx: 10)),
++                        (virtual, raw("vmenet0", 3, rx: 10, tx: 10))]
++        let source = NetworkActivitySource(reader: ScriptedNetworkCounterReader([
++            .success(snapshot(0, entries1)), .success(snapshot(1, entries2)),
++            .success(snapshot(2, entries3))]), metadata: store)
++        _ = await source.sample(collectionEpoch: 0)
++        let second = try #require(await source.sample(collectionEpoch: 0))
++        #expect(second.status == .rate)
++        #expect(second.representative == RatePair(receivedBytesPerSecond: 0, sentBytesPerSecond: 0))
++        #expect(second.interfaces.first { $0.kind == .vpn }?.rate ==
++                RatePair(receivedBytesPerSecond: 1000, sentBytesPerSecond: 1000))
++        let third = try #require(await source.sample(collectionEpoch: 0))
++        #expect(third.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 20))
++        #expect(third.interfaces.first { $0.kind == .vpn }?.rate == nil)
++    }
++
++    @Test func twoPhysicalTargetsAreSummedOnceAndRemovalClearsCurrentList() async throws {
++        let first = key()
++        let second = key("en1", 2, registry: 8, lifetime: 2)
++        let store = await metadataStore(1, [record(first), record(second)])
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(first, raw(rx: 100, tx: 100)),
++                                  (second, raw("en1", 2, rx: 200, tx: 200))])),
++            .success(snapshot(1, [(first, raw(rx: 110, tx: 120)),
++                                  (second, raw("en1", 2, rx: 230, tx: 240))])),
++            .success(snapshot(2, revision: 2, [(first, raw(rx: 120, tx: 130))]))
++        ])
++        let source = NetworkActivitySource(reader: reader, metadata: store)
++        _ = await source.sample(collectionEpoch: 0)
++        let both = try #require(await source.sample(collectionEpoch: 0))
++        #expect(both.representative == RatePair(receivedBytesPerSecond: 40,
++                                                sentBytesPerSecond: 60))
++        let removed = try #require(await source.sample(collectionEpoch: 0))
++        #expect(removed.interfaces.map(\.key.name) == ["en0"])
++        #expect(removed.representative == nil)
++        #expect(removed.status == .baselineOnly(.topologyChanged))
++    }
++
++    @Test func everyInvalidIntervalAndFailureRestartsAtARealBaseline() async throws {
++        let target = key()
++        let store = await metadataStore(1, [record(target)])
++        let cases: [(NetworkCounterSnapshot, NetworkBaselineReason)] = [
++            (snapshot(5, [(target, raw(rx: 120, tx: 120))]), .nonpositiveElapsed),
++            (snapshot(16, [(target, raw(rx: 120, tx: 120))]), .excessiveGap),
++            (snapshot(6, [(target, raw(rx: 90, tx: 120))]), .counterDecrease),
++            (snapshot(6, revision: 2, [(target, raw(rx: 120, tx: 120))]), .topologyChanged),
++            (snapshot(6, [(key("en1", 2), raw("en1", 2, rx: 120, tx: 120))]), .newTarget)
++        ]
++        for (invalid, reason) in cases {
++            let reader = ScriptedNetworkCounterReader([
++                .success(snapshot(0, [(target, raw(rx: 100, tx: 100))])),
++                .success(snapshot(5, [(target, raw(rx: 110, tx: 110))])),
++                .success(invalid)
++            ])
++            let source = NetworkActivitySource(reader: reader, metadata: store)
++            _ = await source.sample(collectionEpoch: 0)
++            _ = await source.sample(collectionEpoch: 0)
++            let result = try #require(await source.sample(collectionEpoch: 0))
++            #expect(result.status == .baselineOnly(reason) || result.status == .partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다"))
++            #expect(result.representative == nil)
++        }
++
++        let failureReader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(target, raw(rx: 100, tx: 100))])),
++            .success(snapshot(1, [(target, raw(rx: 110, tx: 110))])),
++            .failure(.malformed("injected")),
++            .success(snapshot(2, [(target, raw(rx: 120, tx: 120))])),
++            .success(snapshot(3, [(target, raw(rx: 130, tx: 130))]))
++        ])
++        let source = NetworkActivitySource(reader: failureReader, metadata: store)
++        let activityStore = NetworkActivityStore()
++        let first = try #require(await source.sample(collectionEpoch: 0))
++        let valid = try #require(await source.sample(collectionEpoch: 0))
++        let failed = try #require(await source.sample(collectionEpoch: 0))
++        let resumed = try #require(await source.sample(collectionEpoch: 0))
++        let next = try #require(await source.sample(collectionEpoch: 0))
++        for value in [first, valid, failed, resumed, next] {
++            await activityStore.append(TimestampedSample(timestamp: value.readAt, value: value))
++        }
++        if case .failure = failed.status {} else { Issue.record("조회 실패 상태가 아닙니다") }
++        #expect(resumed.status == .baselineOnly(.afterFailure))
++        #expect(next.status == .rate)
++        #expect(next.rateSegment != valid.rateSegment)
++        let history = await activityStore.snapshot(at: origin + .seconds(3)).recentHistory
++        #expect(history.count == 2)
++        #expect(history[0].rateSegment != history[1].rateSegment)
++    }
++
++    @Test func newEpochAndPartialIdentityDoNotPublishACompleteSum() async throws {
++        let target = key()
++        let unknown = key("en9", 9, registry: nil, lifetime: 9)
++        let store = await metadataStore(1, [record(target), record(unknown, kind: .unknown)])
++        let firstEntries = [(target, raw(rx: 100, tx: 100)),
++                            (unknown, raw("en9", 9, rx: 100, tx: 100))]
++        let nextEntries = [(target, raw(rx: 110, tx: 110)),
++                           (unknown, raw("en9", 9, rx: 110, tx: 110))]
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, firstEntries)), .success(snapshot(1, nextEntries)),
++            .success(snapshot(2, nextEntries))
++        ])
++        let source = NetworkActivitySource(reader: reader, metadata: store)
++        _ = await source.sample(collectionEpoch: 0)
++        let partial = try #require(await source.sample(collectionEpoch: 0))
++        if case .partial = partial.status {} else { Issue.record("미확인 물리 대상의 합계를 완전으로 표시했습니다") }
++        #expect(partial.representative == nil)
++        #expect(partial.knownPhysicalRates == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 10))
++        let newEpoch = try #require(await source.sample(collectionEpoch: 1))
++        #expect(newEpoch.status == .baselineOnly(.newEpoch))
++    }
++
++    @Test func linkDisconnectAndReconnectDoNotAverageAcrossTheGap() async throws {
++        let target = key()
++        let store = await metadataStore(1, [record(target)])
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(target, raw(rx: 100, tx: 100))])),
++            .success(snapshot(1, [(target, raw(rx: 110, tx: 110))])),
++            .success(snapshot(2, [(target, raw(rx: 120, tx: 120))])),
++            .success(snapshot(3, [(target, raw(rx: 130, tx: 130))])),
++            .success(snapshot(4, [(target, raw(rx: 140, tx: 140))]))
++        ])
++        let source = NetworkActivitySource(reader: reader, metadata: store)
++        _ = await source.sample(collectionEpoch: 0)
++        let valid = try #require(await source.sample(collectionEpoch: 0))
++        await store.append(TimestampedSample(timestamp: origin + .seconds(2),
++            value: .available(metadata(1, [record(target, active: false)]))))
++        let disconnected = try #require(await source.sample(collectionEpoch: 0))
++        #expect(disconnected.status == .disconnected)
++        await store.append(TimestampedSample(timestamp: origin + .seconds(3),
++            value: .available(metadata(1, [record(target)]))))
++        let reconnected = try #require(await source.sample(collectionEpoch: 0))
++        #expect(reconnected.status == .baselineOnly(.classificationChanged))
++        let next = try #require(await source.sample(collectionEpoch: 0))
++        #expect(next.status == .rate)
++        #expect(next.rateSegment != valid.rateSegment)
++    }
++
++    @Test func topologyLifetimeAndRevisionSurviveRemovalReuseAndMergedNotifications() {
++        let topology = NetworkTopologyTracker()
++        let original = topology.observe([raw(rx: 1, tx: 1)])
++        let empty = topology.observe([])
++        let reused = topology.observe([raw(rx: 2, tx: 2)])
++        #expect(empty.revision > original.revision)
++        #expect(reused.interfaces[0].key != original.interfaces[0].key)
++        topology.noteChange()
++        topology.noteChange()
++        let returned = topology.observe([raw(rx: 3, tx: 3)])
++        #expect(returned.revision >= reused.revision + 2)
++        #expect(returned.interfaces[0].key != reused.interfaces[0].key)
++        let down = topology.observe([raw(rx: 3, tx: 3, up: false)])
++        #expect(down.revision > returned.revision)
++        let newRegistry = topology.observe([raw(rx: 3, tx: 3, up: false)], registryIDs: ["en0": 88])
++        #expect(newRegistry.interfaces[0].key.registryID == 88)
++        #expect(newRegistry.interfaces[0].key != down.interfaces[0].key)
++        let linkUp = topology.observe([raw(rx: 3, tx: 3, up: false)], linkStates: ["en0": true])
++        let linkDown = topology.observe([raw(rx: 3, tx: 3, up: false)], linkStates: ["en0": false])
++        #expect(linkDown.revision > linkUp.revision)
++        let addressChange = topology.observe([raw(rx: 3, tx: 3, up: false)],
++            classifications: ["en0": .physicalEthernet], addressPresence: ["en0": true])
++        let noAddress = topology.observe([raw(rx: 3, tx: 3, up: false)],
++            classifications: ["en0": .physicalEthernet], addressPresence: ["en0": false])
++        #expect(noAddress.revision > addressChange.revision)
++    }
++
++    @Test func metadataCacheRequiresExactLifetimeAndRevision() async {
++        let old = key()
++        let store = await metadataStore(1, [record(old)])
++        let reused = key(lifetime: 2)
++        let sameName = snapshot(1, [(reused, raw(rx: 1, tx: 1))])
++        #expect((await store.classifications(for: sameName)).records.isEmpty)
++        let changedRevision = snapshot(1, revision: 2, [(old, raw(rx: 1, tx: 1))])
++        #expect((await store.classifications(for: changedRevision)).records.isEmpty)
++    }
++
++    @Test func reusedNameAndIndexCannotInheritRateOrMetadata() async throws {
++        let old = key()
++        let reused = key(lifetime: 2)
++        let store = await metadataStore(1, [record(old)])
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(old, raw(rx: 100, tx: 100))])),
++            .success(snapshot(1, [(old, raw(rx: 110, tx: 110))])),
++            .success(snapshot(2, revision: 2, [(reused, raw(rx: 500, tx: 500))])),
++            .success(snapshot(3, revision: 2, [(reused, raw(rx: 510, tx: 510))])),
++            .success(snapshot(4, revision: 2, [(reused, raw(rx: 520, tx: 520))]))
++        ])
++        let source = NetworkActivitySource(reader: reader, metadata: store)
++        _ = await source.sample(collectionEpoch: 0)
++        _ = await source.sample(collectionEpoch: 0)
++        let replaced = try #require(await source.sample(collectionEpoch: 0))
++        #expect(replaced.status == .baselineOnly(.topologyChanged))
++        #expect(replaced.interfaces[0].kind == .unknown)
++        #expect(replaced.representative == nil)
++        await store.append(TimestampedSample(timestamp: origin + .seconds(3),
++            value: .available(metadata(2, [record(reused)]))))
++        let classified = try #require(await source.sample(collectionEpoch: 0))
++        #expect(classified.status == .baselineOnly(.classificationChanged))
++        let measured = try #require(await source.sample(collectionEpoch: 0))
++        #expect(measured.representative == RatePair(receivedBytesPerSecond: 10,
++                                                     sentBytesPerSecond: 10))
++    }
++
++    @Test func staleSourceAndStoreResultsCannotChangeBaselineLatestOrHistory() async throws {
++        let target = key()
++        let hold = NetworkReadHold()
++        let metadata = NetworkMetadataStore(beforeClassification: { await hold.pauseFirst() })
++        await metadata.append(TimestampedSample(timestamp: origin,
++            value: .available(self.metadata(1, [record(target)]))))
++        let reader = ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(target, raw(rx: 100, tx: 100))])),
++            .success(snapshot(1, [(target, raw(rx: 110, tx: 110))])),
++            .success(snapshot(2, [(target, raw(rx: 120, tx: 120))]))
++        ])
++        let admission = gate()
++        let source = NetworkActivitySource(reader: reader, metadata: metadata, admission: admission)
++        let store = NetworkActivityStore(admission: admission)
++        let old = try #require(admission.issue(.networkActivity))
++        let delayed = Task { await source.sample(context: old) }
++        await networkWait { await hold.entered }
++        admission.transition(CollectionBoundary(revision: 1, sequence: 1, epoch: 1, stopped: true))
++        admission.transition(CollectionBoundary(revision: 2, sequence: 2, epoch: 2, stopped: false))
++        _ = admission.advance(.networkActivity)
++        await hold.resume()
++        #expect(await delayed.value == nil)
++        let fresh = try #require(admission.issue(.networkActivity))
++        let baseline = try #require(await source.sample(context: fresh))
++        #expect(baseline.status == .baselineOnly(.first))
++        #expect(await store.append(TimestampedSample(timestamp: baseline.readAt,
++            value: baseline, collectionEpoch: fresh.epoch, context: fresh), context: fresh))
++        let latest = try #require(admission.issue(.networkActivity))
++        let valid = try #require(await source.sample(context: latest))
++        #expect(valid.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 10))
++        #expect(await store.append(TimestampedSample(timestamp: valid.readAt,
++            value: valid, collectionEpoch: latest.epoch, context: latest), context: latest))
++        #expect(await store.storedHistoryCount == 1)
++        let oldSample = TimestampedSample(timestamp: origin, value: baseline,
++            collectionEpoch: old.epoch, context: old)
++        #expect(await store.append(oldSample, context: old) == false)
++        #expect(await store.storedHistoryCount == 1)
++        #expect((await store.snapshot(at: origin + .seconds(2))).latest?.value.representative == valid.representative)
++    }
++
++    @Test func topologyChangeDuringMetadataAwaitRejectsOldActivitySnapshot() async throws {
++        let topology = NetworkTopologyTracker()
++        let nativeRaw = raw(rx: 100, tx: 100)
++        let observed = topology.observe([nativeRaw])
++        let initialKey = observed.interfaces[0].key
++        let hold = NetworkReadHold()
++        let metadata = NetworkMetadataStore(beforeClassification: { await hold.pauseFirst() })
++        await metadata.append(TimestampedSample(timestamp: origin,
++            value: .available(self.metadata(observed.revision, [record(initialKey)]))))
++        let reader = SystemNetworkCounterReader(topology: topology, routeRead: { [nativeRaw] })
++        let admission = gate()
++        let source = NetworkActivitySource(reader: reader, metadata: metadata, admission: admission)
++        let activityStore = NetworkActivityStore(admission: admission)
++        let old = try #require(admission.issue(.networkActivity))
++        let delayed = Task { await source.sample(context: old) }
++        await networkWait { await hold.entered }
++        topology.noteChange()
++        let current = topology.observe([nativeRaw])
++        let currentKey = current.interfaces[0].key
++        await metadata.append(TimestampedSample(timestamp: origin + .seconds(1),
++            value: .available(self.metadata(current.revision, [record(currentKey)]))))
++        await hold.resume()
++        #expect(await delayed.value == nil)
++        #expect((await activityStore.snapshot(at: origin)).latest == nil)
++        let fresh = try #require(admission.issue(.networkActivity))
++        let baseline = try #require(await source.sample(context: fresh))
++        #expect(baseline.status == .baselineOnly(.first))
++        #expect(baseline.interfaces[0].key == currentKey)
++    }
++
++    @Test func historyKeeps601ValidPairsAndFiltersTheMoving600SecondWindow() async {
++        let store = NetworkActivityStore()
++        for index in 0..<605 {
++            let value = NetworkActivitySample(readAt: origin + .seconds(index),
++                topologyRevision: 1, interfaces: [],
++                knownPhysicalRates: RatePair(receivedBytesPerSecond: Double(index), sentBytesPerSecond: Double(604 - index)),
++                representative: RatePair(receivedBytesPerSecond: Double(index), sentBytesPerSecond: Double(604 - index)),
++                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
++            await store.append(TimestampedSample(timestamp: value.readAt, value: value))
++        }
++        #expect(await store.storedHistoryCount == 601)
++        let full = await store.snapshot(at: origin + .seconds(604))
++        #expect(full.recentHistory.count == 601)
++        #expect(full.recentHistory.first?.rate.receivedBytesPerSecond == 4)
++        #expect(full.recentHistory.last?.rate.sentBytesPerSecond == 0)
++        let moved = await store.snapshot(at: origin + .seconds(1000))
++        #expect(moved.recentHistory.first?.rate.receivedBytesPerSecond == 400)
++        #expect(moved.recentHistory.count == 205)
++    }
++}
+diff --git a/ResourceRunnerTests/NetworkMetadataTests.swift b/ResourceRunnerTests/NetworkMetadataTests.swift
+new file mode 100644
+index 0000000..9e137bc
+--- /dev/null
++++ b/ResourceRunnerTests/NetworkMetadataTests.swift
+@@ -0,0 +1,188 @@
++import Darwin
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++private final class NativeNetworkScript: @unchecked Sendable {
++    private let lock = NSLock()
++    private var calls = 0
++    let callback: @Sendable (Int) -> NetworkNativeSnapshot
++    init(callback: @escaping @Sendable (Int) -> NetworkNativeSnapshot) { self.callback = callback }
++    func read() -> NetworkNativeSnapshot {
++        let index = lock.withLock { calls += 1; return calls }
++        return callback(index)
++    }
++}
++
++private final class RouteNetworkScript: @unchecked Sendable {
++    private let lock = NSLock()
++    private var calls = 0
++    let callback: @Sendable (Int) -> [NetworkRawInterface]
++    init(callback: @escaping @Sendable (Int) -> [NetworkRawInterface]) { self.callback = callback }
++    func read() -> [NetworkRawInterface] {
++        let index = lock.withLock { calls += 1; return calls }
++        return callback(index)
++    }
++}
++
++private func nativeNetwork(_ name: String, index: UInt16, registry: UInt64) -> NetworkNativeSnapshot {
++    let raw = NetworkRawInterface(name: name, index: index, flags: Int32(IFF_UP),
++        linkType: 6, receivedBytes: 100, sentBytes: 100, baudrate: 0)
++    let reading = NetworkInterfaceReading(raw: raw, kind: .physicalEthernet,
++        classificationReason: "hardware provider", registryID: registry,
++        providerPath: ["IOEthernetInterface", "IOPCIDevice"], functionalType: nil,
++        ipv4: ["192.0.2.1"], ipv6: [], linkActive: true, status: "link active", linkSpeed: "unsupported")
++    return NetworkNativeSnapshot(interfaces: [reading], physicalTotalsComplete: true,
++        routeLookup: "route=0", addressLookup: "address=0", configurationLookup: "SC=0",
++        registryLookup: "IORegistry=0", linkLookup: "link=0")
++}
++
++private func throughScheduledProtocol<S: ScheduledSampleSource>(_ source: S,
++    context: CollectionRunContext) async throws -> S.Value? {
++    try await source.sample(context: context)
++}
++
++struct NetworkMetadataTests {
++    @Test func newerReaderRequestPreventsOlderRouteAndMetadataFromRestoringTopology() throws {
++        let oldRaw = NetworkRawInterface(name: "en0", index: 1, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        let newRaw = NetworkRawInterface(name: "en1", index: 2, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        for axis in [CollectionAxis.networkActivity, .networkMetadata] {
++            let topology = NetworkTopologyTracker()
++            _ = topology.observe([oldRaw])
++            let admission = CollectionAdmission()
++            admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++            _ = admission.advance(axis)
++            let older = try #require(admission.issue(axis))
++            let newer = try #require(admission.issue(axis))
++            if axis == .networkActivity {
++                let script = RouteNetworkScript { call in call == 1 ? [newRaw] : [oldRaw] }
++                let reader = SystemNetworkCounterReader(topology: topology,
++                    routeRead: { script.read() })
++                #expect(try reader.read(context: newer, admission: admission).interfaces.map(\.key.name) == ["en1"])
++                let revision = topology.currentRevision
++                #expect(throws: NetworkNativeError.self) {
++                    try reader.read(context: older, admission: admission)
++                }
++                #expect(topology.currentRevision == revision)
++            } else {
++                let script = NativeNetworkScript { call in
++                    call == 1 ? nativeNetwork("en1", index: 2, registry: 8) :
++                                nativeNetwork("en0", index: 1, registry: 7)
++                }
++                let reader = SystemNetworkMetadataReader(topology: topology,
++                    nativeRead: { script.read() })
++                #expect(try reader.read(context: newer, admission: admission).records.map(\.key.name) == ["en1"])
++                let revision = topology.currentRevision
++                #expect(throws: NetworkNativeError.self) {
++                    try reader.read(context: older, admission: admission)
++                }
++                #expect(topology.currentRevision == revision)
++            }
++            #expect(topology.observe([newRaw]).interfaces.map(\.key.name) == ["en1"])
++        }
++    }
++
++    @Test func fastReaderRejectsBoundaryDuringRouteReadWithoutChangingTopology() throws {
++        let topology = NetworkTopologyTracker()
++        let raw = NetworkRawInterface(name: "en0", index: 1, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        let initial = topology.observe([raw])
++        let admission = CollectionAdmission()
++        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        _ = admission.advance(.networkActivity)
++        let context = try #require(admission.issue(.networkActivity))
++        let script = RouteNetworkScript { _ in
++            admission.transition(CollectionBoundary(revision: 1, sequence: 1,
++                epoch: 1, stopped: true))
++            return [raw]
++        }
++        let reader = SystemNetworkCounterReader(topology: topology, routeRead: { script.read() })
++        #expect(throws: NetworkNativeError.self) {
++            try reader.read(context: context, admission: admission)
++        }
++        #expect(topology.currentRevision == initial.revision)
++    }
++
++    @Test func fastReaderRetriesChangedTopologyInsteadOfRestoringOldSet() throws {
++        let topology = NetworkTopologyTracker()
++        let old = NetworkRawInterface(name: "en0", index: 1, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        let current = NetworkRawInterface(name: "en1", index: 2, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        _ = topology.observe([old])
++        let script = RouteNetworkScript { call in
++            if call == 1 {
++                _ = topology.observe([current])
++                return [old]
++            }
++            return [current]
++        }
++        let reader = SystemNetworkCounterReader(topology: topology, routeRead: { script.read() })
++        let result = try reader.read()
++        #expect(result.interfaces.map(\.key.name) == ["en1"])
++        #expect(result.topologyRevision == topology.currentRevision)
++    }
++
++    @Test func nativeTopologyChangeDuringSlowReadRetriesWithoutRestoringOldSet() throws {
++        let topology = NetworkTopologyTracker()
++        let oldRaw = NetworkRawInterface(name: "en0", index: 1, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        let newRaw = NetworkRawInterface(name: "en1", index: 2, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        _ = topology.observe([oldRaw])
++        let script = NativeNetworkScript { call in
++            if call == 1 {
++                _ = topology.observe([newRaw])
++                return nativeNetwork("en0", index: 1, registry: 7)
++            }
++            return nativeNetwork("en1", index: 2, registry: 8)
++        }
++        let reader = SystemNetworkMetadataReader(topology: topology, nativeRead: { script.read() })
++        let snapshot = try reader.read()
++        #expect(snapshot.records.map(\.key.name) == ["en1"])
++        #expect(snapshot.topologyRevision == topology.currentRevision)
++        #expect(topology.observe([newRaw]).interfaces.map(\.key.name) == ["en1"])
++    }
++
++    @Test func gateBoundaryDuringNativeReadLeavesTrackerAndStoresUntouched() async throws {
++        let topology = NetworkTopologyTracker()
++        let raw = NetworkRawInterface(name: "en0", index: 1, flags: Int32(IFF_UP),
++            linkType: 6, receivedBytes: 1, sentBytes: 1, baudrate: 0)
++        let initial = topology.observe([raw])
++        let admission = CollectionAdmission()
++        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        _ = admission.advance(.networkMetadata)
++        let old = try #require(admission.issue(.networkMetadata))
++        let script = NativeNetworkScript { call in
++            if call == 1 {
++                admission.transition(CollectionBoundary(revision: 1, sequence: 1,
++                    epoch: 1, stopped: true))
++            }
++            return nativeNetwork("en0", index: 1, registry: 7)
++        }
++        let reader = SystemNetworkMetadataReader(topology: topology, nativeRead: { script.read() })
++        let source = NetworkMetadataSource(reader: reader, admission: admission)
++        let store = NetworkMetadataStore(admission: admission)
++        let discarded = try await throughScheduledProtocol(source, context: old)
++        #expect(discarded == nil)
++        #expect(topology.currentRevision == initial.revision)
++        #expect((await store.status()).latest == nil)
++
++        admission.transition(CollectionBoundary(revision: 2, sequence: 2,
++            epoch: 2, stopped: false))
++        _ = admission.advance(.networkMetadata)
++        let current = try #require(admission.issue(.networkMetadata))
++        let result = try #require(try await throughScheduledProtocol(source, context: current))
++        if case .available(let snapshot) = result {
++            #expect(snapshot.records[0].key.registryID == 7)
++        } else { Issue.record("복귀 후 metadata 원본을 읽지 못했습니다") }
++        let timestamp = ContinuousClock().now
++        #expect(await store.append(TimestampedSample(timestamp: timestamp, value: result,
++            collectionEpoch: current.epoch, context: current), context: current))
++        #expect(await store.append(TimestampedSample(timestamp: timestamp, value: result,
++            collectionEpoch: old.epoch, context: old), context: old) == false)
++        #expect((await store.status()).lastKnown?.records.count == 1)
++    }
++}

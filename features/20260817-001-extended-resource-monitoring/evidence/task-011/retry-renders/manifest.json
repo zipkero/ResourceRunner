@@ -1,0 +1,440 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "814F0C81-7515-4005-8EB5-422A3262FE0E.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-detail-volume-device-long-name_0_C748AB55-72F5-4A99-B2A2-9E9F7BB4362D.png",
+        "timestamp" : 1790952764.494
+      }
+    ],
+    "testIdentifier" : "DiskDashboardViewTests/detailPreservesSharedCapacityDriverCountersOperationsAndRelations()",
+    "testIdentifierURL" : "test://com.apple.xcode/ResourceRunner/ResourceRunnerTests/DiskDashboardViewTests/detailPreservesSharedCapacityDriverCountersOperationsAndRelations()"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "B63CE036-6C43-4A6D-932A-AF4D06CC18C5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-my_MM-small-positive-light_0_DE0CE24C-584E-4EB8-BF15-F88FA3BFDBF8.png",
+        "timestamp" : 1790952764.477
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "5277BB51-702F-4C6F-A5AD-81CDAF618C42.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-my_MM-zero-light_0_A21542CC-1F86-4BB5-BE4A-F237225D7308.png",
+        "timestamp" : 1790952764.472
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "483DB79B-DDA6-4723-8B1B-701527834FE3.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-my_MM-unit-boundary-light_0_8450C535-215F-4784-AC97-6516BDD77F0C.png",
+        "timestamp" : 1790952764.468
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "97D7A2D7-A77E-429A-9C3C-71830BAB0B68.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-my_MM-different-tb-gb-light_0_D24530AF-107D-4196-B420-830443D5F4FA.png",
+        "timestamp" : 1790952764.463
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "71E2A942-197C-4119-9F26-CEA8B94CDFB6.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-my_MM-max-same-unit-light_0_FE718580-8F27-43C0-A2FF-CAF0DF1AC46B.png",
+        "timestamp" : 1790952764.458
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "9785F167-00A8-4533-A3DB-9A02E55B89F9.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-gez_ER-small-positive-light_0_0F37DD81-0176-4FE6-AAEB-2E4412AC1259.png",
+        "timestamp" : 1790952764.451
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "8A963D3A-A401-4A3E-AE93-57D8914BD65C.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-gez_ER-zero-light_0_6D7523B5-DC93-4BEF-B8C2-BED482EFEE0C.png",
+        "timestamp" : 1790952764.447
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "0BBE65F3-92AA-4524-AA9D-A7725322697D.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-gez_ER-unit-boundary-light_0_21164F72-E247-49C2-A360-9B963363DBB1.png",
+        "timestamp" : 1790952764.444
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "1CA073BB-BDCB-4F57-A3E5-97590911B337.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-gez_ER-different-tb-gb-light_0_9B9F5528-C381-425E-82CF-8E1D425B0131.png",
+        "timestamp" : 1790952764.441
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "8BE9B937-02C5-4752-8801-9B246E1BE74B.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-gez_ER-max-same-unit-light_0_FB8B2032-5FCC-4127-98B3-F762B4800F2B.png",
+        "timestamp" : 1790952764.437
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "8C9DD18C-F4B7-4051-B41B-C63E5B02A18D.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-ko_KR-small-positive-light_0_B39796DB-7BB0-402F-92DE-C8496CCB0DDB.png",
+        "timestamp" : 1790952764.429
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "918E322C-8341-40BF-9AF1-B3BB11E129D8.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-ko_KR-zero-light_0_CC63F7DA-4D17-4D61-8C4C-5D9F0331FC13.png",
+        "timestamp" : 1790952764.426
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "C2B6F165-E42B-4EE0-9315-A7CE40B1C669.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-ko_KR-unit-boundary-light_0_C70A8D56-27B1-48C6-ADBE-835371183775.png",
+        "timestamp" : 1790952764.422
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "3EEA2BDD-0C2B-4C18-91CF-C69FF8AFD4C2.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-ko_KR-different-tb-gb-light_0_7E7ED823-5CA3-4C34-8820-770CAA3A1C9A.png",
+        "timestamp" : 1790952764.419
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "42004C62-9561-4BD8-87AA-9D19134D70F0.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-ko_KR-max-same-unit-light_0_C3B18B97-8A32-4E08-AF64-8380287D2F62.png",
+        "timestamp" : 1790952764.416
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "E059006B-7748-40CF-B24D-9C63CE2F96A6.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-de_DE-small-positive-light_0_92076AAA-E099-4CDA-A267-2B9F9818C5C9.png",
+        "timestamp" : 1790952764.412
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "4DD5B32D-4E83-423C-AC96-F9C268F0390E.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-de_DE-zero-light_0_7DA22220-99D0-43A4-B2B5-AED59EAA974F.png",
+        "timestamp" : 1790952764.409
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "7FCA7CA5-A65B-4B94-8166-B3D5F6C19D37.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-de_DE-unit-boundary-light_0_7F026806-54C6-45FF-9E5C-5ED7F385DD3E.png",
+        "timestamp" : 1790952764.405
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "C870592C-C303-4AAF-A90E-665D137061A5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-de_DE-different-tb-gb-light_0_215296C4-E9D1-44D4-8A6B-11DFD1412054.png",
+        "timestamp" : 1790952764.402
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "DD4B1346-C372-4F91-9044-8E21601368FC.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-de_DE-max-same-unit-light_0_797040D8-5008-4B21-A9DC-DC6B4A912EC2.png",
+        "timestamp" : 1790952764.399
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "8AE79182-245E-43BC-9E0E-16EE1EF5B146.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-en_US-small-positive-light_0_4AC7A1D8-7D60-49E0-958B-0852DF1839F2.png",
+        "timestamp" : 1790952764.396
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "A018B9D1-F148-42E0-93B6-10351542B4EE.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-en_US-zero-light_0_A7459213-CC91-4358-8FCE-66E58B446AC5.png",
+        "timestamp" : 1790952764.393
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "FAD7D507-42ED-4E26-B889-E35373114236.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-en_US-unit-boundary-light_0_C58B338B-B091-443E-8EAF-23E1D5D562B9.png",
+        "timestamp" : 1790952764.389
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "F50C1BC5-2FB4-46FE-9084-F803642CB500.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-en_US-different-tb-gb-light_0_56B90CB3-E3D4-4474-AED7-748581973A59.png",
+        "timestamp" : 1790952764.386
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "E33340A7-F705-4EE9-B21F-F73D6608FA85.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-en_US-max-same-unit-light_0_DA70A4EE-0714-4A86-BA49-E5DC167C64FC.png",
+        "timestamp" : 1790952764.382
+      }
+    ],
+    "testIdentifier" : "DiskDashboardViewTests/fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales()",
+    "testIdentifierURL" : "test://com.apple.xcode/ResourceRunner/ResourceRunnerTests/DiskDashboardViewTests/fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales()"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "A3327B9A-86B4-4FE0-881A-EAE413DCEED8.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-german-locale-light_0_6B022305-347C-414E-96F1-59CA93352744.png",
+        "timestamp" : 1790952764.377
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "E1469018-92B5-4AB9-B08F-EE350687F512.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-long-value-dark_0_94C8AC78-0C97-4BCE-B6F6-5804C9920576.png",
+        "timestamp" : 1790952764.373
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "FD005336-A403-4A2C-BEC3-7A625D13BF4E.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-long-value-light_0_C2814CDA-CAEB-4592-9E96-A4450B84FADF.png",
+        "timestamp" : 1790952764.37
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "C453805E-3A7F-4207-B3F2-B3128505CFB1.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-no-device-dark_0_8A8CF598-621E-40D6-AC48-CF89BD041A6F.png",
+        "timestamp" : 1790952764.366
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "1C9D351A-064A-4744-B520-B399A89D7E70.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-no-device-light_0_973354B6-9C01-4E37-B9B3-5CBA90AC9F47.png",
+        "timestamp" : 1790952764.363
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "48C0F3B8-A645-42B0-98A1-4AB69CE9C51A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-partial-dark_0_5A53E8A2-EA1A-4596-8AE7-945739339611.png",
+        "timestamp" : 1790952764.36
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "763DB6BB-9B6E-4600-A39C-4BBB3CBF4F1F.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-partial-light_0_CAAA12A8-46B8-4AFD-8103-651AA3D42637.png",
+        "timestamp" : 1790952764.356
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "FC60FA64-2ADE-4148-A4AA-DC055CC6F58E.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-failure-dark_0_FDE6E9C5-74DD-4D91-B4DA-B22C3083EFFF.png",
+        "timestamp" : 1790952764.353
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "6D850271-62A7-4054-8F8D-733214EF56BF.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-capacity-failure-light_0_C87F29E0-C277-4B17-8727-8FCC63A208DA.png",
+        "timestamp" : 1790952764.349
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "B3EF3FEC-CABA-44DA-BD6D-999377340D47.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-stopped-dark_0_A72DF281-675F-4A30-AE31-7B47284C5370.png",
+        "timestamp" : 1790952764.346
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "183CF2BA-0B2E-4A0E-8941-D2EFD8C72E39.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-stopped-light_0_A2EEA6BE-7104-40DB-923B-6C8BD03B9AC3.png",
+        "timestamp" : 1790952764.342
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "178AB367-C8A4-42D8-B0DB-213E090F5B20.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-activity-failure-dark_0_7F413CD9-8DAA-46B3-98C5-93F355FDB370.png",
+        "timestamp" : 1790952764.338
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "E7788251-8A73-4015-984F-99ADF504B38D.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-activity-failure-light_0_628EBB33-7D67-4A30-A09C-BC69218B99E2.png",
+        "timestamp" : 1790952764.335
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "185E4143-6C23-42D6-80E7-148F8C566923.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-partial-dark_0_1559202E-37CC-407D-80AE-D668E2FD4066.png",
+        "timestamp" : 1790952764.33
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "E731EF9E-C655-4CB9-9571-9E00047F4B53.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-partial-light_0_1E7C40AB-A0AA-4B74-821D-B2AF711DDD53.png",
+        "timestamp" : 1790952764.327
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "46C3A097-DBDD-4690-89A4-C4B43D0F7593.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-normal-dark_0_DDBB8DC4-F6ED-4A14-ADFD-9BFFDA07B8A7.png",
+        "timestamp" : 1790952764.324
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "13564CAE-7F3C-43B3-9192-6CD4E887D2F4.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-normal-light_0_2C9F88D1-638B-4628-A0FB-090EEEB66DF5.png",
+        "timestamp" : 1790952764.32
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "0AD1C572-978B-47AB-B242-32B67003A617.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-initial-dark_0_8979EE47-1B9A-4259-AD0E-1AB929508939.png",
+        "timestamp" : 1790952764.315
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "29842FA7-46EB-47A2-B881-A512079D8D84.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-card-initial-light_0_FF5E30C4-78C8-409C-B412-BAF3CD654344.png",
+        "timestamp" : 1790952764.31
+      }
+    ],
+    "testIdentifier" : "DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()",
+    "testIdentifierURL" : "test://com.apple.xcode/ResourceRunner/ResourceRunnerTests/DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "exportedFileName" : "D2AE38D3-D119-4D40-8803-073ABC9B0165.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "disk-detail-external-unmounted-unknown-failure_0_B276543E-2835-4AD1-9D15-E7D1355E7CC1.png",
+        "timestamp" : 1790952764.488
+      }
+    ],
+    "testIdentifier" : "DiskDashboardViewTests/conditionalOperationsAndExternalMountStatesStayDistinct()",
+    "testIdentifierURL" : "test://com.apple.xcode/ResourceRunner/ResourceRunnerTests/DiskDashboardViewTests/conditionalOperationsAndExternalMountStatesStayDistinct()"
+  }
+]

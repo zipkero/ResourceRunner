@@ -1,0 +1,70 @@
+import XCTest
+
+/// 서명된 앱의 Disk 카드와 실제 볼륨·드라이버 상세, 공통 닫힘 경로를 확인합니다.
+final class DiskCardUITests: XCTestCase {
+    override func setUpWithError() throws { continueAfterFailure = false }
+
+    @MainActor
+    func testRealDiskCardDetailAndReturnKeepFrames() throws {
+        let app = XCUIApplication()
+        app.launch()
+        let statusItem = app.statusItems.firstMatch
+        XCTAssertTrue(statusItem.waitForExistence(timeout: 10))
+        statusItem.click()
+
+        let disk = app.descendants(matching: .any).matching(identifier: "DiskCard").firstMatch
+        XCTAssertTrue(disk.waitForExistence(timeout: 10))
+        let dashboard = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
+        XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
+        let scroll = app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch
+        XCTAssertTrue(scroll.exists)
+        for _ in 0..<8 where !disk.isHittable { scroll.swipeUp() }
+        XCTAssertTrue(disk.isHittable, "Disk 카드가 본체 스크롤에서 도달되지 않았습니다.")
+
+        let cardBefore = disk.frame
+        let bodyBefore = dashboard.frame
+        print("TASK011_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(disk.label)")
+        XCTAssertEqual(cardBefore.height, 294, accuracy: 1)
+
+        disk.click()
+        let detail = app.descendants(matching: .any).matching(identifier: "DiskDetail").firstMatch
+        XCTAssertTrue(detail.waitForExistence(timeout: 5))
+        XCTAssertEqual(app.popovers.count, 2)
+        XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
+        let summary = detail.descendants(matching: .any).matching(identifier: "DiskSummary").firstMatch
+        XCTAssertTrue(summary.waitForExistence(timeout: 5))
+        let volume = detail.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "DiskVolume-"))
+            .firstMatch
+        XCTAssertTrue(volume.waitForExistence(timeout: 10))
+        print("TASK011_ACTUAL_UI summary=\(summary.label) volume=\(volume.label)")
+        XCTAssertTrue(summary.label.contains("전체"))
+        XCTAssertTrue(summary.label.contains("사용 가능"))
+        XCTAssertTrue(summary.label.contains("전체 − 사용 가능"))
+        XCTAssertTrue(volume.label.contains("사용 중"))
+        XCTAssertTrue(volume.label.contains("공유 공간"))
+        XCTAssertEqual(disk.frame, cardBefore)
+        XCTAssertEqual(dashboard.frame, bodyBefore)
+
+        let close = app.buttons.matching(identifier: "DiskDetailClose").firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: 2))
+        close.click()
+        XCTAssertTrue(waitUntil({ !detail.exists }, timeout: 3))
+        XCTAssertEqual(disk.frame, cardBefore)
+        XCTAssertEqual(dashboard.frame, bodyBefore)
+        disk.click()
+        XCTAssertTrue(detail.waitForExistence(timeout: 3))
+        disk.click()
+        XCTAssertTrue(waitUntil({ !detail.exists }, timeout: 3))
+        print("TASK011_ACTUAL_UI cardAfter=\(disk.frame) bodyAfter=\(dashboard.frame)")
+    }
+
+    private func waitUntil(_ condition: () -> Bool, timeout: TimeInterval) -> Bool {
+        let end = Date().addingTimeInterval(timeout)
+        while Date() < end {
+            if condition() { return true }
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
+        }
+        return condition()
+    }
+}

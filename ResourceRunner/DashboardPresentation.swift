@@ -198,6 +198,7 @@ nonisolated enum DashboardSelection: Sendable, Equatable {
     case cpu
     case memory
     case network
+    case disk
 }
 
 /// CPU 카드 표시 값. 전체 사용률, User·System 비율, 최근 10분 그래프 점, 앱 단위 CPU TOP 5를 담습니다.

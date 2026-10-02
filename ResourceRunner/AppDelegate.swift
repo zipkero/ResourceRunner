@@ -97,6 +97,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 status.togglePopover()
             }
         }
+        if ProcessInfo.processInfo.environment["RR_DISK_UI_PROBE"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "DiskUIProbe")
+                try? await Task.sleep(for: .seconds(4))
+                guard let coordinator = self.coordinator else { return }
+                let status = coordinator.statusBarController
+                status.togglePopover()
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("opened=\(status.popover.isShown) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public) diskAX=\(coordinator.dashboardPresentationStore.diskCard.accessibilityLabel, privacy: .public)")
+                if let hosting = status.popover.contentViewController?.view,
+                   let scroll = Self.firstScrollView(in: hosting) {
+                    logger.notice("scrollBefore contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public) documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
+                    scroll.contentView.scroll(to: NSPoint(x: 0, y: 900))
+                    scroll.reflectScrolledClipView(scroll.contentView)
+                    try? await Task.sleep(for: .milliseconds(300))
+                    logger.notice("scrollAfter contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public)")
+                } else { logger.error("actual dashboard ScrollView not found") }
+                Self.logDiskAccessibility(logger: logger)
+                coordinator.dashboardPresentationStore.selectCard(.disk)
+                logger.notice("common selectCard called selection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public)")
+                for _ in 0..<10 {
+                    if coordinator.dashboardPresentationStore.diskCard.supplemental.capacity != nil { break }
+                    try? await Task.sleep(for: .milliseconds(500))
+                }
+                try? await Task.sleep(for: .milliseconds(500))
+                logger.notice("selected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) diskAX=\(coordinator.dashboardPresentationStore.diskCard.accessibilityLabel, privacy: .public) windows=\(NSApp.windows.map { String(describing: $0.frame) }.joined(separator: ";"), privacy: .public)")
+                Self.logDiskAccessibility(logger: logger)
+                if let caches = FileManager.default.urls(for: .cachesDirectory,
+                    in: .userDomainMask).first {
+                    let output = caches.appending(path: "Task011Probe")
+                    try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+                    if let parent = status.popover.contentViewController?.view.window {
+                        Self.writeProbeImage(window: parent,
+                            path: output.appending(path: "actual-disk-dashboard.png").path, logger: logger)
+                    }
+                    if let detail = NSApp.windows.first(where: { $0.frame.width > 400 && $0.frame.width < 450 }) {
+                        Self.writeProbeImage(window: detail,
+                            path: output.appending(path: "actual-disk-detail-top.png").path, logger: logger)
+                        if let content = detail.contentView,
+                           let scroll = Self.firstScrollView(in: content) {
+                            logger.notice("detailScroll documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
+                            scroll.contentView.scroll(to: NSPoint(x: 0, y: 1_050))
+                            scroll.reflectScrolledClipView(scroll.contentView)
+                            try? await Task.sleep(for: .milliseconds(250))
+                            Self.writeProbeImage(window: detail,
+                                path: output.appending(path: "actual-disk-detail-devices.png").path, logger: logger)
+                        }
+                    } else { logger.error("Disk detail NSWindow not found") }
+                }
+                if let close = Self.findNetworkAX("DiskDetailClose") {
+                    let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
+                    logger.notice("close AXPress result=\(result.rawValue)")
+                } else { logger.error("Disk close AX element missing") }
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("closedSelection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public)")
+                coordinator.dashboardPresentationStore.selectCard(.disk)
+                try? await Task.sleep(for: .milliseconds(500))
+                logger.notice("reselected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
+                coordinator.dashboardPresentationStore.selectCard(.disk)
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("sameCardClosed=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
+                Self.logDiskAccessibility(logger: logger)
+                status.togglePopover()
+            }
+        }
         if ProcessInfo.processInfo.environment["RR_COLLECTION_PROBE"] == "1" {
             Task { @MainActor [weak self] in
                 let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
@@ -245,6 +311,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return nil
         }
         return find(root, depth: 0)
+    }
+
+    /// 실제 서명 앱의 카드·볼륨·물리 장치 AX 값과 위치를 원본 그대로 기록합니다.
+    @MainActor private static func logDiskAccessibility(logger: Logger) {
+        let root = AXUIElementCreateApplication(getpid())
+        var visited = 0
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 16, visited < 1500 else { return }
+            visited += 1
+            var identifier: CFTypeRef?
+            let result = AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
+            if result == .success, let name = identifier as? String,
+               name == "DiskCard" || name == "DiskDetail" || name == "DiskDetailClose" ||
+               name == "DiskSummary" || name.hasPrefix("DiskVolume-") || name.hasPrefix("DiskDevice-") {
+                var position: CFTypeRef?
+                var size: CFTypeRef?
+                var label: CFTypeRef?
+                let positionResult = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position)
+                let sizeResult = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
+                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &label)
+                logger.notice("AX id=\(name, privacy: .public) positionResult=\(positionResult.rawValue) sizeResult=\(sizeResult.rawValue) position=\(String(describing: position), privacy: .public) size=\(String(describing: size), privacy: .public) label=\(String(describing: label), privacy: .public)")
+            }
+            var value: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+                  let children = value as? [AXUIElement] else { return }
+            for child in children { walk(child, depth: depth + 1) }
+        }
+        walk(root, depth: 0)
+        logger.notice("Disk AX traversal visited=\(visited)")
     }
 
     /// UI runner가 automation mode에 진입하지 못한 환경에서 앱 자신의 실제 AX 계층과 frame을 기록합니다.

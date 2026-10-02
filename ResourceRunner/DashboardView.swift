@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// 대시보드 팝오버 셸. CPU·Memory·Network 카드와 카드 옆 상세 팝업을 담습니다.
+/// 대시보드 팝오버 셸. CPU·Memory·Network·Disk 카드와 카드 옆 상세 팝업을 담습니다.
 ///
 /// 본체는 한 열로 스크롤하며 상세를 위한 자리를 예약하지 않습니다.
 /// 팝오버 프레임 크기는 `selection`과 무관한 상수(`frame(width:height:)`)이므로 카드를 선택하거나 해제해도
@@ -17,6 +17,7 @@ import SwiftUI
 /// 확인된 사실입니다(ANALYSIS §근거 확인 사실).
 struct DashboardView: View {
     @ObservedObject var store: DashboardPresentationStore
+    @Environment(\.locale) private var locale
     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
     /// 같은 앱의 아이콘을 다시 얻게 됩니다(ANALYSIS §1 「아이콘 경계」, §5 DP11).
@@ -71,6 +72,19 @@ struct DashboardView: View {
                 NetworkDetailPopoverContent(presentation: store.networkCard,
                     onClose: { store.dismissDetail(for: .network) })
             }
+            Button(action: { store.selectCard(.disk) }) {
+                DiskCardView(presentation: store.diskCard)
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("4", modifiers: .command)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", 단축키 ⌘4")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityIdentifier("DiskCard")
+            .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+                DiskDetailPopoverContent(presentation: store.diskCard,
+                    onClose: { store.dismissDetail(for: .disk) })
+            }
           }
           .padding()
         }
@@ -81,7 +95,7 @@ struct DashboardView: View {
         .accessibilityIdentifier("DashboardContainer")
     }
 
-    /// 기존 본체의 601pt viewport를 유지하고 넘치는 세 번째 카드는 내부 스크롤로 보여줍니다.
+    /// 기존 본체의 601pt viewport를 유지하고 넘치는 카드는 내부 스크롤로 보여줍니다.
     fileprivate static let bodyHeight: CGFloat = 601
 
     /// 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
@@ -128,6 +142,15 @@ struct DashboardView: View {
                 if !isPresented {
                     store.dismissDetail(for: .memory)
                 }
+            }
+        )
+    }
+
+    private var diskDetailIsPresented: Binding<Bool> {
+        Binding(
+            get: { store.selection == .disk },
+            set: { isPresented in
+                if !isPresented { store.dismissDetail(for: .disk) }
             }
         )
     }

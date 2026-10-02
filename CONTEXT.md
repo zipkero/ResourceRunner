@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-02 17:23 +0900
+저장: 2026-10-03 00:01 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-010 검증 기준 HEAD `2926498`. task-001~010 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~010 `[x]`, task-011~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-011이다.
+branch `main`, task-011 검증 기준 HEAD `331bdc5`. task-001~011 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~011 `[x]`, task-012~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-012 화면별 viewport다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-010/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-011/`에 있다. task-011의 최종 근거는 retry/다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -25,7 +25,7 @@ async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완�
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
 Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network·Disk source/store·여섯 축 production 배선·표시 모델·독립 그래프와 Network 카드/상세가 구현됐다. Disk 카드/상세는 다음 Task다. M2 기존 계약과 회귀 기준을 유지한다.
+Network·Disk source/store·여섯 축 production 배선·표시 모델·독립 그래프와 두 카드/상세가 구현됐다. 화면별 viewport·전체 키보드/AX는 아직 남았다. M2 기존 계약과 회귀 기준을 유지한다.
 
 task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
 즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
@@ -73,7 +73,14 @@ native en0/utun 현재·누적·주소·링크 사유와 AXPress닫기·재선�
 상태별 카드와 긴 이름 상세 렌더, 실제 Caches 캡처를 main/verifier가 직접 확인했다.
 XCUITest는 automation mode 활성timeout으로 본문전에 실패했고 성공으로 주장하지 않는다.
 실제 카드 클릭·전체 키보드/AX·화면 viewport·VPN 전환은 task-012~014 후속 관문이다.
-task-010 상태·근거·인수인계를 커밋한 뒤 같은 worker에게 task-011을 맡긴다.
+task-010은 `331bdc5`로 커밋했고 같은 worker `implement_task002`에게 task-011을 맡겼다.
+task-011의 최장 UInt64 용량 말줄임으로 design/scope rejected를 기록하고 사용자 요청으로 중단했다가 재개했다.
+design-init analyzer 후보를 검토해 DESIGN §3.3에 가용 라벨·같은 단위 공유를 반영했고 수치·단위선택·정밀도·로케일·갱신시각·294pt/글꼴/그래프를 유지했다.
+worker 재구현 후 독립 verifier `verify_task010`의 approved 재검증 후보를 main이 확정했다.
+직접5/5·전체unit606/606·Release/서명Debug·소스7개와실행dylib해시/patch 대응을 확인했다.
+5로케일×최장/단위경계/0/작은양수25개248×294렌더의 온전한 두 값을 확인했고 상세/AX 전체 라벨·단위·같은로케일을 유지한다.
+실제Sandbox PID73723의 APFS/볼륨8개/disk0 current·raw·IOPS/외장없음·카드248×294·상세400×480·AXPress닫기/재선택/frame과 실제PNG3개를 확인했다.
+task-011 최근 reject를 제거했고 상태·인수인계를 커밋한 뒤 task-012를 맡긴다. task-012 이후는 아직 진행하지 않았다.
 - [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md) — 승인된 요구사항과 완료 조건 18개
 - [features/20260817-001-extended-resource-monitoring/design.md](./features/20260817-001-extended-resource-monitoring/design.md) — 구조·데이터 흐름·인터페이스·영향 범위와 채택한 DP1~DP7
 - [features/20260817-001-extended-resource-monitoring/implement.md](./features/20260817-001-extended-resource-monitoring/implement.md) — Task 18개와 검증 조건, 완료 조건 매핑
@@ -95,14 +102,14 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 미확정 판단
 
-현재 SPEC·DESIGN에 미확정 요구사항이나 미채택 결정은 없다.
+승인된 SPEC·DESIGN의 의미는 유지한다. task-011의 최장 용량 표시 문제는 DESIGN §3.3 보완·실제 렌더·AX와 독립 재verify로 해소됐다.
 실제 배포 Sandbox에서 필수 API 접근이 불가능하면 근거와 영향을 정리해 SPEC 소유 단계로 반환한다.
 구현 중 카드 프레임·실제 화면 관문을 만족하지 못해 설계 변경이 필요하면 DESIGN으로 반환한다.
 
 ## 다음 작업
 
-- 작업: M3 task-011 Disk 요약 카드와 장치·볼륨 상세를 worker로 구현하고 독립 verify한다.
-- 완료 기준: implement.md task-011의 294pt 슬롯·현재속도/느린용량·사용중 정의·APFS공유·조건부IOPS·장치/볼륨/외장 상태와 실제UI 상세/선택/복귀를 확인한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-012로 진행한다.
+- 작업: task-012 네 카드 본체와 상세의 화면별 viewport를 worker로 구현·독립 verify한다.
+- 완료 기준: implement.md task-012의 콘텐츠1221pt·viewport최대601pt·실제화면visibleFrame/chrome/8pt여유·첫/중간/마지막상세·마우스스크롤도달·상태별frame보존을 확인한다. approved 후 저장·커밋하고 task-013으로 진행한다.
 
 ## 먼저 읽을 파일
 

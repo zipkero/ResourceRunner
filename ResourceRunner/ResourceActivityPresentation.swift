@@ -351,19 +351,21 @@ nonisolated struct DiskCardPresentation: Sendable {
         }
     }
 
-    var accessibilityLabel: String {
+    var accessibilityLabel: String { accessibilityLabel(locale: .current) }
+
+    func accessibilityLabel(locale: Locale) -> String {
         var parts = ["Disk 카드", phase.accessibilityText]
         if let currentRate {
             let qualifier = currentRateIsPartial ? "확인된 일부 합계" : "현재"
-            parts.append("\(qualifier) Read \(ResourceQuantityFormatter.byteRate(currentRate.receivedBytesPerSecond)), Write \(ResourceQuantityFormatter.byteRate(currentRate.sentBytesPerSecond))")
+            parts.append("\(qualifier) Read \(ResourceQuantityFormatter.byteRate(currentRate.receivedBytesPerSecond, locale: locale)), Write \(ResourceQuantityFormatter.byteRate(currentRate.sentBytesPerSecond, locale: locale))")
         } else if let lastKnownRate {
-            parts.append("마지막 측정값(과거) Read \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.receivedBytesPerSecond)), Write \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.sentBytesPerSecond))")
+            parts.append("마지막 측정값(과거) Read \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.receivedBytesPerSecond, locale: locale)), Write \(ResourceQuantityFormatter.byteRate(lastKnownRate.rate.sentBytesPerSecond, locale: locale))")
         } else { parts.append("측정된 속도 없음") }
         parts.append(supplemental.phase.accessibilityText)
         if supplemental.isLastKnown { parts.append("보조 정보는 마지막 성공 시각의 과거 값") }
         if let capacity = supplemental.capacity {
             let qualifier = supplemental.isLastKnown ? "마지막 저장 공간(과거)" : "저장 공간"
-            parts.append("\(qualifier) 전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes)), 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes)), 사용 중은 전체에서 사용 가능을 뺀 값")
+            parts.append("\(qualifier) 전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)), 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale)), 사용 중은 전체에서 사용 가능을 뺀 값")
             if capacity.sharedCapacity { parts.append("APFS 공유 공간이며 볼륨별 독점 사용량이 아님") }
         }
         return parts.joined(separator: ", ")

@@ -1,0 +1,797 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 7176a48..dfd9ca3 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -97,6 +97,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+                 status.togglePopover()
+             }
+         }
++        if ProcessInfo.processInfo.environment["RR_DISK_UI_PROBE"] == "1" {
++            Task { @MainActor [weak self] in
++                guard let self else { return }
++                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "DiskUIProbe")
++                try? await Task.sleep(for: .seconds(4))
++                guard let coordinator = self.coordinator else { return }
++                let status = coordinator.statusBarController
++                status.togglePopover()
++                try? await Task.sleep(for: .seconds(1))
++                logger.notice("opened=\(status.popover.isShown) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public) diskAX=\(coordinator.dashboardPresentationStore.diskCard.accessibilityLabel, privacy: .public)")
++                if let hosting = status.popover.contentViewController?.view,
++                   let scroll = Self.firstScrollView(in: hosting) {
++                    logger.notice("scrollBefore contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public) documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
++                    scroll.contentView.scroll(to: NSPoint(x: 0, y: 900))
++                    scroll.reflectScrolledClipView(scroll.contentView)
++                    try? await Task.sleep(for: .milliseconds(300))
++                    logger.notice("scrollAfter contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public)")
++                } else { logger.error("actual dashboard ScrollView not found") }
++                Self.logDiskAccessibility(logger: logger)
++                coordinator.dashboardPresentationStore.selectCard(.disk)
++                logger.notice("common selectCard called selection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public)")
++                for _ in 0..<10 {
++                    if coordinator.dashboardPresentationStore.diskCard.supplemental.capacity != nil { break }
++                    try? await Task.sleep(for: .milliseconds(500))
++                }
++                try? await Task.sleep(for: .milliseconds(500))
++                logger.notice("selected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) diskAX=\(coordinator.dashboardPresentationStore.diskCard.accessibilityLabel, privacy: .public) windows=\(NSApp.windows.map { String(describing: $0.frame) }.joined(separator: ";"), privacy: .public)")
++                Self.logDiskAccessibility(logger: logger)
++                if let caches = FileManager.default.urls(for: .cachesDirectory,
++                    in: .userDomainMask).first {
++                    let output = caches.appending(path: "Task011Probe")
++                    try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
++                    if let parent = status.popover.contentViewController?.view.window {
++                        Self.writeProbeImage(window: parent,
++                            path: output.appending(path: "actual-disk-dashboard.png").path, logger: logger)
++                    }
++                    if let detail = NSApp.windows.first(where: { $0.frame.width > 400 && $0.frame.width < 450 }) {
++                        Self.writeProbeImage(window: detail,
++                            path: output.appending(path: "actual-disk-detail-top.png").path, logger: logger)
++                        if let content = detail.contentView,
++                           let scroll = Self.firstScrollView(in: content) {
++                            logger.notice("detailScroll documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
++                            scroll.contentView.scroll(to: NSPoint(x: 0, y: 1_050))
++                            scroll.reflectScrolledClipView(scroll.contentView)
++                            try? await Task.sleep(for: .milliseconds(250))
++                            Self.writeProbeImage(window: detail,
++                                path: output.appending(path: "actual-disk-detail-devices.png").path, logger: logger)
++                        }
++                    } else { logger.error("Disk detail NSWindow not found") }
++                }
++                if let close = Self.findNetworkAX("DiskDetailClose") {
++                    let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
++                    logger.notice("close AXPress result=\(result.rawValue)")
++                } else { logger.error("Disk close AX element missing") }
++                try? await Task.sleep(for: .seconds(1))
++                logger.notice("closedSelection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public)")
++                coordinator.dashboardPresentationStore.selectCard(.disk)
++                try? await Task.sleep(for: .milliseconds(500))
++                logger.notice("reselected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
++                coordinator.dashboardPresentationStore.selectCard(.disk)
++                try? await Task.sleep(for: .seconds(1))
++                logger.notice("sameCardClosed=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
++                Self.logDiskAccessibility(logger: logger)
++                status.togglePopover()
++            }
++        }
+         if ProcessInfo.processInfo.environment["RR_COLLECTION_PROBE"] == "1" {
+             Task { @MainActor [weak self] in
+                 let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
+@@ -247,6 +313,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+         return find(root, depth: 0)
+     }
+ 
++    /// 실제 서명 앱의 카드·볼륨·물리 장치 AX 값과 위치를 원본 그대로 기록합니다.
++    @MainActor private static func logDiskAccessibility(logger: Logger) {
++        let root = AXUIElementCreateApplication(getpid())
++        var visited = 0
++        func walk(_ element: AXUIElement, depth: Int) {
++            guard depth < 16, visited < 1500 else { return }
++            visited += 1
++            var identifier: CFTypeRef?
++            let result = AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
++            if result == .success, let name = identifier as? String,
++               name == "DiskCard" || name == "DiskDetail" || name == "DiskDetailClose" ||
++               name == "DiskSummary" || name.hasPrefix("DiskVolume-") || name.hasPrefix("DiskDevice-") {
++                var position: CFTypeRef?
++                var size: CFTypeRef?
++                var label: CFTypeRef?
++                let positionResult = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position)
++                let sizeResult = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
++                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &label)
++                logger.notice("AX id=\(name, privacy: .public) positionResult=\(positionResult.rawValue) sizeResult=\(sizeResult.rawValue) position=\(String(describing: position), privacy: .public) size=\(String(describing: size), privacy: .public) label=\(String(describing: label), privacy: .public)")
++            }
++            var value: CFTypeRef?
++            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
++                  let children = value as? [AXUIElement] else { return }
++            for child in children { walk(child, depth: depth + 1) }
++        }
++        walk(root, depth: 0)
++        logger.notice("Disk AX traversal visited=\(visited)")
++    }
++
+     /// UI runner가 automation mode에 진입하지 못한 환경에서 앱 자신의 실제 AX 계층과 frame을 기록합니다.
+     @MainActor private static func logNetworkAccessibility(logger: Logger) {
+         let root = AXUIElementCreateApplication(getpid())
+diff --git a/ResourceRunner/DashboardPresentation.swift b/ResourceRunner/DashboardPresentation.swift
+index d5607ac..e8c3633 100644
+--- a/ResourceRunner/DashboardPresentation.swift
++++ b/ResourceRunner/DashboardPresentation.swift
+@@ -198,6 +198,7 @@ nonisolated enum DashboardSelection: Sendable, Equatable {
+     case cpu
+     case memory
+     case network
++    case disk
+ }
+ 
+ /// CPU 카드 표시 값. 전체 사용률, User·System 비율, 최근 10분 그래프 점, 앱 단위 CPU TOP 5를 담습니다.
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index a33446e..8a87fa8 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -7,7 +7,7 @@
+ 
+ import SwiftUI
+ 
+-/// 대시보드 팝오버 셸. CPU·Memory·Network 카드와 카드 옆 상세 팝업을 담습니다.
++/// 대시보드 팝오버 셸. CPU·Memory·Network·Disk 카드와 카드 옆 상세 팝업을 담습니다.
+ ///
+ /// 본체는 한 열로 스크롤하며 상세를 위한 자리를 예약하지 않습니다.
+ /// 팝오버 프레임 크기는 `selection`과 무관한 상수(`frame(width:height:)`)이므로 카드를 선택하거나 해제해도
+@@ -71,6 +71,19 @@ struct DashboardView: View {
+                 NetworkDetailPopoverContent(presentation: store.networkCard,
+                     onClose: { store.dismissDetail(for: .network) })
+             }
++            Button(action: { store.selectCard(.disk) }) {
++                DiskCardView(presentation: store.diskCard)
++            }
++            .buttonStyle(.plain)
++            .keyboardShortcut("4", modifiers: .command)
++            .accessibilityElement(children: .ignore)
++            .accessibilityLabel(store.diskCard.accessibilityLabel + ", 단축키 ⌘4")
++            .accessibilityAddTraits(.isButton)
++            .accessibilityIdentifier("DiskCard")
++            .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
++                DiskDetailPopoverContent(presentation: store.diskCard,
++                    onClose: { store.dismissDetail(for: .disk) })
++            }
+           }
+           .padding()
+         }
+@@ -81,7 +94,7 @@ struct DashboardView: View {
+         .accessibilityIdentifier("DashboardContainer")
+     }
+ 
+-    /// 기존 본체의 601pt viewport를 유지하고 넘치는 세 번째 카드는 내부 스크롤로 보여줍니다.
++    /// 기존 본체의 601pt viewport를 유지하고 넘치는 카드는 내부 스크롤로 보여줍니다.
+     fileprivate static let bodyHeight: CGFloat = 601
+ 
+     /// 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
+@@ -132,6 +145,15 @@ struct DashboardView: View {
+         )
+     }
+ 
++    private var diskDetailIsPresented: Binding<Bool> {
++        Binding(
++            get: { store.selection == .disk },
++            set: { isPresented in
++                if !isPresented { store.dismissDetail(for: .disk) }
++            }
++        )
++    }
++
+     private var networkDetailIsPresented: Binding<Bool> {
+         Binding(
+             get: { store.selection == .network },
+diff --git a/ResourceRunner/DiskDashboardView.swift b/ResourceRunner/DiskDashboardView.swift
+new file mode 100644
+index 0000000..83087b4
+--- /dev/null
++++ b/ResourceRunner/DiskDashboardView.swift
+@@ -0,0 +1,335 @@
++import SwiftUI
++
++/// 디스크 활동과 별도 저장 공간 조회의 상태를 서로 다른 시각으로 표시합니다.
++nonisolated enum DiskDisplayText {
++    static func activity(_ phase: ResourceActivityPhase) -> String {
++        switch phase {
++        case .collecting: "수집 중"
++        case .measured: "현재 측정"
++        case .partial: "물리 합계 일부 확인"
++        case .baseline: "기준점 수집 중"
++        case .disconnected: "연결 없음"
++        case .noPhysicalDevice: "물리 장치 없음"
++        case .failure: "활동 조회 실패"
++        case .stopped: "수집 중지"
++        }
++    }
++
++    static func cardStatus(_ presentation: DiskCardPresentation, now: ContinuousClock.Instant) -> String {
++        let state: String = switch presentation.phase {
++        case .collecting: "수집 중"
++        case .measured: "현재"
++        case .partial: "일부 실패"
++        case .baseline: "기준점"
++        case .disconnected: "연결 없음"
++        case .noPhysicalDevice: "물리 장치 없음"
++        case .failure: "조회 실패"
++        case .stopped: "중지"
++        }
++        guard presentation.currentRate == nil, let previous = presentation.lastKnownRate else { return state }
++        return "\(state) · 과거 \(max(0, previous.readAt.duration(to: now).components.seconds))초 전"
++    }
++
++    static func external(_ kind: DiskExternalKind?, reason: String?) -> String {
++        guard let kind else { return "외장 여부 미확인 · 저장 공간 조회 대기" }
++        switch kind {
++        case .internalDevice: return "내장 장치"
++        case .externalDevice: return "외장 장치"
++        case .unknown: return "외장 여부 미확인 · \(reason ?? "근거 없음")"
++        }
++    }
++
++    static func mount(_ state: StorageMountState?) -> String {
++        guard let state else { return "마운트 상태 미확인" }
++        switch state {
++        case .mounted: return "마운트됨"
++        case .unmounted: return "마운트되지 않음"
++        case .relationUnconfirmed: return "장치·볼륨 관계 미확인"
++        }
++    }
++
++    static func supplemental(_ presentation: StorageSupplementalPresentation) -> String {
++        let prefix = presentation.isLastKnown ? "과거 용량 · " : ""
++        switch presentation.phase {
++        case .collecting: return "용량 수집 중"
++        case .refreshing: return prefix + "용량 갱신 중"
++        case .available: return prefix + "용량 확인"
++        case .partial: return prefix + "용량 일부 확인"
++        case .failure: return prefix + "용량 조회 실패"
++        case .unsupported: return prefix + "용량 미지원"
++        }
++    }
++
++    static func compactCapacity(_ presentation: StorageSupplementalPresentation,
++                                now: ContinuousClock.Instant) -> String {
++        let state: String = switch presentation.phase {
++        case .collecting: "용량 수집 중"
++        case .refreshing: "용량 갱신 중"
++        case .available: "용량 확인"
++        case .partial: "용량 일부"
++        case .failure: "용량 실패"
++        case .unsupported: "용량 미지원"
++        }
++        guard let readAt = presentation.readAt else { return state }
++        let age = max(0, readAt.duration(to: now).components.seconds)
++        return "\(state) · \(presentation.isLastKnown ? "과거 " : "")\(age)초 전"
++    }
++
++    static func volumeScope(_ scope: DiskVolumeScope) -> String {
++        switch scope {
++        case .physical: "물리 관계 확인"
++        case .virtual: "가상 볼륨"
++        case .unconfirmed: "장치 관계 미확인"
++        }
++    }
++
++    static func age(_ timestamp: ContinuousClock.Instant?, now: ContinuousClock.Instant) -> String {
++        NetworkDisplayText.age(timestamp, now: now)
++    }
++
++    static func capacitySummary(_ capacity: DiskCapacityPresentation?, locale: Locale) -> String {
++        guard let capacity else { return "시스템 / 용량 확인 중" }
++        return "전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale))"
++    }
++
++    static let usedDefinition = "사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다."
++}
++
++nonisolated enum DiskCardLayout {
++    static let title = NetworkCardLayout.title
++    static let rates = NetworkCardLayout.rates
++    static let auxiliary = NetworkCardLayout.auxiliary
++    static let graph = NetworkCardLayout.graph
++    static let spacing = NetworkCardLayout.spacing
++    static let padding = NetworkCardLayout.padding
++    static let total = NetworkCardLayout.total
++}
++
++struct DiskCardView: View {
++    let presentation: DiskCardPresentation
++    var fixedNow: ContinuousClock.Instant? = nil
++    @Environment(\.locale) private var locale
++
++    var body: some View {
++        let now = fixedNow ?? ContinuousClock().now
++        let graph = ResourceRateGraph.make(history: presentation.recentHistory,
++            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
++        return VStack(alignment: .leading, spacing: DiskCardLayout.spacing) {
++            HStack {
++                Text("Disk · 물리 합계")
++                Spacer(minLength: 0)
++                Text(DiskDisplayText.cardStatus(presentation, now: now)).lineLimit(1)
++                Text("⌘4")
++            }
++            .dashboardTypography(DashboardStyle.TypographyRole.heading)
++            .frame(height: DiskCardLayout.title)
++
++            VStack(spacing: 4) {
++                rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
++                rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
++            }
++            .frame(height: DiskCardLayout.rates)
++
++            VStack(alignment: .leading, spacing: 4) {
++                Text(DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale))
++                    .lineLimit(1)
++                    .accessibilityLabel("시스템 / " + DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale) + ". " + DiskDisplayText.usedDefinition)
++                    .frame(height: 14)
++                HStack(spacing: 4) {
++                    Text(DiskDisplayText.compactCapacity(presentation.supplemental, now: now))
++                        .lineLimit(1)
++                        .accessibilityLabel("저장 공간 별도 느린 주기, " + DiskDisplayText.supplemental(presentation.supplemental) + ", " + DiskDisplayText.age(presentation.supplemental.readAt, now: now))
++                    Spacer(minLength: 0)
++                    Text(graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
++                         ?? "범위 대기 · B/s")
++                        .lineLimit(1)
++                }
++                .frame(height: 14)
++            }
++            .dashboardTypography(DashboardStyle.TypographyRole.label)
++            .frame(height: DiskCardLayout.auxiliary)
++
++            ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
++                firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow)
++                .frame(height: DiskCardLayout.graph)
++        }
++        .padding(DiskCardLayout.padding)
++        .frame(maxWidth: .infinity, alignment: .leading)
++        .frame(height: DiskCardLayout.total)
++        .background(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
++            .fill(DashboardStyle.CardSurface.fillColor))
++        .contentShape(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius))
++    }
++
++    private var selectedRate: RatePair? { presentation.currentRate ?? presentation.lastKnownRate?.rate }
++    private var isPast: Bool { presentation.currentRate == nil && presentation.lastKnownRate != nil }
++
++    private func rateRow(_ series: ResourceRateGraphSlotView.Series, rate: Double?) -> some View {
++        HStack(spacing: 3) {
++            ResourceRateLegendMarkerView(kind: .disk, series: series)
++            Text(series == .received ? "Read" : "Write")
++                .dashboardTypography(DashboardStyle.TypographyRole.label)
++            Spacer(minLength: 2)
++            if let rate {
++                let parts = ResourceQuantityFormatter.byteRate(rate, locale: locale)
++                    .split(separator: " ", maxSplits: 1)
++                Text(String(parts.first ?? ""))
++                    .dashboardTypography(DashboardStyle.TypographyRole.focus).lineLimit(1)
++                Text(parts.count > 1 ? String(parts[1]) : "B/s")
++                    .dashboardTypography(DashboardStyle.TypographyRole.label).lineLimit(1)
++            } else {
++                Text(DiskDisplayText.activity(presentation.phase))
++                    .dashboardTypography(DashboardStyle.TypographyRole.label).lineLimit(1)
++            }
++        }
++        .frame(height: 32)
++        .accessibilityElement(children: .ignore)
++        .accessibilityLabel(rateAccessibility(series: series, rate: rate))
++    }
++
++    private func rateAccessibility(series: ResourceRateGraphSlotView.Series, rate: Double?) -> String {
++        let label = series == .received ? "Read 읽기" : "Write 쓰기"
++        guard let rate else { return "\(label), \(DiskDisplayText.activity(presentation.phase)), 현재 속도 없음" }
++        let scope = presentation.currentRateIsPartial ? "확인된 물리 장치 일부 합계" : "물리 장치 합계"
++        let age = DiskDisplayText.age(isPast ? presentation.lastKnownRate?.readAt : presentation.latestReadAt,
++            now: fixedNow ?? ContinuousClock().now)
++        return "\(label), \(isPast ? "과거" : "현재") \(scope), \(ResourceQuantityFormatter.byteRate(rate, locale: locale)), \(age), \(DiskDisplayText.activity(presentation.phase))"
++    }
++}
++
++/// 볼륨 용량은 각 볼륨 원본 그대로 보여주며 합산하거나 독점 사용량으로 해석하지 않습니다.
++struct DiskDetailPopoverContent: View {
++    let presentation: DiskCardPresentation
++    let onClose: () -> Void
++    var fixedNow: ContinuousClock.Instant? = nil
++    @Environment(\.locale) private var locale
++
++    var body: some View {
++        let now = fixedNow ?? ContinuousClock().now
++        return ScrollView {
++            VStack(alignment: .leading, spacing: DashboardStyle.Section.betweenSections) {
++                HStack {
++                    Text("Disk 장치와 볼륨")
++                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                    Spacer()
++                    Button("닫기", action: onClose).accessibilityIdentifier("DiskDetailClose")
++                }
++                VStack(alignment: .leading, spacing: 4) {
++                    Text("활동 · \(DiskDisplayText.activity(presentation.phase)) · \(DiskDisplayText.age(presentation.latestReadAt, now: now))")
++                    if case .partial(let reason) = presentation.phase { Text("물리 합계 일부 실패: \(reason)") }
++                    if case .failure(let reason) = presentation.phase { Text("활동 조회 실패: \(reason)") }
++                    Text("용량은 활동과 별도 느린 주기로 갱신 · \(DiskDisplayText.supplemental(presentation.supplemental)) · \(DiskDisplayText.age(presentation.supplemental.readAt, now: now))")
++                    if case .partial(let reason) = presentation.supplemental.phase { Text("용량 일부 실패: \(reason)") }
++                    if case .failure(let reason) = presentation.supplemental.phase { Text("용량 조회 실패: \(reason)") }
++                    Text("시스템 / · \(DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale))")
++                    if let capacity = presentation.supplemental.capacity {
++                        Text("사용 중 \(ResourceQuantityFormatter.bytes(capacity.usedBytes, locale: locale))")
++                        Text("용량 관계: \(capacity.relationReason)")
++                    }
++                    Text(DiskDisplayText.usedDefinition)
++                    Text(externalSummary)
++                }
++                .dashboardTypography(DashboardStyle.TypographyRole.label)
++                .fixedSize(horizontal: false, vertical: true)
++                .accessibilityElement(children: .ignore)
++                .accessibilityLabel(summaryAccessibility(now: now))
++                .accessibilityIdentifier("DiskSummary")
++
++                Text("마운트 볼륨")
++                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                if presentation.supplemental.volumes.isEmpty {
++                    Text("확인된 마운트 볼륨 없음")
++                        .dashboardTypography(DashboardStyle.TypographyRole.label)
++                }
++                ForEach(presentation.supplemental.volumes, id: \.identity) { item in
++                    volumeRow(item)
++                }
++
++                Text("물리 장치 · 드라이버 통계")
++                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                if presentation.devices.isEmpty {
++                    Text("확인된 물리 장치 없음")
++                        .dashboardTypography(DashboardStyle.TypographyRole.label)
++                }
++                ForEach(presentation.devices, id: \.registryID) { item in
++                    deviceRow(item, now: now)
++                }
++            }
++            .padding(16)
++            .frame(maxWidth: .infinity, alignment: .leading)
++        }
++        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
++        .accessibilityIdentifier("DiskDetail")
++    }
++
++    private func summaryAccessibility(now: ContinuousClock.Instant) -> String {
++        let activity = "활동 " + DiskDisplayText.activity(presentation.phase) + ", " +
++            DiskDisplayText.age(presentation.latestReadAt, now: now)
++        let storage = "저장 공간 별도 느린 주기, " +
++            DiskDisplayText.supplemental(presentation.supplemental) + ", " +
++            DiskDisplayText.age(presentation.supplemental.readAt, now: now)
++        let capacity = "시스템 / " +
++            DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale)
++        return [activity, storage, capacity, DiskDisplayText.usedDefinition, externalSummary]
++            .joined(separator: ", ")
++    }
++
++    private var externalSummary: String {
++        switch presentation.supplemental.externalDevicesAbsent {
++        case .some(true): "외장 장치 없음"
++        case .some(false): "외장 장치 확인 · 아래 장치 상태 참조"
++        case .none: "외장 장치 여부 미확인 · 용량 조회 대기 또는 실패"
++        }
++    }
++
++    func volumeRow(_ item: DiskVolumeReading) -> some View {
++        let paths = item.mountPaths.sorted().joined(separator: ", ")
++        let lines = [
++            "\(paths.isEmpty ? item.identity : paths) · \(item.fileSystem ?? "파일 시스템 미확인") · \(DiskDisplayText.volumeScope(item.scope))",
++            "전체 \(ResourceQuantityFormatter.bytes(item.totalBytes, locale: locale)) · 사용 중 \(ResourceQuantityFormatter.bytes(item.usedBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.bytes(item.availableBytes, locale: locale))",
++            "장치 관계: \(item.relationReason)",
++            item.sharedCapacity ? "APFS 공유 공간 · 볼륨별 독점 사용량 아님" : "공유 공간 여부 미확인 또는 비공유",
++            DiskDisplayText.usedDefinition
++        ]
++        return detailRow(lines, identifier: "DiskVolume-\(item.identity)")
++    }
++
++    func deviceRow(_ item: DiskDevicePresentation, now: ContinuousClock.Instant) -> some View {
++        let read = item.rate.map { ResourceQuantityFormatter.byteRate($0.receivedBytesPerSecond, locale: locale) } ?? "현재 속도 없음"
++        let write = item.rate.map { ResourceQuantityFormatter.byteRate($0.sentBytesPerSecond, locale: locale) } ?? "현재 속도 없음"
++        let readBytes = item.readBytes.map { "\($0.formatted(.number.locale(locale))) B" } ?? "조회 실패 · \(item.bytesReason)"
++        let writtenBytes = item.writtenBytes.map { "\($0.formatted(.number.locale(locale))) B" } ?? "조회 실패 · \(item.bytesReason)"
++        let operations: String = switch item.operations {
++        case .collecting: "드라이버 IOPS 기준점 수집 중"
++        case .available: item.operationsRate.map {
++            "드라이버 IOPS Read \(ResourceQuantityFormatter.driverOperationsPerSecond($0.readsPerSecond, locale: locale)) · Write \(ResourceQuantityFormatter.driverOperationsPerSecond($0.writesPerSecond, locale: locale))"
++        } ?? "드라이버 IOPS 값 미확인"
++        case .unsupported(let reason): "드라이버 IOPS 미지원 · \(reason)"
++        case .failure(let reason): "드라이버 IOPS 조회 실패 · \(reason)"
++        }
++        let lines = [
++            "\(item.bsdNames.sorted().joined(separator: ", ")) · 물리 드라이버 ID \(item.registryID)",
++            "\(DiskDisplayText.external(item.external, reason: item.externalReason)) · \(DiskDisplayText.mount(item.mountState))",
++            "현재 Read \(read) · Write \(write) · \(DiskDisplayText.age(presentation.latestReadAt, now: now))",
++            "드라이버 원시 누적 Read \(readBytes) · Write \(writtenBytes)",
++            operations + " · 앱 요청 수 아님"
++        ]
++        return detailRow(lines, identifier: "DiskDevice-\(item.registryID)")
++    }
++
++    private func detailRow(_ lines: [String], identifier: String) -> some View {
++        VStack(alignment: .leading, spacing: 4) {
++            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
++                Text(line).fixedSize(horizontal: false, vertical: true)
++            }
++        }
++        .dashboardTypography(DashboardStyle.TypographyRole.label)
++        .frame(maxWidth: .infinity, alignment: .leading)
++        .padding(8)
++        .background(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
++            .fill(DashboardStyle.CardSurface.fillColor))
++        .accessibilityElement(children: .ignore)
++        .accessibilityLabel(lines.joined(separator: ", "))
++        .accessibilityIdentifier(identifier)
++    }
++}
+diff --git a/ResourceRunnerTests/DiskDashboardViewTests.swift b/ResourceRunnerTests/DiskDashboardViewTests.swift
+new file mode 100644
+index 0000000..1782a1b
+--- /dev/null
++++ b/ResourceRunnerTests/DiskDashboardViewTests.swift
+@@ -0,0 +1,191 @@
++import AppKit
++import SwiftUI
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++struct DiskDashboardViewTests {
++    private let now = ContinuousClock().now
++
++    private func volume(path: String, shared: Bool = true) -> DiskVolumeReading {
++        DiskVolumeReading(identity: "volume-\(path)", mountPaths: [path], bsdName: "disk3s5",
++            fileSystem: "apfs", totalBytes: 1 << 40, availableBytes: 1 << 39,
++            driverIDs: [42], scope: .physical, relationReason: "driver 42 confirmed",
++            sharedCapacity: shared)
++    }
++
++    private func device(external: DiskExternalKind? = .internalDevice,
++                        mount: StorageMountState? = .mounted,
++                        operations: ConditionalMetric = .available("Read 2.5 회/s, Write 1.0 회/s")) -> DiskDevicePresentation {
++        DiskDevicePresentation(registryID: 42,
++            bsdNames: ["disk0123456789012345678901234567890123456789"],
++            readBytes: UInt64.max, writtenBytes: 9_876_543_210,
++            bytesReason: "IOBlockStorageDriver Statistics bytes",
++            rate: RatePair(receivedBytesPerSecond: 1_024, sentBytesPerSecond: 0),
++            readOperations: 100, writeOperations: 200,
++            operationsRate: DiskOperationRates(readsPerSecond: 2.5, writesPerSecond: 1),
++            operations: operations, external: external,
++            externalReason: "IORegistry external property", mountState: mount)
++    }
++
++    private func card(_ phase: ResourceActivityPhase = .measured,
++                      auxiliary: SupplementalDisplayPhase = .available,
++                      current: RatePair? = RatePair(receivedBytesPerSecond: 1_024, sentBytesPerSecond: 0),
++                      partial: Bool = false,
++                      lastKnown: LastKnownRate? = nil,
++                      capacity: DiskCapacityPresentation? = nil,
++                      externalAbsent: Bool? = true,
++                      capacityIsLastKnown: Bool = false,
++                      devices: [DiskDevicePresentation]? = nil) -> DiskCardPresentation {
++        let storage = capacity ?? DiskCapacityPresentation(identity: "/", totalBytes: 1 << 40,
++            availableBytes: 1 << 39, usedBytes: 1 << 39, sharedCapacity: true,
++            relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))
++        return DiskCardPresentation(phase: phase, currentRate: current,
++            currentRateIsPartial: partial, latestReadAt: now.advanced(by: .seconds(-2)),
++            lastKnownRate: lastKnown, topologyRevision: 1, recentHistory: [],
++            firstHistoryPointAt: nil, devices: devices ?? [device()],
++            supplemental: StorageSupplementalPresentation(phase: auxiliary,
++                readAt: now.advanced(by: .seconds(-30)), capacity: storage,
++                volumes: [volume(path: "/"), volume(path: "/System/Volumes/Data")],
++                externalDevicesAbsent: externalAbsent, isLastKnown: capacityIsLastKnown))
++    }
++
++    private func render(_ presentation: DiskCardPresentation, appearance name: NSAppearance.Name,
++                        label: String, locale: Locale = .current) throws {
++        let appearance = try #require(NSAppearance(named: name))
++        let view = DiskCardView(presentation: presentation, fixedNow: now)
++            .frame(width: 248)
++            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
++            .environment(\.locale, locale)
++        var bitmap: NSBitmapImageRep?
++        appearance.performAsCurrentDrawingAppearance {
++            let renderer = ImageRenderer(content: view)
++            renderer.scale = 1
++            bitmap = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
++        }
++        let image = try #require(bitmap)
++        #expect(image.pixelsWide == 248)
++        #expect(image.pixelsHigh == 294)
++        Attachment.record(try #require(image.representation(using: .png, properties: [:])),
++            named: "disk-card-\(label)-\(name == .darkAqua ? "dark" : "light").png")
++    }
++
++    @Test func fixedSlotsAndStatesKeepRateAndCapacityIndependent() throws {
++        #expect(DiskCardLayout.total == NetworkCardLayout.total)
++        #expect(DiskCardLayout.total == 294)
++        #expect(DiskCardLayout.title == 12)
++        #expect(DiskCardLayout.rates == 68)
++        #expect(DiskCardLayout.auxiliary == 32)
++        #expect(DiskCardLayout.graph == 118)
++        let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 4_096,
++            sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
++        let fixtures: [(String, DiskCardPresentation)] = [
++            ("initial", .collecting),
++            ("normal", card()),
++            ("partial", card(.partial("driver bytes missing"), partial: true)),
++            ("activity-failure", card(.failure("driver unavailable"), current: nil, lastKnown: past)),
++            ("stopped", card(.stopped, current: nil, lastKnown: past)),
++            ("capacity-failure", card(auxiliary: .failure("volume unavailable"), capacityIsLastKnown: true)),
++            ("capacity-partial", card(auxiliary: .partial("relationship unconfirmed"))),
++            ("no-device", card(.noPhysicalDevice, current: nil, devices: [])),
++            ("long-value", card(current: RatePair(receivedBytesPerSecond: 1_073_741_823,
++                sentBytesPerSecond: 1_073_741_824),
++                capacity: DiskCapacityPresentation(identity: "/", totalBytes: UInt64.max,
++                    availableBytes: UInt64.max - 1, usedBytes: 1, sharedCapacity: true,
++                    relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))))
++        ]
++        for (label, fixture) in fixtures {
++            for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++                try render(fixture, appearance: appearance, label: label)
++            }
++        }
++        try render(card(), appearance: .aqua, label: "german-locale", locale: Locale(identifier: "de_DE"))
++        #expect(DiskDisplayText.compactCapacity(card().supplemental, now: now) == "용량 확인 · 30초 전")
++        let failedCapacity = card(auxiliary: .failure("volume unavailable"), capacityIsLastKnown: true)
++        #expect(failedCapacity.currentRate != nil)
++        #expect(failedCapacity.supplemental.isLastKnown)
++        #expect(DiskDisplayText.compactCapacity(failedCapacity.supplemental, now: now)
++            == "용량 실패 · 과거 30초 전")
++        #expect(DiskDisplayText.cardStatus(card(.stopped, current: nil, lastKnown: past), now: now)
++            == "중지 · 과거 20초 전")
++    }
++
++    @Test func detailPreservesSharedCapacityDriverCountersOperationsAndRelations() throws {
++        let item = device()
++        let fixture = card()
++        let detail = DiskDetailPopoverContent(presentation: fixture, onClose: {}, fixedNow: now)
++        let rows = VStack(spacing: 16) {
++            detail.volumeRow(fixture.supplemental.volumes[0])
++            detail.deviceRow(item, now: now)
++        }
++        .frame(width: 368)
++        .environment(\.colorScheme, .light)
++        let renderer = ImageRenderer(content: rows)
++        renderer.scale = 1
++        let image = try #require(renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:)))
++        #expect(image.pixelsWide == 368)
++        #expect(image.pixelsHigh > 200)
++        Attachment.record(try #require(image.representation(using: .png, properties: [:])),
++            named: "disk-detail-volume-device-long-name.png")
++        #expect(fixture.supplemental.volumes[0].usedBytes == 1 << 39)
++        #expect(fixture.supplemental.volumes[0].sharedCapacity)
++        #expect(fixture.accessibilityLabel.contains("APFS 공유 공간"))
++        #expect(DiskDisplayText.usedDefinition.contains("전체 − 사용 가능"))
++        #expect(item.readBytes == UInt64.max)
++        #expect(item.operationsRate?.readsPerSecond == 2.5)
++        #expect(ResourceQuantityFormatter.driverOperationsPerSecond(2.5) == "2.5 회/s")
++        #expect(DiskDisplayText.external(.externalDevice, reason: nil) == "외장 장치")
++        #expect(DiskDisplayText.external(.unknown, reason: "IORegistry unknown").contains("미확인"))
++        #expect(DiskDisplayText.mount(.mounted) == "마운트됨")
++        #expect(DiskDisplayText.mount(.unmounted) == "마운트되지 않음")
++        #expect(DiskDisplayText.mount(.relationUnconfirmed) == "장치·볼륨 관계 미확인")
++        #expect(DiskDisplayText.volumeScope(.unconfirmed) == "장치 관계 미확인")
++    }
++
++    @Test func conditionalOperationsAndExternalMountStatesStayDistinct() throws {
++        let fixture = card(externalAbsent: false, devices: [
++            device(external: .externalDevice, mount: .unmounted,
++                operations: .unsupported("unsupported: Operations key absent")),
++            DiskDevicePresentation(registryID: 43, bsdNames: ["disk43"],
++                readBytes: nil, writtenBytes: nil, bytesReason: "invalid: Statistics bytes missing",
++                rate: nil, readOperations: nil, writeOperations: nil, operationsRate: nil,
++                operations: .failure("invalid: Operations key"), external: .unknown,
++                externalReason: "IORegistry relation unconfirmed", mountState: .relationUnconfirmed)
++        ])
++        let detail = DiskDetailPopoverContent(presentation: fixture, onClose: {}, fixedNow: now)
++        let rows = VStack(spacing: 16) {
++            detail.deviceRow(fixture.devices[0], now: now)
++            detail.deviceRow(fixture.devices[1], now: now)
++        }
++        .frame(width: 368)
++        .environment(\.colorScheme, .dark)
++        let renderer = ImageRenderer(content: rows)
++        renderer.scale = 1
++        let bitmap = try #require(renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:)))
++        #expect(bitmap.pixelsWide == 368)
++        #expect(bitmap.pixelsHigh > 200)
++        Attachment.record(try #require(bitmap.representation(using: .png, properties: [:])),
++            named: "disk-detail-external-unmounted-unknown-failure.png")
++        #expect(DiskDisplayText.external(fixture.devices[0].external,
++            reason: fixture.devices[0].externalReason) == "외장 장치")
++        #expect(DiskDisplayText.mount(fixture.devices[0].mountState) == "마운트되지 않음")
++        #expect(DiskDisplayText.mount(fixture.devices[1].mountState) == "장치·볼륨 관계 미확인")
++        #expect(DiskDisplayText.external(fixture.devices[1].external,
++            reason: fixture.devices[1].externalReason).contains("미확인"))
++    }
++
++    @Test func diskSelectionAndExplicitCloseUseCommonStore() {
++        let store = DashboardPresentationStore()
++        store.selectCard(.disk)
++        #expect(store.selection == .disk)
++        store.selectCard(.disk)
++        #expect(store.selection == .none)
++        store.selectCard(.disk)
++        store.selectCard(.network)
++        store.dismissDetail(for: .disk)
++        #expect(store.selection == .network)
++        store.selectCard(.disk)
++        store.dismissDetail(for: .disk)
++        #expect(store.selection == .none)
++    }
++}
+diff --git a/ResourceRunnerUITests/DiskCardUITests.swift b/ResourceRunnerUITests/DiskCardUITests.swift
+new file mode 100644
+index 0000000..e9da5a1
+--- /dev/null
++++ b/ResourceRunnerUITests/DiskCardUITests.swift
+@@ -0,0 +1,70 @@
++import XCTest
++
++/// 서명된 앱의 Disk 카드와 실제 볼륨·드라이버 상세, 공통 닫힘 경로를 확인합니다.
++final class DiskCardUITests: XCTestCase {
++    override func setUpWithError() throws { continueAfterFailure = false }
++
++    @MainActor
++    func testRealDiskCardDetailAndReturnKeepFrames() throws {
++        let app = XCUIApplication()
++        app.launch()
++        let statusItem = app.statusItems.firstMatch
++        XCTAssertTrue(statusItem.waitForExistence(timeout: 10))
++        statusItem.click()
++
++        let disk = app.descendants(matching: .any).matching(identifier: "DiskCard").firstMatch
++        XCTAssertTrue(disk.waitForExistence(timeout: 10))
++        let dashboard = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
++        XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
++        let scroll = app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch
++        XCTAssertTrue(scroll.exists)
++        for _ in 0..<8 where !disk.isHittable { scroll.swipeUp() }
++        XCTAssertTrue(disk.isHittable, "Disk 카드가 본체 스크롤에서 도달되지 않았습니다.")
++
++        let cardBefore = disk.frame
++        let bodyBefore = dashboard.frame
++        print("TASK011_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(disk.label)")
++        XCTAssertEqual(cardBefore.height, 294, accuracy: 1)
++
++        disk.click()
++        let detail = app.descendants(matching: .any).matching(identifier: "DiskDetail").firstMatch
++        XCTAssertTrue(detail.waitForExistence(timeout: 5))
++        XCTAssertEqual(app.popovers.count, 2)
++        XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
++        let summary = detail.descendants(matching: .any).matching(identifier: "DiskSummary").firstMatch
++        XCTAssertTrue(summary.waitForExistence(timeout: 5))
++        let volume = detail.descendants(matching: .any)
++            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "DiskVolume-"))
++            .firstMatch
++        XCTAssertTrue(volume.waitForExistence(timeout: 10))
++        print("TASK011_ACTUAL_UI summary=\(summary.label) volume=\(volume.label)")
++        XCTAssertTrue(summary.label.contains("전체"))
++        XCTAssertTrue(summary.label.contains("사용 가능"))
++        XCTAssertTrue(summary.label.contains("전체 − 사용 가능"))
++        XCTAssertTrue(volume.label.contains("사용 중"))
++        XCTAssertTrue(volume.label.contains("공유 공간"))
++        XCTAssertEqual(disk.frame, cardBefore)
++        XCTAssertEqual(dashboard.frame, bodyBefore)
++
++        let close = app.buttons.matching(identifier: "DiskDetailClose").firstMatch
++        XCTAssertTrue(close.waitForExistence(timeout: 2))
++        close.click()
++        XCTAssertTrue(waitUntil({ !detail.exists }, timeout: 3))
++        XCTAssertEqual(disk.frame, cardBefore)
++        XCTAssertEqual(dashboard.frame, bodyBefore)
++        disk.click()
++        XCTAssertTrue(detail.waitForExistence(timeout: 3))
++        disk.click()
++        XCTAssertTrue(waitUntil({ !detail.exists }, timeout: 3))
++        print("TASK011_ACTUAL_UI cardAfter=\(disk.frame) bodyAfter=\(dashboard.frame)")
++    }
++
++    private func waitUntil(_ condition: () -> Bool, timeout: TimeInterval) -> Bool {
++        let end = Date().addingTimeInterval(timeout)
++        while Date() < end {
++            if condition() { return true }
++            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
++        }
++        return condition()
++    }
++}

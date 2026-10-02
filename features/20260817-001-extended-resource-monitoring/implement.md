@@ -321,7 +321,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
     DESIGN §1.2, DESIGN §2.3, DESIGN §3.2, DESIGN §3.3, DESIGN §3.5, DESIGN §4.2
   - 승인 근거: 2026-10-02 독립 verifier의 approved 후보를 main이 원본·실행 근거와 대조해 확정했습니다. 기준 HEAD `2926498`의 카드/상세·공통 선택·최소 본체 ScrollView·범례 마커·DEBUG UI probe 및 직접 테스트 소스7개와 PNG42개 해시/patch가 `evidence/task-010/`과 일치합니다. 상태별·최장값·로케일294pt 렌더, 물리 대표와VPN/터널상세 범위, 긴 이름·현재/누적/주소/조건부 링크 사유를 확인했습니다. 집중16/16·전체unit601/601·Release/서명Debug빌드가 통과했습니다. 실제Sandbox PID77408의 카드248×294·상세400×480·본문306×627·자식426×506과 en0/utun 항목, AXPress닫기·재선택·개폐전후frame 보존을 확인했습니다. XCUITest는 automation mode 활성timeout으로 본문전에 실패했고 성공 근거로 사용하지 않았습니다. 실제 카드 클릭·전체 키보드/AX·네 카드 viewport·VPN 전환은 후속012~014에 남습니다. SPEC·DESIGN과 선행 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
-- [ ] task-011: Disk 요약 카드와 장치·볼륨 상세
+- [x] task-011: Disk 요약 카드와 장치·볼륨 상세
   - 목적: Disk 카드에서 현재 입출력·시스템 용량·최근 그래프를 확인하고
     카드 옆 상세에서 현재 장치·볼륨·외장 상태를 구분해 읽을 수 있게 합니다.
   - 접근: Network와 같은 294pt 고정 슬롯에 Read·Write,
@@ -347,6 +347,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.2, SPEC §5.4, SPEC §5.10, SPEC §5.12,
     SPEC §5.14, SPEC §5.15, SPEC §5.18,
     DESIGN §1.3, DESIGN §1.4, DESIGN §2.3, DESIGN §3.2, DESIGN §3.3, DESIGN §3.5, DESIGN §4.2
+  - 승인 근거: 2026-10-03 독립 verifier의 재검증 approved 후보를 main이 확정했습니다. 기준 HEAD `331bdc5`의 변경 소스7개와 signed Debug dylib SHA-256/최종patch가 `evidence/task-011/retry/`와 일치합니다. DESIGN §3.3의 가용 라벨·같은 단위 공유로 최대 UInt64 두 값과 단위 경계·0·작은 양수·5로케일25개248×294 렌더의 말줄임을 해소했으며 상세/AX 전체 라벨·단위·로케일을 유지합니다. 직접5/5·전체unit606/606·Release/서명Debug빌드가 통과했습니다. 실제Sandbox PID73723의 `/` 용량·APFS 공유 정의·볼륨8개·disk0 현재/원시누적/드라이버IOPS·외장없음과 카드248×294·상세400×480·본문306×627·자식426×506·AXPress닫기/재선택/frame보존을 확인했습니다. main/verifier가 실제PNG3개와 최장값렌더를 직접 확인했습니다. 이전 design/scope reject는 해소됐고 최근 reject를 제거합니다. SPEC·DESIGN·선행 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. XCUITest 성공은 주장하지 않고 실제 앱 probe로 이번 UI 근거를 확인했으며 viewport/키보드AX/실제외장 전환은012~014에 남습니다.
 
 - [ ] task-012: 네 카드 본체와 상세의 화면별 viewport
   - 목적: 화면 가용 영역 안에서 네 카드와 넘치는 상세 내용에 도달하고

@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-/// 대시보드 팝오버 셸. CPU·Memory 카드(task-008, task-009)와 카드 옆 상세 팝업(task-010)을 담습니다.
+/// 대시보드 팝오버 셸. CPU·Memory·Network 카드와 카드 옆 상세 팝업을 담습니다.
 ///
-/// 본체는 두 카드만 가지며 상세를 위한 자리를 예약하지 않습니다.
+/// 본체는 한 열로 스크롤하며 상세를 위한 자리를 예약하지 않습니다.
 /// 팝오버 프레임 크기는 `selection`과 무관한 상수(`frame(width:height:)`)이므로 카드를 선택하거나 해제해도
 /// 본체 창 크기가 흔들리지 않습니다 — 상세는 그 카드에 앵커한 별도 자식 팝업으로 열려 본체 레이아웃에 참여하지
 /// 않습니다(ANALYSIS §1 「표시 경계」, §5 DP14). 자식 팝오버를 카드에 붙여도 부모 팝오버가 닫히지 않고
@@ -23,7 +23,8 @@ struct DashboardView: View {
     let iconProvider: any ApplicationIconProviding
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
+        ScrollView {
+          VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
             // `Button`은 macOS에서 표준 포커스 가능 컨트롤이라 키보드 탐색(Full Keyboard Access)을 켠 환경에서는
             // Tab 이동과 Space·Return 활성화가 그대로 동작합니다. 다만 이 설정은 기본값이 꺼짐이고,
             // 꺼진 상태에서는 Tab이 텍스트 필드·목록만 순회해 버튼에 닿지 않는 것을 실행 중인 앱에서 확인했습니다.
@@ -57,8 +58,22 @@ struct DashboardView: View {
             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
                 MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider)
             }
+            Button(action: { store.selectCard(.network) }) {
+                NetworkCardView(presentation: store.networkCard)
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("3", modifiers: .command)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(store.networkCard.accessibilityLabel + ", 단축키 ⌘3")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityIdentifier("NetworkCard")
+            .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
+                NetworkDetailPopoverContent(presentation: store.networkCard,
+                    onClose: { store.dismissDetail(for: .network) })
+            }
+          }
+          .padding()
         }
-        .padding()
         .frame(width: 280, height: DashboardView.bodyHeight, alignment: .topLeading)
         .background(DashboardColorPalette.popoverBackground)
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
@@ -66,11 +81,10 @@ struct DashboardView: View {
         .accessibilityIdentifier("DashboardContainer")
     }
 
-    /// 높이 제약을 걷고 수집 중·정상 상태를 각각 재었을 때 팝오버 프레임은 모두 627pt였습니다.
-    /// `NSPopover` chrome 26pt를 뺀 콘텐츠 높이로 고정해 상태 전이에도 프레임이 흔들리지 않게 합니다.
+    /// 기존 본체의 601pt viewport를 유지하고 넘치는 세 번째 카드는 내부 스크롤로 보여줍니다.
     fileprivate static let bodyHeight: CGFloat = 601
 
-    /// 두 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
+    /// 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
     static let cardSpacing = DashboardStyle.Spacing.betweenSections
 
     /// CPU 카드 선택·복귀 단축키의 실제 키. `CPUCardPresentation.selectionShortcutKey`에서 유도되어
@@ -114,6 +128,15 @@ struct DashboardView: View {
                 if !isPresented {
                     store.dismissDetail(for: .memory)
                 }
+            }
+        )
+    }
+
+    private var networkDetailIsPresented: Binding<Bool> {
+        Binding(
+            get: { store.selection == .network },
+            set: { isPresented in
+                if !isPresented { store.dismissDetail(for: .network) }
             }
         )
     }

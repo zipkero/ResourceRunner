@@ -20,6 +20,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         coordinator = ApplicationCoordinator()
 #if DEBUG
+        if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "NetworkUIProbe")
+                try? await Task.sleep(for: .seconds(4))
+                guard let coordinator = self.coordinator else { return }
+                let status = coordinator.statusBarController
+                status.togglePopover()
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("opened=\(status.popover.isShown) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public) networkAX=\(coordinator.dashboardPresentationStore.networkCard.accessibilityLabel, privacy: .public)")
+                Self.logNetworkAccessibility(logger: logger)
+                if let hosting = status.popover.contentViewController?.view,
+                   let scroll = Self.firstScrollView(in: hosting) {
+                    logger.notice("scrollBefore contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public) documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
+                    scroll.contentView.scroll(to: NSPoint(x: 0, y: 310))
+                    scroll.reflectScrolledClipView(scroll.contentView)
+                    try? await Task.sleep(for: .milliseconds(300))
+                    logger.notice("scrollAfter contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public)")
+                } else {
+                    logger.error("actual ScrollView NSScrollView not found")
+                }
+                Self.logNetworkAccessibility(logger: logger)
+                coordinator.dashboardPresentationStore.selectCard(.network)
+                logger.notice("common selectCard called selection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public)")
+                for _ in 0..<10 {
+                    if !coordinator.dashboardPresentationStore.networkCard.interfaces.isEmpty { break }
+                    try? await Task.sleep(for: .milliseconds(500))
+                }
+                try? await Task.sleep(for: .milliseconds(500))
+                let windowFrames = NSApp.windows.map { String(describing: $0.frame) }.joined(separator: ";")
+                logger.notice("selected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) interfaceCount=\(coordinator.dashboardPresentationStore.networkCard.interfaces.count) windowFrames=\(windowFrames, privacy: .public)")
+                Self.logNetworkAccessibility(logger: logger)
+                if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE_OUTPUT"] == "1",
+                   let caches = FileManager.default.urls(for: .cachesDirectory,
+                       in: .userDomainMask).first {
+                    let output = caches.appending(path: "Task010Probe")
+                    try? FileManager.default.createDirectory(at: output,
+                        withIntermediateDirectories: true)
+                    if let parent = status.popover.contentViewController?.view.window {
+                        Self.writeProbeImage(window: parent,
+                            path: output.appending(path: "actual-dashboard.png").path, logger: logger)
+                    }
+                    if let detail = NSApp.windows.first(where: { $0.frame.width > 400 && $0.frame.width < 450 }) {
+                        Self.writeProbeImage(window: detail,
+                            path: output.appending(path: "actual-network-detail.png").path, logger: logger)
+                        if let content = detail.contentView,
+                           let scroll = Self.firstScrollView(in: content) {
+                            logger.notice("detailScroll documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
+                            scroll.contentView.scroll(to: NSPoint(x: 0, y: 2_500))
+                            scroll.reflectScrolledClipView(scroll.contentView)
+                            try? await Task.sleep(for: .milliseconds(250))
+                            Self.writeProbeImage(window: detail,
+                                path: output.appending(path: "actual-network-detail-physical.png").path, logger: logger)
+                            scroll.contentView.scroll(to: NSPoint(x: 0, y: 3_200))
+                            scroll.reflectScrolledClipView(scroll.contentView)
+                            try? await Task.sleep(for: .milliseconds(250))
+                            Self.writeProbeImage(window: detail,
+                                path: output.appending(path: "actual-network-detail-tunnel.png").path, logger: logger)
+                        }
+                    }
+                }
+                if let close = Self.findNetworkAX("NetworkDetailClose") {
+                    let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
+                    logger.notice("close AXPress result=\(result.rawValue)")
+                } else { logger.error("close AX element missing") }
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("closedSelection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public)")
+                Self.logNetworkAccessibility(logger: logger)
+                coordinator.dashboardPresentationStore.selectCard(.network)
+                try? await Task.sleep(for: .milliseconds(500))
+                logger.notice("reselected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
+                coordinator.dashboardPresentationStore.selectCard(.network)
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("sameCardClosed=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
+                status.togglePopover()
+            }
+        }
         if ProcessInfo.processInfo.environment["RR_COLLECTION_PROBE"] == "1" {
             Task { @MainActor [weak self] in
                 let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
@@ -125,4 +202,84 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 #endif
     }
+
+#if DEBUG
+    @MainActor private static func writeProbeImage(window: NSWindow, path: String, logger: Logger) {
+        guard let view = window.contentView,
+              let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else {
+            logger.error("snapshot unavailable path=\(path, privacy: .public)")
+            return
+        }
+        view.cacheDisplay(in: view.bounds, to: bitmap)
+        guard let png = bitmap.representation(using: .png, properties: [:]) else { return }
+        do {
+            try png.write(to: URL(fileURLWithPath: path), options: .atomic)
+            logger.notice("snapshot path=\(path, privacy: .public) pixels=\(bitmap.pixelsWide)x\(bitmap.pixelsHigh)")
+        } catch {
+            logger.error("snapshot failed path=\(path, privacy: .public) error=\(String(describing: error), privacy: .public)")
+        }
+    }
+
+    @MainActor private static func firstScrollView(in view: NSView) -> NSScrollView? {
+        if let scroll = view as? NSScrollView { return scroll }
+        for child in view.subviews {
+            if let scroll = firstScrollView(in: child) { return scroll }
+        }
+        return nil
+    }
+
+    @MainActor private static func findNetworkAX(_ identifier: String) -> AXUIElement? {
+        let root = AXUIElementCreateApplication(getpid())
+        var visited = 0
+        func find(_ element: AXUIElement, depth: Int) -> AXUIElement? {
+            guard depth < 14, visited < 1000 else { return nil }
+            visited += 1
+            var value: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &value) == .success,
+               value as? String == identifier { return element }
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+                  let children = value as? [AXUIElement] else { return nil }
+            for child in children {
+                if let match = find(child, depth: depth + 1) { return match }
+            }
+            return nil
+        }
+        return find(root, depth: 0)
+    }
+
+    /// UI runner가 automation mode에 진입하지 못한 환경에서 앱 자신의 실제 AX 계층과 frame을 기록합니다.
+    @MainActor private static func logNetworkAccessibility(logger: Logger) {
+        let root = AXUIElementCreateApplication(getpid())
+        var visited = 0
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 14, visited < 1000 else { return }
+            visited += 1
+            var identifier: CFTypeRef?
+            let result = AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
+            if result == .success, let name = identifier as? String,
+               name == "NetworkCard" || name == "NetworkDetail" ||
+               name == "NetworkDetailClose" || name.hasPrefix("NetworkInterface-") {
+                var position: CFTypeRef?
+                var size: CFTypeRef?
+                var label: CFTypeRef?
+                let positionResult = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position)
+                let sizeResult = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
+                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &label)
+                logger.notice("AX id=\(name, privacy: .public) positionResult=\(positionResult.rawValue) sizeResult=\(sizeResult.rawValue) position=\(String(describing: position), privacy: .public) size=\(String(describing: size), privacy: .public) label=\(String(describing: label), privacy: .public)")
+            }
+            var valueText: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueText)
+            if let content = valueText as? String,
+               content.contains("Network 인터페이스") || content.contains("원시 누적 RX") {
+                logger.notice("AX text=\(content, privacy: .public)")
+            }
+            var value: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+                  let children = value as? [AXUIElement] else { return }
+            for child in children { walk(child, depth: depth + 1) }
+        }
+        walk(root, depth: 0)
+        logger.notice("AX traversal visited=\(visited)")
+    }
+#endif
 }

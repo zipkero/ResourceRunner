@@ -1,0 +1,868 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 724abbd..7176a48 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -20,6 +20,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidFinishLaunching(_ notification: Notification) {
+         coordinator = ApplicationCoordinator()
+ #if DEBUG
++        if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE"] == "1" {
++            Task { @MainActor [weak self] in
++                guard let self else { return }
++                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "NetworkUIProbe")
++                try? await Task.sleep(for: .seconds(4))
++                guard let coordinator = self.coordinator else { return }
++                let status = coordinator.statusBarController
++                status.togglePopover()
++                try? await Task.sleep(for: .seconds(1))
++                logger.notice("opened=\(status.popover.isShown) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public) networkAX=\(coordinator.dashboardPresentationStore.networkCard.accessibilityLabel, privacy: .public)")
++                Self.logNetworkAccessibility(logger: logger)
++                if let hosting = status.popover.contentViewController?.view,
++                   let scroll = Self.firstScrollView(in: hosting) {
++                    logger.notice("scrollBefore contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public) documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
++                    scroll.contentView.scroll(to: NSPoint(x: 0, y: 310))
++                    scroll.reflectScrolledClipView(scroll.contentView)
++                    try? await Task.sleep(for: .milliseconds(300))
++                    logger.notice("scrollAfter contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public)")
++                } else {
++                    logger.error("actual ScrollView NSScrollView not found")
++                }
++                Self.logNetworkAccessibility(logger: logger)
++                coordinator.dashboardPresentationStore.selectCard(.network)
++                logger.notice("common selectCard called selection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public)")
++                for _ in 0..<10 {
++                    if !coordinator.dashboardPresentationStore.networkCard.interfaces.isEmpty { break }
++                    try? await Task.sleep(for: .milliseconds(500))
++                }
++                try? await Task.sleep(for: .milliseconds(500))
++                let windowFrames = NSApp.windows.map { String(describing: $0.frame) }.joined(separator: ";")
++                logger.notice("selected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) interfaceCount=\(coordinator.dashboardPresentationStore.networkCard.interfaces.count) windowFrames=\(windowFrames, privacy: .public)")
++                Self.logNetworkAccessibility(logger: logger)
++                if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE_OUTPUT"] == "1",
++                   let caches = FileManager.default.urls(for: .cachesDirectory,
++                       in: .userDomainMask).first {
++                    let output = caches.appending(path: "Task010Probe")
++                    try? FileManager.default.createDirectory(at: output,
++                        withIntermediateDirectories: true)
++                    if let parent = status.popover.contentViewController?.view.window {
++                        Self.writeProbeImage(window: parent,
++                            path: output.appending(path: "actual-dashboard.png").path, logger: logger)
++                    }
++                    if let detail = NSApp.windows.first(where: { $0.frame.width > 400 && $0.frame.width < 450 }) {
++                        Self.writeProbeImage(window: detail,
++                            path: output.appending(path: "actual-network-detail.png").path, logger: logger)
++                        if let content = detail.contentView,
++                           let scroll = Self.firstScrollView(in: content) {
++                            logger.notice("detailScroll documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
++                            scroll.contentView.scroll(to: NSPoint(x: 0, y: 2_500))
++                            scroll.reflectScrolledClipView(scroll.contentView)
++                            try? await Task.sleep(for: .milliseconds(250))
++                            Self.writeProbeImage(window: detail,
++                                path: output.appending(path: "actual-network-detail-physical.png").path, logger: logger)
++                            scroll.contentView.scroll(to: NSPoint(x: 0, y: 3_200))
++                            scroll.reflectScrolledClipView(scroll.contentView)
++                            try? await Task.sleep(for: .milliseconds(250))
++                            Self.writeProbeImage(window: detail,
++                                path: output.appending(path: "actual-network-detail-tunnel.png").path, logger: logger)
++                        }
++                    }
++                }
++                if let close = Self.findNetworkAX("NetworkDetailClose") {
++                    let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
++                    logger.notice("close AXPress result=\(result.rawValue)")
++                } else { logger.error("close AX element missing") }
++                try? await Task.sleep(for: .seconds(1))
++                logger.notice("closedSelection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) bodyFrame=\(String(describing: status.popover.contentViewController?.view.window?.frame), privacy: .public)")
++                Self.logNetworkAccessibility(logger: logger)
++                coordinator.dashboardPresentationStore.selectCard(.network)
++                try? await Task.sleep(for: .milliseconds(500))
++                logger.notice("reselected=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
++                coordinator.dashboardPresentationStore.selectCard(.network)
++                try? await Task.sleep(for: .seconds(1))
++                logger.notice("sameCardClosed=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public) windows=\(NSApp.windows.count)")
++                status.togglePopover()
++            }
++        }
+         if ProcessInfo.processInfo.environment["RR_COLLECTION_PROBE"] == "1" {
+             Task { @MainActor [weak self] in
+                 let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
+@@ -125,4 +202,84 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+         }
+ #endif
+     }
++
++#if DEBUG
++    @MainActor private static func writeProbeImage(window: NSWindow, path: String, logger: Logger) {
++        guard let view = window.contentView,
++              let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else {
++            logger.error("snapshot unavailable path=\(path, privacy: .public)")
++            return
++        }
++        view.cacheDisplay(in: view.bounds, to: bitmap)
++        guard let png = bitmap.representation(using: .png, properties: [:]) else { return }
++        do {
++            try png.write(to: URL(fileURLWithPath: path), options: .atomic)
++            logger.notice("snapshot path=\(path, privacy: .public) pixels=\(bitmap.pixelsWide)x\(bitmap.pixelsHigh)")
++        } catch {
++            logger.error("snapshot failed path=\(path, privacy: .public) error=\(String(describing: error), privacy: .public)")
++        }
++    }
++
++    @MainActor private static func firstScrollView(in view: NSView) -> NSScrollView? {
++        if let scroll = view as? NSScrollView { return scroll }
++        for child in view.subviews {
++            if let scroll = firstScrollView(in: child) { return scroll }
++        }
++        return nil
++    }
++
++    @MainActor private static func findNetworkAX(_ identifier: String) -> AXUIElement? {
++        let root = AXUIElementCreateApplication(getpid())
++        var visited = 0
++        func find(_ element: AXUIElement, depth: Int) -> AXUIElement? {
++            guard depth < 14, visited < 1000 else { return nil }
++            visited += 1
++            var value: CFTypeRef?
++            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &value) == .success,
++               value as? String == identifier { return element }
++            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
++                  let children = value as? [AXUIElement] else { return nil }
++            for child in children {
++                if let match = find(child, depth: depth + 1) { return match }
++            }
++            return nil
++        }
++        return find(root, depth: 0)
++    }
++
++    /// UI runner가 automation mode에 진입하지 못한 환경에서 앱 자신의 실제 AX 계층과 frame을 기록합니다.
++    @MainActor private static func logNetworkAccessibility(logger: Logger) {
++        let root = AXUIElementCreateApplication(getpid())
++        var visited = 0
++        func walk(_ element: AXUIElement, depth: Int) {
++            guard depth < 14, visited < 1000 else { return }
++            visited += 1
++            var identifier: CFTypeRef?
++            let result = AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
++            if result == .success, let name = identifier as? String,
++               name == "NetworkCard" || name == "NetworkDetail" ||
++               name == "NetworkDetailClose" || name.hasPrefix("NetworkInterface-") {
++                var position: CFTypeRef?
++                var size: CFTypeRef?
++                var label: CFTypeRef?
++                let positionResult = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position)
++                let sizeResult = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
++                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &label)
++                logger.notice("AX id=\(name, privacy: .public) positionResult=\(positionResult.rawValue) sizeResult=\(sizeResult.rawValue) position=\(String(describing: position), privacy: .public) size=\(String(describing: size), privacy: .public) label=\(String(describing: label), privacy: .public)")
++            }
++            var valueText: CFTypeRef?
++            _ = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueText)
++            if let content = valueText as? String,
++               content.contains("Network 인터페이스") || content.contains("원시 누적 RX") {
++                logger.notice("AX text=\(content, privacy: .public)")
++            }
++            var value: CFTypeRef?
++            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
++                  let children = value as? [AXUIElement] else { return }
++            for child in children { walk(child, depth: depth + 1) }
++        }
++        walk(root, depth: 0)
++        logger.notice("AX traversal visited=\(visited)")
++    }
++#endif
+ }
+diff --git a/ResourceRunner/DashboardPresentation.swift b/ResourceRunner/DashboardPresentation.swift
+index 355b5c4..d5607ac 100644
+--- a/ResourceRunner/DashboardPresentation.swift
++++ b/ResourceRunner/DashboardPresentation.swift
+@@ -190,13 +190,14 @@ extension ResourceCardState {
+     }
+ }
+ 
+-/// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지. 도달 가능한 값은 선택 없음·CPU·Memory 셋뿐입니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
++/// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지.
+ /// 전이는 `DashboardPresentationStore.selectCard(_:)`(카드 활성화)와 `dismissDetail(for:)`(팝업 자신의 닫힘) 둘로만 일어나고,
+ /// 수집 갱신이나 수집 실패는 이 값을 바꾸지 않습니다(SPEC §5.2).
+ nonisolated enum DashboardSelection: Sendable, Equatable {
+     case none
+     case cpu
+     case memory
++    case network
+ }
+ 
+ /// CPU 카드 표시 값. 전체 사용률, User·System 비율, 최근 10분 그래프 점, 앱 단위 CPU TOP 5를 담습니다.
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index 9df9ff8..a33446e 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -7,9 +7,9 @@
+ 
+ import SwiftUI
+ 
+-/// 대시보드 팝오버 셸. CPU·Memory 카드(task-008, task-009)와 카드 옆 상세 팝업(task-010)을 담습니다.
++/// 대시보드 팝오버 셸. CPU·Memory·Network 카드와 카드 옆 상세 팝업을 담습니다.
+ ///
+-/// 본체는 두 카드만 가지며 상세를 위한 자리를 예약하지 않습니다.
++/// 본체는 한 열로 스크롤하며 상세를 위한 자리를 예약하지 않습니다.
+ /// 팝오버 프레임 크기는 `selection`과 무관한 상수(`frame(width:height:)`)이므로 카드를 선택하거나 해제해도
+ /// 본체 창 크기가 흔들리지 않습니다 — 상세는 그 카드에 앵커한 별도 자식 팝업으로 열려 본체 레이아웃에 참여하지
+ /// 않습니다(ANALYSIS §1 「표시 경계」, §5 DP14). 자식 팝오버를 카드에 붙여도 부모 팝오버가 닫히지 않고
+@@ -23,7 +23,8 @@ struct DashboardView: View {
+     let iconProvider: any ApplicationIconProviding
+ 
+     var body: some View {
+-        VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
++        ScrollView {
++          VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
+             // `Button`은 macOS에서 표준 포커스 가능 컨트롤이라 키보드 탐색(Full Keyboard Access)을 켠 환경에서는
+             // Tab 이동과 Space·Return 활성화가 그대로 동작합니다. 다만 이 설정은 기본값이 꺼짐이고,
+             // 꺼진 상태에서는 Tab이 텍스트 필드·목록만 순회해 버튼에 닿지 않는 것을 실행 중인 앱에서 확인했습니다.
+@@ -57,8 +58,22 @@ struct DashboardView: View {
+             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
+                 MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider)
+             }
++            Button(action: { store.selectCard(.network) }) {
++                NetworkCardView(presentation: store.networkCard)
++            }
++            .buttonStyle(.plain)
++            .keyboardShortcut("3", modifiers: .command)
++            .accessibilityElement(children: .ignore)
++            .accessibilityLabel(store.networkCard.accessibilityLabel + ", 단축키 ⌘3")
++            .accessibilityAddTraits(.isButton)
++            .accessibilityIdentifier("NetworkCard")
++            .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
++                NetworkDetailPopoverContent(presentation: store.networkCard,
++                    onClose: { store.dismissDetail(for: .network) })
++            }
++          }
++          .padding()
+         }
+-        .padding()
+         .frame(width: 280, height: DashboardView.bodyHeight, alignment: .topLeading)
+         .background(DashboardColorPalette.popoverBackground)
+         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
+@@ -66,11 +81,10 @@ struct DashboardView: View {
+         .accessibilityIdentifier("DashboardContainer")
+     }
+ 
+-    /// 높이 제약을 걷고 수집 중·정상 상태를 각각 재었을 때 팝오버 프레임은 모두 627pt였습니다.
+-    /// `NSPopover` chrome 26pt를 뺀 콘텐츠 높이로 고정해 상태 전이에도 프레임이 흔들리지 않게 합니다.
++    /// 기존 본체의 601pt viewport를 유지하고 넘치는 세 번째 카드는 내부 스크롤로 보여줍니다.
+     fileprivate static let bodyHeight: CGFloat = 601
+ 
+-    /// 두 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
++    /// 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
+     static let cardSpacing = DashboardStyle.Spacing.betweenSections
+ 
+     /// CPU 카드 선택·복귀 단축키의 실제 키. `CPUCardPresentation.selectionShortcutKey`에서 유도되어
+@@ -117,6 +131,15 @@ struct DashboardView: View {
+             }
+         )
+     }
++
++    private var networkDetailIsPresented: Binding<Bool> {
++        Binding(
++            get: { store.selection == .network },
++            set: { isPresented in
++                if !isPresented { store.dismissDetail(for: .network) }
++            }
++        )
++    }
+ }
+ 
+ /// CPU 카드 콘텐츠: 전체 사용률, User·System 비율, 최근 10분 그래프, 앱 단위 CPU TOP 5.
+diff --git a/ResourceRunner/ResourceRateGraphView.swift b/ResourceRunner/ResourceRateGraphView.swift
+index 4101c4a..237f927 100644
+--- a/ResourceRunner/ResourceRateGraphView.swift
++++ b/ResourceRunner/ResourceRateGraphView.swift
+@@ -147,19 +147,30 @@ struct ResourceRateLegendView: View {
+ 
+     private func legend(_ series: ResourceRateGraphSlotView.Series, label: String) -> some View {
+         HStack(spacing: 3) {
+-            Canvas { context, size in
+-                var path = Path()
+-                path.move(to: CGPoint(x: 0, y: size.height / 2))
+-                path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
+-                context.stroke(path, with: .color(kind.color(for: series)), style: series.style)
+-            }
+-            .frame(width: 14, height: 8)
++            ResourceRateLegendMarkerView(kind: kind, series: series)
+             Text(label)
+         }
+     }
+ 
+ }
+ 
++/// 현재값 이름과 그래프 범례가 같은 선 모양을 공유합니다.
++struct ResourceRateLegendMarkerView: View {
++    let kind: ResourceRateGraphSlotView.Kind
++    let series: ResourceRateGraphSlotView.Series
++
++    var body: some View {
++        Canvas { context, size in
++            var path = Path()
++            path.move(to: CGPoint(x: 0, y: size.height / 2))
++            path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
++            context.stroke(path, with: .color(kind.color(for: series)), style: series.style)
++        }
++        .frame(width: 14, height: 8)
++        .accessibilityHidden(true)
++    }
++}
++
+ /// 현재값 이름 옆 범례와 축 범위를 판 밖 요약 줄에 배치할 때 재사용합니다.
+ struct ResourceRateGraphHeaderView: View {
+     let kind: ResourceRateGraphSlotView.Kind
+diff --git a/ResourceRunner/NetworkDashboardView.swift b/ResourceRunner/NetworkDashboardView.swift
+new file mode 100644
+index 0000000..f64876d
+--- /dev/null
++++ b/ResourceRunner/NetworkDashboardView.swift
+@@ -0,0 +1,283 @@
++import SwiftUI
++
++/// 활동 원본과 별도 보조 원본의 상태를 카드 한 슬롯에 배치할 문자열만 만듭니다.
++nonisolated enum NetworkDisplayText {
++    static func kind(_ kind: NetworkInterfaceKind) -> String {
++        switch kind {
++        case .physicalWiFi: "물리 Wi-Fi"
++        case .physicalEthernet: "물리 Ethernet"
++        case .physicalOther: "기타 물리"
++        case .logical: "논리"
++        case .virtual: "가상"
++        case .tunnel: "터널"
++        case .vpn: "VPN"
++        case .loopback: "Loopback"
++        case .unknown: "종류 미확인"
++        }
++    }
++
++    static func activity(_ phase: ResourceActivityPhase) -> String {
++        switch phase {
++        case .collecting: "수집 중"
++        case .measured: "현재 측정"
++        case .partial: "물리 합계 일부 확인"
++        case .baseline: "기준점 수집 중"
++        case .disconnected: "연결 없음"
++        case .noPhysicalDevice: "물리 대상 없음"
++        case .failure: "활동 조회 실패"
++        case .stopped: "수집 중지"
++        }
++    }
++
++    static func supplemental(_ phase: SupplementalDisplayPhase, lastKnown: Bool) -> String {
++        let prefix = lastKnown ? "과거 보조 정보 · " : ""
++        switch phase {
++        case .collecting: return "보조 수집 중"
++        case .refreshing: return prefix + "보조 갱신 중"
++        case .available: return prefix + "보조 확인"
++        case .partial: return prefix + "보조 일부 확인"
++        case .failure: return prefix + "보조 조회 실패"
++        case .unsupported: return prefix + "보조 미지원"
++        }
++    }
++
++    static func activeSummary(_ interfaces: [NetworkInterfacePresentation]) -> String {
++        let active = interfaces.filter { $0.linkActive == true && $0.kind != .loopback }
++        let unknown = interfaces.filter { $0.linkActive == nil && $0.kind != .loopback }
++        guard !active.isEmpty else {
++            return unknown.isEmpty ? "활성 대상 0개" : "활성 미확인 \(unknown.count)개"
++        }
++        let kinds = Set(active.map(\.kind))
++        let names = kinds.sorted { $0.rawValue < $1.rawValue }.map { kind in
++            switch kind {
++            case .physicalWiFi: "Wi-Fi"
++            case .physicalEthernet: "Ethernet"
++            case .physicalOther: "물리"
++            case .logical: "논리"
++            case .virtual: "가상"
++            case .tunnel: "터널"
++            case .vpn: "VPN"
++            case .loopback: "Loopback"
++            case .unknown: "미확인"
++            }
++        }.joined(separator: "·")
++        let uncertain = unknown.isEmpty ? "" : " · 상태 미확인 \(unknown.count)개"
++        return "활성 확인 \(active.count)개 · \(names)\(uncertain)"
++    }
++
++    static func cardStatus(_ presentation: NetworkCardPresentation,
++                           now: ContinuousClock.Instant) -> String {
++        let state: String = switch presentation.phase {
++        case .collecting: "수집 중"
++        case .measured: "현재"
++        case .partial: "일부 실패"
++        case .baseline: "기준점"
++        case .disconnected: "연결 없음"
++        case .noPhysicalDevice: "물리 대상 없음"
++        case .failure: "조회 실패"
++        case .stopped: "중지"
++        }
++        guard presentation.currentRate == nil, let previous = presentation.lastKnownRate else { return state }
++        return "\(state) · 과거 \(max(0, previous.readAt.duration(to: now).components.seconds))초 전"
++    }
++
++    static func link(_ metric: ConditionalMetric) -> String {
++        switch metric {
++        case .collecting: "링크 속도 조회 중"
++        case .available(let value): "링크 속도 \(value)"
++        case .unsupported(let reason): "링크 속도 미지원 · \(reason)"
++        case .failure(let reason): "링크 속도 조회 실패 · \(reason)"
++        }
++    }
++
++    static func age(_ timestamp: ContinuousClock.Instant?, now: ContinuousClock.Instant) -> String {
++        guard let timestamp else { return "원본 조회 시각 없음" }
++        let seconds = max(0, Int(timestamp.duration(to: now).components.seconds))
++        return "원본 조회 \(seconds)초 전"
++    }
++}
++
++/// 설계의 다섯 고정 높이와 세 구역 간격을 한곳에서 검증합니다.
++nonisolated enum NetworkCardLayout {
++    static let title: CGFloat = 12
++    static let rates: CGFloat = 68
++    static let auxiliary: CGFloat = 32
++    static let graph: CGFloat = 118
++    static let spacing: CGFloat = 16
++    static let padding: CGFloat = 8
++    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
++}
++
++struct NetworkCardView: View {
++    let presentation: NetworkCardPresentation
++    var fixedNow: ContinuousClock.Instant? = nil
++    @Environment(\.locale) private var locale
++
++    var body: some View {
++        let now = fixedNow ?? ContinuousClock().now
++        let graph = ResourceRateGraph.make(history: presentation.recentHistory,
++            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
++        return VStack(alignment: .leading, spacing: NetworkCardLayout.spacing) {
++            HStack {
++                Text("Network · 물리 합계")
++                Spacer(minLength: 0)
++                Text(NetworkDisplayText.cardStatus(presentation, now: now))
++                    .lineLimit(1)
++                Text("⌘3")
++            }
++            .dashboardTypography(DashboardStyle.TypographyRole.heading)
++            .frame(height: NetworkCardLayout.title)
++
++            VStack(spacing: 4) {
++                rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
++                rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
++            }
++            .frame(height: NetworkCardLayout.rates)
++
++            VStack(alignment: .leading, spacing: 4) {
++                Text(NetworkDisplayText.activeSummary(presentation.interfaces))
++                    .lineLimit(1)
++                    .accessibilityLabel(NetworkDisplayText.activeSummary(presentation.interfaces))
++                    .frame(height: 14)
++                HStack(spacing: 4) {
++                    Text(NetworkDisplayText.supplemental(presentation.supplemental.phase,
++                         lastKnown: presentation.supplemental.isLastKnown))
++                        .lineLimit(1)
++                    Spacer(minLength: 0)
++                    Text(graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
++                         ?? "속도 범위 대기 · B/s")
++                        .lineLimit(1)
++                }
++                .frame(height: 14)
++            }
++            .dashboardTypography(DashboardStyle.TypographyRole.label)
++            .frame(height: NetworkCardLayout.auxiliary)
++
++            ResourceRateGraphSlotView(kind: .network, history: presentation.recentHistory,
++                firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow)
++                .frame(height: NetworkCardLayout.graph)
++        }
++        .padding(NetworkCardLayout.padding)
++        .frame(maxWidth: .infinity, alignment: .leading)
++        .frame(height: NetworkCardLayout.total)
++        .background(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
++            .fill(DashboardStyle.CardSurface.fillColor))
++        .contentShape(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius))
++    }
++
++    private var selectedRate: RatePair? {
++        presentation.currentRate ?? presentation.lastKnownRate?.rate
++    }
++
++    private var isPast: Bool {
++        presentation.currentRate == nil && presentation.lastKnownRate != nil
++    }
++
++    private func rateRow(_ series: ResourceRateGraphSlotView.Series, rate: Double?) -> some View {
++        HStack(spacing: 3) {
++            ResourceRateLegendMarkerView(kind: .network, series: series)
++            Text(series == .received ? "다운로드" : "업로드")
++                .dashboardTypography(DashboardStyle.TypographyRole.label)
++            Spacer(minLength: 2)
++            if let rate {
++                let parts = ResourceQuantityFormatter.byteRate(rate, locale: locale)
++                    .split(separator: " ", maxSplits: 1)
++                Text(String(parts.first ?? ""))
++                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
++                    .lineLimit(1)
++                Text(parts.count > 1 ? String(parts[1]) : "B/s")
++                    .dashboardTypography(DashboardStyle.TypographyRole.label)
++                    .lineLimit(1)
++            } else {
++                Text(NetworkDisplayText.activity(presentation.phase))
++                    .dashboardTypography(DashboardStyle.TypographyRole.label)
++                    .lineLimit(1)
++            }
++        }
++        .frame(height: 32)
++        .accessibilityElement(children: .ignore)
++        .accessibilityLabel(rateAccessibility(series: series, rate: rate))
++    }
++
++    private func rateAccessibility(series: ResourceRateGraphSlotView.Series, rate: Double?) -> String {
++        let label = series == .received ? "다운로드 RX" : "업로드 TX"
++        guard let rate else { return "\(label), \(NetworkDisplayText.activity(presentation.phase)), 현재 속도 없음" }
++        let scope = presentation.currentRateIsPartial ? "확인된 물리 대상 일부 합계" : "물리 대상 합계"
++        let age = NetworkDisplayText.age(isPast ? presentation.lastKnownRate?.readAt : presentation.latestReadAt,
++            now: fixedNow ?? ContinuousClock().now)
++        return "\(label), \(isPast ? "과거" : "현재") \(scope), \(ResourceQuantityFormatter.byteRate(rate, locale: locale)), \(age), \(NetworkDisplayText.activity(presentation.phase))"
++    }
++}
++
++/// 카드 옆 팝업의 인터페이스 목록은 긴 이름과 다수 대상을 내부 스크롤로 보존합니다.
++struct NetworkDetailPopoverContent: View {
++    let presentation: NetworkCardPresentation
++    let onClose: () -> Void
++    var fixedNow: ContinuousClock.Instant? = nil
++    @Environment(\.locale) private var locale
++
++    var body: some View {
++        let now = fixedNow ?? ContinuousClock().now
++        return ScrollView {
++            VStack(alignment: .leading, spacing: DashboardStyle.Section.betweenSections) {
++                HStack {
++                    Text("Network 인터페이스")
++                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                    Spacer()
++                    Button("닫기", action: onClose).accessibilityIdentifier("NetworkDetailClose")
++                }
++                VStack(alignment: .leading, spacing: 4) {
++                    Text("\(NetworkDisplayText.activity(presentation.phase)) · \(NetworkDisplayText.activeSummary(presentation.interfaces))")
++                    if case .partial(let reason) = presentation.phase { Text("물리 합계 일부 실패: \(reason)") }
++                    if case .failure(let reason) = presentation.phase { Text("활동 조회 실패: \(reason)") }
++                    if case .partial(let reason) = presentation.supplemental.phase { Text("보조 일부 실패: \(reason)") }
++                    if case .failure(let reason) = presentation.supplemental.phase { Text("보조 조회 실패: \(reason)") }
++                    Text("현재 속도는 확인된 물리 대상만 합산합니다. VPN·터널은 아래 상세 전용입니다.")
++                    Text(NetworkDisplayText.age(presentation.latestReadAt, now: now))
++                    Text("\(NetworkDisplayText.supplemental(presentation.supplemental.phase, lastKnown: presentation.supplemental.isLastKnown)) · \(NetworkDisplayText.age(presentation.supplemental.readAt, now: now))")
++                }
++                .dashboardTypography(DashboardStyle.TypographyRole.label)
++                if presentation.interfaces.isEmpty {
++                    Text("현재 인터페이스 정보 없음")
++                        .dashboardTypography(DashboardStyle.TypographyRole.label)
++                }
++                ForEach(presentation.interfaces, id: \.key) { item in
++                    interfaceRow(item, now: now)
++                }
++            }
++            .padding(16)
++            .frame(maxWidth: .infinity, alignment: .leading)
++        }
++        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
++        .accessibilityIdentifier("NetworkDetail")
++    }
++
++    func interfaceRow(_ item: NetworkInterfacePresentation, now: ContinuousClock.Instant) -> some View {
++        let state = item.linkActive.map { $0 ? "연결 활성" : "연결 비활성" } ?? "연결 상태 미확인"
++        let receive = item.rate.map { ResourceQuantityFormatter.byteRate($0.receivedBytesPerSecond, locale: locale) } ?? "현재 속도 없음"
++        let send = item.rate.map { ResourceQuantityFormatter.byteRate($0.sentBytesPerSecond, locale: locale) } ?? "현재 속도 없음"
++        let age = NetworkDisplayText.age(presentation.latestReadAt, now: now)
++        let lines = [
++            "\(item.key.name) · \(NetworkDisplayText.kind(item.kind)) · \(state)",
++            "분류 근거: \(item.classificationReason)",
++            "현재 RX \(receive) · 현재 TX \(send) · \(age)",
++            "원시 누적 RX \(item.receivedBytes.formatted(.number.locale(locale))) B · 원시 누적 TX \(item.sentBytes.formatted(.number.locale(locale))) B",
++            "IPv4 \(item.ipv4.isEmpty ? "없음 또는 미확인" : item.ipv4.joined(separator: ", "))",
++            "IPv6 \(item.ipv6.isEmpty ? "없음 또는 미확인" : item.ipv6.joined(separator: ", "))",
++            NetworkDisplayText.link(item.linkSpeed)
++        ]
++        return VStack(alignment: .leading, spacing: 4) {
++            ForEach(lines, id: \.self) { line in
++                Text(line).fixedSize(horizontal: false, vertical: true)
++            }
++        }
++        .dashboardTypography(DashboardStyle.TypographyRole.label)
++        .frame(maxWidth: .infinity, alignment: .leading)
++        .padding(8)
++        .background(RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
++            .fill(DashboardStyle.CardSurface.fillColor))
++        .accessibilityElement(children: .ignore)
++        .accessibilityLabel(lines.joined(separator: ", "))
++        .accessibilityIdentifier("NetworkInterface-\(item.key.name)")
++    }
++}
+diff --git a/ResourceRunnerTests/NetworkDashboardViewTests.swift b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+new file mode 100644
+index 0000000..d8f67c3
+--- /dev/null
++++ b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+@@ -0,0 +1,183 @@
++import AppKit
++import SwiftUI
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++struct NetworkDashboardViewTests {
++    private let now = ContinuousClock().now
++    private let key = NetworkTargetKey(name: "utun1234567890123456789012345678901234567890",
++        index: 8, registryID: nil, lifetime: 3)
++
++    private func item(kind: NetworkInterfaceKind = .tunnel, name: String? = nil, index: UInt16 = 8,
++                      link: ConditionalMetric = .unsupported("unsupported: negotiated speed unverified")) -> NetworkInterfacePresentation {
++        let target = NetworkTargetKey(name: name ?? key.name, index: index, registryID: nil, lifetime: 3)
++        let reason = switch kind {
++        case .physicalWiFi: "confirmed hardware provider"
++        case .vpn: "confirmed VPN service"
++        case .tunnel: "tunnel name; VPN service unconfirmed"
++        default: "classification unavailable"
++        }
++        let rates = switch kind {
++        case .physicalWiFi: RatePair(receivedBytesPerSecond: 1_023, sentBytesPerSecond: 1_024)
++        case .vpn: RatePair(receivedBytesPerSecond: 2_048, sentBytesPerSecond: 512)
++        default: RatePair(receivedBytesPerSecond: 4_096, sentBytesPerSecond: 0)
++        }
++        return NetworkInterfacePresentation(key: target, kind: kind, classificationReason: reason,
++            linkActive: true, receivedBytes: UInt64.max, sentBytes: 9_876_543_210,
++            rate: rates,
++            ipv4: ["198.51.100.10"], ipv6: ["2001:db8::1"], linkSpeed: link)
++    }
++
++    private func card(_ phase: ResourceActivityPhase = .measured,
++                      auxiliary: SupplementalDisplayPhase = .available,
++                      current: RatePair? = RatePair(receivedBytesPerSecond: 1_023,
++                                                   sentBytesPerSecond: 1_024),
++                      partial: Bool = false,
++                      lastKnown: LastKnownRate? = nil,
++                      interfaces: [NetworkInterfacePresentation]? = nil) -> NetworkCardPresentation {
++        NetworkCardPresentation(phase: phase, currentRate: current,
++            currentRateIsPartial: partial, latestReadAt: now.advanced(by: .seconds(-3)),
++            lastKnownRate: lastKnown, topologyRevision: 1, recentHistory: [],
++            firstHistoryPointAt: nil, interfaces: interfaces ?? [
++                item(kind: .physicalWiFi, name: "en0", index: 1),
++                item(kind: .vpn, name: "utun3", index: 3),
++                item(kind: .tunnel, name: key.name, index: 8)
++            ],
++            supplemental: NetworkSupplementalPresentation(phase: auxiliary,
++                readAt: now.advanced(by: .seconds(-30)), records: [], isLastKnown: false))
++    }
++
++    private func render(_ presentation: NetworkCardPresentation,
++                        appearance name: NSAppearance.Name, label: String,
++                        locale: Locale = .current) throws -> NSBitmapImageRep {
++        let appearance = try #require(NSAppearance(named: name))
++        let view = NetworkCardView(presentation: presentation, fixedNow: now)
++            .frame(width: 248)
++            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
++            .environment(\.locale, locale)
++        var image: NSBitmapImageRep?
++        appearance.performAsCurrentDrawingAppearance {
++            let renderer = ImageRenderer(content: view)
++            renderer.scale = 1
++            image = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
++        }
++        let bitmap = try #require(image)
++        #expect(bitmap.pixelsWide == 248)
++        #expect(bitmap.pixelsHigh == 294)
++        Attachment.record(try #require(bitmap.representation(using: .png, properties: [:])),
++            named: "network-card-\(label)-\(name == .darkAqua ? "dark" : "light").png")
++        return bitmap
++    }
++
++    @Test func fixedSlotsCoverInitialNormalPartialFailureStoppedAndAuxiliaryFailure() throws {
++        #expect(NetworkCardLayout.total == 294)
++        #expect(NetworkCardLayout.title == 12)
++        #expect(NetworkCardLayout.rates == 68)
++        #expect(NetworkCardLayout.auxiliary == 32)
++        #expect(NetworkCardLayout.graph == 118)
++        let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 1_024,
++                                               sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
++        let fixtures: [(String, NetworkCardPresentation)] = [
++            ("initial", .collecting),
++            ("normal", card()),
++            ("partial", card(.partial("llw0 classification unknown"), partial: true)),
++            ("failure", card(.failure("route unavailable"), current: nil, lastKnown: past)),
++            ("stopped", card(.stopped, current: nil, lastKnown: past)),
++            ("aux-failure", card(auxiliary: .failure("addresses unavailable"))),
++            ("disconnected", card(.disconnected, current: nil, interfaces: [])),
++            ("long-value", card(current: RatePair(receivedBytesPerSecond: 1_023,
++                                                  sentBytesPerSecond: 1_073_741_823)))
++        ]
++        for (label, fixture) in fixtures {
++            for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++                _ = try render(fixture, appearance: appearance, label: label)
++            }
++        }
++        _ = try render(card(), appearance: .aqua, label: "german-locale",
++            locale: Locale(identifier: "de_DE"))
++        #expect(ResourceQuantityFormatter.byteRate(1_024,
++            locale: Locale(identifier: "de_DE")) == "1,0 KB/s")
++    }
++
++    @Test func displayTextPreservesPhysicalScopeAndConditionalFailure() {
++        let physical = item(kind: .physicalWiFi, name: "en0", index: 1)
++        let vpn = item(kind: .vpn, name: "utun3", index: 3)
++        let tunnel = item(kind: .tunnel)
++        #expect(NetworkDisplayText.activeSummary([physical, vpn, tunnel]).contains("3개"))
++        #expect(NetworkDisplayText.activeSummary([physical, vpn, tunnel]).contains("VPN"))
++        let uncertain = NetworkInterfacePresentation(key: key, kind: .unknown,
++            classificationReason: "classification unavailable", linkActive: nil,
++            receivedBytes: 0, sentBytes: 0, rate: nil, ipv4: [], ipv6: [], linkSpeed: .collecting)
++        #expect(NetworkDisplayText.activeSummary([uncertain]) == "활성 미확인 1개")
++        #expect(NetworkDisplayText.activeSummary([physical, uncertain]).contains("상태 미확인 1개"))
++        #expect(NetworkDisplayText.kind(.tunnel) == "터널")
++        #expect(NetworkDisplayText.link(.unsupported("unsupported: unknown"))
++            .contains("미지원"))
++        #expect(NetworkDisplayText.link(.failure("sysctl failed")).contains("조회 실패"))
++        #expect(NetworkDisplayText.link(.available("1.0 Gbit/s")).contains("bit/s"))
++        let partial = card(.partial("physical classification unknown"), partial: true)
++        #expect(partial.accessibilityLabel.contains("확인된 일부 합계"))
++        #expect(NetworkDisplayText.activity(partial.phase) == "물리 합계 일부 확인")
++        #expect(NetworkDisplayText.age(now.advanced(by: .seconds(-10)), now: now) == "원본 조회 10초 전")
++        let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 20)!,
++                                 readAt: now.advanced(by: .seconds(-20)))
++        #expect(NetworkDisplayText.cardStatus(card(.stopped, current: nil, lastKnown: past), now: now)
++            == "중지 · 과거 20초 전")
++        #expect(NetworkDisplayText.cardStatus(card(.failure("route"), current: nil, lastKnown: past), now: now)
++            == "조회 실패 · 과거 20초 전")
++    }
++
++    @Test func selectionAndExplicitCloseReuseCommonPath() {
++        let store = DashboardPresentationStore()
++        store.selectCard(.network)
++        #expect(store.selection == .network)
++        store.selectCard(.network)
++        #expect(store.selection == .none)
++        store.selectCard(.network)
++        store.selectCard(.cpu)
++        store.dismissDetail(for: .network)
++        #expect(store.selection == .cpu)
++        store.selectCard(.network)
++        store.dismissDetail(for: .network)
++        #expect(store.selection == .none)
++    }
++
++    @Test func longNameAndLargeRawCountersRemainInDetailSource() throws {
++        let fixture = card(interfaces: [
++            item(kind: .physicalWiFi, name: "en0", index: 1),
++            item(kind: .vpn, name: "utun3", index: 3),
++            item(kind: .tunnel, name: key.name, index: 8)
++        ])
++        let detail = NetworkDetailPopoverContent(presentation: fixture, onClose: {}, fixedNow: now)
++            .environment(\.colorScheme, .light)
++        let renderer = ImageRenderer(content: detail)
++        renderer.scale = 1
++        let image = try #require(renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:)))
++        #expect(image.pixelsWide == 400)
++        #expect(image.pixelsHigh == 480)
++        // ImageRenderer는 ScrollView의 레이어를 빈 비트맵으로 내보내므로 실제 행을 별도로 렌더합니다.
++        let rows = VStack(spacing: 16) {
++            NetworkDetailPopoverContent(presentation: fixture, onClose: {}, fixedNow: now)
++                .interfaceRow(fixture.interfaces[0], now: now)
++            NetworkDetailPopoverContent(presentation: fixture, onClose: {}, fixedNow: now)
++                .interfaceRow(fixture.interfaces[1], now: now)
++            NetworkDetailPopoverContent(presentation: fixture, onClose: {}, fixedNow: now)
++                .interfaceRow(fixture.interfaces[2], now: now)
++        }
++        .frame(width: 368)
++        .environment(\.colorScheme, .light)
++        let rowRenderer = ImageRenderer(content: rows)
++        rowRenderer.scale = 1
++        let rowImage = try #require(rowRenderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:)))
++        #expect(rowImage.pixelsWide == 368)
++        #expect(rowImage.pixelsHigh > 300)
++        Attachment.record(try #require(rowImage.representation(using: .png, properties: [:])),
++            named: "network-detail-three-kinds-long-name.png")
++        #expect(key.name.count > 30)
++        #expect(fixture.interfaces.count == 3)
++        #expect(fixture.interfaces[2].receivedBytes == UInt64.max)
++        #expect(fixture.interfaces[2].ipv4 == ["198.51.100.10"])
++        #expect(fixture.interfaces[2].ipv6 == ["2001:db8::1"])
++    }
++}
+diff --git a/ResourceRunnerUITests/NetworkCardUITests.swift b/ResourceRunnerUITests/NetworkCardUITests.swift
+new file mode 100644
+index 0000000..cea656d
+--- /dev/null
++++ b/ResourceRunnerUITests/NetworkCardUITests.swift
+@@ -0,0 +1,69 @@
++import XCTest
++
++/// 서명된 앱 한 세션에서 실제 Network 카드와 카드 옆 상세의 위치·원본 문자열을 관찰합니다.
++final class NetworkCardUITests: XCTestCase {
++    override func setUpWithError() throws { continueAfterFailure = false }
++
++    @MainActor
++    func testRealNetworkCardDetailAndReturnKeepFrames() throws {
++        let app = XCUIApplication()
++        app.launch()
++        let statusItem = app.statusItems.firstMatch
++        XCTAssertTrue(statusItem.waitForExistence(timeout: 10))
++        statusItem.click()
++
++        let network = app.descendants(matching: .any).matching(identifier: "NetworkCard").firstMatch
++        XCTAssertTrue(network.waitForExistence(timeout: 10))
++        let dashboard = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
++        XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
++        let scroll = app.scrollViews.containing(.any, identifier: "NetworkCard").firstMatch
++        XCTAssertTrue(scroll.exists)
++        for _ in 0..<4 where !network.isHittable { scroll.swipeUp() }
++        XCTAssertTrue(network.isHittable, "Network 카드가 본체 스크롤에서 도달되지 않았습니다.")
++
++        let cardBefore = network.frame
++        let bodyBefore = dashboard.frame
++        print("TASK010_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(network.label)")
++        XCTAssertEqual(cardBefore.height, 294, accuracy: 1)
++
++        network.click()
++        let detail = app.descendants(matching: .any).matching(identifier: "NetworkDetail").firstMatch
++        XCTAssertTrue(detail.waitForExistence(timeout: 5))
++        XCTAssertEqual(app.popovers.count, 2)
++        XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
++        let row = detail.descendants(matching: .any)
++            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "NetworkInterface-"))
++            .firstMatch
++        XCTAssertTrue(row.waitForExistence(timeout: 10), "실제 native 대상 상세 행이 없습니다.")
++        print("TASK010_ACTUAL_UI detail=\(detail.frame) row=\(row.label)")
++        XCTAssertTrue(row.label.contains("현재 RX"))
++        XCTAssertTrue(row.label.contains("현재 TX"))
++        XCTAssertTrue(row.label.contains("원시 누적 RX"))
++        XCTAssertTrue(row.label.contains("IPv4"))
++        XCTAssertTrue(row.label.contains("IPv6"))
++        XCTAssertTrue(row.label.contains("링크 속도"))
++        XCTAssertEqual(network.frame, cardBefore)
++        XCTAssertEqual(dashboard.frame, bodyBefore)
++
++        let close = app.buttons.matching(identifier: "NetworkDetailClose").firstMatch
++        XCTAssertTrue(close.waitForExistence(timeout: 2))
++        close.click()
++        XCTAssertTrue(waitUntil({ !detail.exists }, timeout: 3))
++        XCTAssertEqual(network.frame, cardBefore)
++        XCTAssertEqual(dashboard.frame, bodyBefore)
++        network.click()
++        XCTAssertTrue(detail.waitForExistence(timeout: 3))
++        network.click()
++        XCTAssertTrue(waitUntil({ !detail.exists }, timeout: 3))
++        print("TASK010_ACTUAL_UI cardAfter=\(network.frame) bodyAfter=\(dashboard.frame)")
++    }
++
++    private func waitUntil(_ condition: () -> Bool, timeout: TimeInterval) -> Bool {
++        let end = Date().addingTimeInterval(timeout)
++        while Date() < end {
++            if condition() { return true }
++            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
++        }
++        return condition()
++    }
++}

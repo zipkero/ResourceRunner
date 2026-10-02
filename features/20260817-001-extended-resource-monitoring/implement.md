@@ -296,7 +296,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `2068184`의 속도 그래프 모델/view·store 첫 유효 시각·표시 history 전달·공통판/팔레트 및 직접 테스트 소스9개 해시와 최종 patch가 `evidence/task-009/`과 일치합니다. 원본 두 peak 기반 1–2–5축·최소1024·빈 값/실제0·epoch/segment/10초초과 공백·극값 index 합집합 축소·중지 중600초창 이동·축출후 진행문구 종료를 확인했습니다. 렌더PNG20개를 main/verifier가 직접 열어 라이트/다크 정상/빈판·확장 연속 구간·큰공백·별도범례/범위·점선/실선·100pt판/118pt슬롯·1pt절반기준선·clipping/윤곽선없음을 확인했고 해시가 일치합니다. 집중51/51·전체unit597/597·Release빌드·diff-check가 통과하고 CPU그래프/source/store 계약을 유지합니다. 마지막 매핑이 끝난 SPEC 조건은 없습니다. 카드 통합 배치는 task-010/011에서 확인합니다.
 
-- [ ] task-010: Network 요약 카드와 인터페이스 상세
+- [x] task-010: Network 요약 카드와 인터페이스 상세
   - 목적: Network 카드에서 현재 송수신·활성 종류·대상 수·최근 그래프를 확인하고
     카드 옆 상세에서 현재 인터페이스별 정보를 읽을 수 있게 합니다.
   - 접근: 제목 12pt, 두 수치 68pt, 보조 정보 32pt, 그래프 118pt와
@@ -319,6 +319,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.1, SPEC §5.3, SPEC §5.5, SPEC §5.12,
     SPEC §5.14, SPEC §5.15, SPEC §5.18,
     DESIGN §1.2, DESIGN §2.3, DESIGN §3.2, DESIGN §3.3, DESIGN §3.5, DESIGN §4.2
+  - 승인 근거: 2026-10-02 독립 verifier의 approved 후보를 main이 원본·실행 근거와 대조해 확정했습니다. 기준 HEAD `2926498`의 카드/상세·공통 선택·최소 본체 ScrollView·범례 마커·DEBUG UI probe 및 직접 테스트 소스7개와 PNG42개 해시/patch가 `evidence/task-010/`과 일치합니다. 상태별·최장값·로케일294pt 렌더, 물리 대표와VPN/터널상세 범위, 긴 이름·현재/누적/주소/조건부 링크 사유를 확인했습니다. 집중16/16·전체unit601/601·Release/서명Debug빌드가 통과했습니다. 실제Sandbox PID77408의 카드248×294·상세400×480·본문306×627·자식426×506과 en0/utun 항목, AXPress닫기·재선택·개폐전후frame 보존을 확인했습니다. XCUITest는 automation mode 활성timeout으로 본문전에 실패했고 성공 근거로 사용하지 않았습니다. 실제 카드 클릭·전체 키보드/AX·네 카드 viewport·VPN 전환은 후속012~014에 남습니다. SPEC·DESIGN과 선행 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
 - [ ] task-011: Disk 요약 카드와 장치·볼륨 상세
   - 목적: Disk 카드에서 현재 입출력·시스템 용량·최근 그래프를 확인하고

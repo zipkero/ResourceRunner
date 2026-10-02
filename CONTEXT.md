@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-01 23:36 +0900
+저장: 2026-10-02 17:23 +0900
 
 ## 현재 목표
 
@@ -10,11 +10,11 @@
 
 ## 현재 상태
 
-branch `main`, task-009 검증 기준 HEAD `2068184`. task-001~009 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~009 `[x]`, task-010~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-010이다.
+branch `main`, task-010 검증 기준 HEAD `2926498`. task-001~010 독립 verify approved를 main이 확정했다.
+SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~010 `[x]`, task-011~018 `[ ]`다.
+각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-011이다.
 
-실행 원자료는 feature `evidence/task-001/`~`task-009/`에 있다.
+실행 원자료는 feature `evidence/task-001/`~`task-010/`에 있다.
 Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
 Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
 Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
@@ -25,7 +25,7 @@ async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완�
 전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
 실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
 Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network·Disk source/store·여섯 축 production 배선·표시 모델·독립 그래프는 구현됐고 새 카드 뷰는 아직 없다. M2 기존 계약과 회귀 기준을 유지한다.
+Network·Disk source/store·여섯 축 production 배선·표시 모델·독립 그래프와 Network 카드/상세가 구현됐다. Disk 카드/상세는 다음 Task다. M2 기존 계약과 회귀 기준을 유지한다.
 
 task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
 즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
@@ -62,9 +62,18 @@ task-008 독립 verify approved를 확정했다. 활동/보조 표시 모델·fo
 task-009 독립 verify approved를 확정했다. 속도 graph·공통plot modifier·팔레트역할과
 store 첫 유효 시각을 구현해 원본peak/공백/극값/진행문구를 유지한다.
 집중51/51·전체unit597/597·Release빌드·소스9개/PNG20개 해시를 확인했고 main과verifier가 실제렌더를 검토했다.
-다음은 Network 카드·상세의 실제 UI 통합 task-010이다.
+task-009는 `2926498`로 커밋했다.
 
 ## 현재 작업 문서
+
+task-010은 독립 custom verifier `verify_task010`의 approved 후보를 main이 확정했다.
+최종 집중16/16·전체unit601/601·Release/서명Debug가 통과했고 소스7개/PNG42개 해시가 일치한다.
+실제Sandbox PID77408의 카드248×294·본문306×627·상세400×480·자식426×506,
+native en0/utun 현재·누적·주소·링크 사유와 AXPress닫기·재선택·frame 보존을 확인했다.
+상태별 카드와 긴 이름 상세 렌더, 실제 Caches 캡처를 main/verifier가 직접 확인했다.
+XCUITest는 automation mode 활성timeout으로 본문전에 실패했고 성공으로 주장하지 않는다.
+실제 카드 클릭·전체 키보드/AX·화면 viewport·VPN 전환은 task-012~014 후속 관문이다.
+task-010 상태·근거·인수인계를 커밋한 뒤 같은 worker에게 task-011을 맡긴다.
 - [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md) — 승인된 요구사항과 완료 조건 18개
 - [features/20260817-001-extended-resource-monitoring/design.md](./features/20260817-001-extended-resource-monitoring/design.md) — 구조·데이터 흐름·인터페이스·영향 범위와 채택한 DP1~DP7
 - [features/20260817-001-extended-resource-monitoring/implement.md](./features/20260817-001-extended-resource-monitoring/implement.md) — Task 18개와 검증 조건, 완료 조건 매핑
@@ -92,8 +101,8 @@ Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002�
 
 ## 다음 작업
 
-- 작업: M3 task-010 Network 요약 카드와 인터페이스 상세를 worker로 구현하고 독립 verify한다.
-- 완료 기준: 294pt 고정 슬롯·모든 상태/최장표기/로케일·물리대표와VPN/터널상세범위·현재/누적/링크 단위·실제UI상세항목/개폐/프레임을 확인한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-011로 진행한다.
+- 작업: M3 task-011 Disk 요약 카드와 장치·볼륨 상세를 worker로 구현하고 독립 verify한다.
+- 완료 기준: implement.md task-011의 294pt 슬롯·현재속도/느린용량·사용중 정의·APFS공유·조건부IOPS·장치/볼륨/외장 상태와 실제UI 상세/선택/복귀를 확인한다. approved 뒤 상태·CONTEXT 갱신·커밋 후 task-012로 진행한다.
 
 ## 먼저 읽을 파일
 

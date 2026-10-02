@@ -1,0 +1,23 @@
+Executable=/private/tmp/ResourceRunner-M3-task010-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Identifier=com.zipkero.ResourceRunner
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=435 flags=0x2(adhoc) hashes=3+7 location=embedded
+VersionPlatform=1
+VersionMin=1705216
+VersionSDK=1705216
+Hash type=sha256 size=32
+CandidateCDHash sha256=f00bd48d92b3bb3938647bad9c3fea8d8d2442d5
+CandidateCDHashFull sha256=f00bd48d92b3bb3938647bad9c3fea8d8d2442d502f4e48b6b419a50ca6d35ab
+Hash choices=sha256
+CMSDigest=f00bd48d92b3bb3938647bad9c3fea8d8d2442d502f4e48b6b419a50ca6d35ab
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=16384
+Executable Segment flags=0x1
+Page size=16384
+CDHash=f00bd48d92b3bb3938647bad9c3fea8d8d2442d5
+Signature=adhoc
+Info.plist entries=20
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12

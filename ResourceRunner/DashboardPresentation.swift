@@ -190,13 +190,14 @@ extension ResourceCardState {
     }
 }
 
-/// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지. 도달 가능한 값은 선택 없음·CPU·Memory 셋뿐입니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
+/// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지.
 /// 전이는 `DashboardPresentationStore.selectCard(_:)`(카드 활성화)와 `dismissDetail(for:)`(팝업 자신의 닫힘) 둘로만 일어나고,
 /// 수집 갱신이나 수집 실패는 이 값을 바꾸지 않습니다(SPEC §5.2).
 nonisolated enum DashboardSelection: Sendable, Equatable {
     case none
     case cpu
     case memory
+    case network
 }
 
 /// CPU 카드 표시 값. 전체 사용률, User·System 비율, 최근 10분 그래프 점, 앱 단위 CPU TOP 5를 담습니다.

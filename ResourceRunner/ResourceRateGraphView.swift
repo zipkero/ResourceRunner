@@ -147,17 +147,28 @@ struct ResourceRateLegendView: View {
 
     private func legend(_ series: ResourceRateGraphSlotView.Series, label: String) -> some View {
         HStack(spacing: 3) {
-            Canvas { context, size in
-                var path = Path()
-                path.move(to: CGPoint(x: 0, y: size.height / 2))
-                path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
-                context.stroke(path, with: .color(kind.color(for: series)), style: series.style)
-            }
-            .frame(width: 14, height: 8)
+            ResourceRateLegendMarkerView(kind: kind, series: series)
             Text(label)
         }
     }
 
+}
+
+/// 현재값 이름과 그래프 범례가 같은 선 모양을 공유합니다.
+struct ResourceRateLegendMarkerView: View {
+    let kind: ResourceRateGraphSlotView.Kind
+    let series: ResourceRateGraphSlotView.Series
+
+    var body: some View {
+        Canvas { context, size in
+            var path = Path()
+            path.move(to: CGPoint(x: 0, y: size.height / 2))
+            path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
+            context.stroke(path, with: .color(kind.color(for: series)), style: series.style)
+        }
+        .frame(width: 14, height: 8)
+        .accessibilityHidden(true)
+    }
 }
 
 /// 현재값 이름 옆 범례와 축 범위를 판 밖 요약 줄에 배치할 때 재사용합니다.

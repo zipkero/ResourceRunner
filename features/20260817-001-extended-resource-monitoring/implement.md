@@ -511,7 +511,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.8, SPEC §5.9, SPEC §5.11, SPEC §5.15, SPEC §5.19,
     DESIGN §2.1, DESIGN §2.2, DESIGN §2.4, DESIGN §2.5, DESIGN §3.4, DESIGN §4.2, DESIGN §4.3
 
-- [ ] task-016: Network의 시스템 도구 변화 방향 비교
+- [x] task-016: Network의 시스템 도구 변화 방향 비교
+  - main 승인(2026-10-03): worker FINAL completed와 독립 verifier FINAL approved를 인수했습니다. 동일 Sandbox 세션에서 각 방향 15초 유휴→30초 부하→15초 회복과 같은 물리 Link 행 집합의 방향 일치를 확인했습니다. 부분 합계·대표값 미확정 상태를 보존했으며 최종 소스/Debug stub·dylib/Release 해시와 화면을 대조했습니다. 근거: [task-016](./evidence/task-016/README.md). 연결된 SPEC 조건은 후속 Task가 남아 전체 완료하지 않습니다.
   - 목적: 실제 다운로드·업로드에서 앱의 물리 대표값과 macOS 도구가
     같은 집계 범위의 변화 방향을 보여 주는지 확인합니다.
   - 접근: 한 Sandbox 앱 세션의 일반 모드·팝오버 열림에서

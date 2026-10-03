@@ -1,0 +1,114 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 0da9a57..1a04eda 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -20,6 +20,109 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidFinishLaunching(_ notification: Notification) {
+         coordinator = ApplicationCoordinator()
+ #if DEBUG
++        if ProcessInfo.processInfo.environment["RR_NETWORK_COMPARISON_PROBE"] == "1" {
++            Task { @MainActor [weak self] in
++                guard let self, let coordinator = self.coordinator,
++                      let caches = FileManager.default.urls(for: .cachesDirectory,
++                          in: .userDomainMask).first else { return }
++                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "NetworkComparison")
++                let output = caches.appending(path: "Task016NetworkComparison")
++                try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
++                let samplesURL = output.appending(path: "app-samples.tsv")
++                FileManager.default.createFile(atPath: samplesURL.path, contents: nil)
++                guard let samples = try? FileHandle(forWritingTo: samplesURL) else { return }
++                defer { try? samples.close() }
++                let markerURL = output.appending(path: "phase.txt")
++                let iso = ISO8601DateFormatter()
++                iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
++                func row(_ fields: [String]) {
++                    let line = fields.map { $0.replacingOccurrences(of: "\t", with: " ")
++                        .replacingOccurrences(of: "\n", with: " ") }.joined(separator: "\t") + "\n"
++                    samples.write(Data(line.utf8))
++                }
++                row(["record", "wallUTC", "uptimeSeconds", "phase", "readAt", "epoch",
++                     "generation", "request", "boundary", "topologyRevision", "rateSegment",
++                     "statusOrKind", "identity", "rxBytes", "txBytes", "rxBps", "txBps",
++                     "completeOrPartial", "extra"])
++                try? await Task.sleep(for: .seconds(2))
++                coordinator.statusBarController.togglePopover()
++                try? await Task.sleep(for: .milliseconds(500))
++                coordinator.dashboardPresentationStore.selectCard(.network)
++                try? await Task.sleep(for: .milliseconds(500))
++                try? "ready".write(to: output.appending(path: "ready.txt"),
++                    atomically: true, encoding: .utf8)
++                logger.notice("ready pid=\(getpid()) output=\(output.path, privacy: .public) popover=\(coordinator.statusBarController.popover.isShown) selection=\(String(describing: coordinator.dashboardPresentationStore.selection), privacy: .public)")
++                var priorPhase = ""
++                var captureAt: Date?
++                for _ in 0..<155 {
++                    let phase = (try? String(contentsOf: markerURL, encoding: .utf8))?
++                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "unmarked"
++                    if phase == "done" { break }
++                    let wall = iso.string(from: Date())
++                    let uptime = String(ProcessInfo.processInfo.systemUptime)
++                    let latest = await coordinator.collectionPipelines.networkStore
++                        .snapshot(at: ContinuousClock().now).latest
++                    let delivered = coordinator.collectionDeliveryStore.networkActivity?.latest
++                    let card = coordinator.dashboardPresentationStore.networkCard
++                    if let latest {
++                        let sample = latest.value
++                        let context = latest.context
++                        let common = [wall, uptime, phase, String(describing: sample.readAt),
++                                      String(latest.collectionEpoch),
++                                      String(context?.generation ?? -1),
++                                      String(context?.requestSequence ?? -1),
++                                      String(context?.boundarySequence ?? -1),
++                                      String(sample.topologyRevision), String(sample.rateSegment)]
++                        row(["sample"] + common + [String(describing: sample.status), "knownPhysical",
++                            "", "", String(sample.knownPhysicalRates?.receivedBytesPerSecond ?? -1),
++                            String(sample.knownPhysicalRates?.sentBytesPerSecond ?? -1),
++                            String(sample.physicalTotalsComplete),
++                            "representativeRX=\(sample.representative?.receivedBytesPerSecond ?? -1);representativeTX=\(sample.representative?.sentBytesPerSecond ?? -1)"])
++                        for item in sample.interfaces {
++                            let identity = "\(item.key.name)#\(item.key.index)#\(item.key.registryID.map(String.init) ?? "nil")#\(item.key.lifetime)"
++                            row(["interface"] + common + [item.kind.rawValue, identity,
++                                String(item.receivedBytes), String(item.sentBytes),
++                                String(item.rate?.receivedBytesPerSecond ?? -1),
++                                String(item.rate?.sentBytesPerSecond ?? -1),
++                                String(describing: item.linkActive), item.classificationReason])
++                        }
++                        row(["delivery"] + common + ["delivered", "networkActivity", "", "", "", "",
++                            "", "sameReadAt=\(delivered?.value.readAt == sample.readAt)"])
++                    }
++                    row(["card", wall, uptime, phase,
++                        String(describing: card.latestReadAt), "", "", "", "",
++                        String(card.topologyRevision ?? 0), "", String(describing: card.phase),
++                        "NetworkCard", "", "",
++                        String(card.currentRate?.receivedBytesPerSecond ?? -1),
++                        String(card.currentRate?.sentBytesPerSecond ?? -1),
++                        String(card.currentRateIsPartial), card.accessibilityLabel])
++                    if phase != priorPhase {
++                        logger.notice("phase=\(phase, privacy: .public) wall=\(wall, privacy: .public)")
++                        priorPhase = phase
++                        captureAt = Date().addingTimeInterval(8)
++                    }
++                    if let deadline = captureAt, Date() >= deadline {
++                        if let body = coordinator.statusBarController.popover.contentViewController?.view.window {
++                            Self.writeProbeImage(window: body,
++                                path: output.appending(path: "\(phase)-card.png").path, logger: logger)
++                        }
++                        if let detail = coordinator.statusBarController.viewport?.detailWindow {
++                            if let content = detail.contentView,
++                               let scroll = Self.firstScrollView(in: content) {
++                                scroll.contentView.scroll(to: NSPoint(x: 0, y: 2_500))
++                                scroll.reflectScrolledClipView(scroll.contentView)
++                            }
++                            Self.writeProbeImage(window: detail,
++                                path: output.appending(path: "\(phase)-detail.png").path, logger: logger)
++                        }
++                        Self.logNetworkAccessibility(logger: logger)
++                        captureAt = nil
++                    }
++                    try? await Task.sleep(for: .seconds(1))
++                }
++                logger.notice("finished output=\(output.path, privacy: .public)")
++            }
++        }
+         if ProcessInfo.processInfo.environment["RR_KEYBOARD_PROBE"] == "1" {
+             Task { @MainActor [weak self] in
+                 guard let self, let coordinator = self.coordinator else { return }

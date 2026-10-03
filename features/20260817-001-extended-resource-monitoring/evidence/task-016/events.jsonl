@@ -1,0 +1,72 @@
+{"utc": "2026-10-03T03:48:46.391+00:00", "monotonic": 0.052871041, "kind": "phase_start", "phase": "download-idle", "durationSeconds": 15}
+{"utc": "2026-10-03T03:49:01.399+00:00", "monotonic": 15.060641875, "kind": "phase_stop", "phase": "download-idle"}
+{"utc": "2026-10-03T03:49:01.400+00:00", "monotonic": 15.061191, "kind": "phase_start", "phase": "download-load", "durationSeconds": 30}
+{"utc": "2026-10-03T03:49:01.557+00:00", "monotonic": 15.218197166, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.144663", "error": ""}
+{"utc": "2026-10-03T03:49:02.640+00:00", "monotonic": 16.301376916, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.217995", "error": ""}
+{"utc": "2026-10-03T03:49:03.559+00:00", "monotonic": 17.220632375, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.138513", "error": ""}
+{"utc": "2026-10-03T03:49:04.580+00:00", "monotonic": 18.241051541, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.146185", "error": ""}
+{"utc": "2026-10-03T03:49:05.598+00:00", "monotonic": 19.259220583, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.156328", "error": ""}
+{"utc": "2026-10-03T03:49:06.603+00:00", "monotonic": 20.263796416, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.150719", "error": ""}
+{"utc": "2026-10-03T03:49:07.598+00:00", "monotonic": 21.258868416, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.141092", "error": ""}
+{"utc": "2026-10-03T03:49:08.590+00:00", "monotonic": 22.251223041, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.122960", "error": ""}
+{"utc": "2026-10-03T03:49:09.615+00:00", "monotonic": 23.275851041, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.148805", "error": ""}
+{"utc": "2026-10-03T03:49:10.681+00:00", "monotonic": 24.341790208, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.202795", "error": ""}
+{"utc": "2026-10-03T03:49:11.650+00:00", "monotonic": 25.31114475, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.168790", "error": ""}
+{"utc": "2026-10-03T03:49:12.634+00:00", "monotonic": 26.295571083, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.148084", "error": ""}
+{"utc": "2026-10-03T03:49:13.657+00:00", "monotonic": 27.317873708, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.160325", "error": ""}
+{"utc": "2026-10-03T03:49:14.758+00:00", "monotonic": 28.419112083, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.254503", "error": ""}
+{"utc": "2026-10-03T03:49:15.663+00:00", "monotonic": 29.324564916, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.161105", "error": ""}
+{"utc": "2026-10-03T03:49:16.701+00:00", "monotonic": 30.362136416, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.198370", "error": ""}
+{"utc": "2026-10-03T03:49:17.703+00:00", "monotonic": 31.364105333, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.195917", "error": ""}
+{"utc": "2026-10-03T03:49:18.673+00:00", "monotonic": 32.333862208, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.157072", "error": ""}
+{"utc": "2026-10-03T03:49:19.685+00:00", "monotonic": 33.346146916, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.158896", "error": ""}
+{"utc": "2026-10-03T03:49:20.689+00:00", "monotonic": 34.350416791, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.152326", "error": ""}
+{"utc": "2026-10-03T03:49:21.713+00:00", "monotonic": 35.373999541, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.170857", "error": ""}
+{"utc": "2026-10-03T03:49:22.704+00:00", "monotonic": 36.365606375, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.155230", "error": ""}
+{"utc": "2026-10-03T03:49:23.707+00:00", "monotonic": 37.368090041, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.148161", "error": ""}
+{"utc": "2026-10-03T03:49:24.705+00:00", "monotonic": 38.36627, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.148639", "error": ""}
+{"utc": "2026-10-03T03:49:25.765+00:00", "monotonic": 39.425764125, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.194494", "error": ""}
+{"utc": "2026-10-03T03:49:26.737+00:00", "monotonic": 40.398152625, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.159455", "error": ""}
+{"utc": "2026-10-03T03:49:27.773+00:00", "monotonic": 41.433926958, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.190764", "error": ""}
+{"utc": "2026-10-03T03:49:28.720+00:00", "monotonic": 42.380924583, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.139834", "error": ""}
+{"utc": "2026-10-03T03:49:29.756+00:00", "monotonic": 43.417451791, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.153405", "error": ""}
+{"utc": "2026-10-03T03:49:30.756+00:00", "monotonic": 44.4175955, "kind": "request", "phase": "download-load", "exit": 0, "result": "200 2097152 0 0.151264", "error": ""}
+{"utc": "2026-10-03T03:49:31.408+00:00", "monotonic": 45.069126625, "kind": "phase_stop", "phase": "download-load"}
+{"utc": "2026-10-03T03:49:31.409+00:00", "monotonic": 45.069693125, "kind": "phase_start", "phase": "download-recovery", "durationSeconds": 15}
+{"utc": "2026-10-03T03:49:46.416+00:00", "monotonic": 60.076991, "kind": "phase_stop", "phase": "download-recovery"}
+{"utc": "2026-10-03T03:49:46.417+00:00", "monotonic": 60.077862666, "kind": "phase_start", "phase": "upload-idle", "durationSeconds": 15}
+{"utc": "2026-10-03T03:50:01.419+00:00", "monotonic": 75.079598208, "kind": "phase_stop", "phase": "upload-idle"}
+{"utc": "2026-10-03T03:50:01.419+00:00", "monotonic": 75.08021625, "kind": "phase_start", "phase": "upload-load", "durationSeconds": 30}
+{"utc": "2026-10-03T03:50:01.641+00:00", "monotonic": 75.302051833, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.205823", "error": ""}
+{"utc": "2026-10-03T03:50:02.676+00:00", "monotonic": 76.33723525, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.226214", "error": ""}
+{"utc": "2026-10-03T03:50:03.628+00:00", "monotonic": 77.288557, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.173226", "error": ""}
+{"utc": "2026-10-03T03:50:04.609+00:00", "monotonic": 78.270304875, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.147176", "error": ""}
+{"utc": "2026-10-03T03:50:05.660+00:00", "monotonic": 79.321157708, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.186966", "error": ""}
+{"utc": "2026-10-03T03:50:06.631+00:00", "monotonic": 80.291912, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.155371", "error": ""}
+{"utc": "2026-10-03T03:50:07.703+00:00", "monotonic": 81.364250625, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.216291", "error": ""}
+{"utc": "2026-10-03T03:50:08.681+00:00", "monotonic": 82.342116166, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.192671", "error": ""}
+{"utc": "2026-10-03T03:50:09.673+00:00", "monotonic": 83.334312833, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.182225", "error": ""}
+{"utc": "2026-10-03T03:50:10.682+00:00", "monotonic": 84.342961791, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.182285", "error": ""}
+{"utc": "2026-10-03T03:50:11.703+00:00", "monotonic": 85.364035125, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.175558", "error": ""}
+{"utc": "2026-10-03T03:50:12.674+00:00", "monotonic": 86.334548625, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.161654", "error": ""}
+{"utc": "2026-10-03T03:50:13.885+00:00", "monotonic": 87.54607725, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.363423", "error": ""}
+{"utc": "2026-10-03T03:50:14.698+00:00", "monotonic": 88.359429375, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.168600", "error": ""}
+{"utc": "2026-10-03T03:50:15.705+00:00", "monotonic": 89.365854916, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.162465", "error": ""}
+{"utc": "2026-10-03T03:50:16.745+00:00", "monotonic": 90.40599425, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.189833", "error": ""}
+{"utc": "2026-10-03T03:50:17.715+00:00", "monotonic": 91.376263708, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.147530", "error": ""}
+{"utc": "2026-10-03T03:50:18.730+00:00", "monotonic": 92.390649208, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.163599", "error": ""}
+{"utc": "2026-10-03T03:50:19.716+00:00", "monotonic": 93.376757375, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.145157", "error": ""}
+{"utc": "2026-10-03T03:50:20.835+00:00", "monotonic": 94.495790666, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.258140", "error": ""}
+{"utc": "2026-10-03T03:50:21.884+00:00", "monotonic": 95.544554916, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.297010", "error": ""}
+{"utc": "2026-10-03T03:50:22.950+00:00", "monotonic": 96.610593916, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.339965", "error": ""}
+{"utc": "2026-10-03T03:50:23.911+00:00", "monotonic": 97.571962166, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.307485", "error": ""}
+{"utc": "2026-10-03T03:50:24.827+00:00", "monotonic": 98.488435625, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.214866", "error": ""}
+{"utc": "2026-10-03T03:50:25.867+00:00", "monotonic": 99.528350291, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.259471", "error": ""}
+{"utc": "2026-10-03T03:50:26.887+00:00", "monotonic": 100.54790425, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.263955", "error": ""}
+{"utc": "2026-10-03T03:50:27.826+00:00", "monotonic": 101.486698166, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.196677", "error": ""}
+{"utc": "2026-10-03T03:50:28.832+00:00", "monotonic": 102.492651958, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.197364", "error": ""}
+{"utc": "2026-10-03T03:50:29.836+00:00", "monotonic": 103.497133333, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.192724", "error": ""}
+{"utc": "2026-10-03T03:50:30.825+00:00", "monotonic": 104.48549775, "kind": "request", "phase": "upload-load", "exit": 0, "result": "200 0 2097152 0.174824", "error": ""}
+{"utc": "2026-10-03T03:50:31.428+00:00", "monotonic": 105.088437708, "kind": "phase_stop", "phase": "upload-load"}
+{"utc": "2026-10-03T03:50:31.428+00:00", "monotonic": 105.089055791, "kind": "phase_start", "phase": "upload-recovery", "durationSeconds": 15}
+{"utc": "2026-10-03T03:50:46.437+00:00", "monotonic": 120.097649125, "kind": "phase_stop", "phase": "upload-recovery"}

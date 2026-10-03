@@ -1,0 +1,16 @@
+cwd=/Users/zipkero/XcodeProjects/ResourceRunner
+HEAD=1b15966681f1983f44ac37ab9d1124de1fdb9bd5
+appPID=53720
+appPath=/tmp/rr-task016-signed/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+arm64
+screen (0.0, 0.0, 1728.0, 1117.0) visible (0.0, 0.0, 1728.0, 1084.0) scale 2.0
+keyboardMode=0
+signedDebugEntitlements:
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.app-sandbox</key><true/><key>com.apple.security.files.user-selected.read-only</key><true/><key>com.apple.security.get-task-allow</key><true/></dict></plist>
+relatedGitStatus:
+ M CONTEXT.md
+ M ResourceRunner/AppDelegate.swift
+?? features/20260817-001-extended-resource-monitoring/evidence/task-016/

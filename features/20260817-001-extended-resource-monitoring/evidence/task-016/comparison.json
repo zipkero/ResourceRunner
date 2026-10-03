@@ -1,0 +1,239 @@
+{
+  "scope": {
+    "confirmedPhysicalNames": [
+      "en0",
+      "en1",
+      "en2",
+      "en3",
+      "en4",
+      "en5",
+      "en6"
+    ],
+    "sameNamesEveryValidAppSample": true,
+    "unknownNamesExcluded": [
+      "ap1",
+      "llw0"
+    ],
+    "netstatSelection": "one <Link#...> row per confirmed physical interface; address rows excluded",
+    "edgeExclusionSeconds": 3,
+    "appStatus": "rate or partial with nonnegative knownPhysicalRates; baseline/failure excluded"
+  },
+  "phases": {
+    "download-idle": {
+      "startUTC": "2026-10-03T03:48:46.391000+00:00",
+      "stopUTC": "2026-10-03T03:49:01.399000+00:00",
+      "app": {
+        "count": 9,
+        "rxMedianBps": 347278.64342876035,
+        "txMedianBps": 11811.525051929833,
+        "rxMinBps": 311954.8366166714,
+        "rxMaxBps": 399782.52961530373,
+        "txMinBps": 1999.710491132509,
+        "txMaxBps": 33495.29302182275
+      },
+      "card": {
+        "count": 9,
+        "rxMedianBps": 347278.64342876035,
+        "txMedianBps": 11811.525051929833,
+        "rxMinBps": 311954.8366166714,
+        "rxMaxBps": 399782.52961530373,
+        "txMinBps": 1999.710491132509,
+        "txMaxBps": 33495.29302182275
+      },
+      "cardPartialCount": 9,
+      "netstat": {
+        "count": 8,
+        "rxMedianBps": 319211.1757764148,
+        "txMedianBps": 6103.5597609561755,
+        "rxMinBps": 311361.4457831325,
+        "rxMaxBps": 380305.52763819095,
+        "txMinBps": 1710.5527638190954,
+        "txMaxBps": 16528.884462151393
+      },
+      "requests": 0,
+      "http200": 0,
+      "responseBytes": 0,
+      "uploadBytes": 0
+    },
+    "download-load": {
+      "startUTC": "2026-10-03T03:49:01.400000+00:00",
+      "stopUTC": "2026-10-03T03:49:31.408000+00:00",
+      "app": {
+        "count": 23,
+        "rxMedianBps": 2521001.2871688944,
+        "txMedianBps": 9700.760332353144,
+        "rxMinBps": 2395510.0462782783,
+        "rxMaxBps": 2685184.9480971387,
+        "txMinBps": 5055.598205637462,
+        "txMaxBps": 163627.68005744394
+      },
+      "card": {
+        "count": 23,
+        "rxMedianBps": 2521001.2871688944,
+        "txMedianBps": 9700.760332353144,
+        "rxMinBps": 2395510.0462782783,
+        "rxMaxBps": 2685184.9480971387,
+        "txMinBps": 5055.598205637462,
+        "txMaxBps": 163627.68005744394
+      },
+      "cardPartialCount": 23,
+      "netstat": {
+        "count": 24,
+        "rxMedianBps": 2523490.655778894,
+        "txMedianBps": 10373.052299988045,
+        "rxMinBps": 2498999.003984064,
+        "rxMaxBps": 2590066.265060241,
+        "txMinBps": 5427.0,
+        "txMaxBps": 161276.0
+      },
+      "requests": 30,
+      "http200": 30,
+      "responseBytes": 62914560.0,
+      "uploadBytes": 0.0
+    },
+    "download-recovery": {
+      "startUTC": "2026-10-03T03:49:31.409000+00:00",
+      "stopUTC": "2026-10-03T03:49:46.416000+00:00",
+      "app": {
+        "count": 8,
+        "rxMedianBps": 314882.74533213594,
+        "txMedianBps": 1027.1317317305216,
+        "rxMinBps": 308285.1090891513,
+        "rxMaxBps": 377416.51738750323,
+        "txMinBps": 0.0,
+        "txMaxBps": 253086.74866309893
+      },
+      "card": {
+        "count": 8,
+        "rxMedianBps": 314882.74533213594,
+        "txMedianBps": 1027.1317317305216,
+        "rxMinBps": 308285.1090891513,
+        "rxMaxBps": 377416.51738750323,
+        "txMinBps": 0.0,
+        "txMaxBps": 253086.74866309893
+      },
+      "cardPartialCount": 8,
+      "netstat": {
+        "count": 8,
+        "rxMedianBps": 311869.3723455864,
+        "txMedianBps": 613.5846774193549,
+        "rxMinBps": 304621.0,
+        "rxMaxBps": 382153.69261477044,
+        "txMinBps": 208.20820820820822,
+        "txMaxBps": 254293.46733668342
+      },
+      "requests": 0,
+      "http200": 0,
+      "responseBytes": 0,
+      "uploadBytes": 0
+    },
+    "upload-idle": {
+      "startUTC": "2026-10-03T03:49:46.417000+00:00",
+      "stopUTC": "2026-10-03T03:50:01.419000+00:00",
+      "app": {
+        "count": 8,
+        "rxMedianBps": 312059.02832294675,
+        "txMedianBps": 1005.7615257492839,
+        "rxMinBps": 303815.0149256283,
+        "rxMaxBps": 317259.0575818292,
+        "txMinBps": 0.0,
+        "txMaxBps": 6983.689946769825
+      },
+      "card": {
+        "count": 8,
+        "rxMedianBps": 312059.02832294675,
+        "txMedianBps": 1005.7615257492839,
+        "rxMinBps": 303815.0149256283,
+        "rxMaxBps": 317259.0575818292,
+        "txMinBps": 0.0,
+        "txMaxBps": 6983.689946769825
+      },
+      "cardPartialCount": 8,
+      "netstat": {
+        "count": 8,
+        "rxMedianBps": 311600.8573573574,
+        "txMedianBps": 539.1876876876877,
+        "rxMinBps": 306581.0,
+        "rxMaxBps": 321895.0,
+        "txMinBps": 208.0,
+        "txMaxBps": 7327.0
+      },
+      "requests": 0,
+      "http200": 0,
+      "responseBytes": 0,
+      "uploadBytes": 0
+    },
+    "upload-load": {
+      "startUTC": "2026-10-03T03:50:01.419000+00:00",
+      "stopUTC": "2026-10-03T03:50:31.428000+00:00",
+      "app": {
+        "count": 23,
+        "rxMedianBps": 357018.6130846884,
+        "txMedianBps": 2226020.9575888473,
+        "rxMinBps": 340643.9838011597,
+        "rxMaxBps": 387919.5473456184,
+        "txMinBps": 2088325.6239784707,
+        "txMaxBps": 2359933.959339361
+      },
+      "card": {
+        "count": 23,
+        "rxMedianBps": 357018.6130846884,
+        "txMedianBps": 2226020.9575888473,
+        "rxMinBps": 340643.9838011597,
+        "rxMaxBps": 387919.5473456184,
+        "txMinBps": 2088325.6239784707,
+        "txMaxBps": 2359933.959339361
+      },
+      "cardPartialCount": 23,
+      "netstat": {
+        "count": 23,
+        "rxMedianBps": 360152.6104417671,
+        "txMedianBps": 2209036.0721442886,
+        "rxMinBps": 335754.7547547548,
+        "rxMaxBps": 383233.7662337663,
+        "txMinBps": 2193168.15920398,
+        "txMaxBps": 2228993.0209371885
+      },
+      "requests": 30,
+      "http200": 30,
+      "responseBytes": 0.0,
+      "uploadBytes": 62914560.0
+    },
+    "upload-recovery": {
+      "startUTC": "2026-10-03T03:50:31.428000+00:00",
+      "stopUTC": "2026-10-03T03:50:46.437000+00:00",
+      "app": {
+        "count": 7,
+        "rxMedianBps": 316093.89051055245,
+        "txMedianBps": 13482.160026970398,
+        "rxMinBps": 304920.8438442561,
+        "rxMaxBps": 328219.40374056646,
+        "txMinBps": 2045.4621787111755,
+        "txMaxBps": 172895.78005553468
+      },
+      "card": {
+        "count": 7,
+        "rxMedianBps": 316093.89051055245,
+        "txMedianBps": 13482.160026970398,
+        "rxMinBps": 304920.8438442561,
+        "rxMaxBps": 328219.40374056646,
+        "txMinBps": 2045.4621787111755,
+        "txMaxBps": 172895.78005553468
+      },
+      "cardPartialCount": 7,
+      "netstat": {
+        "count": 8,
+        "rxMedianBps": 315178.4974129717,
+        "txMedianBps": 4004.4669090083844,
+        "rxMinBps": 305524.47552447557,
+        "rxMaxBps": 325742.9718875502,
+        "txMinBps": 1660.0,
+        "txMaxBps": 171113.54581673307
+      },
+      "requests": 0,
+      "http200": 0,
+      "responseBytes": 0,
+      "uploadBytes": 0
+    }
+  }
+}

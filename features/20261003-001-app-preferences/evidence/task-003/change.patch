@@ -1,0 +1,693 @@
+diff --git a/ResourceRunner/CPUSystemMetricsCollector.swift b/ResourceRunner/CPUSystemMetricsCollector.swift
+index e71a9ac..92b39c6 100644
+--- a/ResourceRunner/CPUSystemMetricsCollector.swift
++++ b/ResourceRunner/CPUSystemMetricsCollector.swift
+@@ -90,6 +90,15 @@ nonisolated protocol CPUSystemMetricsCollecting: Sendable {
+     /// 직전 tick 원본과의 차이로 이번 tick의 CPU 지표를 만듭니다.
+     /// 직전 원본이 없거나 간격이 허용 범위를 넘으면 값을 만들지 않고 기준점만 갱신한 뒤 `nil`을 돌려줍니다.
+     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics?
++    mutating func collect(at timestamp: ContinuousClock.Instant,
++                          maximumTickGap: Duration) throws(CollectorFailure) -> CPUSystemMetrics?
++}
++
++nonisolated extension CPUSystemMetricsCollecting {
++    mutating func collect(at timestamp: ContinuousClock.Instant,
++                          maximumTickGap: Duration) throws(CollectorFailure) -> CPUSystemMetrics? {
++        try collect(at: timestamp)
++    }
+ }
+ 
+ /// 직전 tick 원본과 그 시각을 소유하고 차분으로 사용률을 만드는 Collector.
+@@ -109,6 +118,11 @@ nonisolated struct CPUSystemMetricsCollector<Reader: CPUTickReading>: CPUSystemM
+     }
+ 
+     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics? {
++        try collect(at: timestamp, maximumTickGap: maximumTickGap)
++    }
++
++    mutating func collect(at timestamp: ContinuousClock.Instant,
++                          maximumTickGap: Duration) throws(CollectorFailure) -> CPUSystemMetrics? {
+         let ticks = try reader.readCoreTicks()
+         guard !ticks.isEmpty else {
+             throw CollectorFailure(
+diff --git a/ResourceRunner/DiskActivity.swift b/ResourceRunner/DiskActivity.swift
+index b45b2b2..b802808 100644
+--- a/ResourceRunner/DiskActivity.swift
++++ b/ResourceRunner/DiskActivity.swift
+@@ -110,7 +110,8 @@ actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
+             if let beforeCommit { await beforeCommit() }
+             return commit(sample, next: next, context: context, expectedTopologyRevision: startRevision)
+         }
+-        let (sample, next) = calculate(snapshot, epoch: epoch)
++        let (sample, next) = calculate(snapshot, epoch: epoch,
++            maximumGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
+         if let beforeCommit { await beforeCommit() }
+         return commit(sample, next: next, context: context,
+                       expectedTopologyRevision: snapshot.topologyRevision)
+@@ -140,7 +141,8 @@ actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
+         return sample
+     }
+ 
+-    private func calculate(_ snapshot: DiskCounterSnapshot, epoch: Int) -> (DiskActivitySample, State) {
++    private func calculate(_ snapshot: DiskCounterSnapshot, epoch: Int,
++                           maximumGap: Duration) -> (DiskActivitySample, State) {
+         var next = state
+         let globalReason: DiskBaselineReason? = if next.epoch == nil { .first }
+             else if next.epoch != epoch { .newEpoch }
+@@ -183,7 +185,7 @@ actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
+                         let (seconds, attoseconds) = elapsed.components
+                         let duration = Double(seconds) + Double(attoseconds) / 1e18
+                         if duration <= 0 { gap = .nonpositiveElapsed }
+-                        else if duration > 10 { gap = .excessiveGap }
++                        else if elapsed > maximumGap { gap = .excessiveGap }
+                         else if read < previous.read || write < previous.write { gap = .counterDecrease }
+                         else {
+                             rate = RatePair(receivedBytesPerSecond: Double(read - previous.read) / duration,
+@@ -277,7 +279,7 @@ actor DiskActivityStore: MonitoringSampleSink {
+     private var latest: TimestampedSample<DiskActivitySample>?
+     private var lastSuccess: TimestampedSample<DiskActivitySample>?
+     private var firstHistoryPointAt: ContinuousClock.Instant?
+-    private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
++    private var history = CircularBuffer<RateHistoryPoint>(capacity: 1203)
+     nonisolated let updates: AsyncStream<DiskActivityDisplayValue>
+     private let continuation: AsyncStream<DiskActivityDisplayValue>.Continuation
+ 
+@@ -295,22 +297,29 @@ actor DiskActivityStore: MonitoringSampleSink {
+             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+             lastSuccess = sample
+             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
+-                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
++                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
++                maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
+         }
+         continuation.yield(snapshot(at: sample.value.readAt))
+     }
+ 
+     func append(_ sample: TimestampedSample<DiskActivitySample>,
+                 context: CollectionRunContext) async -> Bool {
+-        guard let admission else { append(sample); return true }
++        guard let admission else {
++            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                collectionEpoch: sample.collectionEpoch, context: context))
++            return true
++        }
+         return admission.admitOptional(context, phase: .store, timestamp: sample.value.readAt) {
+             if let topology {
+                 return topology.withCurrentRevision(sample.value.topologyRevision) {
+-                    append(sample)
++                    append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                        collectionEpoch: sample.collectionEpoch, context: context))
+                     return true
+                 }
+             }
+-            append(sample)
++            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                collectionEpoch: sample.collectionEpoch, context: context))
+             return true
+         } ?? false
+     }
+diff --git a/ResourceRunner/MonitoringSampleStore.swift b/ResourceRunner/MonitoringSampleStore.swift
+index 0533d52..99de943 100644
+--- a/ResourceRunner/MonitoringSampleStore.swift
++++ b/ResourceRunner/MonitoringSampleStore.swift
+@@ -34,17 +34,17 @@ nonisolated struct TimestampedSample<Value: Sendable>: Sendable {
+     }
+ }
+ 
+-/// 시간 범위와 수집 주기에서 양의 고정 용량을 계산하는 순수 정책.
+-/// 그래프 시간 범위는 `docs/product.md`가 정한 최근 10분 하나입니다.
++/// 시간 범위와 수집 주기에서 양의 용량을 계산하는 순수 정책.
+ nonisolated enum HistoryCapacity {
+-    /// 이력 링과 표시용 선별이 함께 쓰는 시간 범위. 사용자에게 범위 선택을 노출하지 않습니다.
++    /// 수집 이력의 최대 시간 범위입니다.
+     static let defaultTimeRange: Duration = .seconds(600)
+ 
+-    /// 이 feature가 시스템 지표에 쓸 수 있는 가장 짧은 수집 주기(normal·팝오버 열림 1초).
++    /// 지원하는 가장 짧은 수집 주기입니다.
+     /// 용량을 그때그때의 유효 주기로 재계산하면 주기가 느려지는 순간 이미 쌓인 이력이 함께 잘려 나가므로,
+     /// 가장 짧은 주기 기준으로 한 번 고정하고 이후 다시 계산하지 않습니다.
+     /// 주기가 느려지면 링이 덜 찰 뿐이고, 범위를 벗어난 오래된 항목은 표시 직전 선별이 걸러냅니다.
+-    static let shortestSamplingInterval: Duration = .seconds(1)
++    static let shortestSamplingInterval: Duration = .milliseconds(500)
++    static let systemHistoryCapacity = 1203
+ 
+     /// `ceil(시간 범위 / 수집 주기)`로 고정 용량을 계산합니다.
+     /// 결과는 항상 1 이상입니다.
+@@ -117,19 +117,25 @@ nonisolated struct SystemMetricsHistoryPoint: Sendable, Equatable {
+     let userRatio: Double
+     let swapUsedBytes: UInt64
+     let collectionEpoch: Int
++    let maximumConnectedGap: Duration
++    let rateSegment: UInt64
+ 
+     init(
+         timestamp: ContinuousClock.Instant,
+         overallCPUUsage: Double,
+         userRatio: Double,
+         swapUsedBytes: UInt64,
+-        collectionEpoch: Int = 0
++        collectionEpoch: Int = 0,
++        maximumConnectedGap: Duration = .seconds(10),
++        rateSegment: UInt64 = 0
+     ) {
+         self.timestamp = timestamp
+         self.overallCPUUsage = overallCPUUsage
+         self.userRatio = userRatio
+         self.swapUsedBytes = swapUsedBytes
+         self.collectionEpoch = collectionEpoch
++        self.maximumConnectedGap = maximumConnectedGap
++        self.rateSegment = rateSegment
+     }
+ }
+ 
+@@ -152,6 +158,7 @@ actor MonitoringSampleStore: MonitoringSampleSink {
+     private let timeRange: Duration
+     private var history: CircularBuffer<SystemMetricsHistoryPoint>
+     private var latest: TimestampedSample<SystemMetricsSample>?
++    private var cpuRateSegment: UInt64 = 0
+ #if DEBUG
+     private var debugLastHistoryEpoch: Int?
+ #endif
+@@ -166,15 +173,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
+          admission: CollectionAdmission? = nil) {
+         self.admission = admission
+         self.timeRange = timeRange
+-        // `HistoryCapacity.capacity`가 돌려주는 개수(1초 주기에서 600)만 쓰면 항목이 정확히 그 주기로 채워질 때
+-        // 가장 오래된 값과 가장 최근 값 사이 구간이 `(개수 - 1) * 주기` = 599초에 그쳐 10분 창을 1초 못 미칩니다.
+-        // +1을 더하면 그 구간이 정확히 시간 범위와 같아져 창의 가장 오래된 끝까지 실제로 덮습니다.
+-        self.history = CircularBuffer(
+-            capacity: HistoryCapacity.capacity(
+-                timeRange: timeRange,
+-                samplingInterval: HistoryCapacity.shortestSamplingInterval
+-            ) + 1
+-        )
++        // 0.5초 간격의 양 끝점 1201개와 시각 경계 여유를 고정 보관합니다.
++        self.history = CircularBuffer(capacity: HistoryCapacity.systemHistoryCapacity)
+ 
+         var continuation: AsyncStream<SystemMetricsDisplayValue>.Continuation!
+         self.displayValues = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
+@@ -186,7 +186,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
+     /// 값을 만들지 못한 tick(`.success(nil)`)과 실패한 tick은 링에 들어가지 않으므로 그 시각이 이력에서 비어 있게 됩니다.
+     func append(_ sample: TimestampedSample<SystemMetricsSample>) {
+         latest = sample
+-        if let point = Self.historyPoint(from: sample) {
++        if case .success(.some) = sample.value.cpu {} else { cpuRateSegment &+= 1 }
++        if let point = Self.historyPoint(from: sample, rateSegment: cpuRateSegment) {
+             history.append(point)
+ #if DEBUG
+             if debugLastHistoryEpoch != point.collectionEpoch {
+@@ -215,7 +216,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
+     func append(_ sample: TimestampedSample<SystemMetricsSample>, context: CollectionRunContext) async -> Bool {
+         guard let admission else { append(sample); return true }
+         return admission.admit(context, phase: .store, timestamp: sample.timestamp) {
+-            append(sample)
++            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                collectionEpoch: sample.collectionEpoch, context: context))
+             return true
+         } ?? false
+     }
+@@ -240,7 +242,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
+ 
+     /// 전체 CPU 사용률과 Swap 값이 모두 있는 tick에서만 이력 항목을 만듭니다.
+     /// 한쪽이라도 없으면 그 시각은 이력에서 비어 있어야 하므로 값을 지어내지 않고 `nil`을 돌려줍니다.
+-    private static func historyPoint(from sample: TimestampedSample<SystemMetricsSample>) -> SystemMetricsHistoryPoint? {
++    private static func historyPoint(from sample: TimestampedSample<SystemMetricsSample>,
++                                     rateSegment: UInt64) -> SystemMetricsHistoryPoint? {
+         guard case .success(let cpu) = sample.value.cpu, let cpu,
+               case .success(let memory) = sample.value.memory else {
+             return nil
+@@ -251,7 +254,9 @@ actor MonitoringSampleStore: MonitoringSampleSink {
+             overallCPUUsage: cpu.overallUsage,
+             userRatio: cpu.userRatio,
+             swapUsedBytes: memory.swapUsedBytes,
+-            collectionEpoch: sample.collectionEpoch
++            collectionEpoch: sample.collectionEpoch,
++            maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1)),
++            rateSegment: rateSegment
+         )
+     }
+ 
+diff --git a/ResourceRunner/NetworkActivity.swift b/ResourceRunner/NetworkActivity.swift
+index afa6d22..f80c102 100644
+--- a/ResourceRunner/NetworkActivity.swift
++++ b/ResourceRunner/NetworkActivity.swift
+@@ -107,7 +107,8 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
+         let view = if let metadata { await metadata.classifications(for: snapshot) }
+             else { NetworkClassificationView(records: [:], complete: false) }
+         if let context, admission?.isCurrent(context) != true { return nil }
+-        let (sample, next) = calculate(snapshot, view: view, epoch: collectionEpoch)
++        let (sample, next) = calculate(snapshot, view: view, epoch: collectionEpoch,
++            maximumGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
+         return commit(sample, next: next, context: context,
+                       topologyRevision: snapshot.topologyRevision)
+     }
+@@ -137,7 +138,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
+     }
+ 
+     private func calculate(_ snapshot: NetworkCounterSnapshot, view: NetworkClassificationView,
+-                           epoch: Int) -> (NetworkActivitySample, State) {
++                           epoch: Int, maximumGap: Duration) -> (NetworkActivitySample, State) {
+         var next = state
+         let classes = Dictionary(uniqueKeysWithValues: snapshot.interfaces.map { item in
+             let record = view.records[item.key]
+@@ -180,7 +181,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
+             }
+             let previous = next.baselines[item.key]
+             let (rate, gap) = Self.rate(item.raw, at: snapshot.readAt, previous: previous,
+-                                        forcedBaseline: globalReason != nil)
++                                        forcedBaseline: globalReason != nil, maximumGap: maximumGap)
+             // 비합산 대상의 카운터 이상은 해당 상세 속도만 비웁니다.
+             if let gap, firstGap == nil, activePhysicalTarget { firstGap = gap }
+             if activePhysicalTarget {
+@@ -224,7 +225,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
+     }
+ 
+     private static func rate(_ raw: NetworkRawInterface, at timestamp: ContinuousClock.Instant,
+-                             previous: CounterBaseline?, forcedBaseline: Bool)
++                             previous: CounterBaseline?, forcedBaseline: Bool, maximumGap: Duration)
+         -> (RatePair?, NetworkBaselineReason?) {
+         guard !forcedBaseline else { return (nil, nil) }
+         guard let previous else { return (nil, .newTarget) }
+@@ -232,7 +233,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
+         let (seconds, attoseconds) = elapsed.components
+         let duration = Double(seconds) + Double(attoseconds) / 1e18
+         guard duration > 0 else { return (nil, .nonpositiveElapsed) }
+-        guard duration <= 10 else { return (nil, .excessiveGap) }
++        guard elapsed <= maximumGap else { return (nil, .excessiveGap) }
+         guard raw.receivedBytes >= previous.received, raw.sentBytes >= previous.sent else {
+             return (nil, .counterDecrease)
+         }
+@@ -250,6 +251,16 @@ nonisolated struct RateHistoryPoint: Sendable, Equatable {
+     let rate: RatePair
+     let collectionEpoch: Int
+     let rateSegment: UInt64
++    let maximumConnectedGap: Duration
++
++    init(timestamp: ContinuousClock.Instant, rate: RatePair, collectionEpoch: Int,
++         rateSegment: UInt64, maximumConnectedGap: Duration = .seconds(10)) {
++        self.timestamp = timestamp
++        self.rate = rate
++        self.collectionEpoch = collectionEpoch
++        self.rateSegment = rateSegment
++        self.maximumConnectedGap = maximumConnectedGap
++    }
+ }
+ 
+ nonisolated struct NetworkActivityDisplayValue: Sendable {
+@@ -270,14 +281,14 @@ nonisolated struct NetworkActivityDisplayValue: Sendable {
+     }
+ }
+ 
+-/// 유효한 대표 두 속도만 601개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
++/// 유효한 대표 두 속도만 1203개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
+ actor NetworkActivityStore: MonitoringSampleSink {
+     private let admission: CollectionAdmission?
+     private let topology: NetworkTopologyTracker?
+     private var latest: TimestampedSample<NetworkActivitySample>?
+     private var lastSuccess: TimestampedSample<NetworkActivitySample>?
+     private var firstHistoryPointAt: ContinuousClock.Instant?
+-    private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
++    private var history = CircularBuffer<RateHistoryPoint>(capacity: 1203)
+     nonisolated let updates: AsyncStream<NetworkActivityDisplayValue>
+     private let continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation
+ 
+@@ -295,22 +306,29 @@ actor NetworkActivityStore: MonitoringSampleSink {
+             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+             lastSuccess = sample
+             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
+-                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
++                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
++                maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
+         }
+         continuation.yield(snapshot(at: sample.value.readAt))
+     }
+ 
+     func append(_ sample: TimestampedSample<NetworkActivitySample>,
+                 context: CollectionRunContext) async -> Bool {
+-        guard let admission else { append(sample); return true }
++        guard let admission else {
++            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                collectionEpoch: sample.collectionEpoch, context: context))
++            return true
++        }
+         return admission.admitOptional(context, phase: .store, timestamp: sample.value.readAt) {
+             if let topology {
+                 return topology.withCurrentRevision(sample.value.topologyRevision) {
+-                    append(sample)
++                    append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                        collectionEpoch: sample.collectionEpoch, context: context))
+                     return true
+                 }
+             }
+-            append(sample)
++            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
++                collectionEpoch: sample.collectionEpoch, context: context))
+             return true
+         } ?? false
+     }
+diff --git a/ResourceRunner/SystemMetrics.swift b/ResourceRunner/SystemMetrics.swift
+index 947d2a6..25fcc8a 100644
+--- a/ResourceRunner/SystemMetrics.swift
++++ b/ResourceRunner/SystemMetrics.swift
+@@ -89,7 +89,7 @@ nonisolated struct CollectorFailure: Error, Sendable, Equatable {
+ /// 두 지표가 한 값에 묶이므로 카드 사이에 시점 차이가 생기지 않습니다.
+ nonisolated struct SystemMetricsSample: Sendable, Equatable {
+     /// `.success(nil)`은 값을 만들지 않고 기준점만 갱신한 tick입니다.
+-    /// 첫 tick이거나 직전 tick과의 간격이 `SystemMetricsSampling.maximumTickGap`을 넘은 경우이며,
++    /// 첫 tick이거나 직전 tick과의 간격이 발급 당시 허용 간격을 넘은 경우이며,
+     /// 조회 실패(`.failure`)와 구분됩니다.
+     let cpu: Result<CPUSystemMetrics?, CollectorFailure>
+     let memory: Result<MemorySystemMetrics, CollectorFailure>
+@@ -98,7 +98,11 @@ nonisolated struct SystemMetricsSample: Sendable, Equatable {
+ /// 시스템 지표 tick 사이 간격에 대한 판정 기준.
+ nonisolated enum SystemMetricsSampling {
+     /// 직전 tick과의 간격이 이 값을 넘으면 누적 tick을 차분하지 않고 기준점만 갱신합니다.
+-    /// 이 feature가 시스템 지표에 쓰는 가장 느린 주기(lowPower·팝오버 닫힘 5초)의 두 배이므로,
+-    /// 정상 주기의 지연은 값을 버리지 않고 중지·재개나 장시간 지연만 걸러집니다.
++    /// 빠른 주기의 최소 허용 간격입니다. 느린 주기는 `maximumTickGap(for:)`가 확장합니다.
+     static let maximumTickGap: Duration = .seconds(10)
++
++    /// 발급된 요청의 주기로 판정하며 완료 시점의 설정을 다시 읽지 않습니다.
++    static func maximumTickGap(for interval: Duration) -> Duration {
++        max(maximumTickGap, interval * 2)
++    }
+ }
+diff --git a/ResourceRunner/SystemMetricsSampleSource.swift b/ResourceRunner/SystemMetricsSampleSource.swift
+index d2d8e39..a3d7b1a 100644
+--- a/ResourceRunner/SystemMetricsSampleSource.swift
++++ b/ResourceRunner/SystemMetricsSampleSource.swift
+@@ -83,7 +83,8 @@ actor SystemMetricsSampleSource<
+ 
+         let cpu: Result<CPUSystemMetrics?, CollectorFailure>
+         do {
+-            cpu = .success(try candidate.collect(at: timestamp))
++            cpu = .success(try candidate.collect(at: timestamp,
++                maximumTickGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1))))
+         } catch {
+             cpu = .failure(error)
+         }
+@@ -112,7 +113,7 @@ actor SystemMetricsSampleSource<
+         // 기준점 전용 tick의 원인이 새 epoch인지 시각 간격인지 구분해 남깁니다.
+         if case .success(.none) = cpu {
+             let elapsed = previousTimestamp.map { String(describing: $0.duration(to: timestamp)) } ?? "none"
+-            let maximumTickGap = String(describing: SystemMetricsSampling.maximumTickGap)
++            let maximumTickGap = String(describing: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
+             let epochReset = debugPreviousCollectionEpoch.map { collectionEpoch > $0 } ?? false
+             // 로그 호출 지연이 이 actor의 임계 구간을 늦추지 않도록 별도 Task로 분리합니다.
+             Task.detached(priority: .utility) {
+diff --git a/ResourceRunnerTests/DiskActivityTests.swift b/ResourceRunnerTests/DiskActivityTests.swift
+index 911e13d..f9ea61a 100644
+--- a/ResourceRunnerTests/DiskActivityTests.swift
++++ b/ResourceRunnerTests/DiskActivityTests.swift
+@@ -45,6 +45,30 @@ private func diskWait(_ condition: () async -> Bool) async {
+ struct DiskActivityTests {
+     private let origin = ContinuousClock().now
+ 
++    @Test func tenSecondContextUsesActualTwentySecondBoundary() async throws {
++        let admission = gate()
++        admission.setPlan(.running(.seconds(10)), revision: 1, for: .diskActivity)
++        let source = DiskActivitySource(reader: DiskScriptedReader([
++            .success(snapshot(0, [device(read: 100, write: 200)])),
++            .success(snapshot(20, [device(read: 300, write: 300)])),
++            .success(snapshot(41, [device(read: 510, write: 405)])),
++            .success(snapshot(42, [device(read: 520, write: 410)]))
++        ]), admission: admission)
++        let firstContext = try #require(admission.issue(.diskActivity))
++        let first = await source.sample(context: firstContext)
++        #expect(first?.status == .baselineOnly(.first))
++        let boundaryContext = try #require(admission.issue(.diskActivity))
++        let boundary = try #require(await source.sample(context: boundaryContext))
++        #expect(boundary.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++        let excessiveContext = try #require(admission.issue(.diskActivity))
++        let excessive = await source.sample(context: excessiveContext)
++        #expect(excessive?.status == .baselineOnly(.excessiveGap))
++        admission.setPlan(.running(.seconds(1)), revision: 2, for: .diskActivity)
++        let resumedContext = try #require(admission.issue(.diskActivity))
++        let resumed = try #require(await source.sample(context: resumedContext))
++        #expect(resumed.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++    }
++
+     private func device(_ id: UInt64 = 1, kind: DiskDeviceKind = .physical,
+                         read: UInt64? = 100, write: UInt64? = 200,
+                         readOps: UInt64? = 10, writeOps: UInt64? = 20) -> DiskCounterDevice {
+@@ -244,7 +268,7 @@ struct DiskActivityTests {
+             #expect(await store.append(TimestampedSample(timestamp: value.readAt, value: value,
+                 collectionEpoch: context.epoch), context: context))
+         }
+-        #expect(await store.storedHistoryCount == 601)
++        #expect(await store.storedHistoryCount == 603)
+         let current = await store.snapshot(at: origin.advanced(by: .seconds(603)))
+         #expect(current.recentHistory.count == 601)
+         #expect(current.recentHistory.first?.timestamp == origin.advanced(by: .seconds(3)))
+@@ -257,7 +281,25 @@ struct DiskActivityTests {
+             physicalTotalsComplete: false, status: .failure("brief"), rateSegment: 1)
+         #expect(await store.append(TimestampedSample(timestamp: failed.readAt, value: failed,
+             collectionEpoch: 0), context: failContext))
+-        #expect(await store.storedHistoryCount == 601)
++        #expect(await store.storedHistoryCount == 603)
++    }
++
++    @Test func halfSecondHistoryRetainsBothWindowEndpointsWithBoundedRing() async {
++        let store = DiskActivityStore()
++        for index in 0...1204 {
++            let time = origin + .milliseconds(index * 500)
++            let rate = RatePair(receivedBytesPerSecond: Double(index), sentBytesPerSecond: 1)!
++            let value = DiskActivitySample(readAt: time, topologyRevision: 1, devices: [],
++                knownPhysicalRates: rate, representative: rate,
++                knownPhysicalOperations: nil, representativeOperations: nil,
++                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
++            await store.append(TimestampedSample(timestamp: time, value: value))
++        }
++        #expect(await store.storedHistoryCount == 1203)
++        let history = await store.snapshot(at: origin + .seconds(602)).recentHistory
++        #expect(history.count == 1201)
++        #expect(history.first?.timestamp == origin + .seconds(2))
++        #expect(history.last?.timestamp == origin + .seconds(602))
+     }
+ 
+     @Test func briefFailureAndRecoveryCreateDistinctStoredRateSegmentsWithoutZeroPoints() async throws {
+diff --git a/ResourceRunnerTests/MonitoringSampleStoreTests.swift b/ResourceRunnerTests/MonitoringSampleStoreTests.swift
+index 42111af..9c7b294 100644
+--- a/ResourceRunnerTests/MonitoringSampleStoreTests.swift
++++ b/ResourceRunnerTests/MonitoringSampleStoreTests.swift
+@@ -186,6 +186,25 @@ nonisolated private struct SilentSystemMetricsSampleSource: ScheduledSampleSourc
+ /// stream이 최신 조합 하나만 보존하는 것을 검증합니다.
+ struct MonitoringSampleStoreTests {
+ 
++    @Test func pointsKeepTheirIssuedGapAndCPUFailureBoundary() async {
++        let store = MonitoringSampleStore()
++        let base = ContinuousClock().now
++        let old = CollectionRunContext(axis: .systemMetrics, epoch: 0, generation: 1,
++            planRevision: 1, requestSequence: 1, boundarySequence: 0, interval: .seconds(10))
++        let current = CollectionRunContext(axis: .systemMetrics, epoch: 0, generation: 2,
++            planRevision: 2, requestSequence: 2, boundarySequence: 0, interval: .seconds(1))
++        let first = sample(at: base, cpuUsage: 20)
++        await store.append(TimestampedSample(timestamp: first.timestamp, value: first.value, context: old))
++        let failed = sample(at: base + .seconds(1), cpuUsage: nil)
++        await store.append(failed)
++        let second = sample(at: base + .seconds(2), cpuUsage: 30)
++        await store.append(TimestampedSample(timestamp: second.timestamp, value: second.value, context: current))
++        let points = await store.snapshot().recentHistory
++        #expect(points.count == 2)
++        #expect(points.map(\.maximumConnectedGap) == [.seconds(20), .seconds(10)])
++        #expect(points[0].rateSegment != points[1].rateSegment)
++    }
++
+     @Test func shortStopPreservesDistinctEpochsWithoutAddingABaselinePoint() async {
+         let store = MonitoringSampleStore()
+         let base = ContinuousClock().now
+@@ -324,13 +343,12 @@ struct MonitoringSampleStoreTests {
+         #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [2, 3, 4])
+     }
+ 
+-    /// 링 용량(10분 / 1초 + 1 = 601)을 넘으면 가장 오래된 항목 하나만 교체됩니다.
+-    /// 개수 축출만 관찰하려면 602개가 모두 10분 창 안에 있어야 하므로 0.5초 간격으로 채웁니다.
++    /// 1203개 용량을 넘으면 가장 오래된 항목 하나만 교체됩니다.
+     @Test func exceedingCapacityReplacesOnlyTheOldestEntry() async {
+         let store = MonitoringSampleStore()
+         let base = ContinuousClock().now
+ 
+-        for index in 0...601 {
++        for index in 0...1203 {
+             await store.append(
+                 sample(at: base.advanced(by: .milliseconds(500 * index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
+             )
+@@ -338,23 +356,21 @@ struct MonitoringSampleStoreTests {
+ 
+         let history = await store.snapshot().recentHistory
+ 
+-        #expect(history.count == 601)
++        #expect(history.count == 1201)
+         // 첫 항목(swap 0)만 밀려나고 두 번째 항목부터 순서대로 남습니다.
+-        #expect(history.first?.swapUsedBytes == 1)
+-        #expect(history.last?.swapUsedBytes == 601)
++        #expect(history.first?.swapUsedBytes == 3)
++        #expect(history.last?.swapUsedBytes == 1203)
+     }
+ 
+-    /// 가장 짧은 주기(1초)로 쉬지 않고 채웠을 때 링이 10분 창을 끝까지 덮는지 고정합니다.
+-    /// 601개가 정확히 600초를 걸치므로 가장 오래된 항목의 시각이 창의 왼쪽 끝과 같아야 합니다.
+-    /// 용량을 `capacity(...)` 결과(600)로 되돌리면 그 항목이 개수로 축출되어 창이 599초로 줄고 이 테스트가 실패합니다.
++    /// 가장 짧은 0.5초 주기로 600초 양 끝점을 보존합니다.
+     @Test func ringCoversTheWholeTenMinuteWindowAtTheShortestInterval() async {
+         let store = MonitoringSampleStore()
+         let base = ContinuousClock().now
+-        let sampleCount = 601
++        let sampleCount = 1201
+ 
+         for index in 0..<sampleCount {
+             await store.append(
+-                sample(at: base.advanced(by: .seconds(index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
++                sample(at: base.advanced(by: .milliseconds(index * 500)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
+             )
+         }
+ 
+@@ -365,6 +381,20 @@ struct MonitoringSampleStoreTests {
+         #expect(history.last?.timestamp == base.advanced(by: HistoryCapacity.defaultTimeRange))
+     }
+ 
++    @Test func halfSecondOverflowKeepsFixedCapacityAndActualWindow() async {
++        let store = MonitoringSampleStore()
++        let base = ContinuousClock().now
++        for index in 0...1204 {
++            await store.append(sample(at: base + .milliseconds(index * 500),
++                cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index)))
++        }
++        #expect(await store.debugStatusDescription == "history=1203 capacity=1203")
++        let history = await store.snapshot().recentHistory
++        #expect(history.count == 1201)
++        #expect(history.first?.swapUsedBytes == 4)
++        #expect(history.last?.swapUsedBytes == 1204)
++    }
++
+     /// 1시간 중지를 시각으로 재현합니다.
+     /// 재개 첫 tick은 간격이 허용 범위를 넘어 값 없이 기준점만 갱신하므로 링에 들어가지 않고,
+     /// 중지 전 항목은 링에 남아 있어도 최신 샘플 시각 기준 10분 창 밖이라 표시용 값에서 빠집니다.
+diff --git a/ResourceRunnerTests/NetworkActivityTests.swift b/ResourceRunnerTests/NetworkActivityTests.swift
+index c6d212c..eca03a3 100644
+--- a/ResourceRunnerTests/NetworkActivityTests.swift
++++ b/ResourceRunnerTests/NetworkActivityTests.swift
+@@ -41,6 +41,31 @@ private func networkWait(_ condition: () async -> Bool) async {
+ struct NetworkActivityTests {
+     private let origin = ContinuousClock().now
+ 
++    @Test func tenSecondContextUsesActualTwentySecondBoundary() async throws {
++        let target = key()
++        let metadata = await metadataStore(1, [record(target)])
++        let admission = gate()
++        admission.setPlan(.running(.seconds(10)), revision: 1, for: .networkActivity)
++        let source = NetworkActivitySource(reader: ScriptedNetworkCounterReader([
++            .success(snapshot(0, [(target, raw(rx: 100, tx: 100))])),
++            .success(snapshot(20, [(target, raw(rx: 300, tx: 200))])),
++            .success(snapshot(41, [(target, raw(rx: 510, tx: 305))])),
++            .success(snapshot(42, [(target, raw(rx: 520, tx: 310))]))
++        ]), metadata: metadata, admission: admission)
++        let first = try #require(admission.issue(.networkActivity))
++        #expect((await source.sample(context: first))?.status == .baselineOnly(.first))
++        let boundaryContext = try #require(admission.issue(.networkActivity))
++        let boundary = try #require(await source.sample(context: boundaryContext))
++        #expect(boundary.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++        let excessiveContext = try #require(admission.issue(.networkActivity))
++        let excessive = await source.sample(context: excessiveContext)
++        #expect(excessive?.status == .baselineOnly(.excessiveGap))
++        admission.setPlan(.running(.seconds(1)), revision: 2, for: .networkActivity)
++        let resumedContext = try #require(admission.issue(.networkActivity))
++        let resumed = try #require(await source.sample(context: resumedContext))
++        #expect(resumed.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
++    }
++
+     private func key(_ name: String = "en0", _ index: UInt16 = 1,
+                      registry: UInt64? = 7, lifetime: UInt64 = 1) -> NetworkTargetKey {
+         NetworkTargetKey(name: name, index: index, registryID: registry, lifetime: lifetime)
+@@ -424,7 +449,7 @@ struct NetworkActivityTests {
+                 physicalTotalsComplete: true, status: .rate, rateSegment: 1)
+             await store.append(TimestampedSample(timestamp: value.readAt, value: value))
+         }
+-        #expect(await store.storedHistoryCount == 601)
++        #expect(await store.storedHistoryCount == 605)
+         let full = await store.snapshot(at: origin + .seconds(604))
+         #expect(full.recentHistory.count == 601)
+         #expect(full.recentHistory.first?.rate.receivedBytesPerSecond == 4)
+@@ -433,4 +458,21 @@ struct NetworkActivityTests {
+         #expect(moved.recentHistory.first?.rate.receivedBytesPerSecond == 400)
+         #expect(moved.recentHistory.count == 205)
+     }
++
++    @Test func halfSecondHistoryRetainsBothWindowEndpointsWithBoundedRing() async {
++        let store = NetworkActivityStore()
++        for index in 0...1204 {
++            let time = origin + .milliseconds(index * 500)
++            let rate = RatePair(receivedBytesPerSecond: Double(index), sentBytesPerSecond: 1)!
++            let value = NetworkActivitySample(readAt: time, topologyRevision: 1,
++                interfaces: [], knownPhysicalRates: rate, representative: rate,
++                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
++            await store.append(TimestampedSample(timestamp: time, value: value))
++        }
++        #expect(await store.storedHistoryCount == 1203)
++        let history = await store.snapshot(at: origin + .seconds(602)).recentHistory
++        #expect(history.count == 1201)
++        #expect(history.first?.timestamp == origin + .seconds(2))
++        #expect(history.last?.timestamp == origin + .seconds(602))
++    }
+ }
+diff --git a/ResourceRunnerTests/SystemMetricsCollectorTests.swift b/ResourceRunnerTests/SystemMetricsCollectorTests.swift
+index 5a6a792..e4007f3 100644
+--- a/ResourceRunnerTests/SystemMetricsCollectorTests.swift
++++ b/ResourceRunnerTests/SystemMetricsCollectorTests.swift
+@@ -199,6 +199,26 @@ struct CPUSystemMetricsCollectorTests {
+         #expect(metrics?.overallUsage == 10)
+     }
+ 
++    @Test func tenSecondPlanAllowsTwentySecondsButBreaksBeyondIt() throws {
++        let reader = StubCPUTickReader(tickOutcomes: [
++            .success([ticks(user: 0, system: 0, idle: 0)]),
++            .success([ticks(user: 20, system: 0, idle: 180)]),
++            .success([ticks(user: 41, system: 0, idle: 389)]),
++            .success([ticks(user: 51, system: 0, idle: 479)]),
++        ])
++        var collector = CPUSystemMetricsCollector(reader: reader)
++        let gap = SystemMetricsSampling.maximumTickGap(for: .seconds(10))
++        #expect(gap == .seconds(20))
++        #expect(SystemMetricsSampling.maximumTickGap(for: .milliseconds(500)) == .seconds(10))
++        _ = try collector.collect(at: baseInstant, maximumTickGap: gap)
++        let boundary = try collector.collect(at: baseInstant + .seconds(20), maximumTickGap: gap)
++        #expect(boundary?.overallUsage == 10)
++        let beyond = try collector.collect(at: baseInstant + .seconds(41), maximumTickGap: gap)
++        #expect(beyond == nil)
++        let resumed = try collector.collect(at: baseInstant + .seconds(42), maximumTickGap: .seconds(10))
++        #expect(resumed?.overallUsage == 10)
++    }
++
+     /// 명시적 중지 없이 수집 주기만 5초에서 1초로 바뀌면 두 차분 모두 유효합니다.
+     @Test func fiveSecondToOneSecondIntervalChangeKeepsProducingUsage() throws {
+         let reader = StubCPUTickReader(tickOutcomes: [
+diff --git a/ResourceRunnerTests/SystemMetricsSampleSourceTests.swift b/ResourceRunnerTests/SystemMetricsSampleSourceTests.swift
+index abec771..545fc46 100644
+--- a/ResourceRunnerTests/SystemMetricsSampleSourceTests.swift
++++ b/ResourceRunnerTests/SystemMetricsSampleSourceTests.swift
+@@ -319,4 +319,25 @@ struct SystemMetricsSampleSourceTests {
+         #expect((try? oneSecond?.cpu.get())?.overallUsage == 10)
+         #expect(await clock.nowCallCount == 3)
+     }
++
++    @Test func issuedTenSecondContextAllowsTwentySecondCPUDelta() async throws {
++        let start = ContinuousClock().now
++        let admission = CollectionAdmission()
++        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        _ = admission.advance(.systemMetrics)
++        admission.setPlan(.running(.seconds(10)), revision: 1, for: .systemMetrics)
++        let clock = RecordingMonotonicClock(instants: [start, start + .seconds(20)])
++        let source = SystemMetricsSampleSource(
++            cpuCollector: CPUSystemMetricsCollector(reader: SequenceCPUTickReader(snapshots: [
++                [CPUCoreTicks(user: 0, system: 0, idle: 0, nice: 0)],
++                [CPUCoreTicks(user: 20, system: 0, idle: 180, nice: 0)]
++            ])),
++            memoryCollector: FakeMemoryCollector(outcomes: Array(repeating: .success(memoryFixture), count: 2)),
++            clock: clock, admission: admission)
++        let firstContext = try #require(admission.issue(.systemMetrics))
++        #expect(await source.sample(context: firstContext)?.cpu == .success(nil))
++        let secondContext = try #require(admission.issue(.systemMetrics))
++        let second = try #require(await source.sample(context: secondContext))
++        #expect((try? second.cpu.get())?.overallUsage == 10)
++    }
+ }

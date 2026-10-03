@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-03 (M4 task-002 승인)
+저장: 2026-10-03 (M4 task-003 승인)
 
 ## 현재 목표
 
@@ -8,10 +8,11 @@
 
 ## 현재 상태
 
-- branch main, loop 시작 HEAD cf9bc683. task-001을 worker가 구현하고 독립 verifier approved를 main이 확정했다. task-001/002 [x], task-003~011 [ ], SPEC/DESIGN [x], IMPLEMENT [ ].
+- branch main, loop 시작 HEAD cf9bc683. task-001을 worker가 구현하고 독립 verifier approved를 main이 확정했다. task-001~003 [x], task-004~011 [ ], SPEC/DESIGN [x], IMPLEMENT [ ].
 - 새 AppPreferences.swift·PreferencesStore.swift·PreferencesStoreTests.swift, 근거와 상태 문서를 인수했다. 전용 signed 테스트5/5·실패0/skip0, 소스 해시·패치·xcresult 대응을 확인했다. 실제 초기 앱 배선·로그인은 아직 후속 범위다.
 - task-002의 제품5개·검증4개 파일과 근거를 인수했다. A→B→A target 역순의 최신 revision 미적용으로 최초 correctness reject였으나 worker 재시도1에서 두 Scheduler 검사와 회귀3개를 보완했다. 독립 verifier approved를 main이 확정했다. 관련7suite50case(동적56실행), 실패/skip0·전체9파일 최종 해시 대응을 확인했다.
-- 재시도 누적: task-001 구현0/근거0, task-002 구현1/근거0. 초기 reject·근거는 evidence/task-002의 이력으로 보존했다. collaboration worker thread limit·not_found를 확인하고 같은 worker 모델 gpt-6-sol/medium의 로컬 CLI로 수정했으며 재검증은 custom verifier를 사용했다.
+- 재시도 누적: task-001 구현0/근거0, task-002 구현1/근거0, task-003 구현0/근거0. 초기 reject·근거는 evidence/task-002의 이력으로 보존했다. collaboration worker thread limit·not_found를 확인하고 같은 worker 모델 gpt-6-sol/medium의 로컬 CLI로 수정했으며 재검증은 custom verifier를 사용했다.
+- task-003의 제품6개·검증5개 파일을 인수했다. 기준 HEAD429906e, 제품 커밋e429527, 독립 verifier approved를 main이 확정했다. 관련86case(동적94실행)·Memory6case(동적17실행), 실패/skip0·소스/패치/로그 해시 대응을 확인했다. 그래프 적용은 task-006이다.
 - M3 task014/015 보류와 기존 승인은 유지한다. M4 실제 로그인 관문은 별도다. 기존 M3 검증을 M4 통과로 사용하지 않는다.
 
 ## 현재 작업 문서
@@ -32,11 +33,11 @@
 
 ## 미확정 판단
 
-task-001/002는 승인됐다. 상위 결정의 부족은 없다. 후속 실제 UI·로그인 결과는 아직 없으며 task-011의 실제 세션 전환 권한·환경은 해당 착수 시 main이 확인한다.
+task-001~003은 승인됐다. 상위 결정의 부족은 없다. 후속 실제 UI·로그인 결과는 아직 없으며 task-011의 실제 세션 전환 권한·환경은 해당 착수 시 main이 확인한다.
 
 ## 다음 작업
 
-- 작업: 첫 미완료 task-003을 worker에게 맡겨 당시 P의 차분/G·단절·1203개 제한 이력을 구현하고 verify한다.
+- 작업: 첫 미완료 task-004를 worker에게 맡겨 실제 로그인 상태 adapter·직렬 요청·복원 결과를 구현하고 verify한다.
 - 완료 기준: Task별 현재 원본·diff·검증 근거로 승인하고 상태·이력을 갱신한다. SPEC §5.1~§5.13의 모든 매핑 Task가 승인되기 전에는 IMPLEMENT를 완료로 표시하지 않는다. 필수 실제 관문 미확인은 남긴다.
 
 ## 먼저 읽을 파일

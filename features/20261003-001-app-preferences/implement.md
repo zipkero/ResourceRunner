@@ -39,13 +39,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.5, §5.6, §5.13; DESIGN §1.4, §2.1, §2.2, §2.3, §2.4, §4.2, §5 DP3~DP5.
   - 승인 근거: 2026-10-03 main이 독립 재검증 approved를 확정했습니다. HEAD1647242 기준 전체9파일 소스 해시·최종 수정4파일 diff/로그가 일치하고 관련7suite50case(동적56실행)·실패/skip0입니다. A→B→A 최신 revision 누락을 수정하고 두 Scheduler의 역순 조회/캐시/pending 회귀를 확인했습니다. [task-002 근거](./evidence/task-002/README.md). 구현 재시도1·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
-- [ ] task-003: 당시 주기의 차분·단절과 제한된10분 이력
+- [x] task-003: 당시 주기의 차분·단절과 제한된10분 이력
   - 목적: 긴 정상 주기도 실제 경과 시간으로 계산하고 빠름의10분 이력을 제한된 메모리에 보존합니다.
   - 접근: 선행 task-002. 출발점은 `ResourceRunner/CPUSystemMetricsCollector.swift`, `ResourceRunner/SystemMetricsSampleSource.swift`, `ResourceRunner/NetworkActivity.swift`, `ResourceRunner/DiskActivity.swift`, `ResourceRunner/MonitoringSampleStore.swift`, `ResourceRunner/ProcessHistoryStore.swift`입니다. CPU 측정별 허용 간격과 Network·Disk 차분에 `G(P)=max(10초,2×P)`를 전달하고 candidate 상태는 현재 admission에서만 commit합니다. 시스템·Network·Disk 링은 각각1203개로 고정하며 실제600초 선별을 유지합니다. CPU·Disk 점에 당시 G·기존 연속성을 보존합니다. 표시 범위는 task-006이 소유합니다.
   - 검증 조건:
     - 결과: P≤5초는 G=10초, P=10초는 G=20초이며 분모는 실제 시각 차이입니다. 0 이하·G 초과는 기준점 전용입니다. epoch·실패·topology/identity·카운터 감소의 단절·Collector별 실패 격리를 유지합니다. 프로필 변경만으로 정상 기준점을 지우거나 과거 P를 재해석하지 않습니다. 링은 주기·표시 범위에 따라 축소하지 않습니다. 프로세스 최대20초·Memory600초 창/30초 최소 간격/21개 링은 유지합니다.
     - 확인: `ResourceRunnerTests/SystemMetricsCollectorTests.swift`, `SystemMetricsSampleSourceTests.swift`, `NetworkActivityTests.swift`, `DiskActivityTests.swift`, `MonitoringSampleStoreTests.swift`, `ProcessHistoryStoreTests.swift`에서 정상 지연·정확한 G 경계·초과·강제 단절·늦은 candidate 거부를 확인합니다. 0.5초의600초 양 끝점,1203개 상한·overflow·주기 변경·native 지연·긴 중지·실패, 보간/가짜0/과거 채움 없음과 기존 Memory·프로세스 계산 결과를 검증합니다.
   - 참조: SPEC §5.5, §5.6, §5.7, §5.13; DESIGN §2.4, §2.5, §3.4, §4.1, §4.2, §5 DP5, DP6.
+  - 승인 근거: 2026-10-03 독립 verifier approved를 main이 확정했습니다. HEAD429906e 기준11파일 diff·소스/로그 해시 대응과 관련86case(동적94실행)·Memory6case(동적17실행), 실패/skip0을 확인했습니다. [task-003 근거](./evidence/task-003/README.md). 구현 재시도0·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
 - [ ] task-004: 실제 로그인 상태와 직렬 요청·복원 결과
   - 목적: 일반 설정과 독립된 macOS 로그인 상태를 관리하고 명시적 요청·복원 결과를 구분합니다.

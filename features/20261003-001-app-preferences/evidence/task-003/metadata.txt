@@ -1,0 +1,16 @@
+/Users/zipkero/XcodeProjects/ResourceRunner
+429906e5e43172f60d7ad11104c6bb1f8d9a32f2
+ M ResourceRunner/CPUSystemMetricsCollector.swift
+ M ResourceRunner/DiskActivity.swift
+ M ResourceRunner/MonitoringSampleStore.swift
+ M ResourceRunner/NetworkActivity.swift
+ M ResourceRunner/SystemMetrics.swift
+ M ResourceRunner/SystemMetricsSampleSource.swift
+ M ResourceRunnerTests/DiskActivityTests.swift
+ M ResourceRunnerTests/MonitoringSampleStoreTests.swift
+ M ResourceRunnerTests/NetworkActivityTests.swift
+ M ResourceRunnerTests/SystemMetricsCollectorTests.swift
+ M ResourceRunnerTests/SystemMetricsSampleSourceTests.swift
+018d4991419be3f2e67a444414299408d8c9105577dcb9fc667020b6db76fe1a  /tmp/rr-m4-task003.patch
+a0cf255c3f83631a2db77482b462f843cc0d60b08f549d6a06108576cf532cce  /tmp/rr-m4-task003-unit-evidence.log
+733c63a82f41bf6bdb4e17e8bcf9a818e2124f4c38dfb5e30d253dadfef78d44  /tmp/rr-m4-task003-memory.log

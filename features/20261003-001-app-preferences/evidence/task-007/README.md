@@ -1,6 +1,6 @@
-# task-007 부분 구현과 환경 차단
+# task-007 부분 구현과 환경 차단 이력
 
-기준 HEAD `ccee0f6bf60435ce52739bf7cf268e2142528e95`, cwd `/Users/zipkero/XcodeProjects/ResourceRunner`. 이 Task는 미승인입니다. 제품/검증10파일은 작업 트리에 미커밋으로 보존합니다.
+기준 HEAD `ccee0f6bf60435ce52739bf7cf268e2142528e95`, cwd `/Users/zipkero/XcodeProjects/ResourceRunner`. 이 기록 당시 Task는 미승인이었고 제품/검증10파일은 미커밋으로 보존했습니다. 2026-10-04 UI 재개·AX 수정 후 main이 승인했으며 최신 근거는 [재개/승인 기록](./resume-20261004/README.md)입니다.
 
 카드/TOP5 조건부 표시·자연 높이·숨김 선택 정리·전체 숨김 callback을 부분 구현했습니다. DEBUG 명시적 UI fixture는 인메모리 설정이며 실제 native 로그인 mutation을 추가하지 않습니다. 기본/Release 설정 경로는 유지합니다.
 

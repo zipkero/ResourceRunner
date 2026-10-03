@@ -578,6 +578,36 @@ private func measuredIdealWidth(_ view: some View) -> CGFloat {
 @MainActor
 struct DashboardCardHeightTests {
 
+    @Test func hidingTopApplicationsRemovesWholeRankingHeightAcrossStates() {
+        let cpuValue = cpuPresentation(topApplicationsCount: 5)
+        let memoryValue = memoryPresentation(topApplicationsCount: 5)
+        let cpuStates: [ResourceCardState<CPUCardPresentation>] = [
+            .collecting, .normal(cpuValue, timestamp: baseInstant),
+            .failure(lastKnown: nil), .stopped(lastKnown: nil),
+        ]
+        let memoryStates: [ResourceCardState<MemoryCardPresentation>] = [
+            .collecting, .normal(memoryValue, timestamp: baseInstant),
+            .failure(lastKnown: nil), .stopped(lastKnown: nil),
+        ]
+        for state in cpuStates {
+            let full = measuredHeight(CPUCardView(state: state,
+                iconProvider: StubApplicationIconProvider(), showsTopApplications: true))
+            let hidden = measuredHeight(CPUCardView(state: state,
+                iconProvider: StubApplicationIconProvider(), showsTopApplications: false))
+            #expect(hidden < full - 50)
+        }
+        for state in memoryStates {
+            let full = measuredHeight(MemoryCardView(state: state,
+                iconProvider: StubApplicationIconProvider(), showsTopApplications: true))
+            let hidden = measuredHeight(MemoryCardView(state: state,
+                iconProvider: StubApplicationIconProvider(), showsTopApplications: false))
+            #expect(hidden < full - 50)
+        }
+        #expect(CardRankingSlotView.headingSpacing == 3)
+        #expect(DashboardStyle.Summary.cpuPlotHeight == 66.67)
+        #expect(measuredHeight(memoryCardView(.normal(memoryValue, timestamp: baseInstant))) == 169)
+    }
+
     // MARK: - CPU 카드
 
     @Test func cpuCardHeightIsSameRegardlessOfTopApplicationsCount() {

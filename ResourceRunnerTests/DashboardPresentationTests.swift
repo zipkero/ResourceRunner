@@ -706,6 +706,21 @@ struct CPUCardPresentationAssembleTests {
 /// task-008 검증 조건: 카드의 접근성 이름에 현재 사용률과 상태, TOP 5의 안내 문구가 포함됩니다.
 struct CPUCardAccessibilityLabelTests {
 
+    @Test func hiddenTopApplicationsRemoveOnlyRankingFromAccessibility() {
+        let presentation = CPUCardPresentation.assemble(
+            cpu: cpuMetrics(overallUsage: 55, userRatio: 40, systemRatio: 15),
+            history: [], topApplications: [], currentTimestamp: baseInstant)
+        let state = ResourceCardState.normal(presentation, timestamp: baseInstant)
+        let label = state.cpuAccessibilityLabel(timeRange: .tenMinutes,
+            showsTopApplications: false, now: baseInstant)
+        #expect(!label.contains(CPUCardPresentation.topApplicationsAccessibilityText))
+        #expect(label.contains("전체 사용률 55%"))
+        #expect(label.contains("User 40%"))
+        #expect(label.contains("System 15%"))
+        #expect(label.contains("최근 10분 그래프"))
+        #expect(label.contains(CPUCardPresentation.selectionShortcutDisplayText))
+    }
+
     @Test func collectingStateDescribesCollectingWithoutAUsageValue() {
         let state = ResourceCardState<CPUCardPresentation>.collecting
 
@@ -1149,6 +1164,21 @@ struct MemoryCardPresentationAssembleTests {
 
 /// task-009 검증 조건: 카드 접근성 이름에 현재 단계와 사용 중 메모리가 포함됩니다.
 struct MemoryCardAccessibilityLabelTests {
+
+    @Test func hiddenTopApplicationsKeepCompositionPressureAndSwapInAccessibility() {
+        let presentation = MemoryCardPresentation.assemble(
+            memory: memoryMetricsForTests(swapUsedBytes: 3 * 1024 * 1024 * 1024,
+                pressureLevel: .warning), history: [], topApplications: [],
+            currentTimestamp: baseInstant)
+        let state = ResourceCardState.normal(presentation, timestamp: baseInstant)
+        let label = state.memoryAccessibilityLabel(showsTopApplications: false)
+        #expect(!label.contains(MemoryCardPresentation.topApplicationsAccessibilityText))
+        #expect(label.contains("Memory Pressure 경고"))
+        #expect(label.contains("Swap"))
+        #expect(label.contains("App"))
+        #expect(label.contains("Wired"))
+        #expect(label.contains(MemoryCardPresentation.selectionShortcutDisplayText))
+    }
 
     @Test func collectingStateDescribesCollectingWithoutAValue() {
         let state = ResourceCardState<MemoryCardPresentation>.collecting

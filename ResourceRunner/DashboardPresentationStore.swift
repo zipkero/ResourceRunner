@@ -28,8 +28,16 @@ final class DashboardPresentationStore: ObservableObject {
 
     func applyPreferences(_ snapshot: PreferencesSnapshot) {
         guard snapshot.revision > preferencesSnapshot.revision else { return }
+        if selection != .none && !snapshot.preferences.showsCard(selection) {
+            selection = .none
+            selectionGeneration &+= 1
+        }
         // 카드 모델은 최대 이력과 전체 상세를 보유하고, 표시 선택은 현재 snapshot으로 유도합니다.
         preferencesSnapshot = snapshot
+    }
+
+    func isCardVisible(_ card: DashboardSelection) -> Bool {
+        preferencesSnapshot.preferences.showsCard(card)
     }
 
     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
@@ -55,6 +63,7 @@ final class DashboardPresentationStore: ObservableObject {
     /// 이미 선택된 카드를 다시 활성화하면 선택이 해제되어 요약 상태로 돌아가고,
     /// 다른 카드를 활성화하면 선택이 그 카드로 바뀝니다(SPEC §5.2).
     func selectCard(_ card: DashboardSelection) {
+        guard isCardVisible(card) else { return }
         selection = (selection == card) ? .none : card
         selectionGeneration &+= 1
     }

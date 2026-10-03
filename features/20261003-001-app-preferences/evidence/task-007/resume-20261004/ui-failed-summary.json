@@ -1,0 +1,49 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "25G83",
+        "osVersion" : "26.6.2",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 1,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "ResourceRunner · Built with macOS 26.6.2",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1791067101.464,
+  "passedTests" : 1,
+  "result" : "Failed",
+  "skippedTests" : 0,
+  "startTime" : 1791067076.546,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertTrue failed",
+      "targetName" : "ResourceRunnerUITests",
+      "testIdentifier" : 1,
+      "testIdentifierString" : "DashboardPreferencesVisibilityUITests/testAllOffShowsSettingsActionAndNoCardAccessibilityElements()",
+      "testIdentifierURL" : "test://com.apple.xcode/ResourceRunner/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests/testAllOffShowsSettingsActionAndNoCardAccessibilityElements",
+      "testName" : "testAllOffShowsSettingsActionAndNoCardAccessibilityElements()"
+    }
+  ],
+  "title" : "Test - ResourceRunner",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 2
+}

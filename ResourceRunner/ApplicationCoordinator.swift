@@ -156,6 +156,19 @@ final class ApplicationCoordinator {
         statusBarController.debugStateInjector = { [characterStateSource] state in
             characterStateSource.send(state)
         }
+        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
+            statusBarController.debugCardVisibilityInjector = { [preferencesStore] card in
+                preferencesStore.update { preferences in
+                    switch card {
+                    case .cpu: preferences.showsCPUCard.toggle()
+                    case .memory: preferences.showsMemoryCard.toggle()
+                    case .network: preferences.showsNetworkCard.toggle()
+                    case .disk: preferences.showsDiskCard.toggle()
+                    case .none: break
+                    }
+                }
+            }
+        }
 #endif
 
         let sink: CharacterPresentationSink = statusBarController

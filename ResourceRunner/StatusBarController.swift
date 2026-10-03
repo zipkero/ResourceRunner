@@ -41,6 +41,7 @@ final class StatusBarController: NSObject {
 #if DEBUG
     /// 우클릭 디버그 메뉴에서 상태를 고르면 호출되는 콜백. Release 빌드에는 이 진입점이 존재하지 않습니다.
     var debugStateInjector: ((CharacterActivityState) -> Void)?
+    var debugCardVisibilityInjector: ((DashboardSelection) -> Void)?
 #endif
 
     init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
@@ -210,12 +211,27 @@ final class StatusBarController: NSObject {
             item.representedObject = state
             menu.addItem(item)
         }
+        if debugCardVisibilityInjector != nil {
+            menu.addItem(.separator())
+            for card in DashboardSelection.cardOrder {
+                let item = NSMenuItem(title: "Toggle \(card) Card",
+                    action: #selector(toggleDebugCard(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = card
+                menu.addItem(item)
+            }
+        }
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
     }
 
     @objc private func injectDebugState(_ sender: NSMenuItem) {
         guard let state = sender.representedObject as? CharacterActivityState else { return }
         debugStateInjector?(state)
+    }
+
+    @objc private func toggleDebugCard(_ sender: NSMenuItem) {
+        guard let card = sender.representedObject as? DashboardSelection else { return }
+        debugCardVisibilityInjector?(card)
     }
 #endif
 }

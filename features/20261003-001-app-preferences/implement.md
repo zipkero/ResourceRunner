@@ -75,14 +75,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.4, §5.7, §5.13; DESIGN §1.4, §2.4, §2.5, §3.4, §4.2, §5 DP5, DP6.
   - 승인 근거: 2026-10-03 독립 읽기 전용 verifier approved를 main이 확정했습니다. HEAD8345f58 기준9파일 diff·소스 해시와 최종 signed serial86case(동적90실행)·실패/skip0을 확인했습니다. [task-006 근거](./evidence/task-006/README.md). agent thread 제한으로 동일 verifier 역할을 로컬 CLI에 적용했습니다. 구현 재시도0·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
-- [ ] task-007: 카드·TOP 5 숨김과 자연 높이·선택 정리
+- [x] task-007: 카드·TOP 5 숨김과 자연 높이·선택 정리
   - 목적: 숨긴 구역을 layout·AX에서 제거하고 대표값·상세·기본 배치·전체 숨김 복구를 유지합니다.
   - 접근: 선행 task-005, task-006. 출발점은 `ResourceRunner/DashboardView.swift`, `ResourceRunner/DashboardPresentationStore.swift`, `ResourceRunner/DashboardPresentation.swift`, `ResourceRunner/ResourceActivityPresentation.swift`입니다. 고정 순서의 켜진 카드만 eager 한 열에 구성합니다. TOP 5 제목·행·자리표시·실패 안내 전체를 제거합니다. 선택 카드 제거 전에 none·generation 전진을 적용하고 숨긴 상세 진입을 막습니다. 전체 숨김은 설명·공통 설정 callback만 표시합니다. 창은 task-009, 포커스·viewport는 task-008이 소유합니다.
   - 검증 조건:
     - 결과: 네 카드·두 TOP 5가 독립 즉시 반영되며 다른 저장 선택을 바꾸지 않습니다. 예약 frame·최소 높이·빈 순위 공간·본체 ScrollView·기본 footer가 없습니다. CPU 대표값/User/System/그래프·Memory 구성/Pressure/Swap·상세 목록을 유지합니다. 숨긴 AX·선택을 제거하고 늦은 닫힘은 새 선택을 지우지 않습니다. 기본 글꼴·Memory 자연 높이·TOP 5 여백·네 카드 배치를 유지합니다.
     - 확인: `ResourceRunnerTests/IntegratedDashboardSummaryTests.swift`, `DashboardPresentationTests.swift`와 `ResourceRunnerUITests/DashboardCPUCardUITests.swift`, `DashboardMemoryCardUITests.swift`, `DashboardCardSelectionUITests.swift`로16개 카드 조합·두 TOP 5 각각의 on/off 조합을 확인합니다. 열린 상세 숨김·빠른 재표시·늦은 닫힘·전체 숨김의 frame/AX/selection을 관찰하고 기존 기본 수치·글꼴·무스크롤 근거와 대조합니다.
   - 참조: SPEC §5.1, §5.2, §5.3, §5.12, §5.13; DESIGN §1.2, §1.4, §2.1, §3.2, §4.2, §5 DP7.
-  - 진행/차단: 2026-10-03 worker blocked를 main이 인수했습니다. 기준 HEADccee0f6, 부분 구현10파일 미커밋·최종 signed 단위40/40/6suite와64렌더 조합 통과. UI는 두 번 모두 본문 전 LocalAuthentication Code=-4로 차단돼 미승인입니다. [부분 구현/차단 근거](./evidence/task-007/README.md). 인증 종료 후 동일 signed UI→독립 verify로 재개하며 task-008~011은 미착수입니다. 구현 재시도0·근거 재검증0, verifier reject는 없습니다.
+  - 승인 근거: 2026-10-04 독립 verifier approved를 main이 확정했습니다. HEADcac4ca9 기준10파일 해시/patch 대응, 최종 signed UI2/2·단위40/40/6suite·64렌더 조합·실패/skip0. 전체 숨김 부모 AX 식별자 전파를 수정하고 실제 버튼/높이/카드 AX 부재·상세 숨김/재표시를 확인했습니다. [재개/승인 근거](./evidence/task-007/resume-20261004/README.md). UI correctness 보완1회·근거 재검증0; 이전 환경 차단/실패 이력은 보존합니다. task-008~011 미착수, 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
 - [ ] task-008: 표시 조합의 포커스·단축키·현재 앵커
   - 목적: 제거 뒤 키보드 복귀와 마지막 표시 카드의 상세 공간을 안정적으로 유지합니다.

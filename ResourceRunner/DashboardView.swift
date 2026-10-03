@@ -9,7 +9,7 @@ import SwiftUI
 
 /// 대시보드 팝오버 셸. CPU·Memory·Network·Disk 카드와 카드 옆 상세 팝업을 담습니다.
 ///
-/// 본체는 네 카드를 한 열에 모두 표시하며 상세를 위한 자리를 예약하지 않습니다.
+/// 본체는 켜진 카드를 고정 순서의 한 열에 표시하며 상세를 위한 자리를 예약하지 않습니다.
 /// 본체 폭과 각 카드의 최소 높이는 선택 상태와 무관하므로 카드를 선택하거나 해제해도
 /// 본체 창 크기가 흔들리지 않습니다 — 상세는 그 카드에 앵커한 별도 자식 팝업으로 열려 본체 레이아웃에 참여하지
 /// 않습니다(ANALYSIS §1 「표시 경계」, §5 DP14). 자식 팝오버를 카드에 붙여도 부모 팝오버가 닫히지 않고
@@ -24,97 +24,121 @@ struct DashboardView: View {
     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
     /// 같은 앱의 아이콘을 다시 얻게 됩니다(ANALYSIS §1 「아이콘 경계」, §5 DP11).
     let iconProvider: any ApplicationIconProviding
+    var onOpenSettings: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
+            let preferences = store.preferencesSnapshot.preferences
             // `Button`은 macOS에서 표준 포커스 가능 컨트롤이라 키보드 탐색(Full Keyboard Access)을 켠 환경에서는
             // Tab 이동과 Space·Return 활성화가 그대로 동작합니다. 다만 이 설정은 기본값이 꺼짐이고,
             // 꺼진 상태에서는 Tab이 텍스트 필드·목록만 순회해 버튼에 닿지 않는 것을 실행 중인 앱에서 확인했습니다.
             // 그래서 `keyboardShortcut(_:modifiers:)`로 키보드 탐색 설정과 무관하게 항상 동작하는 단축키를
             // 함께 둡니다(ANALYSIS §5 DP15) — 이 단축키가 기본 설정 환경에서 SPEC §5.13을 성립시키는 수단입니다.
-            Button(action: { store.selectCard(.cpu) }) {
-                CPUCardView(state: store.cpuCard, iconProvider: iconProvider,
-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
-            }
-            .buttonStyle(.plain)
-            .focusable()
-            .focused($focusedCard, equals: .cpu)
-            .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
-                timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
-                now: ContinuousClock().now))
-            .accessibilityAddTraits(.isButton)
-            // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
-            // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
-            .accessibilityIdentifier("CPUCard")
-            .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
-                let generation = store.selectionGeneration
-                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
-                    viewport: viewport,
-                    onClose: { store.dismissDetail(for: .cpu, generation: generation) })
+            if preferences.showsCPUCard {
+                Button(action: { store.selectCard(.cpu) }) {
+                    CPUCardView(state: store.cpuCard, iconProvider: iconProvider,
+                        timeRange: preferences.graphTimeRange,
+                        showsTopApplications: preferences.showsCPUTopApplications)
+                }
+                .buttonStyle(.plain)
+                .focusable()
+                .focused($focusedCard, equals: .cpu)
+                .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
+                    timeRange: preferences.graphTimeRange,
+                    showsTopApplications: preferences.showsCPUTopApplications,
+                    now: ContinuousClock().now))
+                .accessibilityAddTraits(.isButton)
+                // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
+                // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
+                .accessibilityIdentifier("CPUCard")
+                .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
+                    let generation = store.selectionGeneration
+                    CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
+                        viewport: viewport,
+                        onClose: { store.dismissDetail(for: .cpu, generation: generation) })
+                }
             }
 
-            Button(action: { store.selectCard(.memory) }) {
-                MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
+            if preferences.showsMemoryCard {
+                Button(action: { store.selectCard(.memory) }) {
+                    MemoryCardView(state: store.memoryCard, iconProvider: iconProvider,
+                        showsTopApplications: preferences.showsMemoryTopApplications)
+                }
+                .buttonStyle(.plain)
+                .focusable()
+                .focused($focusedCard, equals: .memory)
+                .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
+                .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel(
+                    showsTopApplications: preferences.showsMemoryTopApplications))
+                .accessibilityAddTraits(.isButton)
+                // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
+                .accessibilityIdentifier("MemoryCard")
+                .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
+                    let generation = store.selectionGeneration
+                    MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
+                        viewport: viewport,
+                        onClose: { store.dismissDetail(for: .memory, generation: generation) })
+                }
             }
-            .buttonStyle(.plain)
-            .focusable()
-            .focused($focusedCard, equals: .memory)
-            .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
-            .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel)
-            .accessibilityAddTraits(.isButton)
-            // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
-            .accessibilityIdentifier("MemoryCard")
-            .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
-                let generation = store.selectionGeneration
-                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
-                    viewport: viewport,
-                    onClose: { store.dismissDetail(for: .memory, generation: generation) })
+            if preferences.showsNetworkCard {
+                Button(action: { store.selectCard(.network) }) {
+                    NetworkCardView(presentation: store.networkCard)
+                }
+                .buttonStyle(.plain)
+                .focusable()
+                .focused($focusedCard, equals: .network)
+                .keyboardShortcut("3", modifiers: .command)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
+                    NetworkDisplayText.activeSummary(store.networkCard.interfaces) + ", 단축키 ⌘3")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier("NetworkCard")
+                .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
+                    let generation = store.selectionGeneration
+                    NetworkDetailPopoverContent(presentation: store.networkCard,
+                        onClose: { store.dismissDetail(for: .network, generation: generation) },
+                        viewport: viewport)
+                }
             }
-            Button(action: { store.selectCard(.network) }) {
-                NetworkCardView(presentation: store.networkCard)
+            if preferences.showsDiskCard {
+                Button(action: { store.selectCard(.disk) }) {
+                    DiskCardView(presentation: store.diskCard,
+                        timeRange: preferences.graphTimeRange)
+                }
+                .buttonStyle(.plain)
+                .focusable()
+                .focused($focusedCard, equals: .disk)
+                .background(DashboardLowestAnchorCapture(viewport: viewport))
+                .keyboardShortcut("4", modifiers: .command)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+                    DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
+                        now: ContinuousClock().now,
+                        timeRange: preferences.graphTimeRange,
+                        locale: locale) + ", 단축키 ⌘4")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier("DiskCard")
+                .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+                    let generation = store.selectionGeneration
+                    DiskDetailPopoverContent(presentation: store.diskCard,
+                        onClose: { store.dismissDetail(for: .disk, generation: generation) },
+                        viewport: viewport,
+                        timeRange: preferences.graphTimeRange)
+                }
             }
-            .buttonStyle(.plain)
-            .focusable()
-            .focused($focusedCard, equals: .network)
-            .keyboardShortcut("3", modifiers: .command)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
-                NetworkDisplayText.activeSummary(store.networkCard.interfaces) + ", 단축키 ⌘3")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityIdentifier("NetworkCard")
-            .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
-                let generation = store.selectionGeneration
-                NetworkDetailPopoverContent(presentation: store.networkCard,
-                    onClose: { store.dismissDetail(for: .network, generation: generation) },
-                    viewport: viewport)
-            }
-            Button(action: { store.selectCard(.disk) }) {
-                DiskCardView(presentation: store.diskCard,
-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
-            }
-            .buttonStyle(.plain)
-            .focusable()
-            .focused($focusedCard, equals: .disk)
-            .background(DashboardLowestAnchorCapture(viewport: viewport))
-            .keyboardShortcut("4", modifiers: .command)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
-                DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
-                    now: ContinuousClock().now,
-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
-                    locale: locale) + ", 단축키 ⌘4")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityIdentifier("DiskCard")
-            .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
-                let generation = store.selectionGeneration
-                DiskDetailPopoverContent(presentation: store.diskCard,
-                    onClose: { store.dismissDetail(for: .disk, generation: generation) },
-                    viewport: viewport,
-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
+            if preferences.visibleCards.isEmpty {
+                VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
+                    Text("표시할 카드가 없습니다")
+                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                    Text("설정에서 카드를 다시 켤 수 있습니다")
+                        .dashboardTypography(DashboardStyle.TypographyRole.label)
+                    Button("설정 열기", action: onOpenSettings)
+                        .accessibilityIdentifier("DashboardOpenSettings")
+                }
             }
         }
         .padding(DashboardStyle.Summary.bodyPadding)
@@ -126,7 +150,8 @@ struct DashboardView: View {
                 // 자식 팝오버가 key를 반환한 뒤 해당 카드에 초점을 둡니다. 빠른 재선택이 시작되면 폐기합니다.
                 DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
                     guard store.selection == .none,
-                          store.selectionGeneration == generation else { return }
+                          store.selectionGeneration == generation,
+                          store.isCardVisible(old) else { return }
                     viewport.requestBodyFocus?()
                     focusedCard = old
                 }
@@ -215,6 +240,7 @@ struct CPUCardView: View {
     /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
     let iconProvider: any ApplicationIconProviding
     var timeRange: GraphTimeRange = .tenMinutes
+    var showsTopApplications = true
 
     /// 요약 카드의 제목·그래프·순위 구역을 읽을 수 있는 간격으로 묶습니다.
     static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
@@ -242,11 +268,11 @@ struct CPUCardView: View {
 
             HistoryGraphSlotView(points: cached?.graphPoints, timeRange: timeRange)
 
-            rankingSlot
+            if showsTopApplications { rankingSlot }
         }
         .padding(DashboardStyle.Summary.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: 241, alignment: .topLeading)
+        .frame(minHeight: showsTopApplications ? 241 : nil, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
                 .fill(DashboardStyle.CardSurface.fillColor)
@@ -423,6 +449,7 @@ struct MemoryCardView: View {
     let state: ResourceCardState<MemoryCardPresentation>
     /// CPU 카드와 같은 이유로 전달만 받습니다.
     let iconProvider: any ApplicationIconProviding
+    var showsTopApplications = true
 
     /// CPU 카드의 같은 상수와 같은 뜻입니다.
     static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
@@ -450,7 +477,7 @@ struct MemoryCardView: View {
                 compositionLegendLine
             }
 
-            rankingSlot
+            if showsTopApplications { rankingSlot }
         }
         .padding(DashboardStyle.Summary.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)

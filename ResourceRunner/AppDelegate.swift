@@ -17,7 +17,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var loginItemController: LoginItemController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+#if DEBUG
+        let preferences: PreferencesStore
+        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
+            let environment = ProcessInfo.processInfo.environment
+            let cardMask = Int(environment["RR_DASHBOARD_CARD_MASK"] ?? "15") ?? 15
+            let topMask = Int(environment["RR_DASHBOARD_TOP_MASK"] ?? "3") ?? 3
+            var fixture = AppPreferences.defaults
+            fixture.showsCPUCard = cardMask & 1 != 0
+            fixture.showsMemoryCard = cardMask & 2 != 0
+            fixture.showsNetworkCard = cardMask & 4 != 0
+            fixture.showsDiskCard = cardMask & 8 != 0
+            fixture.showsCPUTopApplications = topMask & 1 != 0
+            fixture.showsMemoryTopApplications = topMask & 2 != 0
+            preferences = PreferencesStore(storage: DashboardUITestPreferencesStorage(initial: fixture))
+        } else {
+            preferences = PreferencesStore()
+        }
+#else
         let preferences = PreferencesStore()
+#endif
         let login = LoginItemController()
         preferencesStore = preferences
         loginItemController = login
@@ -29,3 +48,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         coordinator?.refreshLoginStatus()
     }
 }
+
+#if DEBUG
+/// UI 테스트 설정은 프로세스 안에서만 유지해 기존 사용자 설정을 건드리지 않습니다.
+@MainActor
+private final class DashboardUITestPreferencesStorage: PreferencesStorage {
+    private var value: [String: Any]
+
+    init(initial: AppPreferences) {
+        value = [
+            "schemaVersion": 1,
+            "showsCPUCard": initial.showsCPUCard,
+            "showsMemoryCard": initial.showsMemoryCard,
+            "showsNetworkCard": initial.showsNetworkCard,
+            "showsDiskCard": initial.showsDiskCard,
+            "showsCPUTopApplications": initial.showsCPUTopApplications,
+            "showsMemoryTopApplications": initial.showsMemoryTopApplications,
+        ]
+    }
+
+    func read() -> Any? { value }
+    func write(_ dictionary: [String: Any]) { value = dictionary }
+}
+#endif

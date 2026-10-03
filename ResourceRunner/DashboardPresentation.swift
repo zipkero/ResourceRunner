@@ -214,6 +214,26 @@ nonisolated enum DashboardSelection: Sendable, Hashable {
     case disk
 }
 
+nonisolated extension AppPreferences {
+    func showsCard(_ card: DashboardSelection) -> Bool {
+        switch card {
+        case .none: false
+        case .cpu: showsCPUCard
+        case .memory: showsMemoryCard
+        case .network: showsNetworkCard
+        case .disk: showsDiskCard
+        }
+    }
+
+    var visibleCards: [DashboardSelection] {
+        DashboardSelection.cardOrder.filter(showsCard)
+    }
+}
+
+nonisolated extension DashboardSelection {
+    static let cardOrder: [DashboardSelection] = [.cpu, .memory, .network, .disk]
+}
+
 /// CPU 카드 표시 값. 전체 사용률, User·System 비율, 최근 10분 그래프 점, 앱 단위 CPU TOP 5를 담습니다.
 nonisolated struct CPUCardPresentation: Sendable, Equatable {
     let overallUsage: Double
@@ -555,6 +575,7 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
     }
 
     func cpuAccessibilityLabel(timeRange: GraphTimeRange,
+                               showsTopApplications: Bool = true,
                                now: ContinuousClock.Instant? = nil) -> String {
         let shortcut = "단축키 \(CPUCardPresentation.selectionShortcutDisplayText)"
         let duration = Duration.seconds(timeRange.duration)
@@ -566,10 +587,10 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
         case .normal(let presentation, let timestamp):
             let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints,
                 currentTimestamp: now ?? timestamp, timeRange: duration)
+            let ranking = showsTopApplications
+                ? ", \(CPUCardPresentation.topApplicationsAccessibilityText)" : ""
             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
-                + "\(timeAxis.accessibilityLabel), "
-                + CPUCardPresentation.topApplicationsAccessibilityText
-                + ", \(shortcut)"
+                + "\(timeAxis.accessibilityLabel)\(ranking), \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
                 let timeAxis = HistoryGraphTimeAxis.make(points: [],
@@ -1254,14 +1275,18 @@ extension ResourceCardState where Presentation == MemoryCardPresentation {
     /// Memory 카드의 접근성 이름. 현재 단계와 사용 중·구성 수치, 병합 줄 수치,
     /// 선택·복귀 단축키를 포함합니다.
     var memoryAccessibilityLabel: String {
+        memoryAccessibilityLabel(showsTopApplications: true)
+    }
+
+    func memoryAccessibilityLabel(showsTopApplications: Bool) -> String {
         let shortcut = "단축키 \(MemoryCardPresentation.selectionShortcutDisplayText)"
         switch self {
         case .collecting:
             return "Memory 카드, 수집 중, \(shortcut)"
         case .normal(let presentation, _):
-            return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel), "
-                + MemoryCardPresentation.topApplicationsAccessibilityText
-                + ", \(shortcut)"
+            let ranking = showsTopApplications
+                ? ", \(MemoryCardPresentation.topApplicationsAccessibilityText)" : ""
+            return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel)\(ranking), \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
                 return "Memory 카드, 수집 실패, \(shortcut)"

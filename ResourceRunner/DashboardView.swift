@@ -33,14 +33,17 @@ struct DashboardView: View {
             // 그래서 `keyboardShortcut(_:modifiers:)`로 키보드 탐색 설정과 무관하게 항상 동작하는 단축키를
             // 함께 둡니다(ANALYSIS §5 DP15) — 이 단축키가 기본 설정 환경에서 SPEC §5.13을 성립시키는 수단입니다.
             Button(action: { store.selectCard(.cpu) }) {
-                CPUCardView(state: store.cpuCard, iconProvider: iconProvider)
+                CPUCardView(state: store.cpuCard, iconProvider: iconProvider,
+                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
             }
             .buttonStyle(.plain)
             .focusable()
             .focused($focusedCard, equals: .cpu)
             .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel)
+            .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
+                timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
+                now: ContinuousClock().now))
             .accessibilityAddTraits(.isButton)
             // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
@@ -90,7 +93,8 @@ struct DashboardView: View {
                     viewport: viewport)
             }
             Button(action: { store.selectCard(.disk) }) {
-                DiskCardView(presentation: store.diskCard)
+                DiskCardView(presentation: store.diskCard,
+                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
             }
             .buttonStyle(.plain)
             .focusable()
@@ -100,14 +104,17 @@ struct DashboardView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
                 DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
-                    now: ContinuousClock().now, locale: locale) + ", 단축키 ⌘4")
+                    now: ContinuousClock().now,
+                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
+                    locale: locale) + ", 단축키 ⌘4")
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("DiskCard")
             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
                 let generation = store.selectionGeneration
                 DiskDetailPopoverContent(presentation: store.diskCard,
                     onClose: { store.dismissDetail(for: .disk, generation: generation) },
-                    viewport: viewport)
+                    viewport: viewport,
+                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
             }
         }
         .padding(DashboardStyle.Summary.bodyPadding)
@@ -195,7 +202,7 @@ struct DashboardView: View {
     }
 }
 
-/// CPU 카드 콘텐츠: 전체 사용률, User·System 비율, 최근 10분 그래프, 앱 단위 CPU TOP 5.
+/// CPU 카드 콘텐츠: 전체 사용률, User·System 비율, 선택한 시간 범위의 그래프, 앱 단위 CPU TOP 5.
 /// 접근성 이름·식별자·탭 활성화는 이 뷰를 감싸는 `Button`(`DashboardView`)이 담당합니다.
 ///
 /// 수집 중·정상·실패·중지 네 상태 모두 제목 줄 · 초점 줄 · 계열 요약 줄 · 그래프 자리 · 순위 자리라는 같은 슬롯
@@ -207,6 +214,7 @@ struct CPUCardView: View {
     let state: ResourceCardState<CPUCardPresentation>
     /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
     let iconProvider: any ApplicationIconProviding
+    var timeRange: GraphTimeRange = .tenMinutes
 
     /// 요약 카드의 제목·그래프·순위 구역을 읽을 수 있는 간격으로 묶습니다.
     static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
@@ -232,7 +240,7 @@ struct CPUCardView: View {
                 secondaryLine
             }
 
-            HistoryGraphSlotView(points: cached?.graphPoints)
+            HistoryGraphSlotView(points: cached?.graphPoints, timeRange: timeRange)
 
             rankingSlot
         }
@@ -633,7 +641,7 @@ nonisolated enum MemoryCompositionBarLayout {
     }
 }
 
-/// 최근 10분 CPU 사용률 그래프. 인접 간격이 벌어진 점끼리는 잇지 않고 연속 구간별로 선을 그립니다.
+/// 선택한 시간 범위의 CPU 사용률 그래프. 인접 간격이 벌어진 점끼리는 잇지 않고 연속 구간별로 선을 그립니다.
 ///
 /// 가로축 오른쪽 끝은 마지막 점의 시각이 아니라 **그리는 시점의 시각**입니다(ANALYSIS §5 DP3).
 /// 갱신이 멈춘 동안(팝오버가 닫혀 있거나 화면을 볼 수 없어 카드가 갱신되지 않는 동안)에는 `points` 자체가
@@ -642,7 +650,7 @@ nonisolated enum MemoryCompositionBarLayout {
 /// 그래야 중지 뒤 재개 첫 tick처럼 카드 갱신 자체가 없는 순간에도 마지막 샘플이 오른쪽 끝에 들러붙지 않고
 /// 실제 경과 시간만큼 왼쪽으로 밀려나 빈 구간이 제자리에 보입니다.
 ///
-/// 이력 링 용량(10분 창, 1초 해상도라 점이 최대 601개)을 실제 렌더 폭(팝오버 280pt에서 카드 padding을 뺀 약 248pt)에
+/// 이력 링 최대 1203개 점을 실제 렌더 폭(팝오버 280pt에서 카드 padding을 뺀 약 248pt)에
 /// 그대로 찍으면 점 간격이 원본 표본 간격까지 좁아져 사용률 흐름이 뭉개집니다. 그리기 직전
 /// `HistoryPoint.downsampledConnectedSegments(from:bucketCount:)`로 렌더 폭 기준 버킷 수만큼 다운샘플링해
 /// 평균 점 간격이 `lineWidth`보다 확실히 커지게 합니다(결함 수정, SPEC §5.1).
@@ -650,6 +658,7 @@ nonisolated enum MemoryCompositionBarLayout {
 // `@testable import`로 직접 단언해야 격자·밴드 그리기 순서와 불투명도의 회귀를 단위 테스트로 잡을 수 있습니다.
 struct HistoryGraphView: View {
     let points: [HistoryPoint]
+    var timeRange: GraphTimeRange = .tenMinutes
 
     /// 두 밴드 중 어느 쪽인지. 아래(User)와 위(System)가 색이 아니라 채움 밀도·경계선 모양으로도
     /// 구분되도록 이 값에서 스타일을 유도합니다(SPEC §5.5, ANALYSIS §5 DP9).
@@ -718,13 +727,17 @@ struct HistoryGraphView: View {
         GeometryReader { proxy in
                 Canvas { context, size in
                     func xPosition(_ point: HistoryPoint) -> CGFloat {
-                        size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp, currentTimestamp: currentTimestamp))
+                        size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp,
+                            currentTimestamp: currentTimestamp, timeRange: .seconds(timeRange.duration)))
                     }
                     func yPosition(_ value: Double) -> CGFloat {
                         CGFloat(HistoryGraphGridline.yPosition(forValue: value, height: Double(size.height)))
                     }
 
-                    let segments = HistoryPoint.downsampledConnectedSegments(from: points, bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
+                    let visible = HistoryPoint.visiblePoints(from: points,
+                        currentTimestamp: currentTimestamp, timeRange: timeRange)
+                    let segments = HistoryPoint.downsampledConnectedSegments(from: visible,
+                        bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
 
                     func lowerFillPath(for segment: [HistoryPoint]) -> Path? {
                         guard let first = segment.first, let last = segment.last else { return nil }
@@ -815,19 +828,22 @@ private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSi
 /// 판 면은 두 경로를 고르는 판 틀에 배경으로 한 번만 깔아, 어느 경로든 같은 크기·같은 자리의 면 위에 그립니다.
 private struct HistoryGraphSlotView: View {
     let points: [HistoryPoint]?
+    var timeRange: GraphTimeRange = .tenMinutes
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             let currentTimestamp = ContinuousClock().now
             let timeAxis = HistoryGraphTimeAxis.make(
                 points: points ?? [],
-                currentTimestamp: currentTimestamp
+                currentTimestamp: currentTimestamp,
+                timeRange: .seconds(timeRange.duration)
             )
 
             VStack(spacing: HistoryGraphLayout.axisSpacing) {
                 Group {
                     if let points {
-                        HistoryGraphView(points: points, currentTimestamp: currentTimestamp)
+                        HistoryGraphView(points: points, timeRange: timeRange,
+                            currentTimestamp: currentTimestamp)
                     } else {
                         GraphPlaceholderView()
                     }

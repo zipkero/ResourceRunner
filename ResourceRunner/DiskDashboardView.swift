@@ -99,15 +99,18 @@ nonisolated enum DiskDisplayText {
                                        locale: Locale = .current) -> String {
         let range = graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
             ?? "속도 범위 대기 · B/s"
-        return "Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 \(range), " +
-            "\(activity(phase)), 수집 공백은 이어 그리지 않음"
+        let progress = graph.progressLabel.isEmpty ? "" : ", \(graph.progressLabel)"
+        return "Disk \(graph.timeRange.windowLabel) 그래프, Read 점선, Write 실선, 원본 범위 \(range), " +
+            "\(activity(phase)), 수집 공백은 이어 그리지 않음\(progress)"
     }
 
     static func miniGraphAccessibility(presentation: DiskCardPresentation,
                                        now: ContinuousClock.Instant,
+                                       timeRange: GraphTimeRange = .tenMinutes,
                                        locale: Locale = .current) -> String {
         miniGraphAccessibility(ResourceRateGraph.make(history: presentation.recentHistory,
-            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now),
+            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now,
+            timeRange: timeRange),
             phase: presentation.phase, locale: locale)
     }
 
@@ -168,13 +171,15 @@ private enum DiskCompactTypography {
 
 struct DiskCardView: View {
     let presentation: DiskCardPresentation
+    var timeRange: GraphTimeRange = .tenMinutes
     var fixedNow: ContinuousClock.Instant? = nil
     @Environment(\.locale) private var locale
 
     var body: some View {
         let now = fixedNow ?? ContinuousClock().now
         let graph = ResourceRateGraph.make(history: presentation.recentHistory,
-            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
+            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now,
+            timeRange: timeRange)
         return VStack(alignment: .leading, spacing: DiskCardLayout.spacing) {
             HStack(spacing: 3) {
                 Text("Disk · 물리 합계")
@@ -196,7 +201,8 @@ struct DiskCardView: View {
                     }
                     .frame(width: rateWidth, height: DiskCardLayout.ratesAndGraph)
                     ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
-                        firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow,
+                        firstHistoryPointAt: presentation.firstHistoryPointAt,
+                        timeRange: timeRange, fixedNow: fixedNow,
                         plotHeight: DiskCardLayout.miniPlot, showsAxis: false)
                         .frame(maxWidth: .infinity)
                         .frame(height: DiskCardLayout.miniPlot)
@@ -306,6 +312,7 @@ struct DiskDetailPopoverContent: View {
     let presentation: DiskCardPresentation
     let onClose: () -> Void
     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+    var timeRange: GraphTimeRange = .tenMinutes
     var fixedNow: ContinuousClock.Instant? = nil
     @Environment(\.locale) private var locale
 
@@ -321,6 +328,8 @@ struct DiskDetailPopoverContent: View {
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("활동 · \(DiskDisplayText.activity(presentation.phase)) · \(DiskDisplayText.age(presentation.latestReadAt, now: now))")
+                    Text(DiskDisplayText.miniGraphAccessibility(presentation: presentation,
+                        now: now, timeRange: timeRange, locale: locale))
                     if case .partial(let reason) = presentation.phase { Text("물리 합계 일부 실패: \(reason)") }
                     if case .failure(let reason) = presentation.phase { Text("활동 조회 실패: \(reason)") }
                     Text("용량은 활동과 별도 느린 주기로 갱신 · \(DiskDisplayText.supplemental(presentation.supplemental)) · \(DiskDisplayText.age(presentation.supplemental.readAt, now: now))")
@@ -376,7 +385,9 @@ struct DiskDetailPopoverContent: View {
             DiskDisplayText.age(presentation.supplemental.readAt, now: now)
         let capacity = "시스템 / " +
             DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale)
-        return [activity, storage, capacity, DiskDisplayText.usedDefinition, externalSummary]
+        let graph = DiskDisplayText.miniGraphAccessibility(presentation: presentation,
+            now: now, timeRange: timeRange, locale: locale)
+        return [activity, graph, storage, capacity, DiskDisplayText.usedDefinition, externalSummary]
             .joined(separator: ", ")
     }
 

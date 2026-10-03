@@ -55,6 +55,7 @@ struct ResourceRateGraphSlotView: View {
     let kind: Kind
     let history: [RateHistoryPoint]
     let firstHistoryPointAt: ContinuousClock.Instant?
+    var timeRange: GraphTimeRange = .tenMinutes
     /// 결정적 렌더 테스트에서는 시간을 고정하고 실제 앱에서는 매초 새 창을 그립니다.
     var fixedNow: ContinuousClock.Instant? = nil
     var plotHeight: CGFloat = HistoryGraphLayout.plotHeight
@@ -75,7 +76,8 @@ struct ResourceRateGraphSlotView: View {
 
     private func slot(at now: ContinuousClock.Instant) -> some View {
         let graph = ResourceRateGraph.make(history: history,
-            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now)
+            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now,
+            timeRange: timeRange)
         return VStack(spacing: showsAxis ? HistoryGraphLayout.axisSpacing : 0) {
             ZStack(alignment: .top) {
                 Canvas { context, size in
@@ -116,7 +118,7 @@ struct ResourceRateGraphSlotView: View {
             if showsAxis {
                 ZStack {
                     HStack(spacing: 0) {
-                        Text("10분 전")
+                        Text(timeRange.leadingLabel)
                         Spacer(minLength: 0)
                         Text("지금")
                     }

@@ -1,0 +1,704 @@
+diff --git a/ResourceRunner/DashboardPresentation.swift b/ResourceRunner/DashboardPresentation.swift
+index 64f3efb..938a9e1 100644
+--- a/ResourceRunner/DashboardPresentation.swift
++++ b/ResourceRunner/DashboardPresentation.swift
+@@ -107,12 +107,18 @@ nonisolated struct HistoryPoint: Sendable, Equatable {
+     let value: Double
+     let subValue: Double?
+     let collectionEpoch: Int
++    let maximumConnectedGap: Duration
++    let rateSegment: UInt64
+ 
+-    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil, collectionEpoch: Int = 0) {
++    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil,
++         collectionEpoch: Int = 0, maximumConnectedGap: Duration = .seconds(10),
++         rateSegment: UInt64 = 0) {
+         self.timestamp = timestamp
+         self.value = value
+         self.subValue = subValue
+         self.collectionEpoch = collectionEpoch
++        self.maximumConnectedGap = maximumConnectedGap
++        self.rateSegment = rateSegment
+     }
+ }
+ 
+@@ -126,13 +132,18 @@ extension HistoryPoint {
+ }
+ 
+ extension HistoryPoint {
+-    /// 인접한 두 점 사이 간격이 이 값을 넘으면 하나의 선분으로 잇지 않습니다.
+-    /// CPU Collector가 tick 차분을 포기하는 간격(`SystemMetricsSampling.maximumTickGap`)과 같은 기준을 재사용합니다 —
+-    /// 그보다 벌어진 두 그래프 점 사이에는 실제로 수집되지 않은 시간이 있다는 뜻이기 때문입니다.
++    /// 초기/직접 생성 점의 기본 허용 간격입니다. 실제 수집 점은 당시 주기에 따른 값을 따로 보유합니다.
+     static let maximumConnectedGap = SystemMetricsSampling.maximumTickGap
+ 
++    static func visiblePoints(from points: [HistoryPoint],
++                              currentTimestamp: ContinuousClock.Instant,
++                              timeRange: GraphTimeRange) -> [HistoryPoint] {
++        let start = currentTimestamp - .seconds(timeRange.duration)
++        return points.filter { $0.timestamp >= start && $0.timestamp <= currentTimestamp }
++    }
++
+     /// 점 목록을 수집 구간과 인접 간격으로 나눠 하나의 선으로 이어 그릴 수 있는 연속 구간들로 만듭니다.
+-    /// epoch가 다르거나 간격이 `maximumConnectedGap`을 넘는 두 점은 서로 다른 구간에 들어갑니다.
++    /// epoch·segment가 다르거나 뒤쪽 점의 당시 허용 간격을 넘으면 서로 다른 구간에 들어갑니다.
+     /// 빈 입력은 빈 결과를, 점 하나짜리 입력은 그 점 하나만 담은 구간 하나를 돌려줍니다.
+     static func connectedSegments(from points: [HistoryPoint]) -> [[HistoryPoint]] {
+         guard let first = points.first else { return [] }
+@@ -142,7 +153,9 @@ extension HistoryPoint {
+             let lastSegmentIndex = segments.count - 1
+             let previous = segments[lastSegmentIndex][segments[lastSegmentIndex].count - 1]
+             if previous.collectionEpoch != point.collectionEpoch
+-                || previous.timestamp.duration(to: point.timestamp) > maximumConnectedGap {
++                || previous.rateSegment != point.rateSegment
++                || previous.timestamp >= point.timestamp
++                || previous.timestamp.duration(to: point.timestamp) > point.maximumConnectedGap {
+                 segments.append([point])
+             } else {
+                 segments[lastSegmentIndex].append(point)
+@@ -284,7 +297,9 @@ extension CPUCardPresentation {
+                     timestamp: $0.timestamp,
+                     value: $0.overallCPUUsage,
+                     subValue: $0.userRatio,
+-                    collectionEpoch: $0.collectionEpoch
++                    collectionEpoch: $0.collectionEpoch,
++                    maximumConnectedGap: $0.maximumConnectedGap,
++                    rateSegment: $0.rateSegment
+                 )
+             }
+ 
+@@ -389,7 +404,7 @@ extension HistoryPoint {
+ }
+ 
+ extension HistoryPoint {
+-    /// 그래프 점의 가로축 좌표를 `currentTimestamp`(그리는 시점의 시각) 기준 10분 창 안에서 0...1로 계산합니다.
++    /// 그래프 점의 가로축 좌표를 `currentTimestamp`(그리는 시점의 시각) 기준 선택 창 안에서 0...1로 계산합니다.
+     /// 0이 창의 왼쪽 끝(`currentTimestamp - timeRange`), 1이 창의 오른쪽 끝(`currentTimestamp`)입니다.
+     ///
+     /// 창 끝을 점 자신의 시각이 아니라 항상 `currentTimestamp`로 고정해야,
+@@ -501,8 +516,8 @@ nonisolated struct HistoryGraphTimeAxis: Sendable, Equatable {
+         )
+     }
+ 
+-    static var accessibilityTimeWindowLabel: String {
+-        "최근 \(leadingLabel(seconds: HistoryCapacity.defaultTimeRange.secondsAsDouble).replacingOccurrences(of: " 전", with: "")) 그래프"
++    var accessibilityTimeWindowLabel: String {
++        "최근 \(leadingLabel.replacingOccurrences(of: " 전", with: "")) 그래프"
+     }
+ 
+     private static func leadingLabel(seconds: Double) -> String {
+@@ -536,36 +551,48 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
+     /// CPU 카드의 접근성 이름. 현재 사용률과 카드 상태, 겹쳐 그린 두 계열, 기준선,
+     /// TOP 5 안내 문구, 선택·복귀 단축키를 포함합니다.
+     var cpuAccessibilityLabel: String {
++        cpuAccessibilityLabel(timeRange: .tenMinutes)
++    }
++
++    func cpuAccessibilityLabel(timeRange: GraphTimeRange,
++                               now: ContinuousClock.Instant? = nil) -> String {
+         let shortcut = "단축키 \(CPUCardPresentation.selectionShortcutDisplayText)"
++        let duration = Duration.seconds(timeRange.duration)
+         switch self {
+         case .collecting:
+-            let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
++            let timeAxis = HistoryGraphTimeAxis.make(points: [],
++                currentTimestamp: now ?? ContinuousClock().now, timeRange: duration)
+             return "CPU 카드, 수집 중, \(timeAxis.accessibilityLabel), \(shortcut)"
+         case .normal(let presentation, let timestamp):
+-            let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints, currentTimestamp: timestamp)
++            let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints,
++                currentTimestamp: now ?? timestamp, timeRange: duration)
+             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
+                 + "\(timeAxis.accessibilityLabel), "
+                 + CPUCardPresentation.topApplicationsAccessibilityText
+                 + ", \(shortcut)"
+         case .failure(let lastKnown):
+             guard let lastKnown else {
+-                let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
++                let timeAxis = HistoryGraphTimeAxis.make(points: [],
++                    currentTimestamp: now ?? ContinuousClock().now, timeRange: duration)
+                 return "CPU 카드, 수집 실패, \(timeAxis.accessibilityLabel), \(shortcut)"
+             }
+             let timeAxis = HistoryGraphTimeAxis.make(
+                 points: lastKnown.presentation.graphPoints,
+-                currentTimestamp: lastKnown.timestamp
++                currentTimestamp: now ?? lastKnown.timestamp,
++                timeRange: duration
+             )
+             return "CPU 카드, 수집 실패, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
+                 + "\(timeAxis.accessibilityLabel), \(shortcut)"
+         case .stopped(let lastKnown):
+             guard let lastKnown else {
+-                let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
++                let timeAxis = HistoryGraphTimeAxis.make(points: [],
++                    currentTimestamp: now ?? ContinuousClock().now, timeRange: duration)
+                 return "CPU 카드, 수집 중지, \(timeAxis.accessibilityLabel), \(shortcut)"
+             }
+             let timeAxis = HistoryGraphTimeAxis.make(
+                 points: lastKnown.presentation.graphPoints,
+-                currentTimestamp: lastKnown.timestamp
++                currentTimestamp: now ?? lastKnown.timestamp,
++                timeRange: duration
+             )
+             return "CPU 카드, 수집 중지, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
+                 + "\(timeAxis.accessibilityLabel), \(shortcut)"
+@@ -576,9 +603,9 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
+ private extension HistoryGraphTimeAxis {
+     var accessibilityLabel: String {
+         if collectionProgressLabel.isEmpty {
+-            return Self.accessibilityTimeWindowLabel
++            return accessibilityTimeWindowLabel
+         }
+-        return "\(Self.accessibilityTimeWindowLabel), \(collectionProgressLabel)"
++        return "\(accessibilityTimeWindowLabel), \(collectionProgressLabel)"
+     }
+ }
+ 
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index d6b7592..6b41f3c 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -33,14 +33,17 @@ struct DashboardView: View {
+             // 그래서 `keyboardShortcut(_:modifiers:)`로 키보드 탐색 설정과 무관하게 항상 동작하는 단축키를
+             // 함께 둡니다(ANALYSIS §5 DP15) — 이 단축키가 기본 설정 환경에서 SPEC §5.13을 성립시키는 수단입니다.
+             Button(action: { store.selectCard(.cpu) }) {
+-                CPUCardView(state: store.cpuCard, iconProvider: iconProvider)
++                CPUCardView(state: store.cpuCard, iconProvider: iconProvider,
++                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
+             }
+             .buttonStyle(.plain)
+             .focusable()
+             .focused($focusedCard, equals: .cpu)
+             .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
+             .accessibilityElement(children: .ignore)
+-            .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel)
++            .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
++                timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
++                now: ContinuousClock().now))
+             .accessibilityAddTraits(.isButton)
+             // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
+             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
+@@ -90,7 +93,8 @@ struct DashboardView: View {
+                     viewport: viewport)
+             }
+             Button(action: { store.selectCard(.disk) }) {
+-                DiskCardView(presentation: store.diskCard)
++                DiskCardView(presentation: store.diskCard,
++                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
+             }
+             .buttonStyle(.plain)
+             .focusable()
+@@ -100,14 +104,17 @@ struct DashboardView: View {
+             .accessibilityElement(children: .ignore)
+             .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+                 DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
+-                    now: ContinuousClock().now, locale: locale) + ", 단축키 ⌘4")
++                    now: ContinuousClock().now,
++                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
++                    locale: locale) + ", 단축키 ⌘4")
+             .accessibilityAddTraits(.isButton)
+             .accessibilityIdentifier("DiskCard")
+             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+                 let generation = store.selectionGeneration
+                 DiskDetailPopoverContent(presentation: store.diskCard,
+                     onClose: { store.dismissDetail(for: .disk, generation: generation) },
+-                    viewport: viewport)
++                    viewport: viewport,
++                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
+             }
+         }
+         .padding(DashboardStyle.Summary.bodyPadding)
+@@ -195,7 +202,7 @@ struct DashboardView: View {
+     }
+ }
+ 
+-/// CPU 카드 콘텐츠: 전체 사용률, User·System 비율, 최근 10분 그래프, 앱 단위 CPU TOP 5.
++/// CPU 카드 콘텐츠: 전체 사용률, User·System 비율, 선택한 시간 범위의 그래프, 앱 단위 CPU TOP 5.
+ /// 접근성 이름·식별자·탭 활성화는 이 뷰를 감싸는 `Button`(`DashboardView`)이 담당합니다.
+ ///
+ /// 수집 중·정상·실패·중지 네 상태 모두 제목 줄 · 초점 줄 · 계열 요약 줄 · 그래프 자리 · 순위 자리라는 같은 슬롯
+@@ -207,6 +214,7 @@ struct CPUCardView: View {
+     let state: ResourceCardState<CPUCardPresentation>
+     /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
+     let iconProvider: any ApplicationIconProviding
++    var timeRange: GraphTimeRange = .tenMinutes
+ 
+     /// 요약 카드의 제목·그래프·순위 구역을 읽을 수 있는 간격으로 묶습니다.
+     static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
+@@ -232,7 +240,7 @@ struct CPUCardView: View {
+                 secondaryLine
+             }
+ 
+-            HistoryGraphSlotView(points: cached?.graphPoints)
++            HistoryGraphSlotView(points: cached?.graphPoints, timeRange: timeRange)
+ 
+             rankingSlot
+         }
+@@ -633,7 +641,7 @@ nonisolated enum MemoryCompositionBarLayout {
+     }
+ }
+ 
+-/// 최근 10분 CPU 사용률 그래프. 인접 간격이 벌어진 점끼리는 잇지 않고 연속 구간별로 선을 그립니다.
++/// 선택한 시간 범위의 CPU 사용률 그래프. 인접 간격이 벌어진 점끼리는 잇지 않고 연속 구간별로 선을 그립니다.
+ ///
+ /// 가로축 오른쪽 끝은 마지막 점의 시각이 아니라 **그리는 시점의 시각**입니다(ANALYSIS §5 DP3).
+ /// 갱신이 멈춘 동안(팝오버가 닫혀 있거나 화면을 볼 수 없어 카드가 갱신되지 않는 동안)에는 `points` 자체가
+@@ -642,7 +650,7 @@ nonisolated enum MemoryCompositionBarLayout {
+ /// 그래야 중지 뒤 재개 첫 tick처럼 카드 갱신 자체가 없는 순간에도 마지막 샘플이 오른쪽 끝에 들러붙지 않고
+ /// 실제 경과 시간만큼 왼쪽으로 밀려나 빈 구간이 제자리에 보입니다.
+ ///
+-/// 이력 링 용량(10분 창, 1초 해상도라 점이 최대 601개)을 실제 렌더 폭(팝오버 280pt에서 카드 padding을 뺀 약 248pt)에
++/// 이력 링 최대 1203개 점을 실제 렌더 폭(팝오버 280pt에서 카드 padding을 뺀 약 248pt)에
+ /// 그대로 찍으면 점 간격이 원본 표본 간격까지 좁아져 사용률 흐름이 뭉개집니다. 그리기 직전
+ /// `HistoryPoint.downsampledConnectedSegments(from:bucketCount:)`로 렌더 폭 기준 버킷 수만큼 다운샘플링해
+ /// 평균 점 간격이 `lineWidth`보다 확실히 커지게 합니다(결함 수정, SPEC §5.1).
+@@ -650,6 +658,7 @@ nonisolated enum MemoryCompositionBarLayout {
+ // `@testable import`로 직접 단언해야 격자·밴드 그리기 순서와 불투명도의 회귀를 단위 테스트로 잡을 수 있습니다.
+ struct HistoryGraphView: View {
+     let points: [HistoryPoint]
++    var timeRange: GraphTimeRange = .tenMinutes
+ 
+     /// 두 밴드 중 어느 쪽인지. 아래(User)와 위(System)가 색이 아니라 채움 밀도·경계선 모양으로도
+     /// 구분되도록 이 값에서 스타일을 유도합니다(SPEC §5.5, ANALYSIS §5 DP9).
+@@ -718,13 +727,17 @@ struct HistoryGraphView: View {
+         GeometryReader { proxy in
+                 Canvas { context, size in
+                     func xPosition(_ point: HistoryPoint) -> CGFloat {
+-                        size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp, currentTimestamp: currentTimestamp))
++                        size.width * CGFloat(HistoryPoint.normalizedXPosition(for: point.timestamp,
++                            currentTimestamp: currentTimestamp, timeRange: .seconds(timeRange.duration)))
+                     }
+                     func yPosition(_ value: Double) -> CGFloat {
+                         CGFloat(HistoryGraphGridline.yPosition(forValue: value, height: Double(size.height)))
+                     }
+ 
+-                    let segments = HistoryPoint.downsampledConnectedSegments(from: points, bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
++                    let visible = HistoryPoint.visiblePoints(from: points,
++                        currentTimestamp: currentTimestamp, timeRange: timeRange)
++                    let segments = HistoryPoint.downsampledConnectedSegments(from: visible,
++                        bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
+ 
+                     func lowerFillPath(for segment: [HistoryPoint]) -> Path? {
+                         guard let first = segment.first, let last = segment.last else { return nil }
+@@ -815,19 +828,22 @@ private func drawCPUGraphGridlines(in context: inout GraphicsContext, size: CGSi
+ /// 판 면은 두 경로를 고르는 판 틀에 배경으로 한 번만 깔아, 어느 경로든 같은 크기·같은 자리의 면 위에 그립니다.
+ private struct HistoryGraphSlotView: View {
+     let points: [HistoryPoint]?
++    var timeRange: GraphTimeRange = .tenMinutes
+ 
+     var body: some View {
+         TimelineView(.periodic(from: .now, by: 1)) { _ in
+             let currentTimestamp = ContinuousClock().now
+             let timeAxis = HistoryGraphTimeAxis.make(
+                 points: points ?? [],
+-                currentTimestamp: currentTimestamp
++                currentTimestamp: currentTimestamp,
++                timeRange: .seconds(timeRange.duration)
+             )
+ 
+             VStack(spacing: HistoryGraphLayout.axisSpacing) {
+                 Group {
+                     if let points {
+-                        HistoryGraphView(points: points, currentTimestamp: currentTimestamp)
++                        HistoryGraphView(points: points, timeRange: timeRange,
++                            currentTimestamp: currentTimestamp)
+                     } else {
+                         GraphPlaceholderView()
+                     }
+diff --git a/ResourceRunner/DiskDashboardView.swift b/ResourceRunner/DiskDashboardView.swift
+index 9ad15c0..c11ec5f 100644
+--- a/ResourceRunner/DiskDashboardView.swift
++++ b/ResourceRunner/DiskDashboardView.swift
+@@ -99,15 +99,18 @@ nonisolated enum DiskDisplayText {
+                                        locale: Locale = .current) -> String {
+         let range = graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
+             ?? "속도 범위 대기 · B/s"
+-        return "Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 \(range), " +
+-            "\(activity(phase)), 수집 공백은 이어 그리지 않음"
++        let progress = graph.progressLabel.isEmpty ? "" : ", \(graph.progressLabel)"
++        return "Disk \(graph.timeRange.windowLabel) 그래프, Read 점선, Write 실선, 원본 범위 \(range), " +
++            "\(activity(phase)), 수집 공백은 이어 그리지 않음\(progress)"
+     }
+ 
+     static func miniGraphAccessibility(presentation: DiskCardPresentation,
+                                        now: ContinuousClock.Instant,
++                                       timeRange: GraphTimeRange = .tenMinutes,
+                                        locale: Locale = .current) -> String {
+         miniGraphAccessibility(ResourceRateGraph.make(history: presentation.recentHistory,
+-            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now),
++            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now,
++            timeRange: timeRange),
+             phase: presentation.phase, locale: locale)
+     }
+ 
+@@ -168,13 +171,15 @@ private enum DiskCompactTypography {
+ 
+ struct DiskCardView: View {
+     let presentation: DiskCardPresentation
++    var timeRange: GraphTimeRange = .tenMinutes
+     var fixedNow: ContinuousClock.Instant? = nil
+     @Environment(\.locale) private var locale
+ 
+     var body: some View {
+         let now = fixedNow ?? ContinuousClock().now
+         let graph = ResourceRateGraph.make(history: presentation.recentHistory,
+-            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
++            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now,
++            timeRange: timeRange)
+         return VStack(alignment: .leading, spacing: DiskCardLayout.spacing) {
+             HStack(spacing: 3) {
+                 Text("Disk · 물리 합계")
+@@ -196,7 +201,8 @@ struct DiskCardView: View {
+                     }
+                     .frame(width: rateWidth, height: DiskCardLayout.ratesAndGraph)
+                     ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
+-                        firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow,
++                        firstHistoryPointAt: presentation.firstHistoryPointAt,
++                        timeRange: timeRange, fixedNow: fixedNow,
+                         plotHeight: DiskCardLayout.miniPlot, showsAxis: false)
+                         .frame(maxWidth: .infinity)
+                         .frame(height: DiskCardLayout.miniPlot)
+@@ -306,6 +312,7 @@ struct DiskDetailPopoverContent: View {
+     let presentation: DiskCardPresentation
+     let onClose: () -> Void
+     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
++    var timeRange: GraphTimeRange = .tenMinutes
+     var fixedNow: ContinuousClock.Instant? = nil
+     @Environment(\.locale) private var locale
+ 
+@@ -321,6 +328,8 @@ struct DiskDetailPopoverContent: View {
+                 }
+                 VStack(alignment: .leading, spacing: 4) {
+                     Text("활동 · \(DiskDisplayText.activity(presentation.phase)) · \(DiskDisplayText.age(presentation.latestReadAt, now: now))")
++                    Text(DiskDisplayText.miniGraphAccessibility(presentation: presentation,
++                        now: now, timeRange: timeRange, locale: locale))
+                     if case .partial(let reason) = presentation.phase { Text("물리 합계 일부 실패: \(reason)") }
+                     if case .failure(let reason) = presentation.phase { Text("활동 조회 실패: \(reason)") }
+                     Text("용량은 활동과 별도 느린 주기로 갱신 · \(DiskDisplayText.supplemental(presentation.supplemental)) · \(DiskDisplayText.age(presentation.supplemental.readAt, now: now))")
+@@ -376,7 +385,9 @@ struct DiskDetailPopoverContent: View {
+             DiskDisplayText.age(presentation.supplemental.readAt, now: now)
+         let capacity = "시스템 / " +
+             DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale)
+-        return [activity, storage, capacity, DiskDisplayText.usedDefinition, externalSummary]
++        let graph = DiskDisplayText.miniGraphAccessibility(presentation: presentation,
++            now: now, timeRange: timeRange, locale: locale)
++        return [activity, graph, storage, capacity, DiskDisplayText.usedDefinition, externalSummary]
+             .joined(separator: ", ")
+     }
+ 
+diff --git a/ResourceRunner/ResourceRateGraph.swift b/ResourceRunner/ResourceRateGraph.swift
+index dd80bcd..8ca1111 100644
+--- a/ResourceRunner/ResourceRateGraph.swift
++++ b/ResourceRunner/ResourceRateGraph.swift
+@@ -1,19 +1,24 @@
+ import Foundation
+ 
++nonisolated extension GraphTimeRange {
++    var leadingLabel: String { "\(Int(duration) / 60)분 전" }
++    var windowLabel: String { "최근 \(Int(duration) / 60)분" }
++}
++
+ /// Network·Disk의 두 방향을 같은 양의 B/s 축에 놓는 순수 그래프 모델입니다.
+ nonisolated struct ResourceRateGraph: Sendable {
+     let visibleSegments: [[RateHistoryPoint]]
+     let upperBound: Double?
+     let firstHistoryPointAt: ContinuousClock.Instant?
+     let currentTimestamp: ContinuousClock.Instant
++    let timeRange: GraphTimeRange
+ 
+-    static let window: Duration = .seconds(600)
+-    static let maximumConnectedGap: Duration = .seconds(10)
+     static let minimumUpperBound = 1_024.0
+ 
+     static func make(history: [RateHistoryPoint], firstHistoryPointAt: ContinuousClock.Instant?,
+-                     currentTimestamp: ContinuousClock.Instant) -> ResourceRateGraph {
+-        let start = currentTimestamp - window
++                     currentTimestamp: ContinuousClock.Instant,
++                     timeRange: GraphTimeRange = .tenMinutes) -> ResourceRateGraph {
++        let start = currentTimestamp - .seconds(timeRange.duration)
+         let visible = history.filter { $0.timestamp >= start && $0.timestamp <= currentTimestamp }
+             .sorted { $0.timestamp < $1.timestamp }
+         var segments: [[RateHistoryPoint]] = []
+@@ -22,7 +27,7 @@ nonisolated struct ResourceRateGraph: Sendable {
+                previous.collectionEpoch == point.collectionEpoch,
+                previous.rateSegment == point.rateSegment,
+                previous.timestamp < point.timestamp,
+-               previous.timestamp.duration(to: point.timestamp) <= maximumConnectedGap {
++               previous.timestamp.duration(to: point.timestamp) <= point.maximumConnectedGap {
+                 segments[segments.count - 1].append(point)
+             } else { segments.append([point]) }
+         }
+@@ -31,10 +36,11 @@ nonisolated struct ResourceRateGraph: Sendable {
+         }
+         return ResourceRateGraph(visibleSegments: segments,
+             upperBound: visible.isEmpty ? nil : niceUpperBound(for: maximum),
+-            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: currentTimestamp)
++            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: currentTimestamp,
++            timeRange: timeRange)
+     }
+ 
+-    /// 10분 원본의 두 peak를 본 뒤에만 축을 정합니다. 빈 판에는 측정된 peak가 없습니다.
++    /// 표시 구간의 두 peak를 본 뒤에만 축을 정합니다. 빈 판에는 측정된 peak가 없습니다.
+     static func niceUpperBound(for maximum: Double) -> Double {
+         guard maximum.isFinite, maximum > minimumUpperBound else { return minimumUpperBound }
+         let power = pow(10, floor(log10(maximum)))
+@@ -51,13 +57,15 @@ nonisolated struct ResourceRateGraph: Sendable {
+     }
+ 
+     var progressLabel: String {
+-        guard let firstHistoryPointAt else { return "데이터 수집 중 · 00:00 / 10:00" }
++        let total = Int(timeRange.duration)
++        let denominator = String(format: "%02d:%02d", total / 60, total % 60)
++        guard let firstHistoryPointAt else { return "데이터 수집 중 · 00:00 / \(denominator)" }
+         let duration = firstHistoryPointAt.duration(to: currentTimestamp)
+         let (seconds, attoseconds) = duration.components
+         let elapsed = max(0, Double(seconds) + Double(attoseconds) / 1e18)
+-        guard elapsed < 600 else { return "" }
++        guard elapsed < timeRange.duration else { return "" }
+         let whole = Int(elapsed)
+-        return String(format: "데이터 수집 중 · %02d:%02d / 10:00", whole / 60, whole % 60)
++        return String(format: "데이터 수집 중 · %02d:%02d / %@", whole / 60, whole % 60, denominator)
+     }
+ 
+     /// 먼저 분리한 연속 구간마다 버킷의 RX/Read·TX/Write 최소·최대 실제 index 합집합을 보존합니다.
+@@ -86,9 +94,9 @@ nonisolated struct ResourceRateGraph: Sendable {
+     }
+ 
+     func normalizedX(_ timestamp: ContinuousClock.Instant) -> Double {
+-        let start = currentTimestamp - Self.window
++        let start = currentTimestamp - .seconds(timeRange.duration)
+         let (seconds, attoseconds) = start.duration(to: timestamp).components
+-        return (Double(seconds) + Double(attoseconds) / 1e18) / 600
++        return (Double(seconds) + Double(attoseconds) / 1e18) / timeRange.duration
+     }
+ 
+     func normalizedY(_ value: Double) -> Double {
+diff --git a/ResourceRunner/ResourceRateGraphView.swift b/ResourceRunner/ResourceRateGraphView.swift
+index 17a8af7..abf9cb3 100644
+--- a/ResourceRunner/ResourceRateGraphView.swift
++++ b/ResourceRunner/ResourceRateGraphView.swift
+@@ -55,6 +55,7 @@ struct ResourceRateGraphSlotView: View {
+     let kind: Kind
+     let history: [RateHistoryPoint]
+     let firstHistoryPointAt: ContinuousClock.Instant?
++    var timeRange: GraphTimeRange = .tenMinutes
+     /// 결정적 렌더 테스트에서는 시간을 고정하고 실제 앱에서는 매초 새 창을 그립니다.
+     var fixedNow: ContinuousClock.Instant? = nil
+     var plotHeight: CGFloat = HistoryGraphLayout.plotHeight
+@@ -75,7 +76,8 @@ struct ResourceRateGraphSlotView: View {
+ 
+     private func slot(at now: ContinuousClock.Instant) -> some View {
+         let graph = ResourceRateGraph.make(history: history,
+-            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now)
++            firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now,
++            timeRange: timeRange)
+         return VStack(spacing: showsAxis ? HistoryGraphLayout.axisSpacing : 0) {
+             ZStack(alignment: .top) {
+                 Canvas { context, size in
+@@ -116,7 +118,7 @@ struct ResourceRateGraphSlotView: View {
+             if showsAxis {
+                 ZStack {
+                     HStack(spacing: 0) {
+-                        Text("10분 전")
++                        Text(timeRange.leadingLabel)
+                         Spacer(minLength: 0)
+                         Text("지금")
+                     }
+diff --git a/ResourceRunnerTests/DashboardPresentationTests.swift b/ResourceRunnerTests/DashboardPresentationTests.swift
+index 579cbcb..54d18aa 100644
+--- a/ResourceRunnerTests/DashboardPresentationTests.swift
++++ b/ResourceRunnerTests/DashboardPresentationTests.swift
+@@ -13,6 +13,60 @@ import Testing
+ 
+ private let baseInstant = ContinuousClock().now
+ 
++struct CPUSelectedWindowTests {
++    @Test func oneFiveTenAndBackReuseFullModelWithMatchingAxisAndAccessibility() {
++        let history = [-590, -300, -60, -1, 1].map { offset in
++            SystemMetricsHistoryPoint(timestamp: baseInstant.advanced(by: .seconds(offset)),
++                overallCPUUsage: Double(abs(offset)), userRatio: 5, swapUsedBytes: 0)
++        }
++        let model = CPUCardPresentation.assemble(cpu: cpuMetrics(), history: history,
++            topApplications: [], currentTimestamp: baseInstant)
++        #expect(model.graphPoints.count == 5)
++        let sequence: [(GraphTimeRange, Int, String)] = [
++            (.oneMinute, 2, "1분 전"), (.fiveMinutes, 3, "5분 전"),
++            (.tenMinutes, 4, "10분 전"), (.oneMinute, 2, "1분 전"),
++            (.tenMinutes, 4, "10분 전")
++        ]
++        for (range, count, leading) in sequence {
++            let visible = HistoryPoint.visiblePoints(from: model.graphPoints,
++                currentTimestamp: baseInstant, timeRange: range)
++            let axis = HistoryGraphTimeAxis.make(points: model.graphPoints,
++                currentTimestamp: baseInstant, timeRange: .seconds(range.duration))
++            #expect(visible.count == count)
++            #expect(axis.leadingLabel == leading)
++            #expect(axis.trailingLabel == "지금")
++            #expect(model.graphPoints.count == 5)
++            let card = ResourceCardState<CPUCardPresentation>.normal(model, timestamp: baseInstant)
++            #expect(card.cpuAccessibilityLabel(timeRange: range, now: baseInstant)
++                .contains(range.windowLabel))
++        }
++        #expect(HistoryPoint.normalizedXPosition(
++            for: baseInstant.advanced(by: .seconds(-60)), currentTimestamp: baseInstant,
++            timeRange: .seconds(60)) == 0)
++        #expect(HistoryPoint.normalizedXPosition(for: baseInstant,
++            currentTimestamp: baseInstant, timeRange: .seconds(60)) == 1)
++    }
++
++    @Test func connectionUsesLatterSampleHistoricalGapSegmentAndEpoch() {
++        let points = [
++            HistoryPoint(timestamp: baseInstant, value: 10),
++            HistoryPoint(timestamp: baseInstant + .seconds(15), value: 20,
++                maximumConnectedGap: .seconds(20)),
++            HistoryPoint(timestamp: baseInstant + .seconds(30), value: 30,
++                maximumConnectedGap: .seconds(10)),
++            HistoryPoint(timestamp: baseInstant + .seconds(31), value: 40,
++                maximumConnectedGap: .seconds(20), rateSegment: 1),
++            HistoryPoint(timestamp: baseInstant + .seconds(32), value: 50,
++                collectionEpoch: 1, maximumConnectedGap: .seconds(20), rateSegment: 1)
++        ]
++        #expect(HistoryPoint.connectedSegments(from: points).map(\.count) == [2, 1, 1, 1])
++        let visible = HistoryPoint.visiblePoints(from: points,
++            currentTimestamp: baseInstant + .seconds(32), timeRange: .oneMinute)
++        #expect(HistoryPoint.downsampledConnectedSegments(from: visible,
++            bucketCount: 1).map(\.count) == [2, 1, 1, 1])
++    }
++}
++
+ @MainActor
+ struct DashboardPreferencesBoundaryTests {
+     @Test func currentSnapshotSurvivesLateSampleFailureAndStopWithoutDiscardingHistory() {
+diff --git a/ResourceRunnerTests/DiskDashboardViewTests.swift b/ResourceRunnerTests/DiskDashboardViewTests.swift
+index 43183ec..9916619 100644
+--- a/ResourceRunnerTests/DiskDashboardViewTests.swift
++++ b/ResourceRunnerTests/DiskDashboardViewTests.swift
+@@ -7,6 +7,25 @@ import Testing
+ struct DiskDashboardViewTests {
+     private let now = ContinuousClock().now
+ 
++    @Test func miniGraphAccessibilityUsesSelectedRangeForNormalFailureAndStop() {
++        let points = measuredHistory()
++        let current = card(history: points)
++        let failure = card(.failure("injected"), current: nil, history: points)
++        let stopped = card(.stopped, current: nil, history: points)
++        for (range, name) in [
++            (GraphTimeRange.oneMinute, "최근 1분"),
++            (.fiveMinutes, "최근 5분"), (.tenMinutes, "최근 10분")
++        ] {
++            for presentation in [current, failure, stopped] {
++                let label = DiskDisplayText.miniGraphAccessibility(
++                    presentation: presentation, now: now, timeRange: range)
++                #expect(label.contains(name))
++                #expect(label.contains("Read 점선, Write 실선"))
++                #expect(label.contains("수집 공백은 이어 그리지 않음"))
++            }
++        }
++    }
++
+     private func volume(path: String, shared: Bool = true) -> DiskVolumeReading {
+         DiskVolumeReading(identity: "volume-\(path)", mountPaths: [path], bsdName: "disk3s5",
+             fileSystem: "apfs", totalBytes: 1 << 40, availableBytes: 1 << 39,
+diff --git a/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift b/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
+index 295bfc9..ce45c1f 100644
+--- a/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
++++ b/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
+@@ -114,10 +114,11 @@ struct ResourceRateGraphRenderingTests {
+     }
+ 
+     private func renderMini(_ points: [RateHistoryPoint], label: String,
+-                            appearance name: NSAppearance.Name, width: CGFloat = 100) throws -> NSBitmapImageRep {
++                            appearance name: NSAppearance.Name, width: CGFloat = 100,
++                            timeRange: GraphTimeRange = .tenMinutes) throws -> NSBitmapImageRep {
+         let appearance = try #require(NSAppearance(named: name))
+         let view = ResourceRateGraphSlotView(kind: .disk, history: points,
+-            firstHistoryPointAt: points.first?.timestamp, fixedNow: now,
++            firstHistoryPointAt: points.first?.timestamp, timeRange: timeRange, fixedNow: now,
+             plotHeight: 42, showsAxis: false)
+             .frame(width: width, height: 42)
+             .background(DashboardColorPalette.cardSurface)
+@@ -134,6 +135,24 @@ struct ResourceRateGraphRenderingTests {
+         return try #require(NSBitmapImageRep(data: png))
+     }
+ 
++    @Test func selectedDiskMiniWindowsRenderAtSameFortyTwoPointHeight() throws {
++        let points = [
++            (-590, 80_000.0), (-280, 8_000.0), (-30, 800.0), (-2, 1_200.0)
++        ].map { offset, value in
++            RateHistoryPoint(timestamp: now.advanced(by: .seconds(offset)),
++                rate: RatePair(receivedBytesPerSecond: value,
++                    sentBytesPerSecond: value / 2)!, collectionEpoch: 0, rateSegment: 1)
++        }
++        var pngs: [Data] = []
++        for range: GraphTimeRange in [.oneMinute, .fiveMinutes, .tenMinutes] {
++            let bitmap = try renderMini(points, label: range.rawValue,
++                appearance: .aqua, timeRange: range)
++            #expect(bitmap.pixelsHigh == 42)
++            pngs.append(try #require(bitmap.representation(using: .png, properties: [:])))
++        }
++        #expect(Set(pngs).count == 3)
++    }
++
+     private func color(_ bitmap: NSBitmapImageRep, x: Int, y: Int) throws -> NSColor {
+         try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
+     }
+diff --git a/ResourceRunnerTests/ResourceRateGraphTests.swift b/ResourceRunnerTests/ResourceRateGraphTests.swift
+index 8bce607..ea136b9 100644
+--- a/ResourceRunnerTests/ResourceRateGraphTests.swift
++++ b/ResourceRunnerTests/ResourceRateGraphTests.swift
+@@ -6,10 +6,53 @@ struct ResourceRateGraphTests {
+     private let now = ContinuousClock().now
+ 
+     private func point(_ ago: Int, _ first: Double, _ second: Double,
+-                       epoch: Int = 0, segment: UInt64 = 1) -> RateHistoryPoint {
++                       epoch: Int = 0, segment: UInt64 = 1,
++                       gap: Duration = .seconds(10)) -> RateHistoryPoint {
+         RateHistoryPoint(timestamp: now.advanced(by: .seconds(-ago)),
+             rate: RatePair(receivedBytesPerSecond: first, sentBytesPerSecond: second)!,
+-            collectionEpoch: epoch, rateSegment: segment)
++            collectionEpoch: epoch, rateSegment: segment,
++            maximumConnectedGap: gap)
++    }
++
++    @Test func selectedWindowControlsVisiblePeaksCoordinatesAndProgressWithoutChangingHistory() {
++        let history = [point(590, 90_000, 1), point(300, 5_000, 1),
++            point(60, 2_000, 1), point(1, 100, 200), point(-1, 999_999, 1)]
++        let first = now.advanced(by: .seconds(-90))
++        let one = ResourceRateGraph.make(history: history, firstHistoryPointAt: first,
++            currentTimestamp: now, timeRange: .oneMinute)
++        let five = ResourceRateGraph.make(history: history, firstHistoryPointAt: first,
++            currentTimestamp: now, timeRange: .fiveMinutes)
++        let ten = ResourceRateGraph.make(history: history, firstHistoryPointAt: first,
++            currentTimestamp: now, timeRange: .tenMinutes)
++        #expect(history.count == 5)
++        #expect(one.visibleSegments.flatMap { $0 }.count == 2)
++        #expect(five.visibleSegments.flatMap { $0 }.count == 3)
++        #expect(ten.visibleSegments.flatMap { $0 }.count == 4)
++        #expect(one.upperBound == 2_000)
++        #expect(five.upperBound == 5_000)
++        #expect(ten.upperBound == 100_000)
++        #expect(one.normalizedX(now.advanced(by: .seconds(-60))) == 0)
++        #expect(five.normalizedX(now.advanced(by: .seconds(-300))) == 0)
++        #expect(ten.normalizedX(now.advanced(by: .seconds(-600))) == 0)
++        #expect(one.normalizedX(now) == 1)
++        #expect(one.progressLabel == "")
++        #expect(five.progressLabel == "데이터 수집 중 · 01:30 / 05:00")
++        #expect(ten.progressLabel == "데이터 수집 중 · 01:30 / 10:00")
++    }
++
++    @Test func latterPointsHistoricalGapAndSegmentDefineConnectivity() {
++        let history = [
++            point(60, 1, 1),
++            point(45, 2, 2, gap: .seconds(20)),
++            point(30, 3, 3, gap: .seconds(10)),
++            point(15, 4, 4, segment: 2, gap: .seconds(20)),
++            point(0, 5, 5, epoch: 1, segment: 2, gap: .seconds(20))
++        ]
++        let graph = ResourceRateGraph.make(history: history,
++            firstHistoryPointAt: history.first?.timestamp, currentTimestamp: now,
++            timeRange: .oneMinute)
++        #expect(graph.visibleSegments.map(\.count) == [2, 1, 1, 1])
++        #expect(graph.downsampledSegments(bucketCount: 1).map(\.count) == [2, 1, 1, 1])
+     }
+ 
+     @Test func originalPeaksOfBothSeriesSetOnePositiveAxisBeforeDownsampling() {

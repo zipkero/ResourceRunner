@@ -6,10 +6,53 @@ struct ResourceRateGraphTests {
     private let now = ContinuousClock().now
 
     private func point(_ ago: Int, _ first: Double, _ second: Double,
-                       epoch: Int = 0, segment: UInt64 = 1) -> RateHistoryPoint {
+                       epoch: Int = 0, segment: UInt64 = 1,
+                       gap: Duration = .seconds(10)) -> RateHistoryPoint {
         RateHistoryPoint(timestamp: now.advanced(by: .seconds(-ago)),
             rate: RatePair(receivedBytesPerSecond: first, sentBytesPerSecond: second)!,
-            collectionEpoch: epoch, rateSegment: segment)
+            collectionEpoch: epoch, rateSegment: segment,
+            maximumConnectedGap: gap)
+    }
+
+    @Test func selectedWindowControlsVisiblePeaksCoordinatesAndProgressWithoutChangingHistory() {
+        let history = [point(590, 90_000, 1), point(300, 5_000, 1),
+            point(60, 2_000, 1), point(1, 100, 200), point(-1, 999_999, 1)]
+        let first = now.advanced(by: .seconds(-90))
+        let one = ResourceRateGraph.make(history: history, firstHistoryPointAt: first,
+            currentTimestamp: now, timeRange: .oneMinute)
+        let five = ResourceRateGraph.make(history: history, firstHistoryPointAt: first,
+            currentTimestamp: now, timeRange: .fiveMinutes)
+        let ten = ResourceRateGraph.make(history: history, firstHistoryPointAt: first,
+            currentTimestamp: now, timeRange: .tenMinutes)
+        #expect(history.count == 5)
+        #expect(one.visibleSegments.flatMap { $0 }.count == 2)
+        #expect(five.visibleSegments.flatMap { $0 }.count == 3)
+        #expect(ten.visibleSegments.flatMap { $0 }.count == 4)
+        #expect(one.upperBound == 2_000)
+        #expect(five.upperBound == 5_000)
+        #expect(ten.upperBound == 100_000)
+        #expect(one.normalizedX(now.advanced(by: .seconds(-60))) == 0)
+        #expect(five.normalizedX(now.advanced(by: .seconds(-300))) == 0)
+        #expect(ten.normalizedX(now.advanced(by: .seconds(-600))) == 0)
+        #expect(one.normalizedX(now) == 1)
+        #expect(one.progressLabel == "")
+        #expect(five.progressLabel == "데이터 수집 중 · 01:30 / 05:00")
+        #expect(ten.progressLabel == "데이터 수집 중 · 01:30 / 10:00")
+    }
+
+    @Test func latterPointsHistoricalGapAndSegmentDefineConnectivity() {
+        let history = [
+            point(60, 1, 1),
+            point(45, 2, 2, gap: .seconds(20)),
+            point(30, 3, 3, gap: .seconds(10)),
+            point(15, 4, 4, segment: 2, gap: .seconds(20)),
+            point(0, 5, 5, epoch: 1, segment: 2, gap: .seconds(20))
+        ]
+        let graph = ResourceRateGraph.make(history: history,
+            firstHistoryPointAt: history.first?.timestamp, currentTimestamp: now,
+            timeRange: .oneMinute)
+        #expect(graph.visibleSegments.map(\.count) == [2, 1, 1, 1])
+        #expect(graph.downsampledSegments(bucketCount: 1).map(\.count) == [2, 1, 1, 1])
     }
 
     @Test func originalPeaksOfBothSeriesSetOnePositiveAxisBeforeDownsampling() {

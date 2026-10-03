@@ -66,13 +66,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.2, §5.4, §5.5, §5.6, §5.7, §5.8, §5.11, §5.13; DESIGN §1.1, §1.4, §2.1, §2.3, §2.5, §2.6, §4.1, §4.2.
   - 승인 근거: 2026-10-03 독립 verifier approved를 main이 확정했습니다. HEADd119c73 기준8파일 diff·소스 해시와 signed 관련42case·실패/skip0을 확인했습니다. [task-005 근거](./evidence/task-005/README.md). 기존 전체 모델을 유지하고 현재 snapshot으로 표시를 선별하는 내부 접근 차이를 반영했습니다. 구현 재시도0·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
-- [ ] task-006: CPU·Disk의 공통1/5/10분 표시 범위
+- [x] task-006: CPU·Disk의 공통1/5/10분 표시 범위
   - 목적: 최대 이력을 유지하고 CPU·Disk 구간·축·진행·AX를 선택 범위에 즉시 일치시킵니다.
   - 접근: 선행 task-003, task-005. 출발점은 `ResourceRunner/DashboardPresentation.swift`, `ResourceRunner/DashboardView.swift`, `ResourceRunner/ResourceRateGraph.swift`, `ResourceRunner/ResourceRateGraphView.swift`, `ResourceRunner/ResourceActivityPresentation.swift`, `ResourceRunner/DiskDashboardView.swift`입니다. 같은 `GraphTimeRange`를 CPU HistoryGraphView/HistoryGraphTimeAxis/normalizedXPosition과 Disk 모델·렌더·안내에 전달합니다. 현재 시각의 선택 범위만 선별하고 뒤쪽 점의 당시 G·epoch·연속성으로 연결합니다.
   - 검증 조건:
     - 결과: 60/300/600초 창·왼쪽1/5/10분 전·오른쪽 지금·분모01:00/05:00/10:00·표시 안내·상세·AX가 일치합니다. 재수집 없이 변경하며 없는 과거·중지 공백을 채우지 않습니다. CPU 밴드·기준선·극값, Disk Read 점선/Write 실선·42pt 미니 그래프·가시 peak/nice upper bound를 유지합니다. Network/Memory 그래프나 제거된 Disk 큰 안내는 추가하지 않습니다.
     - 확인: `ResourceRunnerTests/DashboardPresentationTests.swift`, `ResourceRateGraphTests.swift`, `ResourceRateGraphRenderingTests.swift`, `DiskDashboardViewTests.swift`에서 빈/부분/충분/실패/중지,1→5→10·10→1→10, 서로 다른 당시 G·강제 단절·창 밖 극값·downsampling을 확인합니다. 같은 원본의 Memory Swap·증가 순위 결과와600초 이름이 범위에 따라 바뀌지 않는지 검증합니다.
   - 참조: SPEC §5.4, §5.7, §5.13; DESIGN §1.4, §2.4, §2.5, §3.4, §4.2, §5 DP5, DP6.
+  - 승인 근거: 2026-10-03 독립 읽기 전용 verifier approved를 main이 확정했습니다. HEAD8345f58 기준9파일 diff·소스 해시와 최종 signed serial86case(동적90실행)·실패/skip0을 확인했습니다. [task-006 근거](./evidence/task-006/README.md). agent thread 제한으로 동일 verifier 역할을 로컬 CLI에 적용했습니다. 구현 재시도0·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
 - [ ] task-007: 카드·TOP 5 숨김과 자연 높이·선택 정리
   - 목적: 숨긴 구역을 layout·AX에서 제거하고 대표값·상세·기본 배치·전체 숨김 복구를 유지합니다.

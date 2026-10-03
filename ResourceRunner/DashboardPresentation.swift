@@ -107,12 +107,18 @@ nonisolated struct HistoryPoint: Sendable, Equatable {
     let value: Double
     let subValue: Double?
     let collectionEpoch: Int
+    let maximumConnectedGap: Duration
+    let rateSegment: UInt64
 
-    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil, collectionEpoch: Int = 0) {
+    init(timestamp: ContinuousClock.Instant, value: Double, subValue: Double? = nil,
+         collectionEpoch: Int = 0, maximumConnectedGap: Duration = .seconds(10),
+         rateSegment: UInt64 = 0) {
         self.timestamp = timestamp
         self.value = value
         self.subValue = subValue
         self.collectionEpoch = collectionEpoch
+        self.maximumConnectedGap = maximumConnectedGap
+        self.rateSegment = rateSegment
     }
 }
 
@@ -126,13 +132,18 @@ extension HistoryPoint {
 }
 
 extension HistoryPoint {
-    /// 인접한 두 점 사이 간격이 이 값을 넘으면 하나의 선분으로 잇지 않습니다.
-    /// CPU Collector가 tick 차분을 포기하는 간격(`SystemMetricsSampling.maximumTickGap`)과 같은 기준을 재사용합니다 —
-    /// 그보다 벌어진 두 그래프 점 사이에는 실제로 수집되지 않은 시간이 있다는 뜻이기 때문입니다.
+    /// 초기/직접 생성 점의 기본 허용 간격입니다. 실제 수집 점은 당시 주기에 따른 값을 따로 보유합니다.
     static let maximumConnectedGap = SystemMetricsSampling.maximumTickGap
 
+    static func visiblePoints(from points: [HistoryPoint],
+                              currentTimestamp: ContinuousClock.Instant,
+                              timeRange: GraphTimeRange) -> [HistoryPoint] {
+        let start = currentTimestamp - .seconds(timeRange.duration)
+        return points.filter { $0.timestamp >= start && $0.timestamp <= currentTimestamp }
+    }
+
     /// 점 목록을 수집 구간과 인접 간격으로 나눠 하나의 선으로 이어 그릴 수 있는 연속 구간들로 만듭니다.
-    /// epoch가 다르거나 간격이 `maximumConnectedGap`을 넘는 두 점은 서로 다른 구간에 들어갑니다.
+    /// epoch·segment가 다르거나 뒤쪽 점의 당시 허용 간격을 넘으면 서로 다른 구간에 들어갑니다.
     /// 빈 입력은 빈 결과를, 점 하나짜리 입력은 그 점 하나만 담은 구간 하나를 돌려줍니다.
     static func connectedSegments(from points: [HistoryPoint]) -> [[HistoryPoint]] {
         guard let first = points.first else { return [] }
@@ -142,7 +153,9 @@ extension HistoryPoint {
             let lastSegmentIndex = segments.count - 1
             let previous = segments[lastSegmentIndex][segments[lastSegmentIndex].count - 1]
             if previous.collectionEpoch != point.collectionEpoch
-                || previous.timestamp.duration(to: point.timestamp) > maximumConnectedGap {
+                || previous.rateSegment != point.rateSegment
+                || previous.timestamp >= point.timestamp
+                || previous.timestamp.duration(to: point.timestamp) > point.maximumConnectedGap {
                 segments.append([point])
             } else {
                 segments[lastSegmentIndex].append(point)
@@ -284,7 +297,9 @@ extension CPUCardPresentation {
                     timestamp: $0.timestamp,
                     value: $0.overallCPUUsage,
                     subValue: $0.userRatio,
-                    collectionEpoch: $0.collectionEpoch
+                    collectionEpoch: $0.collectionEpoch,
+                    maximumConnectedGap: $0.maximumConnectedGap,
+                    rateSegment: $0.rateSegment
                 )
             }
 
@@ -389,7 +404,7 @@ extension HistoryPoint {
 }
 
 extension HistoryPoint {
-    /// 그래프 점의 가로축 좌표를 `currentTimestamp`(그리는 시점의 시각) 기준 10분 창 안에서 0...1로 계산합니다.
+    /// 그래프 점의 가로축 좌표를 `currentTimestamp`(그리는 시점의 시각) 기준 선택 창 안에서 0...1로 계산합니다.
     /// 0이 창의 왼쪽 끝(`currentTimestamp - timeRange`), 1이 창의 오른쪽 끝(`currentTimestamp`)입니다.
     ///
     /// 창 끝을 점 자신의 시각이 아니라 항상 `currentTimestamp`로 고정해야,
@@ -501,8 +516,8 @@ nonisolated struct HistoryGraphTimeAxis: Sendable, Equatable {
         )
     }
 
-    static var accessibilityTimeWindowLabel: String {
-        "최근 \(leadingLabel(seconds: HistoryCapacity.defaultTimeRange.secondsAsDouble).replacingOccurrences(of: " 전", with: "")) 그래프"
+    var accessibilityTimeWindowLabel: String {
+        "최근 \(leadingLabel.replacingOccurrences(of: " 전", with: "")) 그래프"
     }
 
     private static func leadingLabel(seconds: Double) -> String {
@@ -536,36 +551,48 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
     /// CPU 카드의 접근성 이름. 현재 사용률과 카드 상태, 겹쳐 그린 두 계열, 기준선,
     /// TOP 5 안내 문구, 선택·복귀 단축키를 포함합니다.
     var cpuAccessibilityLabel: String {
+        cpuAccessibilityLabel(timeRange: .tenMinutes)
+    }
+
+    func cpuAccessibilityLabel(timeRange: GraphTimeRange,
+                               now: ContinuousClock.Instant? = nil) -> String {
         let shortcut = "단축키 \(CPUCardPresentation.selectionShortcutDisplayText)"
+        let duration = Duration.seconds(timeRange.duration)
         switch self {
         case .collecting:
-            let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
+            let timeAxis = HistoryGraphTimeAxis.make(points: [],
+                currentTimestamp: now ?? ContinuousClock().now, timeRange: duration)
             return "CPU 카드, 수집 중, \(timeAxis.accessibilityLabel), \(shortcut)"
         case .normal(let presentation, let timestamp):
-            let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints, currentTimestamp: timestamp)
+            let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints,
+                currentTimestamp: now ?? timestamp, timeRange: duration)
             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
                 + "\(timeAxis.accessibilityLabel), "
                 + CPUCardPresentation.topApplicationsAccessibilityText
                 + ", \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
-                let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
+                let timeAxis = HistoryGraphTimeAxis.make(points: [],
+                    currentTimestamp: now ?? ContinuousClock().now, timeRange: duration)
                 return "CPU 카드, 수집 실패, \(timeAxis.accessibilityLabel), \(shortcut)"
             }
             let timeAxis = HistoryGraphTimeAxis.make(
                 points: lastKnown.presentation.graphPoints,
-                currentTimestamp: lastKnown.timestamp
+                currentTimestamp: now ?? lastKnown.timestamp,
+                timeRange: duration
             )
             return "CPU 카드, 수집 실패, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
                 + "\(timeAxis.accessibilityLabel), \(shortcut)"
         case .stopped(let lastKnown):
             guard let lastKnown else {
-                let timeAxis = HistoryGraphTimeAxis.make(points: [], currentTimestamp: ContinuousClock().now)
+                let timeAxis = HistoryGraphTimeAxis.make(points: [],
+                    currentTimestamp: now ?? ContinuousClock().now, timeRange: duration)
                 return "CPU 카드, 수집 중지, \(timeAxis.accessibilityLabel), \(shortcut)"
             }
             let timeAxis = HistoryGraphTimeAxis.make(
                 points: lastKnown.presentation.graphPoints,
-                currentTimestamp: lastKnown.timestamp
+                currentTimestamp: now ?? lastKnown.timestamp,
+                timeRange: duration
             )
             return "CPU 카드, 수집 중지, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
                 + "\(timeAxis.accessibilityLabel), \(shortcut)"
@@ -576,9 +603,9 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
 private extension HistoryGraphTimeAxis {
     var accessibilityLabel: String {
         if collectionProgressLabel.isEmpty {
-            return Self.accessibilityTimeWindowLabel
+            return accessibilityTimeWindowLabel
         }
-        return "\(Self.accessibilityTimeWindowLabel), \(collectionProgressLabel)"
+        return "\(accessibilityTimeWindowLabel), \(collectionProgressLabel)"
     }
 }
 

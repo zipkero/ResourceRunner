@@ -7,6 +7,25 @@ import Testing
 struct DiskDashboardViewTests {
     private let now = ContinuousClock().now
 
+    @Test func miniGraphAccessibilityUsesSelectedRangeForNormalFailureAndStop() {
+        let points = measuredHistory()
+        let current = card(history: points)
+        let failure = card(.failure("injected"), current: nil, history: points)
+        let stopped = card(.stopped, current: nil, history: points)
+        for (range, name) in [
+            (GraphTimeRange.oneMinute, "최근 1분"),
+            (.fiveMinutes, "최근 5분"), (.tenMinutes, "최근 10분")
+        ] {
+            for presentation in [current, failure, stopped] {
+                let label = DiskDisplayText.miniGraphAccessibility(
+                    presentation: presentation, now: now, timeRange: range)
+                #expect(label.contains(name))
+                #expect(label.contains("Read 점선, Write 실선"))
+                #expect(label.contains("수집 공백은 이어 그리지 않음"))
+            }
+        }
+    }
+
     private func volume(path: String, shared: Bool = true) -> DiskVolumeReading {
         DiskVolumeReading(identity: "volume-\(path)", mountPaths: [path], bsdName: "disk3s5",
             fileSystem: "apfs", totalBytes: 1 << 40, availableBytes: 1 << 39,

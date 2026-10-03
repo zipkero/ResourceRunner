@@ -13,6 +13,60 @@ import Testing
 
 private let baseInstant = ContinuousClock().now
 
+struct CPUSelectedWindowTests {
+    @Test func oneFiveTenAndBackReuseFullModelWithMatchingAxisAndAccessibility() {
+        let history = [-590, -300, -60, -1, 1].map { offset in
+            SystemMetricsHistoryPoint(timestamp: baseInstant.advanced(by: .seconds(offset)),
+                overallCPUUsage: Double(abs(offset)), userRatio: 5, swapUsedBytes: 0)
+        }
+        let model = CPUCardPresentation.assemble(cpu: cpuMetrics(), history: history,
+            topApplications: [], currentTimestamp: baseInstant)
+        #expect(model.graphPoints.count == 5)
+        let sequence: [(GraphTimeRange, Int, String)] = [
+            (.oneMinute, 2, "1분 전"), (.fiveMinutes, 3, "5분 전"),
+            (.tenMinutes, 4, "10분 전"), (.oneMinute, 2, "1분 전"),
+            (.tenMinutes, 4, "10분 전")
+        ]
+        for (range, count, leading) in sequence {
+            let visible = HistoryPoint.visiblePoints(from: model.graphPoints,
+                currentTimestamp: baseInstant, timeRange: range)
+            let axis = HistoryGraphTimeAxis.make(points: model.graphPoints,
+                currentTimestamp: baseInstant, timeRange: .seconds(range.duration))
+            #expect(visible.count == count)
+            #expect(axis.leadingLabel == leading)
+            #expect(axis.trailingLabel == "지금")
+            #expect(model.graphPoints.count == 5)
+            let card = ResourceCardState<CPUCardPresentation>.normal(model, timestamp: baseInstant)
+            #expect(card.cpuAccessibilityLabel(timeRange: range, now: baseInstant)
+                .contains(range.windowLabel))
+        }
+        #expect(HistoryPoint.normalizedXPosition(
+            for: baseInstant.advanced(by: .seconds(-60)), currentTimestamp: baseInstant,
+            timeRange: .seconds(60)) == 0)
+        #expect(HistoryPoint.normalizedXPosition(for: baseInstant,
+            currentTimestamp: baseInstant, timeRange: .seconds(60)) == 1)
+    }
+
+    @Test func connectionUsesLatterSampleHistoricalGapSegmentAndEpoch() {
+        let points = [
+            HistoryPoint(timestamp: baseInstant, value: 10),
+            HistoryPoint(timestamp: baseInstant + .seconds(15), value: 20,
+                maximumConnectedGap: .seconds(20)),
+            HistoryPoint(timestamp: baseInstant + .seconds(30), value: 30,
+                maximumConnectedGap: .seconds(10)),
+            HistoryPoint(timestamp: baseInstant + .seconds(31), value: 40,
+                maximumConnectedGap: .seconds(20), rateSegment: 1),
+            HistoryPoint(timestamp: baseInstant + .seconds(32), value: 50,
+                collectionEpoch: 1, maximumConnectedGap: .seconds(20), rateSegment: 1)
+        ]
+        #expect(HistoryPoint.connectedSegments(from: points).map(\.count) == [2, 1, 1, 1])
+        let visible = HistoryPoint.visiblePoints(from: points,
+            currentTimestamp: baseInstant + .seconds(32), timeRange: .oneMinute)
+        #expect(HistoryPoint.downsampledConnectedSegments(from: visible,
+            bucketCount: 1).map(\.count) == [2, 1, 1, 1])
+    }
+}
+
 @MainActor
 struct DashboardPreferencesBoundaryTests {
     @Test func currentSnapshotSurvivesLateSampleFailureAndStopWithoutDiscardingHistory() {

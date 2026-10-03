@@ -114,10 +114,11 @@ struct ResourceRateGraphRenderingTests {
     }
 
     private func renderMini(_ points: [RateHistoryPoint], label: String,
-                            appearance name: NSAppearance.Name, width: CGFloat = 100) throws -> NSBitmapImageRep {
+                            appearance name: NSAppearance.Name, width: CGFloat = 100,
+                            timeRange: GraphTimeRange = .tenMinutes) throws -> NSBitmapImageRep {
         let appearance = try #require(NSAppearance(named: name))
         let view = ResourceRateGraphSlotView(kind: .disk, history: points,
-            firstHistoryPointAt: points.first?.timestamp, fixedNow: now,
+            firstHistoryPointAt: points.first?.timestamp, timeRange: timeRange, fixedNow: now,
             plotHeight: 42, showsAxis: false)
             .frame(width: width, height: 42)
             .background(DashboardColorPalette.cardSurface)
@@ -132,6 +133,24 @@ struct ResourceRateGraphRenderingTests {
         let png = try #require(bitmap.representation(using: .png, properties: [:]))
         Attachment.record(png, named: "disk-mini-\(label)-\(Int(width))-\(name == .darkAqua ? "dark" : "light").png")
         return try #require(NSBitmapImageRep(data: png))
+    }
+
+    @Test func selectedDiskMiniWindowsRenderAtSameFortyTwoPointHeight() throws {
+        let points = [
+            (-590, 80_000.0), (-280, 8_000.0), (-30, 800.0), (-2, 1_200.0)
+        ].map { offset, value in
+            RateHistoryPoint(timestamp: now.advanced(by: .seconds(offset)),
+                rate: RatePair(receivedBytesPerSecond: value,
+                    sentBytesPerSecond: value / 2)!, collectionEpoch: 0, rateSegment: 1)
+        }
+        var pngs: [Data] = []
+        for range: GraphTimeRange in [.oneMinute, .fiveMinutes, .tenMinutes] {
+            let bitmap = try renderMini(points, label: range.rawValue,
+                appearance: .aqua, timeRange: range)
+            #expect(bitmap.pixelsHigh == 42)
+            pngs.append(try #require(bitmap.representation(using: .png, properties: [:])))
+        }
+        #expect(Set(pngs).count == 3)
     }
 
     private func color(_ bitmap: NSBitmapImageRep, x: Int, y: Int) throws -> NSColor {

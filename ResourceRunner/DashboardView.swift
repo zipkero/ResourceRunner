@@ -17,6 +17,7 @@ import SwiftUI
 /// 확인된 사실입니다(ANALYSIS §근거 확인 사실).
 struct DashboardView: View {
     @ObservedObject var store: DashboardPresentationStore
+    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
     @Environment(\.locale) private var locale
     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
@@ -42,13 +43,15 @@ struct DashboardView: View {
             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
             .accessibilityIdentifier("CPUCard")
             .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
-                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider)
+                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
+                    viewport: viewport)
             }
 
             Button(action: { store.selectCard(.memory) }) {
                 MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
             }
             .buttonStyle(.plain)
+            .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
             .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel)
@@ -56,7 +59,8 @@ struct DashboardView: View {
             // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
             .accessibilityIdentifier("MemoryCard")
             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
-                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider)
+                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
+                    viewport: viewport)
             }
             Button(action: { store.selectCard(.network) }) {
                 NetworkCardView(presentation: store.networkCard)
@@ -70,12 +74,13 @@ struct DashboardView: View {
             .accessibilityIdentifier("NetworkCard")
             .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
                 NetworkDetailPopoverContent(presentation: store.networkCard,
-                    onClose: { store.dismissDetail(for: .network) })
+                    onClose: { store.dismissDetail(for: .network) }, viewport: viewport)
             }
             Button(action: { store.selectCard(.disk) }) {
                 DiskCardView(presentation: store.diskCard)
             }
             .buttonStyle(.plain)
+            .background(DashboardLowestAnchorCapture(viewport: viewport))
             .keyboardShortcut("4", modifiers: .command)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
@@ -85,11 +90,12 @@ struct DashboardView: View {
             .accessibilityIdentifier("DiskCard")
             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
                 DiskDetailPopoverContent(presentation: store.diskCard,
-                    onClose: { store.dismissDetail(for: .disk) })
+                    onClose: { store.dismissDetail(for: .disk) }, viewport: viewport)
             }
         }
         .padding(DashboardStyle.Summary.bodyPadding)
         .frame(width: 280, alignment: .topLeading)
+        .onChange(of: store.selection) { _, _ in viewport.requestCorrection?() }
         .background(DashboardColorPalette.popoverBackground)
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
         .accessibilityElement(children: .contain)
@@ -486,8 +492,8 @@ struct MemoryCardView: View {
     }
 
     /// Pressure·Swap·구성 합계 줄(고정 슬롯). `MemoryPressureSwapLineFormatting.assemble`이 고정한 순서를
-    /// 그대로 이어붙여 그리고 `MemoryPressureSwapLineFormatting.maximumLineCount`로 묶어
-    /// 폭이 부족할 때 줄바꿈 대신 끝에서 잘리게 합니다 — 뷰는 순서도 줄 수 상한도 정하지 않고 조립 결과를 그리기만 합니다(ANALYSIS §5 DP4).
+    /// 그대로 이어붙이고 두 줄까지 자연스럽게 늘립니다. 팝오버의 초기 높이가 긴 원문을 한 줄로 압축하지 않도록
+    /// 세로 고유 크기를 유지하며, 조각 순서와 줄 수 상한은 기존 표시 계약을 따릅니다(ANALYSIS §5 DP4).
     /// 줄 끝의 구성 합계는 제목 줄의 「사용 중」과 다른 지표라 「구성」 라벨을 달아 그립니다(SPEC §5.3).
     // `private`가 아닌 것은 task-011 테스트가 값 없음 자리표시(`…placeholder`)의 조각이 이 줄에 실제로 남는지
     // 이 줄의 이상적 폭으로 재기 때문입니다 — 조립 배열만 단언하면 뷰가 조각을 건너뛰어도 통과합니다.
@@ -520,6 +526,7 @@ struct MemoryCardView: View {
         }
         .dashboardTypography(DashboardStyle.TypographyRole.label)
         .lineLimit(2)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// 구성 범례 줄(고정 슬롯). task-006의 병합이 비워 둔 자리를 씁니다.
@@ -1051,6 +1058,7 @@ struct TopApplicationsView: View {
 struct CPUDetailPopoverContent: View {
     let state: ResourceCardState<CPUCardPresentation>
     let iconProvider: any ApplicationIconProviding
+    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
 
     /// 이 상태에서 상세 본문이 조립하는 이 feature의 새 표시 요소.
     /// 정상 목록을 `CPUDetailView`의 production 조립에서 가져오므로 하위 조립에 요소가 더해지면
@@ -1066,8 +1074,9 @@ struct CPUDetailPopoverContent: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
         .background(DashboardColorPalette.cardSurface)
+        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .cpu))
         .accessibilityIdentifier("DashboardDetail")
     }
 
@@ -1088,6 +1097,7 @@ struct CPUDetailPopoverContent: View {
 struct MemoryDetailPopoverContent: View {
     let state: ResourceCardState<MemoryCardPresentation>
     let iconProvider: any ApplicationIconProviding
+    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
 
     var body: some View {
         ScrollView {
@@ -1102,8 +1112,9 @@ struct MemoryDetailPopoverContent: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
         .background(DashboardColorPalette.cardSurface)
+        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .memory))
         .accessibilityIdentifier("DashboardDetail")
     }
 }

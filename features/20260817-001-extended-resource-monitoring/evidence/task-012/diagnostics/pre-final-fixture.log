@@ -1,0 +1,6 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-03 11:58:15.821 Df ResourceRunner[1643:2f30367] [com.zipkero.ResourceRunner:ViewportProbe] screen index=0 frame=(0.0, 0.0, 1168.0, 755.0) visible=(0.0, 0.0, 1168.0, 729.0) scale=2.000000
+2026-10-03 11:58:20.829 Df ResourceRunner[1643:2f30367] [com.zipkero.ResourceRunner:ViewportProbe] body frame=(359.0, 27.0, 306.0, 694.0) visible=(0.0, 0.0, 1168.0, 729.0) inside8=true bodyScroll=false
+2026-10-03 11:58:21.296 Df ResourceRunner[1643:2f30367] [com.zipkero.ResourceRunner:ViewportProbe] longMemory injected=true body=(359.0, 14.0, 306.0, 707.0) memoryCard=Optional((380.0, 302.0, 264.0, 182.5)) detailSize=Optional((400.0, 136.0))
+2026-10-03 11:58:21.321 Df ResourceRunner[1643:2f30367] [com.zipkero.ResourceRunner:ViewportProbe] snapshot path=/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner/Data/Library/Caches/Task012ViewportProbe/long-memory-body.png pixels=560x1362
+2026-10-03 11:58:22.033 Df ResourceRunner[1643:2f30367] [com.zipkero.ResourceRunner:ViewportProbe] longMemoryDisk body=(359.0, 14.0, 306.0, 707.0) diskCard=Optional((380.0, 608.5, 264.0, 112.0)) detail=Optional((644.0, 9.0, 426.0, 162.0)) inside8=true

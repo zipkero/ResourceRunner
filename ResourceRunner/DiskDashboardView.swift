@@ -305,6 +305,7 @@ struct DiskCardView: View {
 struct DiskDetailPopoverContent: View {
     let presentation: DiskCardPresentation
     let onClose: () -> Void
+    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
     var fixedNow: ContinuousClock.Instant? = nil
     @Environment(\.locale) private var locale
 
@@ -362,7 +363,8 @@ struct DiskDetailPopoverContent: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
+        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .disk))
         .accessibilityIdentifier("DiskDetail")
     }
 

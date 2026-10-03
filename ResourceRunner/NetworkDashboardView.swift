@@ -265,6 +265,7 @@ struct NetworkCardView: View {
 struct NetworkDetailPopoverContent: View {
     let presentation: NetworkCardPresentation
     let onClose: () -> Void
+    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
     var fixedNow: ContinuousClock.Instant? = nil
     @Environment(\.locale) private var locale
 
@@ -304,7 +305,8 @@ struct NetworkDetailPopoverContent: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
+        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .network))
         .accessibilityIdentifier("NetworkDetail")
     }
 

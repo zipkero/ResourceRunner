@@ -1,24 +1,21 @@
 # Context
 
-저장: 2026-10-03 (통합 요약 UI 최종 승인)
-
-## 최신 Per-Request 수정
-
-사용자가 Memory하단공백제거후main스테이징/커밋/푸시를지시했다. Memory최소199pt를제거했고실제내용높이를쓴다(기본169pt/긴정보184pt). 이전고정높이계약보다이사용자수정이우선한다. 관련DashboardCardHeightTests/IntegratedDashboardSummaryTests 15/15·서명Debug빌드통과, 실제PID30987 본체280×668pt/스크롤없음/하단공백제거를확인했다. source/관련테스트·design/implement/상위design에반영했고 Git작업기준HEAD9212400, branchmain, origin/main보다13개선행이었다. 사용자승인범위에따라이번수정을커밋하고기존main커밋과함께origin/main에푸시한다. 최종상태는git status/log로확인한다.
+저장: 2026-10-03 (Task012 승인 후 M3 잔여 검증)
 
 ## 현재 목표
 
-현재 사용자 UI 요청을 완료했다. CPU·Memory·Network·Disk 전체를 줄여 스크롤 없이 한눈에 표시하고, 지나치게 작은 글씨를 회복했다. Network·Disk 하단 안내 삭제, Disk 수치 옆 미니 그래프, TOP 5 아래3pt 여백을 반영했다. 추가 요청 없이 후속 M3 검증을 자동 시작하지 않는다.
+사용자 지시로 M3 잔여 작업을 진행한다. 잠금·절전 복귀와 VPN·외장 디스크 실제 관찰은 사용자 답변으로 보류한다. 읽을 수 있는 스크롤 없는 네 카드와 Memory 자연 높이를 유지한다. main 스테이징·커밋·푸시 승인이 유지된다.
 
 ## 현재 상태
 
-- 루트 `/Users/zipkero/XcodeProjects/ResourceRunner`, branch main. 작업 기준HEAD `11680b5`; 최종 통합 UI 커밋은 `git log -1`로 확인한다.
-- SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`. Tasks001~008/010/011 `[x]`,009철회,012~018 `[ ]`.
-- 사용자가 CPU·Memory가 그대로인 중간 화면의 스크롤과 작은 Network/Disk 글씨를 반려했다. main이590pt·6.67/7pt 강제 치수를 철회하고 전체 요약 통합 수정 하나를 task011로 지정했다. task012에는 추가 화면/chrome 검증을 남겼다.
-- worker implement_task002 최종결과를 main이 인수했고 verifier verify_compact_task010의 FINAL approved를 확정했다. 전체unit610/610·Release/서명Debug빌드·최종source11개/바이너리2개해시/patch가 대응한다.
-- 실제signedSandbox PID94070: visibleFrame1728×1084 scale2, content280×698/outer306×724, bodyScroll=false. 네카드AX CPU264×241/Memory264×199/Network·Disk264×112 모두화면안. Memory/Disk상세400×480·개폐후본체불변·DiskAXPress0. native관찰프로세스는종료했다.
-- 이전Disk단독sample-compact는사용자반려이력으로보존했다. 초기testselector누락·구픽셀좌표6건은최종전체610/610으로해소했다. 현재승인근거는readable-integrated패킷이다.
-- main은문서/상태/커밋소유, worker제품코드/검증, verifier읽기전용. 다른변경을되돌리지않는다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main, 기준 HEAD43de4d3. 승인 Task012를 main이 커밋·푸시한 뒤 다음 Task로 진행한다.
+- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010/011/012 승인,009철회,013~018미완료. task014실장치와015잠금·수면·화면수면·사용자전환은 보류이며 완료/철회로 바꾸지 않는다. Ethernet 전환 장비도 미확보다.
+- worker /root/implement_task002의 Task012 FINALcompleted와 verifier /root/verify_compact_task010의 FINALapproved를 main이 인수·확정했다. main만 문서·상태·커밋·푸시를 수행한다.
+- Task012 소스9개·Debug실행파일/실제Swift dylib·Release해시 일치, 관련38/38·Release·서명Debug 통과. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-012/README.md).
+- 실제 현재화면1728×1117(visible1084),scale2: 본체280×668/외곽306×694/스크롤없음, 네상세400×480/외곽426×506, 모두8pt·카드앵커·개폐본체불변·끝스크롤 확인(PID4865).
+- 추가실제1168×755(visible729)모드: 본체동일/네상세공유400×136/외곽426×162, 모두8pt·앵커·끝스크롤 확인(PID5951). 합성최장Memory fixture PID6563에서169→184/본체668→683으로늘어도상세400×136불변·Disky8. 원문두줄PNG확인. 화면모드복원·관찰앱종료 완료.
+- 외부물리화면은없고더낮은지원모드는본문+chrome+16pt가들어가지않는다. 새정책을넣지않았고그모드들의지원성공을주장하지않는다.
+- 이전owned Task011일반앱PID34093은정확한실행경로대조후종료했다. 마지막에는일반앱하나만실행한다.
 
 ## 현재 작업 문서
 
@@ -26,34 +23,35 @@
 - [design.md](./features/20260817-001-extended-resource-monitoring/design.md)
 - [implement.md](./features/20260817-001-extended-resource-monitoring/implement.md)
 - [README.md](./features/20260817-001-extended-resource-monitoring/README.md)
-- [최종 UI 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-011/readable-integrated/README.md)
 
-각 문서 첫머리의 실제 화면 피드백 기준이 과거 샘플/치수보다 우선한다.
+최신첫머리의실제화면피드백·Memory수정이과거590pt/고정199pt/작은글꼴·본체스크롤설명보다우선한다. Task013/018 관련문장도기존결정에맞게정합화했다.
 
 ## 확정된 결정
 
-본체폭280/padding8/gap6, 기본요약10pt이상/대표17.33pt/CPU판66.67pt, TOP5아래3pt. 최종CPU241/Memory199/Network112/Disk112로본체698pt, ScrollView없음. 많은Network종류는종류수/활성·미확인수요약, 전체이름은상세/부모AX에보존한다. 상세원래글꼴/스크롤·수집·단위·원문값·실제아이콘을유지한다.
+본체폭280/padding8/gap6, 기본요약10pt이상/대표17.33pt/CPU판66.67pt, TOP5아래3pt. CPU최소241pt/Memory자연높이(기본169·긴184)/Network112/Disk112pt, 기본본체668pt·ScrollView없음. Network그래프·Network/Disk하단안내삭제, Disk수치옆42pt미니그래프. 상세원래글꼴·내부스크롤·정보·수집·단위보존. 많은Network종류는개수요약하고전체이름은상세/AX에보존한다.
 
-이전Task012 부분구현은stash `0ef806c85321a92c7a07226de4b0080a7cc1eb48`에보존했다. 구치수1221/601기준으로전체적용금지, 필요하면현재계약에맞는부분만선별한다.
+Task012는실제Disk·Memory카드NSView좌표/높이와chrome로네상세공유높이를계산한다. Memory긴정보가실제팝오버에서세로압축되지않게고유높이를유지했다. Memory예약공백은재도입하지않는다.
+
+Task011전체610/610근거는 [readable-integrated](./features/20260817-001-extended-resource-monitoring/evidence/task-011/readable-integrated/README.md)에있다. Memory하단수정은관련15/15·실제668pt·서명Debug확인후43de4d3로커밋·푸시했다. 이전Task012 stash 0ef806c85321a92c7a07226de4b0080a7cc1eb48은구치수기준이라전체적용하지않는다.
 
 ## 미확정 판단
 
-추가화면의팝오버외곽chrome·8pt여유는task012, 전체키보드/AX·OS/연결전환·시스템도구비교·production통합은013~018에남는다. 콘텐츠는현재실화면안에있지만NSPopover외곽상단5pt는메뉴바영역에걸치며chrome검증후속관문이다. UI완료를M3전체완료로보고하지않는다.
+Task014실장치와015잠금·절전복귀는보류·미완료다. 외부화면/너무작은화면정책경계는Task012근거에남겼다. M3전체완료로보고하지않는다.
 
 ## 다음 작업
 
-- 작업: 추가요청이없으면자동후속Task를시작하지않는다. 다음재개시task012추가화면/chrome관문을원본에서확인한다.
-- 완료 기준: 현재UI요청완료/전체610통과/실제한눈화면을보고한다.
+- 작업: Task012를main에커밋·푸시한뒤worker에게Task013키보드·포커스·실제AX검증을위임한다. 이어016→017→018을진행한다.
+- 완료 기준: Task마다worker FINAL/독립verifier FINAL을인수하고main이판정·상태·CONTEXT·커밋을반영한다. 보류한실제전환을mock/통합결과로대체하지않는다.
 
 ## 먼저 읽을 파일
 
+- [DashboardViewport.swift](./ResourceRunner/DashboardViewport.swift)
 - [DashboardView.swift](./ResourceRunner/DashboardView.swift)
-- [DashboardStyle.swift](./ResourceRunner/DashboardStyle.swift)
-- [NetworkDashboardView.swift](./ResourceRunner/NetworkDashboardView.swift)
-- [DiskDashboardView.swift](./ResourceRunner/DiskDashboardView.swift)
+- [DashboardPresentationStore.swift](./ResourceRunner/DashboardPresentationStore.swift)
 - [StatusBarController.swift](./ResourceRunner/StatusBarController.swift)
-- ~/.codex/skills/implement/SKILL.md, verify/SKILL.md, context-save/SKILL.md, ~/.codex/docs/phased-state.md
+- [AppDelegate.swift](./ResourceRunner/AppDelegate.swift)
+- ~/.codex/skills/implement-loop/SKILL.md, implement/SKILL.md, verify/SKILL.md, context-save/SKILL.md, ~/.codex/docs/phased-state.md
 
 ## 문서 반영 필요
 
-없음. 최신계약과011/012소유재편을원본 문서및상위design/ROADMAP에반영했다.
+없음。 미완료Task최종근거·승인은확인후main이반영한다.

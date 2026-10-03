@@ -15,6 +15,9 @@ import Foundation
 final class DashboardPresentationStore: ObservableObject {
     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
+#if DEBUG
+    private var viewportLongMemoryActive = false
+#endif
     @Published private(set) var networkCard: NetworkCardPresentation = .collecting
     @Published private(set) var diskCard: DiskCardPresentation = .collecting
     private var lastCollectionBoundarySequence = 0
@@ -119,6 +122,9 @@ final class DashboardPresentationStore: ObservableObject {
         processGroups: [ApplicationProcessGroup] = [],
         currentTimestamp: ContinuousClock.Instant
     ) {
+#if DEBUG
+        if viewportLongMemoryActive { return }
+#endif
         guard let latest = displayValue.latest else { return }
 
         switch latest.value.memory {
@@ -139,6 +145,27 @@ final class DashboardPresentationStore: ObservableObject {
             memoryCard = .failure(lastKnown: memoryCard.lastKnownValue)
         }
     }
+
+#if DEBUG
+    /// 실제 viewport 관찰에서 긴 원문 Memory 상태만 일시적으로 만듭니다.
+    func injectLongMemoryForViewportProbe() -> Bool {
+        guard let known = memoryCard.lastKnownValue else { return false }
+        viewportLongMemoryActive = true
+        let original = known.presentation
+        let extended = MemoryCardPresentation(
+            totalPhysicalBytes: original.totalPhysicalBytes,
+            usedBytes: original.usedBytes,
+            pressureDisplay: MemoryPressureLevel.critical.display,
+            swapUsedBytes: 999_000_000_000,
+            swapRecentChangeBytes: 500_000_000_000,
+            topApplications: original.topApplications,
+            topApplicationsFailed: original.topApplicationsFailed,
+            detail: original.detail
+        )
+        memoryCard = .normal(extended, timestamp: known.timestamp)
+        return true
+    }
+#endif
 
     /// 빠른 활동과 느린 보조 정보 중 어느 축이 도착해도 현재 실행권의 값으로 다시 조립합니다.
     /// 원본 readAt과 같은 대상 revision을 유지하므로 느린 보조 실패가 새 속도를 묶어 두지 않습니다.

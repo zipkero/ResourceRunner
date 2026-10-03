@@ -1,0 +1,463 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index c8580a0..3e73449 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -20,6 +20,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidFinishLaunching(_ notification: Notification) {
+         coordinator = ApplicationCoordinator()
+ #if DEBUG
++        if ProcessInfo.processInfo.environment["RR_VIEWPORT_PROBE"] == "1" {
++            Task { @MainActor [weak self] in
++                guard let self, let coordinator = self.coordinator else { return }
++                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "ViewportProbe")
++                let status = coordinator.statusBarController
++                let store = coordinator.dashboardPresentationStore
++                for (index, screen) in NSScreen.screens.enumerated() {
++                    logger.notice("screen index=\(index) frame=\(String(describing: screen.frame), privacy: .public) visible=\(String(describing: screen.visibleFrame), privacy: .public) scale=\(screen.backingScaleFactor, privacy: .public)")
++                }
++                try? await Task.sleep(for: .seconds(4))
++                status.togglePopover()
++                try? await Task.sleep(for: .milliseconds(700))
++                guard let body = status.popover.contentViewController?.view.window,
++                      let screen = status.statusItem.button?.window?.screen ?? NSScreen.main else {
++                    logger.error("body or screen missing")
++                    return
++                }
++                logger.notice("body frame=\(String(describing: body.frame), privacy: .public) visible=\(String(describing: screen.visibleFrame), privacy: .public) inside8=\(DashboardViewportPolicy.contains(body.frame, visibleFrame: screen.visibleFrame)) bodyScroll=\(Self.firstScrollView(in: body.contentView ?? NSView()) != nil)")
++                if ProcessInfo.processInfo.environment["RR_VIEWPORT_LONG_MEMORY"] == "1" {
++                    let injected = store.injectLongMemoryForViewportProbe()
++                    try? await Task.sleep(for: .milliseconds(350))
++                    logger.notice("longMemory injected=\(injected) body=\(String(describing: body.frame), privacy: .public) memoryCard=\(String(describing: Self.probeAXFrame(identifier: "MemoryCard")), privacy: .public) detailSize=\(String(describing: status.viewport?.detailSize), privacy: .public)")
++                    if let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
++                        let output = caches.appending(path: "Task012ViewportProbe")
++                        try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
++                        Self.writeProbeImage(window: body, path: output.appending(path: "long-memory-body.png").path, logger: logger)
++                    }
++                    store.selectCard(.disk)
++                    try? await Task.sleep(for: .milliseconds(650))
++                    let detail = status.viewport?.detailWindow
++                    logger.notice("longMemoryDisk body=\(String(describing: body.frame), privacy: .public) diskCard=\(String(describing: Self.probeAXFrame(identifier: "DiskCard")), privacy: .public) detail=\(String(describing: detail?.frame), privacy: .public) inside8=\(detail.map { DashboardViewportPolicy.contains($0.frame, visibleFrame: $0.screen?.visibleFrame ?? screen.visibleFrame) } ?? false)")
++                    store.selectCard(.disk)
++                    status.togglePopover()
++                    return
++                }
++                Self.logIntegratedAccessibility(logger: logger)
++                guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
++                let output = caches.appending(path: "Task012ViewportProbe")
++                try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
++                Self.writeProbeImage(window: body, path: output.appending(path: "body.png").path, logger: logger)
++                for selection in [DashboardSelection.cpu, .memory, .network, .disk] {
++                    store.selectCard(selection)
++                    try? await Task.sleep(for: .milliseconds(650))
++                    let detail = status.viewport?.detailWindow
++                    let identifier: String = switch selection {
++                    case .cpu: "CPUCard"
++                    case .memory: "MemoryCard"
++                    case .network: "NetworkCard"
++                    case .disk: "DiskCard"
++                    case .none: "DashboardContainer"
++                    }
++                    let card = Self.probeAXFrame(identifier: identifier)
++                    let detailScreen = detail?.screen ?? screen
++                    let detailFrame = detail?.frame
++                    logger.notice("selection=\(String(describing: selection), privacy: .public) owned=\(status.viewport?.detailSelection == selection) cardAX=\(String(describing: card), privacy: .public) detail=\(String(describing: detailFrame), privacy: .public) inside8=\(detailFrame.map { DashboardViewportPolicy.contains($0, visibleFrame: detailScreen.visibleFrame) } ?? false) body=\(String(describing: body.frame), privacy: .public)")
++                    Self.logIntegratedAccessibility(logger: logger)
++                    if let detail {
++                        Self.writeProbeImage(window: detail,
++                            path: output.appending(path: "\(selection)-detail.png").path, logger: logger)
++                        if let content = detail.contentView,
++                           let scroll = Self.firstScrollView(in: content) {
++                            let last = max(0, (scroll.documentView?.frame.height ?? 0) - scroll.contentView.bounds.height)
++                            scroll.contentView.scroll(to: NSPoint(x: 0, y: last))
++                            scroll.reflectScrolledClipView(scroll.contentView)
++                            try? await Task.sleep(for: .milliseconds(120))
++                            logger.notice("detailEnd selection=\(String(describing: selection), privacy: .public) document=\(String(describing: scroll.documentView?.frame), privacy: .public) clip=\(String(describing: scroll.contentView.bounds), privacy: .public)")
++                        }
++                    }
++                    store.selectCard(selection)
++                    try? await Task.sleep(for: .milliseconds(180))
++                    logger.notice("closed selection=\(String(describing: store.selection), privacy: .public) body=\(String(describing: body.frame), privacy: .public)")
++                }
++                status.togglePopover()
++            }
++        }
+         if ProcessInfo.processInfo.environment["RR_INTEGRATED_UI_PROBE"] == "1" {
+             Task { @MainActor [weak self] in
+                 guard let self, let coordinator = self.coordinator else { return }
+@@ -317,6 +392,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     }
+ 
+ #if DEBUG
++    /// probe에서 카드 AX frame을 읽어 자식 창이 선택 카드 옆에 남는지 확인합니다.
++    @MainActor private static func probeAXFrame(identifier: String) -> CGRect? {
++        let root = AXUIElementCreateApplication(getpid())
++        func search(_ element: AXUIElement, depth: Int) -> CGRect? {
++            guard depth < 16 else { return nil }
++            var value: CFTypeRef?
++            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &value) == .success,
++               value as? String == identifier {
++                var position: CFTypeRef?
++                var size: CFTypeRef?
++                guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position) == .success,
++                      AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size) == .success,
++                      let position, let size else { return nil }
++                var point = CGPoint.zero
++                var dimensions = CGSize.zero
++                guard AXValueGetValue(position as! AXValue, .cgPoint, &point),
++                      AXValueGetValue(size as! AXValue, .cgSize, &dimensions) else { return nil }
++                return CGRect(origin: point, size: dimensions)
++            }
++            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
++                  let children = value as? [AXUIElement] else { return nil }
++            for child in children {
++                if let found = search(child, depth: depth + 1) { return found }
++            }
++            return nil
++        }
++        return search(root, depth: 0)
++    }
++
+     /// 실제 팝오버의 네 카드 위치와 접근성 이름을 함께 남겨 본체 무스크롤 배치를 확인합니다.
+     @MainActor private static func logIntegratedAccessibility(logger: Logger) {
+         let root = AXUIElementCreateApplication(getpid())
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 50d4bed..9412cb8 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -55,8 +55,10 @@ final class ApplicationCoordinator {
+ 
+         // 아이콘 캐시 수명은 앱 수명입니다. 여기서 한 번 만들어 뷰에 넘기면 팝오버를 여닫아도
+         // 같은 앱의 아이콘을 다시 얻지 않습니다(ANALYSIS §5 DP11).
++        let viewport = DashboardViewport()
+         statusBarController = StatusBarController(
+-            popoverContent: DashboardView(store: dashboard, iconProvider: ApplicationIconCache())
++            popoverContent: DashboardView(store: dashboard, viewport: viewport,
++                iconProvider: ApplicationIconCache()), viewport: viewport
+         )
+         characterStateSource = CharacterStateSource()
+ 
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index c09f34c..569131c 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -15,6 +15,9 @@ import Foundation
+ final class DashboardPresentationStore: ObservableObject {
+     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
+     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
++#if DEBUG
++    private var viewportLongMemoryActive = false
++#endif
+     @Published private(set) var networkCard: NetworkCardPresentation = .collecting
+     @Published private(set) var diskCard: DiskCardPresentation = .collecting
+     private var lastCollectionBoundarySequence = 0
+@@ -119,6 +122,9 @@ final class DashboardPresentationStore: ObservableObject {
+         processGroups: [ApplicationProcessGroup] = [],
+         currentTimestamp: ContinuousClock.Instant
+     ) {
++#if DEBUG
++        if viewportLongMemoryActive { return }
++#endif
+         guard let latest = displayValue.latest else { return }
+ 
+         switch latest.value.memory {
+@@ -140,6 +146,27 @@ final class DashboardPresentationStore: ObservableObject {
+         }
+     }
+ 
++#if DEBUG
++    /// 실제 viewport 관찰에서 긴 원문 Memory 상태만 일시적으로 만듭니다.
++    func injectLongMemoryForViewportProbe() -> Bool {
++        guard let known = memoryCard.lastKnownValue else { return false }
++        viewportLongMemoryActive = true
++        let original = known.presentation
++        let extended = MemoryCardPresentation(
++            totalPhysicalBytes: original.totalPhysicalBytes,
++            usedBytes: original.usedBytes,
++            pressureDisplay: MemoryPressureLevel.critical.display,
++            swapUsedBytes: 999_000_000_000,
++            swapRecentChangeBytes: 500_000_000_000,
++            topApplications: original.topApplications,
++            topApplicationsFailed: original.topApplicationsFailed,
++            detail: original.detail
++        )
++        memoryCard = .normal(extended, timestamp: known.timestamp)
++        return true
++    }
++#endif
++
+     /// 빠른 활동과 느린 보조 정보 중 어느 축이 도착해도 현재 실행권의 값으로 다시 조립합니다.
+     /// 원본 readAt과 같은 대상 revision을 유지하므로 느린 보조 실패가 새 속도를 묶어 두지 않습니다.
+     func updateNetworkCard(activity: NetworkActivityDisplayValue?,
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index a6df579..649cf6e 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -17,6 +17,7 @@ import SwiftUI
+ /// 확인된 사실입니다(ANALYSIS §근거 확인 사실).
+ struct DashboardView: View {
+     @ObservedObject var store: DashboardPresentationStore
++    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+     @Environment(\.locale) private var locale
+     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
+     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
+@@ -42,13 +43,15 @@ struct DashboardView: View {
+             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
+             .accessibilityIdentifier("CPUCard")
+             .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
+-                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider)
++                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
++                    viewport: viewport)
+             }
+ 
+             Button(action: { store.selectCard(.memory) }) {
+                 MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
+             }
+             .buttonStyle(.plain)
++            .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
+             .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
+             .accessibilityElement(children: .ignore)
+             .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel)
+@@ -56,7 +59,8 @@ struct DashboardView: View {
+             // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
+             .accessibilityIdentifier("MemoryCard")
+             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
+-                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider)
++                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
++                    viewport: viewport)
+             }
+             Button(action: { store.selectCard(.network) }) {
+                 NetworkCardView(presentation: store.networkCard)
+@@ -70,12 +74,13 @@ struct DashboardView: View {
+             .accessibilityIdentifier("NetworkCard")
+             .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
+                 NetworkDetailPopoverContent(presentation: store.networkCard,
+-                    onClose: { store.dismissDetail(for: .network) })
++                    onClose: { store.dismissDetail(for: .network) }, viewport: viewport)
+             }
+             Button(action: { store.selectCard(.disk) }) {
+                 DiskCardView(presentation: store.diskCard)
+             }
+             .buttonStyle(.plain)
++            .background(DashboardLowestAnchorCapture(viewport: viewport))
+             .keyboardShortcut("4", modifiers: .command)
+             .accessibilityElement(children: .ignore)
+             .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+@@ -85,11 +90,12 @@ struct DashboardView: View {
+             .accessibilityIdentifier("DiskCard")
+             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+                 DiskDetailPopoverContent(presentation: store.diskCard,
+-                    onClose: { store.dismissDetail(for: .disk) })
++                    onClose: { store.dismissDetail(for: .disk) }, viewport: viewport)
+             }
+         }
+         .padding(DashboardStyle.Summary.bodyPadding)
+         .frame(width: 280, alignment: .topLeading)
++        .onChange(of: store.selection) { _, _ in viewport.requestCorrection?() }
+         .background(DashboardColorPalette.popoverBackground)
+         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
+         .accessibilityElement(children: .contain)
+@@ -486,8 +492,8 @@ struct MemoryCardView: View {
+     }
+ 
+     /// Pressure·Swap·구성 합계 줄(고정 슬롯). `MemoryPressureSwapLineFormatting.assemble`이 고정한 순서를
+-    /// 그대로 이어붙여 그리고 `MemoryPressureSwapLineFormatting.maximumLineCount`로 묶어
+-    /// 폭이 부족할 때 줄바꿈 대신 끝에서 잘리게 합니다 — 뷰는 순서도 줄 수 상한도 정하지 않고 조립 결과를 그리기만 합니다(ANALYSIS §5 DP4).
++    /// 그대로 이어붙이고 두 줄까지 자연스럽게 늘립니다. 팝오버의 초기 높이가 긴 원문을 한 줄로 압축하지 않도록
++    /// 세로 고유 크기를 유지하며, 조각 순서와 줄 수 상한은 기존 표시 계약을 따릅니다(ANALYSIS §5 DP4).
+     /// 줄 끝의 구성 합계는 제목 줄의 「사용 중」과 다른 지표라 「구성」 라벨을 달아 그립니다(SPEC §5.3).
+     // `private`가 아닌 것은 task-011 테스트가 값 없음 자리표시(`…placeholder`)의 조각이 이 줄에 실제로 남는지
+     // 이 줄의 이상적 폭으로 재기 때문입니다 — 조립 배열만 단언하면 뷰가 조각을 건너뛰어도 통과합니다.
+@@ -520,6 +526,7 @@ struct MemoryCardView: View {
+         }
+         .dashboardTypography(DashboardStyle.TypographyRole.label)
+         .lineLimit(2)
++        .fixedSize(horizontal: false, vertical: true)
+     }
+ 
+     /// 구성 범례 줄(고정 슬롯). task-006의 병합이 비워 둔 자리를 씁니다.
+@@ -1051,6 +1058,7 @@ struct TopApplicationsView: View {
+ struct CPUDetailPopoverContent: View {
+     let state: ResourceCardState<CPUCardPresentation>
+     let iconProvider: any ApplicationIconProviding
++    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+ 
+     /// 이 상태에서 상세 본문이 조립하는 이 feature의 새 표시 요소.
+     /// 정상 목록을 `CPUDetailView`의 production 조립에서 가져오므로 하위 조립에 요소가 더해지면
+@@ -1066,8 +1074,9 @@ struct CPUDetailPopoverContent: View {
+             .padding()
+             .frame(maxWidth: .infinity, alignment: .leading)
+         }
+-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
++        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
+         .background(DashboardColorPalette.cardSurface)
++        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .cpu))
+         .accessibilityIdentifier("DashboardDetail")
+     }
+ 
+@@ -1088,6 +1097,7 @@ struct CPUDetailPopoverContent: View {
+ struct MemoryDetailPopoverContent: View {
+     let state: ResourceCardState<MemoryCardPresentation>
+     let iconProvider: any ApplicationIconProviding
++    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+ 
+     var body: some View {
+         ScrollView {
+@@ -1102,8 +1112,9 @@ struct MemoryDetailPopoverContent: View {
+             .padding()
+             .frame(maxWidth: .infinity, alignment: .leading)
+         }
+-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
++        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
+         .background(DashboardColorPalette.cardSurface)
++        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .memory))
+         .accessibilityIdentifier("DashboardDetail")
+     }
+ }
+diff --git a/ResourceRunner/DiskDashboardView.swift b/ResourceRunner/DiskDashboardView.swift
+index 372c0fe..9ad15c0 100644
+--- a/ResourceRunner/DiskDashboardView.swift
++++ b/ResourceRunner/DiskDashboardView.swift
+@@ -305,6 +305,7 @@ struct DiskCardView: View {
+ struct DiskDetailPopoverContent: View {
+     let presentation: DiskCardPresentation
+     let onClose: () -> Void
++    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+     var fixedNow: ContinuousClock.Instant? = nil
+     @Environment(\.locale) private var locale
+ 
+@@ -362,7 +363,8 @@ struct DiskDetailPopoverContent: View {
+             .padding(16)
+             .frame(maxWidth: .infinity, alignment: .leading)
+         }
+-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
++        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
++        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .disk))
+         .accessibilityIdentifier("DiskDetail")
+     }
+ 
+diff --git a/ResourceRunner/NetworkDashboardView.swift b/ResourceRunner/NetworkDashboardView.swift
+index aba1813..c48ac80 100644
+--- a/ResourceRunner/NetworkDashboardView.swift
++++ b/ResourceRunner/NetworkDashboardView.swift
+@@ -265,6 +265,7 @@ struct NetworkCardView: View {
+ struct NetworkDetailPopoverContent: View {
+     let presentation: NetworkCardPresentation
+     let onClose: () -> Void
++    @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+     var fixedNow: ContinuousClock.Instant? = nil
+     @Environment(\.locale) private var locale
+ 
+@@ -304,7 +305,8 @@ struct NetworkDetailPopoverContent: View {
+             .padding(16)
+             .frame(maxWidth: .infinity, alignment: .leading)
+         }
+-        .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
++        .frame(width: viewport.detailSize.width, height: viewport.detailSize.height)
++        .background(DashboardDetailWindowCapture(viewport: viewport, selection: .network))
+         .accessibilityIdentifier("NetworkDetail")
+     }
+ 
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index 7cbb8d0..69e4790 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -30,6 +30,9 @@ final class StatusBarController: NSObject {
+ 
+     let statusItem: NSStatusItem
+     let popover: NSPopover
++    let viewport: DashboardViewport?
++    private var screenObserver: NSObjectProtocol?
++    private var correctionScheduled = false
+ 
+     weak var output: StatusBarControllerOutput?
+ 
+@@ -38,15 +41,23 @@ final class StatusBarController: NSObject {
+     var debugStateInjector: ((CharacterActivityState) -> Void)?
+ #endif
+ 
+-    init<Content: View>(popoverContent: Content) {
++    init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
+         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+         popover = NSPopover()
++        self.viewport = viewport
+         popover.behavior = .transient
+         popover.contentViewController = NSHostingController(rootView: popoverContent)
+ 
+         super.init()
+ 
+         popover.delegate = self
++        viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
++        screenObserver = NotificationCenter.default.addObserver(
++            forName: NSApplication.didChangeScreenParametersNotification,
++            object: nil, queue: .main
++        ) { [weak self] _ in
++            Task { @MainActor [weak self] in self?.scheduleFrameCorrection() }
++        }
+ 
+         if let button = statusItem.button {
+             // 자산 카탈로그가 돌려주는 공유 인스턴스의 크기를 직접 바꾸지 않도록 복사본을 사용합니다.
+@@ -89,9 +100,56 @@ final class StatusBarController: NSObject {
+         if popover.isShown {
+             popover.performClose(nil)
+         } else {
++            updateViewportFromScreen()
+             NSApp.activate()
+             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+             popover.contentViewController?.view.window?.makeKey()
++            scheduleFrameCorrection()
++        }
++    }
++
++    private func scheduleFrameCorrection() {
++        guard !correctionScheduled else { return }
++        correctionScheduled = true
++        Task { @MainActor [weak self] in
++            await Task.yield()
++            self?.correctFrames()
++            try? await Task.sleep(for: .milliseconds(120))
++            self?.correctFrames()
++            // 하단 카드 상세는 macOS가 최초 창 생성 뒤 한 번 더 앵커 위치를 조정합니다.
++            try? await Task.sleep(for: .milliseconds(380))
++            self?.correctFrames()
++            self?.correctionScheduled = false
++        }
++    }
++
++    /// 상태 항목 화면과 실제 창 chrome를 읽어 보조 viewport를 정한 뒤 외곽 frame을 보정합니다.
++    private func updateViewportFromScreen() {
++        guard let viewport,
++              let screen = statusItem.button?.window?.screen ?? popover.contentViewController?.view.window?.screen
++                ?? NSScreen.main else { return }
++        viewport.apply(screen: screen)
++    }
++
++    private func correctFrames() {
++        guard let viewport,
++              let screen = statusItem.button?.window?.screen ?? popover.contentViewController?.view.window?.screen
++                ?? NSScreen.main else { return }
++        viewport.apply(screen: screen)
++        if let body = popover.contentViewController?.view.window {
++            keepWindow(body, inside: screen.visibleFrame)
++        }
++        if let detail = viewport.detailWindow, detail.isVisible {
++            // 상세는 콘텐츠가 등록한 정확한 자식 창만 보정합니다.
++            keepWindow(detail, inside: detail.screen?.visibleFrame ?? screen.visibleFrame)
++        }
++    }
++
++    private func keepWindow(_ window: NSWindow, inside visibleFrame: CGRect) {
++        guard let origin = DashboardViewportPolicy.containedOrigin(window: window.frame,
++            visibleFrame: visibleFrame) else { return }
++        if abs(origin.x - window.frame.minX) > 0.1 || abs(origin.y - window.frame.minY) > 0.1 {
++            window.setFrameOrigin(origin)
+         }
+     }
+ 
+@@ -121,6 +179,7 @@ final class StatusBarController: NSObject {
+ 
+ extension StatusBarController: NSPopoverDelegate {
+     func popoverDidShow(_ notification: Notification) {
++        scheduleFrameCorrection()
+         output?.popoverPresented(true)
+     }
+ 

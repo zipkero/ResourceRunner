@@ -30,6 +30,9 @@ final class StatusBarController: NSObject {
 
     let statusItem: NSStatusItem
     let popover: NSPopover
+    let viewport: DashboardViewport?
+    private var screenObserver: NSObjectProtocol?
+    private var correctionScheduled = false
 
     weak var output: StatusBarControllerOutput?
 
@@ -38,15 +41,23 @@ final class StatusBarController: NSObject {
     var debugStateInjector: ((CharacterActivityState) -> Void)?
 #endif
 
-    init<Content: View>(popoverContent: Content) {
+    init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         popover = NSPopover()
+        self.viewport = viewport
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: popoverContent)
 
         super.init()
 
         popover.delegate = self
+        viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.scheduleFrameCorrection() }
+        }
 
         if let button = statusItem.button {
             // 자산 카탈로그가 돌려주는 공유 인스턴스의 크기를 직접 바꾸지 않도록 복사본을 사용합니다.
@@ -89,9 +100,56 @@ final class StatusBarController: NSObject {
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            updateViewportFromScreen()
             NSApp.activate()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
+            scheduleFrameCorrection()
+        }
+    }
+
+    private func scheduleFrameCorrection() {
+        guard !correctionScheduled else { return }
+        correctionScheduled = true
+        Task { @MainActor [weak self] in
+            await Task.yield()
+            self?.correctFrames()
+            try? await Task.sleep(for: .milliseconds(120))
+            self?.correctFrames()
+            // 하단 카드 상세는 macOS가 최초 창 생성 뒤 한 번 더 앵커 위치를 조정합니다.
+            try? await Task.sleep(for: .milliseconds(380))
+            self?.correctFrames()
+            self?.correctionScheduled = false
+        }
+    }
+
+    /// 상태 항목 화면과 실제 창 chrome를 읽어 보조 viewport를 정한 뒤 외곽 frame을 보정합니다.
+    private func updateViewportFromScreen() {
+        guard let viewport,
+              let screen = statusItem.button?.window?.screen ?? popover.contentViewController?.view.window?.screen
+                ?? NSScreen.main else { return }
+        viewport.apply(screen: screen)
+    }
+
+    private func correctFrames() {
+        guard let viewport,
+              let screen = statusItem.button?.window?.screen ?? popover.contentViewController?.view.window?.screen
+                ?? NSScreen.main else { return }
+        viewport.apply(screen: screen)
+        if let body = popover.contentViewController?.view.window {
+            keepWindow(body, inside: screen.visibleFrame)
+        }
+        if let detail = viewport.detailWindow, detail.isVisible {
+            // 상세는 콘텐츠가 등록한 정확한 자식 창만 보정합니다.
+            keepWindow(detail, inside: detail.screen?.visibleFrame ?? screen.visibleFrame)
+        }
+    }
+
+    private func keepWindow(_ window: NSWindow, inside visibleFrame: CGRect) {
+        guard let origin = DashboardViewportPolicy.containedOrigin(window: window.frame,
+            visibleFrame: visibleFrame) else { return }
+        if abs(origin.x - window.frame.minX) > 0.1 || abs(origin.y - window.frame.minY) > 0.1 {
+            window.setFrameOrigin(origin)
         }
     }
 
@@ -121,6 +179,7 @@ final class StatusBarController: NSObject {
 
 extension StatusBarController: NSPopoverDelegate {
     func popoverDidShow(_ notification: Notification) {
+        scheduleFrameCorrection()
         output?.popoverPresented(true)
     }
 

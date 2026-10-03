@@ -55,8 +55,10 @@ final class ApplicationCoordinator {
 
         // 아이콘 캐시 수명은 앱 수명입니다. 여기서 한 번 만들어 뷰에 넘기면 팝오버를 여닫아도
         // 같은 앱의 아이콘을 다시 얻지 않습니다(ANALYSIS §5 DP11).
+        let viewport = DashboardViewport()
         statusBarController = StatusBarController(
-            popoverContent: DashboardView(store: dashboard, iconProvider: ApplicationIconCache())
+            popoverContent: DashboardView(store: dashboard, viewport: viewport,
+                iconProvider: ApplicationIconCache()), viewport: viewport
         )
         characterStateSource = CharacterStateSource()
 

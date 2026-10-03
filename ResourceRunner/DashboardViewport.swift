@@ -1,0 +1,185 @@
+import AppKit
+import Combine
+import SwiftUI
+
+/// 팝오버 콘텐츠 크기와 실제 창 chrome를 분리해 화면 가용 영역을 계산합니다.
+nonisolated enum DashboardViewportPolicy {
+    static let edgeMargin: CGFloat = 8
+    static let maximumDetail = CGSize(width: 400, height: 480)
+    static let initialChrome = CGSize(width: 26, height: 26)
+    // Memory의 검증된 가장 긴 원문 상태에 필요한 높이입니다. 카드에 빈 높이를 예약하지 않습니다.
+    static let longestMemoryHeight: CGFloat = 184
+
+    static func normalizedAnchorCenterY(diskCenterY: CGFloat, memoryHeight: CGFloat) -> CGFloat {
+        diskCenterY + memoryHeight - longestMemoryHeight
+    }
+
+    static func detailSize(visibleFrame: CGRect, chrome: CGSize,
+                           lowestAnchorCenterY: CGFloat? = nil) -> CGSize {
+        let anchorHeight = lowestAnchorCenterY.map {
+            2 * ($0 - visibleFrame.minY - edgeMargin) - chrome.height
+        } ?? maximumDetail.height
+        return CGSize(width: min(maximumDetail.width,
+            max(0, visibleFrame.width - 2 * edgeMargin - chrome.width)),
+            height: min(maximumDetail.height,
+                max(0, visibleFrame.height - 2 * edgeMargin - chrome.height),
+                max(0, anchorHeight)))
+    }
+
+    static func containedOrigin(window: CGRect, visibleFrame: CGRect) -> CGPoint? {
+        let inside = visibleFrame.insetBy(dx: edgeMargin, dy: edgeMargin)
+        guard window.width <= inside.width, window.height <= inside.height else { return nil }
+        return CGPoint(x: min(max(window.minX, inside.minX), inside.maxX - window.width),
+                       y: min(max(window.minY, inside.minY), inside.maxY - window.height))
+    }
+
+    static func contains(_ window: CGRect, visibleFrame: CGRect, tolerance: CGFloat = 0.5) -> Bool {
+        let inside = visibleFrame.insetBy(dx: edgeMargin, dy: edgeMargin)
+        return window.minX >= inside.minX - tolerance && window.maxX <= inside.maxX + tolerance
+            && window.minY >= inside.minY - tolerance && window.maxY <= inside.maxY + tolerance
+    }
+}
+
+/// 본체와 네 상세가 함께 쓰는 화면 경계. 본체 카드 크기는 바꾸지 않습니다.
+@MainActor
+final class DashboardViewport: ObservableObject {
+    @Published private(set) var detailSize = DashboardViewportPolicy.maximumDetail
+    private(set) var visibleFrame: CGRect?
+    private(set) var detailChrome = DashboardViewportPolicy.initialChrome
+    weak var detailWindow: NSWindow?
+    private(set) var detailSelection: DashboardSelection?
+    var requestCorrection: (() -> Void)?
+    weak var lowestAnchorView: NSView?
+    weak var memoryCardView: NSView?
+
+    func apply(screen: NSScreen, measuredDetailChrome: CGSize? = nil) {
+        visibleFrame = screen.visibleFrame
+        if let measuredDetailChrome { detailChrome = measuredDetailChrome }
+        let anchorCenterY: CGFloat? = {
+            guard let view = lowestAnchorView, let window = view.window,
+                  window.screen == screen, view.bounds.height > 0 else { return nil }
+            return DashboardViewportPolicy.normalizedAnchorCenterY(
+                diskCenterY: window.convertToScreen(view.convert(view.bounds, to: nil)).midY,
+                memoryHeight: memoryCardView?.bounds.height
+                    ?? DashboardViewportPolicy.longestMemoryHeight)
+        }()
+        let next = DashboardViewportPolicy.detailSize(visibleFrame: screen.visibleFrame,
+            chrome: detailChrome, lowestAnchorCenterY: anchorCenterY)
+        if detailSize != next { detailSize = next }
+    }
+
+    func registerLowestAnchor(view: NSView) {
+        lowestAnchorView = view
+        if let screen = view.window?.screen { apply(screen: screen) }
+    }
+
+    func registerMemoryCard(view: NSView) {
+        memoryCardView = view
+        if let screen = view.window?.screen { apply(screen: screen) }
+    }
+
+    func registerDetail(window: NSWindow?, removingWindow: NSWindow? = nil,
+                        selection: DashboardSelection, contentSize: CGSize) {
+        if let window {
+            let newWindow = detailWindow !== window
+            detailWindow = window
+            detailSelection = selection
+            if contentSize.width > 0, contentSize.height > 0 {
+                let chrome = CGSize(width: max(0, window.frame.width - contentSize.width),
+                                    height: max(0, window.frame.height - contentSize.height))
+                if let screen = window.screen { apply(screen: screen, measuredDetailChrome: chrome) }
+            }
+            if newWindow, let screen = window.screen,
+               !DashboardViewportPolicy.contains(window.frame, visibleFrame: screen.visibleFrame) {
+                requestCorrection?()
+            }
+        } else if detailSelection == selection, detailWindow === removingWindow {
+            detailWindow = nil
+            detailSelection = nil
+        }
+    }
+}
+
+/// 마지막 카드의 실제 NSView 위치를 공유 높이 계산에만 사용합니다.
+struct DashboardLowestAnchorCapture: NSViewRepresentable {
+    @ObservedObject var viewport: DashboardViewport
+    var isMemoryCard = false
+
+    func makeNSView(context: Context) -> AnchorView {
+        let view = AnchorView()
+        view.viewport = viewport
+        view.isMemoryCard = isMemoryCard
+        return view
+    }
+
+    func updateNSView(_ view: AnchorView, context: Context) {
+        view.viewport = viewport
+        view.isMemoryCard = isMemoryCard
+        view.report()
+    }
+
+    final class AnchorView: NSView {
+        weak var viewport: DashboardViewport?
+        var isMemoryCard = false
+        override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); report() }
+        override func layout() { super.layout(); report() }
+        func report() {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.window != nil else { return }
+                if self.isMemoryCard {
+                    self.viewport?.registerMemoryCard(view: self)
+                } else {
+                    self.viewport?.registerLowestAnchor(view: self)
+                }
+            }
+        }
+    }
+}
+
+/// SwiftUI `.popover`가 만든 실제 자식 창을 그 콘텐츠에서 직접 넘깁니다.
+struct DashboardDetailWindowCapture: NSViewRepresentable {
+    @ObservedObject var viewport: DashboardViewport
+    let selection: DashboardSelection
+
+    func makeNSView(context: Context) -> TrackingView {
+        let view = TrackingView()
+        view.onWindowChange = { [weak viewport] window, removed, size in
+            viewport?.registerDetail(window: window, removingWindow: removed,
+                selection: selection, contentSize: size)
+        }
+        return view
+    }
+
+    func updateNSView(_ view: TrackingView, context: Context) {
+        view.onWindowChange = { [weak viewport] window, removed, size in
+            viewport?.registerDetail(window: window, removingWindow: removed,
+                selection: selection, contentSize: size)
+        }
+        view.reportWindow()
+    }
+
+    final class TrackingView: NSView {
+        var onWindowChange: ((NSWindow?, NSWindow?, CGSize) -> Void)?
+        weak var lastWindow: NSWindow?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            reportWindow()
+        }
+
+        override func layout() {
+            super.layout()
+            reportWindow()
+        }
+
+        func reportWindow() {
+            // SwiftUI 갱신 중 Published 상태를 쓰지 않도록 다음 main turn에 측정합니다.
+            let callback = onWindowChange
+            let currentWindow = window
+            let removed = currentWindow == nil ? lastWindow : nil
+            if let currentWindow { lastWindow = currentWindow }
+            let size = bounds.size
+            DispatchQueue.main.async { callback?(currentWindow, removed, size) }
+        }
+    }
+}

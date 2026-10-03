@@ -20,6 +20,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         coordinator = ApplicationCoordinator()
 #if DEBUG
+        if ProcessInfo.processInfo.environment["RR_VIEWPORT_PROBE"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self, let coordinator = self.coordinator else { return }
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "ViewportProbe")
+                let status = coordinator.statusBarController
+                let store = coordinator.dashboardPresentationStore
+                for (index, screen) in NSScreen.screens.enumerated() {
+                    logger.notice("screen index=\(index) frame=\(String(describing: screen.frame), privacy: .public) visible=\(String(describing: screen.visibleFrame), privacy: .public) scale=\(screen.backingScaleFactor, privacy: .public)")
+                }
+                try? await Task.sleep(for: .seconds(4))
+                status.togglePopover()
+                try? await Task.sleep(for: .milliseconds(700))
+                guard let body = status.popover.contentViewController?.view.window,
+                      let screen = status.statusItem.button?.window?.screen ?? NSScreen.main else {
+                    logger.error("body or screen missing")
+                    return
+                }
+                logger.notice("body frame=\(String(describing: body.frame), privacy: .public) visible=\(String(describing: screen.visibleFrame), privacy: .public) inside8=\(DashboardViewportPolicy.contains(body.frame, visibleFrame: screen.visibleFrame)) bodyScroll=\(Self.firstScrollView(in: body.contentView ?? NSView()) != nil)")
+                if ProcessInfo.processInfo.environment["RR_VIEWPORT_LONG_MEMORY"] == "1" {
+                    let injected = store.injectLongMemoryForViewportProbe()
+                    try? await Task.sleep(for: .milliseconds(350))
+                    logger.notice("longMemory injected=\(injected) body=\(String(describing: body.frame), privacy: .public) memoryCard=\(String(describing: Self.probeAXFrame(identifier: "MemoryCard")), privacy: .public) detailSize=\(String(describing: status.viewport?.detailSize), privacy: .public)")
+                    if let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+                        let output = caches.appending(path: "Task012ViewportProbe")
+                        try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+                        Self.writeProbeImage(window: body, path: output.appending(path: "long-memory-body.png").path, logger: logger)
+                    }
+                    store.selectCard(.disk)
+                    try? await Task.sleep(for: .milliseconds(650))
+                    let detail = status.viewport?.detailWindow
+                    logger.notice("longMemoryDisk body=\(String(describing: body.frame), privacy: .public) diskCard=\(String(describing: Self.probeAXFrame(identifier: "DiskCard")), privacy: .public) detail=\(String(describing: detail?.frame), privacy: .public) inside8=\(detail.map { DashboardViewportPolicy.contains($0.frame, visibleFrame: $0.screen?.visibleFrame ?? screen.visibleFrame) } ?? false)")
+                    store.selectCard(.disk)
+                    status.togglePopover()
+                    return
+                }
+                Self.logIntegratedAccessibility(logger: logger)
+                guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+                let output = caches.appending(path: "Task012ViewportProbe")
+                try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+                Self.writeProbeImage(window: body, path: output.appending(path: "body.png").path, logger: logger)
+                for selection in [DashboardSelection.cpu, .memory, .network, .disk] {
+                    store.selectCard(selection)
+                    try? await Task.sleep(for: .milliseconds(650))
+                    let detail = status.viewport?.detailWindow
+                    let identifier: String = switch selection {
+                    case .cpu: "CPUCard"
+                    case .memory: "MemoryCard"
+                    case .network: "NetworkCard"
+                    case .disk: "DiskCard"
+                    case .none: "DashboardContainer"
+                    }
+                    let card = Self.probeAXFrame(identifier: identifier)
+                    let detailScreen = detail?.screen ?? screen
+                    let detailFrame = detail?.frame
+                    logger.notice("selection=\(String(describing: selection), privacy: .public) owned=\(status.viewport?.detailSelection == selection) cardAX=\(String(describing: card), privacy: .public) detail=\(String(describing: detailFrame), privacy: .public) inside8=\(detailFrame.map { DashboardViewportPolicy.contains($0, visibleFrame: detailScreen.visibleFrame) } ?? false) body=\(String(describing: body.frame), privacy: .public)")
+                    Self.logIntegratedAccessibility(logger: logger)
+                    if let detail {
+                        Self.writeProbeImage(window: detail,
+                            path: output.appending(path: "\(selection)-detail.png").path, logger: logger)
+                        if let content = detail.contentView,
+                           let scroll = Self.firstScrollView(in: content) {
+                            let last = max(0, (scroll.documentView?.frame.height ?? 0) - scroll.contentView.bounds.height)
+                            scroll.contentView.scroll(to: NSPoint(x: 0, y: last))
+                            scroll.reflectScrolledClipView(scroll.contentView)
+                            try? await Task.sleep(for: .milliseconds(120))
+                            logger.notice("detailEnd selection=\(String(describing: selection), privacy: .public) document=\(String(describing: scroll.documentView?.frame), privacy: .public) clip=\(String(describing: scroll.contentView.bounds), privacy: .public)")
+                        }
+                    }
+                    store.selectCard(selection)
+                    try? await Task.sleep(for: .milliseconds(180))
+                    logger.notice("closed selection=\(String(describing: store.selection), privacy: .public) body=\(String(describing: body.frame), privacy: .public)")
+                }
+                status.togglePopover()
+            }
+        }
         if ProcessInfo.processInfo.environment["RR_INTEGRATED_UI_PROBE"] == "1" {
             Task { @MainActor [weak self] in
                 guard let self, let coordinator = self.coordinator else { return }
@@ -317,6 +392,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
 #if DEBUG
+    /// probe에서 카드 AX frame을 읽어 자식 창이 선택 카드 옆에 남는지 확인합니다.
+    @MainActor private static func probeAXFrame(identifier: String) -> CGRect? {
+        let root = AXUIElementCreateApplication(getpid())
+        func search(_ element: AXUIElement, depth: Int) -> CGRect? {
+            guard depth < 16 else { return nil }
+            var value: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &value) == .success,
+               value as? String == identifier {
+                var position: CFTypeRef?
+                var size: CFTypeRef?
+                guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position) == .success,
+                      AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size) == .success,
+                      let position, let size else { return nil }
+                var point = CGPoint.zero
+                var dimensions = CGSize.zero
+                guard AXValueGetValue(position as! AXValue, .cgPoint, &point),
+                      AXValueGetValue(size as! AXValue, .cgSize, &dimensions) else { return nil }
+                return CGRect(origin: point, size: dimensions)
+            }
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+                  let children = value as? [AXUIElement] else { return nil }
+            for child in children {
+                if let found = search(child, depth: depth + 1) { return found }
+            }
+            return nil
+        }
+        return search(root, depth: 0)
+    }
+
     /// 실제 팝오버의 네 카드 위치와 접근성 이름을 함께 남겨 본체 무스크롤 배치를 확인합니다.
     @MainActor private static func logIntegratedAccessibility(logger: Logger) {
         let root = AXUIElementCreateApplication(getpid())

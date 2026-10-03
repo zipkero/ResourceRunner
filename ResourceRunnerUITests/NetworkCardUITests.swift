@@ -16,24 +16,25 @@ final class NetworkCardUITests: XCTestCase {
         XCTAssertTrue(network.waitForExistence(timeout: 10))
         let dashboard = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
         XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
-        let scroll = app.scrollViews.containing(.any, identifier: "NetworkCard").firstMatch
-        XCTAssertTrue(scroll.exists)
-        for _ in 0..<4 where !network.isHittable { scroll.swipeUp() }
-        XCTAssertTrue(network.isHittable, "Network 카드가 본체 스크롤에서 도달되지 않았습니다.")
+        XCTAssertFalse(app.scrollViews.containing(.any, identifier: "NetworkCard").firstMatch.exists)
+        XCTAssertTrue(network.isHittable, "Network 카드가 본체 스크롤 없이 보여야 합니다.")
 
         let cardBefore = network.frame
         let bodyBefore = dashboard.frame
         print("TASK010_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(network.label)")
-        XCTAssertEqual(cardBefore.height, 101, accuracy: 1)
+        XCTAssertEqual(cardBefore.height, 112, accuracy: 1)
 
         network.click()
         let detail = app.descendants(matching: .any).matching(identifier: "NetworkDetail").firstMatch
         XCTAssertTrue(detail.waitForExistence(timeout: 5))
         XCTAssertEqual(app.popovers.count, 2)
-        XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
+        XCTAssertLessThanOrEqual(detail.frame.width, 400)
+        XCTAssertLessThanOrEqual(detail.frame.height, 480)
         let cadence = detail.staticTexts.matching(identifier: "NetworkUpdateCadence").firstMatch
         XCTAssertTrue(cadence.exists)
-        XCTAssertTrue(cadence.label.contains("별도 느린 주기"))
+        // SwiftUI StaticText는 이 문구를 AXLabel 대신 AXValue로 내보낼 수 있습니다.
+        let cadenceText = [cadence.label, cadence.value as? String ?? ""].joined(separator: " ")
+        XCTAssertTrue(cadenceText.contains("별도 느린 주기"), cadenceText)
         let row = detail.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier BEGINSWITH %@", "NetworkInterface-"))
             .firstMatch

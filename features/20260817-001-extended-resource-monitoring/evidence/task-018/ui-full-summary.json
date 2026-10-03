@@ -1,0 +1,52 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "00006034-000811520144001C",
+        "deviceName" : "My Mac",
+        "modelName" : "MacBook Pro",
+        "osBuildNumber" : "25G83",
+        "osVersion" : "26.6.2",
+        "platform" : "macOS"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 30,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "ResourceRunner · Built with macOS 26.6.2",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1791001478.51,
+  "passedTests" : 29,
+  "result" : "Failed",
+  "skippedTests" : 0,
+  "startTime" : 1791001165.994,
+  "statistics" : [
+    {
+      "subtitle" : "2 test runs",
+      "title" : "1 test ran with dynamic parameters"
+    }
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertTrue failed",
+      "targetName" : "ResourceRunnerUITests",
+      "testIdentifier" : 24,
+      "testIdentifierString" : "NetworkCardUITests/testRealNetworkCardDetailAndReturnKeepFrames()",
+      "testIdentifierURL" : "test://com.apple.xcode/ResourceRunner/ResourceRunnerUITests/NetworkCardUITests/testRealNetworkCardDetailAndReturnKeepFrames",
+      "testName" : "testRealNetworkCardDetailAndReturnKeepFrames()"
+    }
+  ],
+  "title" : "Test - ResourceRunner",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 30
+}

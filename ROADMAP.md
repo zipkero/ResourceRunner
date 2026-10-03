@@ -55,7 +55,7 @@
 | --- | --- | --- |
 | M1. 메뉴바 기반 | 완료 | Dock 없는 메뉴바 항목과 transient 팝오버, 주입 상태의 접근성 이름 전환, 수집 일정·최근 데이터 순환 버퍼·생명주기 제어가 동작하고, 실제 화면 잠금·해제와 저전력 전환을 실행 환경에서 관찰 |
 | M2. 핵심 리소스 모니터링 | 진행 중 | core-resource-monitoring feature IMPLEMENT 완료 — 2026-10-01 task-012 독립 verify 승인으로 Task 16개 모두 완료. CPU·Memory Collector, 두 카드·상세 팝업·최근 10분 그래프와 앱 단위 TOP 5가 동작하며, 약 12분 55초 잠금 중 두 축 샘플 수 불변·복귀 직후 빈 그래프·오른쪽 재충전의 실기기 근거를 확보함. 정확성 비교 9회에서 전체 CPU 최대 차이 3.41%p, Memory 구성 최대 차이 1.96%, 물리 36GB·Swap 0 및 Memory 상위 3개 앱 키 9/9 일치를 확인. App Sandbox에서 시스템·프로세스 CPU·Resident Memory 접근을 검증했고 Physical Footprint는 사용할 수 없음. 표시 개선 feature 여섯(resource-visualization·detail-popover-readability·dashboard-visual-refinement·graph-legibility-and-color·dashboard-visual-language·graph-plot-surface)도 모두 완료. **캐릭터 자산과 메뉴바 애니메이션은 M2 잔여 중 마지막에 착수합니다(2026-09-14 사용자 결정).** CPU·Memory 검증 선행 조건은 해소됐으며 M3를 먼저 시작합니다. 아래 M3의 「의존 관계: M2」에서 이 두 항목과 관련 M2 전환 기준 세 줄(캐릭터 애니메이션 전환·정적 표현·저전력과 화면 잠금)은 M3 착수의 선행 조건이 아닙니다. M2 전체 완료는 두 항목이 끝나는 시점이며 M3보다 뒤일 수 있습니다 |
-| M3. 확장 리소스 모니터링 | 진행 중 | extended-resource-monitoring SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`. 수집·일정·baseline·이력·표시 모델 task-001~008 승인. 기존 그래프 task-009는 철회 이력으로 보존. 2026-10-03 실제 피드백에 따라 가독성을 유지한 네 카드 전체의 스크롤 없는 배치를 task-011에서 통합 축소를 완료했으며 Network 그래프 없음·Disk 수치 옆 미니 그래프·요약 하단 안내 제거·TOP 5 여백을 반영. 실제 Sandbox 선행 근거는 feature evidence에 보존하며 최종 화면/chrome·키보드/AX·VPN/외장/OS 전환·시스템 도구 비교·통합 관문은 진행 상태에 따라 별도로 검증 |
+| M3. 확장 리소스 모니터링 | 진행 중 | extended-resource-monitoring SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`. 수집·일정·baseline·이력·표시 모델 task-001~008과 화면 task-010~013, 시스템 도구 비교 task-016/017, 통합·production 정리 task-018 승인. task-009는 철회 이력으로 보존. 읽을 수 있는 네 카드의 스크롤 없는 한 열 배치·Memory 자연 높이·Network 그래프 제거·Disk 미니 그래프·TOP 5 여백, 실제 두 화면 모드의 창 여유와 키보드/AX를 확인. unit614/614·Debug/Release 및 보완 재실행을 포함한 UI30개와 정상 앱의 실제 CPU 메뉴바 반응을 검증. task-014 VPN·외장 디스크와 task-015 잠금·절전 복귀는 사용자 보류이며 Ethernet 전환 장비도 미확보. 보류 항목을 전체 완료로 간주하지 않음 |
 | M4. 앱 설정 | 예정 | 제품 설정과 로그인 항목 관리 미구현 |
 | M5. 출시 준비 | 예정 | 정확성·성능·장기 안정성 검증과 배포 산출물 없음 |
 
@@ -126,11 +126,11 @@ Network와 Disk를 추가하고 네 가지 리소스를 일관된 대시보드 �
   - 인터페이스와 볼륨 변경 후 비정상적인 순간값이나 앱 종료가 발생하지 않습니다.
   - 네 카드의 구조, 단위와 상호작용이 일관됩니다.
   - 카드 넷이 지원하는 가장 작은 화면에서도 잘리지 않고 모두 도달됩니다.
-    현재 본체는 고정 높이에 세로 스크롤이 없어 카드가 넷이 되면 작은 화면에서 마지막 카드가 잘립니다 —
-    2026-09-13 세로 예산 계산(dashboard-visual-language feature design.md DP12)에서
-    카드 넷의 프레임이 1083pt로 기준 기기(`visibleFrame` 1084pt)에 여유 1pt만 남기고 들어가는 것이 확인됐으며,
-    M3는 세로 스크롤·아코디언(선택된 카드만 그래프 펼침)·2열 배치 중 하나를 도입해 이를 해소해야 합니다.
-    카드마다 그래프 높이를 다르게 두어 높이를 맞추는 방식은 위의 「네 카드의 구조가 일관됩니다」와 충돌하므로 쓰지 않습니다.
+    2026-10-03 사용자 결정에 따라 가독성을 유지한 한 열 축소 요약을 사용하며 본체에 세로 스크롤을 두지 않습니다.
+    CPU 그래프·Memory 구성은 유지하고 Network 그래프는 제거하며 Disk는 수치 옆 미니 그래프를 사용합니다.
+    Memory는 내용에 필요한 자연 높이를 사용합니다. 실제 `visibleFrame` 1084pt와 729pt에서 본체·상세의
+    외곽 여유와 카드 앵커를 확인했습니다. 본체와 chrome가 들어가지 않는 더 작은 화면의 정책은
+    미확정 경계로 남기며 해당 화면까지 검증 완료했다고 간주하지 않습니다.
   - Collector 하나가 실패해도 나머지 카드와 메뉴바 앱이 정상 동작합니다.
   - 사용자가 한 화면에서 현재 문제와 주요 원인을 파악할 수 있습니다.
 - Feature 문서 후보: extended-resource-monitoring

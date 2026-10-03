@@ -13,7 +13,8 @@
 
 ### 현재 확인된 구현
 
-M1까지 반영된 상태입니다.
+M1 기반과 CPU·Memory 모니터링, M3의 Network·Disk 수집·표시가 반영된 상태입니다.
+M3의 실제 연결 전환과 잠금·절전 복귀 검증은 보류 중이며 전체 완료를 뜻하지 않습니다.
 
 - 앱 진입점은 `Settings { EmptyView() }`와 `@NSApplicationDelegateAdaptor`로 구성하고,
   생성 Info.plist의 `LSUIElement`로 Dock 아이콘 없이 실행합니다.
@@ -21,9 +22,13 @@ M1까지 반영된 상태입니다.
   각각 한 번씩 만들어 종료까지 보유합니다.
 - 메뉴바 항목은 `NSStatusItem.squareLength`와 `.transient` `NSPopover`를 사용하고,
   주입한 다섯 상태를 메뉴바 항목의 접근성 이름으로 구분합니다.
-- 수집 일정, 최근 샘플 순환 버퍼와 생명주기 제어(팝오버 열림·닫힘, 저전력, 화면 잠금)가 동작합니다.
-  실제 수집값 대신 자리표시 샘플을 사용합니다.
-- Collector, 대시보드 카드, 캐릭터 애니메이션과 사용자 설정은 아직 구현되지 않았습니다.
+- `CollectionPipelines`는 시스템 지표·프로세스·Network 활동·Disk 활동·Network 보조 정보·저장 공간의
+  여섯 축을 별도 일정으로 수집합니다. 공개 native API를 사용하는 실제 Collector와 메모리 이력,
+  공통 실행권·기준점·중지 경계를 구성하고 `CollectionDeliveryStore`와 `DashboardPresentationStore`에 전달합니다.
+- 네 요약 카드는 지원 화면에서 본체 스크롤 없이 표시하며 각 카드에 앵커한 상세에서 추가 정보를 봅니다.
+  CPU·Memory TOP 5, CPU 그래프·Memory 구성 표시와 Disk 미니 그래프가 있고 Network 요약에는 그래프가 없습니다.
+  물리 대상 일부만 확인되면 Network·Disk는 완전한 대표값 대신 부분 합계임을 표시합니다.
+- 메뉴바 상태는 실제 CPU 지표로 전환하며 캐릭터 애니메이션과 사용자 설정은 후속 마일스톤 작업입니다.
 - ResourceRunnerTests와 ResourceRunnerUITests 대상이 존재합니다.
 - 세 대상 모두 macOS deployment target은 26.5, Swift language version 설정은 5.0이고,
   앱 실행 파일은 arm64 단일 슬라이스입니다. App Sandbox가 활성화돼 있습니다.

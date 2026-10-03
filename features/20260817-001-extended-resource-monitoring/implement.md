@@ -560,7 +560,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.6, SPEC §5.13,
     DESIGN §1.3, DESIGN §3.3, DESIGN §3.4, DESIGN §4.1, DESIGN §4.4
 
-- [ ] task-018: 네 리소스 통합·CPU·Memory 회귀와 production 구성
+- [x] task-018: 네 리소스 통합·CPU·Memory 회귀와 production 구성
+  - main 승인(2026-10-03): worker FINAL completed와 독립 verifier FINAL approved를 인수했습니다. 임시 DEBUG 관찰 진입점을 제거한 정상 Sandbox 앱 PID95172의 네 카드·상세·끝 페이지와 실제 CPU 부하의 메뉴바 상승/회복을 확인했습니다. unit614/614·Debug/Release 통과, UI 전체29/30 뒤 AXValue 단언 보완한 해당1/1 통과를 구분해 인수했습니다. 최종 소스·실행 파일 해시, production 구성과 선행 화면/키보드 근거의 경로 불변을 대조했습니다. 근거: [task-018](./evidence/task-018/README.md). 이번 승인으로 SPEC §5.1·§5.2·§5.10·§5.12·§5.14·§5.16을 충족합니다. task014/015와 IMPLEMENT 전체는 미완료입니다.
   - 목적: 네 리소스가 한 앱 세션에서 함께 동작하고
     공통 경계·요약 통합이 기존 CPU·Memory와 배포·개인정보 계약을 훼손하지 않은 결과를 완성합니다.
   - 접근: 최종 coordinator·수집·표시 구성과 관련 상위 현재 구현 설명을 정리합니다.

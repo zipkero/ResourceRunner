@@ -16,21 +16,20 @@ final class DiskCardUITests: XCTestCase {
         XCTAssertTrue(disk.waitForExistence(timeout: 10))
         let dashboard = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
         XCTAssertTrue(dashboard.waitForExistence(timeout: 5))
-        let scroll = app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch
-        XCTAssertTrue(scroll.exists)
-        for _ in 0..<8 where !disk.isHittable { scroll.swipeUp() }
-        XCTAssertTrue(disk.isHittable, "Disk 카드가 본체 스크롤에서 도달되지 않았습니다.")
+        XCTAssertFalse(app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch.exists)
+        XCTAssertTrue(disk.isHittable, "Disk 카드가 본체 스크롤 없이 보여야 합니다.")
 
         let cardBefore = disk.frame
         let bodyBefore = dashboard.frame
         print("TASK011_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(disk.label)")
-        XCTAssertEqual(cardBefore.height, 294, accuracy: 1)
+        XCTAssertEqual(cardBefore.height, 112, accuracy: 1)
 
         disk.click()
         let detail = app.descendants(matching: .any).matching(identifier: "DiskDetail").firstMatch
         XCTAssertTrue(detail.waitForExistence(timeout: 5))
         XCTAssertEqual(app.popovers.count, 2)
-        XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
+        XCTAssertLessThanOrEqual(detail.frame.width, 400)
+        XCTAssertLessThanOrEqual(detail.frame.height, 480)
         let summary = detail.descendants(matching: .any).matching(identifier: "DiskSummary").firstMatch
         XCTAssertTrue(summary.waitForExistence(timeout: 5))
         let volume = detail.descendants(matching: .any)

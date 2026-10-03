@@ -1,0 +1,60 @@
+2026-10-03T04:35:04.807970+00:00 phase=idle status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:04.808280+00:00 phase=idle AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 18%, User 10%, System 8%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:02 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:06.930124+00:00 phase=idle status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:06.930307+00:00 phase=idle AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 18%, User 10%, System 7%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:04 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:09.050698+00:00 phase=idle status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:09.050806+00:00 phase=idle AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 19%, User 11%, System 8%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:06 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:11.198977+00:00 phase=idle status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:11.199193+00:00 phase=idle AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 19%, User 11%, System 8%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:09 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:13.200466+00:00 load_start workers=12 command=/usr/bin/yes stdout=/dev/null
+2026-10-03T04:35:13.354298+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:13.354371+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 19%, User 11%, System 8%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:11 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:15.445885+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:15.445985+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 93%, User 9%, System 84%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:13 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:17.516769+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:17.519337+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 95%, User 11%, System 84%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:15 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:19.611157+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:19.611217+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 94%, User 8%, System 86%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:17 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:21.708327+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:21.708428+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 93%, User 8%, System 85%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:19 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:23.784407+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:23.784470+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 94%, User 9%, System 85%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:21 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:25.862929+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:25.863018+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 93%, User 9%, System 84%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:23 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:27.943951+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:27.944051+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 93%, User 9%, System 85%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:25 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:30.036728+00:00 phase=load status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:30.036815+00:00 phase=load AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 93%, User 10%, System 84%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:27 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:32.040388+00:00 load_stop workers_terminated=12
+2026-10-03T04:35:32.097882+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:32.097940+00:00 phase=recovery AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 93%, User 8%, System 85%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:29 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:34.201144+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 매우 높음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:34.201460+00:00 phase=recovery AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 20%, User 12%, System 8%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:32 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:36.314957+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:36.315105+00:00 phase=recovery AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 18%, User 11%, System 8%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:34 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:38.432203+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:38.432338+00:00 phase=recovery AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 20%, User 12%, System 9%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 09:36 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((1024.0, 62.0, 264.0, 241.0))
+2026-10-03T04:35:40.539813+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:40.539958+00:00 phase=recovery missing
+2026-10-03T04:35:42.653392+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:42.653682+00:00 phase=recovery missing
+2026-10-03T04:35:44.770512+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:44.770621+00:00 phase=recovery missing
+2026-10-03T04:35:46.923999+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:46.924147+00:00 phase=recovery missing
+2026-10-03T04:35:49.035004+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:49.035171+00:00 phase=recovery missing
+2026-10-03T04:35:51.149539+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:51.149682+00:00 phase=recovery missing
+2026-10-03T04:35:53.264404+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:53.264564+00:00 phase=recovery missing
+2026-10-03T04:35:55.357718+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:55.357843+00:00 phase=recovery missing
+2026-10-03T04:35:57.476858+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:57.477113+00:00 phase=recovery missing
+2026-10-03T04:35:59.588520+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:35:59.588628+00:00 phase=recovery missing
+2026-10-03T04:36:01.707413+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:36:01.707549+00:00 phase=recovery missing
+2026-10-03T04:36:03.820196+00:00 phase=recovery status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1164.0, 4.5, 24.0, 24.0))
+2026-10-03T04:36:03.820312+00:00 phase=recovery missing

@@ -10,7 +10,7 @@ import XCTest
 final class ResourceRunnerUITests: XCTestCase {
 
     @MainActor
-    func testDashboardPopoverKeepsItsMeasuredHeightFromCollectingToNormal() throws {
+    func testDashboardShowsAllCardsWithoutSummaryScroll() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -20,20 +20,30 @@ final class ResourceRunnerUITests: XCTestCase {
 
         let cpuCard = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
         XCTAssertTrue(cpuCard.waitForExistence(timeout: 5))
-        XCTAssertTrue(
-            cpuCard.label.contains("수집 중"),
-            "첫 높이를 읽기 전에 CPU 카드가 수집 중 상태여야 합니다."
-        )
-        let collectingHeight = app.popovers.firstMatch.frame.height
-        XCTAssertEqual(collectingHeight, 627, "수집 중 본체 팝오버가 재실측 기준 627pt와 다릅니다.")
+        let memoryCard = app.descendants(matching: .any).matching(identifier: "MemoryCard").firstMatch
+        let networkCard = app.descendants(matching: .any).matching(identifier: "NetworkCard").firstMatch
+        let diskCard = app.descendants(matching: .any).matching(identifier: "DiskCard").firstMatch
+        for card in [cpuCard, memoryCard, networkCard, diskCard] {
+            XCTAssertTrue(card.waitForExistence(timeout: 5))
+            XCTAssertTrue(card.isHittable, "네 카드가 본체 스크롤 없이 도달되어야 합니다.")
+        }
+        XCTAssertFalse(app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch.exists)
+        let body = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
+        XCTAssertTrue(body.exists)
+        let initialFrames = [cpuCard, networkCard, diskCard].map(\.frame)
+        XCTAssertEqual(networkCard.frame.height, 112, accuracy: 1)
+        XCTAssertEqual(diskCard.frame.height, 112, accuracy: 1)
         let normal = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "label CONTAINS %@", "전체 사용률"),
             object: cpuCard
         )
         XCTAssertEqual(XCTWaiter.wait(for: [normal], timeout: 5), .completed)
-        let normalHeight = app.popovers.firstMatch.frame.height
-        XCTAssertEqual(normalHeight, 627, "정상 상태 본체 팝오버가 재실측 기준 627pt와 다릅니다.")
-        XCTAssertEqual(collectingHeight, normalHeight)
+        let normalFrames = [cpuCard, networkCard, diskCard].map(\.frame)
+        for (before, after) in zip(initialFrames, normalFrames) {
+            XCTAssertEqual(before.height, after.height, accuracy: 1)
+        }
+        XCTAssertTrue([cpuCard, memoryCard, networkCard, diskCard].allSatisfy(\.isHittable))
+        XCTAssertTrue(body.frame.contains(diskCard.frame), "마지막 카드가 본체 안에 보여야 합니다.")
     }
 
     override func setUpWithError() throws {

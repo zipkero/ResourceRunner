@@ -1,59 +1,56 @@
 # Context
 
-저장: 2026-10-03 (Task017 승인 후 M3 잔여 검증)
+저장: 2026-10-03 (Task018 최종 승인)
 
 ## 현재 목표
 
-사용자 지시로 M3 잔여 작업을 진행한다. 잠금·절전 복귀와 VPN·외장 디스크 실제 관찰은 사용자 답변으로 보류한다. 읽을 수 있는 스크롤 없는 네 카드와 Memory 자연 높이를 유지한다. main 스테이징·커밋·푸시 승인이 유지된다.
+사용자 지시로 M3 잔여 작업을 진행했고, 보류 범위를 제외한 검증·정리를 완료했다. main 스테이징·커밋·푸시 승인이 유지된다.
 
 ## 현재 상태
 
-- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. 기준 HEAD4487c94。Task017 worker FINAL completed와 독립 verifier FINAL approved를 main이 확정했다. 소스·실행 파일·원자료 해시와 Read/Write 방향 일치를 확인했고 커밋·푸시 후 Task018을 진행한다. [Disk 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-017/README.md). Task016과 함께 SPEC §5.6을 충족한다.
-- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010/011/012/013/016/017 승인,009철회,014/015/018미완료. task014실장치와015잠금·수면·화면수면·사용자전환은 보류이며 완료/철회로 바꾸지 않는다. Ethernet 전환 장비도 미확보다.
-- worker /root/implement_task002의 Task012 FINALcompleted와 verifier /root/verify_compact_task010의 FINALapproved를 main이 인수·확정했다. main만 문서·상태·커밋·푸시를 수행한다.
-- Task012 소스9개·Debug실행파일/실제Swift dylib·Release해시 일치, 관련38/38·Release·서명Debug 통과. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-012/README.md).
-- 실제 현재화면1728×1117(visible1084),scale2: 본체280×668/외곽306×694/스크롤없음, 네상세400×480/외곽426×506, 모두8pt·카드앵커·개폐본체불변·끝스크롤 확인(PID4865).
-- 추가실제1168×755(visible729)모드: 본체동일/네상세공유400×136/외곽426×162, 모두8pt·앵커·끝스크롤 확인(PID5951). 합성최장Memory fixture PID6563에서169→184/본체668→683으로늘어도상세400×136불변·Disky8. 원문두줄PNG확인. 화면모드복원·관찰앱종료 완료.
-- 외부물리화면은없고더낮은지원모드는본문+chrome+16pt가들어가지않는다. 새정책을넣지않았고그모드들의지원성공을주장하지않는다.
-- 이전owned Task011일반앱PID34093은정확한실행경로대조후종료했다. 마지막에는일반앱하나만실행한다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. Task018 구현 기준 HEAD는32189a5다. Task012(54a89e1),013(1b15966),016(5aedfa4·CSV 원본 보정4487c94),017(32189a5)은 origin/main에 푸시했다. Task018도 worker FINAL completed와 독립 verifier FINAL approved를 main이 인수·확정했으며 최종 변경을 커밋·푸시한다.
+- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010~013/016~018 승인,009철회,014/015 미완료. task014의 VPN·외장 디스크와 task015의 잠금·수면·화면 수면·사용자 전환은 사용자 보류다. Ethernet 전환 장비도 미확보이며 연결 없음/복귀는 실행하지 않았다.
+- Task018 unit614/614·Debug/Release 통과. 서명 UI 전체29/30 뒤 유일 실패인 NetworkUpdateCadence의 AXLabel 단독 단언을 label+value로 보완한 해당1/1이 통과했다. 단일 실행30/30 성공을 주장하지 않는다. 글로벌 보안/TCC 설정은 변경하지 않았다.
+- 임시 DEBUG probe·긴 Memory/저전력 주입 경로를 제거했다. Collector·일정·baseline·저장·표시·키보드의 production 동작은 유지했다. 최종 소스/Debug stub·실제 Swift dylib/Release 해시10개가 일치한다.
+- 정상 서명 Sandbox 앱 PID95172(/private/tmp/rr-task018-debug/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner) 하나에서 네 카드·상세·끝 페이지와 CPU18~19%→실제 부하93~95%→회복18~20%, 메뉴바 낮음→매우 높음→낮음을 확인했다. 부하 자식은 종료했고 정상 앱 하나를 실행 중으로 남겼다. Release는 빌드 확인용 미서명이며 실제 관찰은 서명 Debug다.
+- 이번018 승인으로 SPEC §5.1·§5.2·§5.10·§5.12·§5.14·§5.16을 충족했다. 016/017로 §5.6도 충족했다. 나머지 조건과 M3/IMPLEMENT 전체를 완료로 표시하지 않는다.
 
 ## 현재 작업 문서
 
-Task013: 전체 unit614/614·Release·서명Debug 통과. 최종 소스11개/Debug stub·Swift dylib/Release 해시14개가 일치한다. 기본 keyboardMode0에서 현재 PID39610/추가1168×755 PID40448의 네 단축키·명시적 닫기/Escape·선택 카드 AX포커스·네 상세 Page끝/역이동·전체 AX값/주기를 확인했다. 화면 모드 복원·관찰앱 종료 완료. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-013/README.md). 초기 중복 단축키·구 픽셀 reference 실패는 최종 로그와 분리했다. XCUITest·외부 물리 키보드·VoiceOver 음성 성공은 주장하지 않는다.
-
-- [spec.md](./features/20260817-001-extended-resource-monitoring/spec.md)
-- [design.md](./features/20260817-001-extended-resource-monitoring/design.md)
-- [implement.md](./features/20260817-001-extended-resource-monitoring/implement.md)
-- [README.md](./features/20260817-001-extended-resource-monitoring/README.md)
-
-최신첫머리의실제화면피드백·Memory수정이과거590pt/고정199pt/작은글꼴·본체스크롤설명보다우선한다. Task013/018 관련문장도기존결정에맞게정합화했다.
+- [기능 상태](./features/20260817-001-extended-resource-monitoring/README.md)
+- [SPEC](./features/20260817-001-extended-resource-monitoring/spec.md)
+- [DESIGN](./features/20260817-001-extended-resource-monitoring/design.md)
+- [IMPLEMENT](./features/20260817-001-extended-resource-monitoring/implement.md)
+- [Task018 통합 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-018/README.md)
+- [Task016 Network 비교](./features/20260817-001-extended-resource-monitoring/evidence/task-016/README.md), [Task017 Disk 비교](./features/20260817-001-extended-resource-monitoring/evidence/task-017/README.md)
+- [Task012 실제 화면](./features/20260817-001-extended-resource-monitoring/evidence/task-012/README.md), [Task013 키보드·접근성](./features/20260817-001-extended-resource-monitoring/evidence/task-013/README.md)
+- [Task014 환경·미실행 기록](./features/20260817-001-extended-resource-monitoring/evidence/task-014/README.md)
 
 ## 확정된 결정
 
-본체폭280/padding8/gap6, 기본요약10pt이상/대표17.33pt/CPU판66.67pt, TOP5아래3pt. CPU최소241pt/Memory자연높이(기본169·긴184)/Network112/Disk112pt, 기본본체668pt·ScrollView없음. Network그래프·Network/Disk하단안내삭제, Disk수치옆42pt미니그래프. 상세원래글꼴·내부스크롤·정보·수집·단위보존. 많은Network종류는개수요약하고전체이름은상세/AX에보존한다.
+본체 스크롤 없이 네 카드가 한 화면에 보여야 하며 글씨를 과도하게 줄이지 않는다. Memory는 예약 하단 공백 없이 자연 높이를 사용한다. Network 그래프·Network/Disk 하단 측정 안내를 제거하고 Disk 수치 옆 미니 그래프와 CPU 그래프·Memory 구성·TOP 5 아래 여백을 유지한다. 상세 정보와 내부 스크롤은 보존한다.
 
-Task012는실제Disk·Memory카드NSView좌표/높이와chrome로네상세공유높이를계산한다. Memory긴정보가실제팝오버에서세로압축되지않게고유높이를유지했다. Memory예약공백은재도입하지않는다.
+현재 실제 화면1728×1117(visible1084)/scale2에서 본체280×668·외곽306×694와 네 상세400×480을 확인했다. task012는 실제1168×755(visible729) 모드와 긴 Memory 자연 높이까지 검증했고018 cleanup의 production geometry 경로는 불변이다. 전체 화면 정책과 구체 치수는 최신 feature 문서를 따른다.
 
-Task011전체610/610근거는 [readable-integrated](./features/20260817-001-extended-resource-monitoring/evidence/task-011/readable-integrated/README.md)에있다. Memory하단수정은관련15/15·실제668pt·서명Debug확인후43de4d3로커밋·푸시했다. 이전Task012 stash 0ef806c85321a92c7a07226de4b0080a7cc1eb48은구치수기준이라전체적용하지않는다.
+Network는 unknown 대상 때문에 부분 합계이며 완전한 대표 합계로 주장하지 않는다. 동일한 확인된 물리 집합의 시간 차분·변화 방향만 비교했다. Disk는 내장 disk0의 실제 F_NOCACHE 합성 부하를 iostat Read+Write 합계와 비교했고 방향은 raw driver 바이트로 확인했다.
 
 ## 미확정 판단
 
-Task014실장치와015잠금·절전복귀는보류·미완료다. 외부화면/너무작은화면정책경계는Task012근거에남겼다. M3전체완료로보고하지않는다.
+Task014/015를 mock이나 통합 결과로 대체하지 않는다. 외부 물리 화면은 없었고 본체와 chrome가 들어가지 않는 더 작은 화면의 정책은 미확정이다. 이전 Task012 stash0ef806c85321a92c7a07226de4b0080a7cc1eb48은 구치수이므로 전체 적용하지 않는다.
 
 ## 다음 작업
 
-- 작업: Task018의 임시 관찰 진입점 정리, 전체 단위·서명 UI suite, 실제 네 카드·상세·CPU 부하 메뉴바 통합과 production 구성 확인을 진행한다. 오래된 UI 테스트 치수와 상위 현재 구현 설명은 최신 승인된 스크롤 없는 배치에 맞춘다. XCUITest의 과거 automation mode 초기화 실패가 있어 현재 환경에서 확인하되 글로벌 보안 설정을 임의 변경하지 않는다.
-- 완료 기준: Task마다worker FINAL/독립verifier FINAL을인수하고main이판정·상태·CONTEXT·커밋을반영한다. 보류한실제전환을mock/통합결과로대체하지않는다.
+- 작업: 최종 main 커밋·푸시 후 Git 동기화를 확인한다. 이후 보류014/015는 사용자가 재개하고 필요한 환경을 확보할 때만 진행한다.
+- 완료 기준: 승인된018 결과와 문서·CONTEXT를 저장하고 origin/main 동기화를 확인한다. M3 전체 완료는 보류 Task의 실제 관문이 충족된 뒤 판단한다.
 
 ## 먼저 읽을 파일
 
-- [DashboardViewport.swift](./ResourceRunner/DashboardViewport.swift)
-- [DashboardView.swift](./ResourceRunner/DashboardView.swift)
-- [DashboardPresentationStore.swift](./ResourceRunner/DashboardPresentationStore.swift)
-- [StatusBarController.swift](./ResourceRunner/StatusBarController.swift)
-- [AppDelegate.swift](./ResourceRunner/AppDelegate.swift)
+- [IMPLEMENT](./features/20260817-001-extended-resource-monitoring/implement.md)
+- [Task018 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-018/README.md)
+- [AppDelegate.swift](./ResourceRunner/AppDelegate.swift), [ApplicationCoordinator.swift](./ResourceRunner/ApplicationCoordinator.swift)
+- [DashboardViewport.swift](./ResourceRunner/DashboardViewport.swift), [DashboardView.swift](./ResourceRunner/DashboardView.swift)
 - ~/.codex/skills/implement-loop/SKILL.md, implement/SKILL.md, verify/SKILL.md, context-save/SKILL.md, ~/.codex/docs/phased-state.md
 
 ## 문서 반영 필요
 
-없음. 미완료 Task 최종 근거·승인은 확인 후 main이 반영한다.
+없음. 현재 구현 설명·ROADMAP·feature 승인 상태를 main이 반영했다.

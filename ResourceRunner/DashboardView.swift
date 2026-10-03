@@ -141,14 +141,8 @@ struct DashboardView: View {
     /// Memory 카드 선택·복귀 단축키의 실제 키. CPU 쪽과 같은 이유로 같은 형태로 유도합니다.
     fileprivate static let memorySelectionKey = KeyEquivalent(MemoryCardPresentation.selectionShortcutKey)
 
-    /// 상세 팝업 콘텐츠의 공통 고정 크기(ANALYSIS §5 DP18). CPU 상세와 Memory 상세가 이 크기를 공유해
-    /// 카드를 오가거나 프로세스 수·값이 바뀌어도 팝업 프레임이 흔들리지 않고, 넘치는 내용은 내부
-    /// `ScrollView`에서만 스크롤됩니다.
-    /// 새 상세 조립에서 후보 400×480을 다시 확정했습니다. 단위 테스트로 콘텐츠 폭 368pt 안에 CPU 앱 행,
-    /// Memory 도넛·범례 행과 코어 격자의 이상적 폭이 들고, 14코어 격자 아래끝 176pt가 높이 480pt 안에
-    /// 드는지 먼저 확인한 뒤 XCUITest에서 네 상태와 앱 행 펼침·접힘, 스크롤 전후의 `DashboardDetail`
-    /// 프레임이 400×480으로 고정되는지 재확인했습니다. 두 상세는 실행 중인 모든 프로세스를 나열하므로
-    /// 넘치는 세로 내용은 기존처럼 이 고정 프레임 안의 단일 `ScrollView`가 맡습니다.
+    /// 상세의 기본 최대 크기입니다. 실제 화면 가용 영역과 창 chrome에 따라 `DashboardViewport`가
+    /// 네 상세에 공유할 크기를 줄이며, 넘치는 항목은 각 상세의 내부 `ScrollView`가 맡습니다.
     static let detailPopupWidth: CGFloat = 400
     static let detailPopupHeight: CGFloat = 480
 

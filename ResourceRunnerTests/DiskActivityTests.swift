@@ -45,6 +45,30 @@ private func diskWait(_ condition: () async -> Bool) async {
 struct DiskActivityTests {
     private let origin = ContinuousClock().now
 
+    @Test func tenSecondContextUsesActualTwentySecondBoundary() async throws {
+        let admission = gate()
+        admission.setPlan(.running(.seconds(10)), revision: 1, for: .diskActivity)
+        let source = DiskActivitySource(reader: DiskScriptedReader([
+            .success(snapshot(0, [device(read: 100, write: 200)])),
+            .success(snapshot(20, [device(read: 300, write: 300)])),
+            .success(snapshot(41, [device(read: 510, write: 405)])),
+            .success(snapshot(42, [device(read: 520, write: 410)]))
+        ]), admission: admission)
+        let firstContext = try #require(admission.issue(.diskActivity))
+        let first = await source.sample(context: firstContext)
+        #expect(first?.status == .baselineOnly(.first))
+        let boundaryContext = try #require(admission.issue(.diskActivity))
+        let boundary = try #require(await source.sample(context: boundaryContext))
+        #expect(boundary.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
+        let excessiveContext = try #require(admission.issue(.diskActivity))
+        let excessive = await source.sample(context: excessiveContext)
+        #expect(excessive?.status == .baselineOnly(.excessiveGap))
+        admission.setPlan(.running(.seconds(1)), revision: 2, for: .diskActivity)
+        let resumedContext = try #require(admission.issue(.diskActivity))
+        let resumed = try #require(await source.sample(context: resumedContext))
+        #expect(resumed.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
+    }
+
     private func device(_ id: UInt64 = 1, kind: DiskDeviceKind = .physical,
                         read: UInt64? = 100, write: UInt64? = 200,
                         readOps: UInt64? = 10, writeOps: UInt64? = 20) -> DiskCounterDevice {
@@ -244,7 +268,7 @@ struct DiskActivityTests {
             #expect(await store.append(TimestampedSample(timestamp: value.readAt, value: value,
                 collectionEpoch: context.epoch), context: context))
         }
-        #expect(await store.storedHistoryCount == 601)
+        #expect(await store.storedHistoryCount == 603)
         let current = await store.snapshot(at: origin.advanced(by: .seconds(603)))
         #expect(current.recentHistory.count == 601)
         #expect(current.recentHistory.first?.timestamp == origin.advanced(by: .seconds(3)))
@@ -257,7 +281,25 @@ struct DiskActivityTests {
             physicalTotalsComplete: false, status: .failure("brief"), rateSegment: 1)
         #expect(await store.append(TimestampedSample(timestamp: failed.readAt, value: failed,
             collectionEpoch: 0), context: failContext))
-        #expect(await store.storedHistoryCount == 601)
+        #expect(await store.storedHistoryCount == 603)
+    }
+
+    @Test func halfSecondHistoryRetainsBothWindowEndpointsWithBoundedRing() async {
+        let store = DiskActivityStore()
+        for index in 0...1204 {
+            let time = origin + .milliseconds(index * 500)
+            let rate = RatePair(receivedBytesPerSecond: Double(index), sentBytesPerSecond: 1)!
+            let value = DiskActivitySample(readAt: time, topologyRevision: 1, devices: [],
+                knownPhysicalRates: rate, representative: rate,
+                knownPhysicalOperations: nil, representativeOperations: nil,
+                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
+            await store.append(TimestampedSample(timestamp: time, value: value))
+        }
+        #expect(await store.storedHistoryCount == 1203)
+        let history = await store.snapshot(at: origin + .seconds(602)).recentHistory
+        #expect(history.count == 1201)
+        #expect(history.first?.timestamp == origin + .seconds(2))
+        #expect(history.last?.timestamp == origin + .seconds(602))
     }
 
     @Test func briefFailureAndRecoveryCreateDistinctStoredRateSegmentsWithoutZeroPoints() async throws {

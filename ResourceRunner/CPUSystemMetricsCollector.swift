@@ -90,6 +90,15 @@ nonisolated protocol CPUSystemMetricsCollecting: Sendable {
     /// 직전 tick 원본과의 차이로 이번 tick의 CPU 지표를 만듭니다.
     /// 직전 원본이 없거나 간격이 허용 범위를 넘으면 값을 만들지 않고 기준점만 갱신한 뒤 `nil`을 돌려줍니다.
     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics?
+    mutating func collect(at timestamp: ContinuousClock.Instant,
+                          maximumTickGap: Duration) throws(CollectorFailure) -> CPUSystemMetrics?
+}
+
+nonisolated extension CPUSystemMetricsCollecting {
+    mutating func collect(at timestamp: ContinuousClock.Instant,
+                          maximumTickGap: Duration) throws(CollectorFailure) -> CPUSystemMetrics? {
+        try collect(at: timestamp)
+    }
 }
 
 /// 직전 tick 원본과 그 시각을 소유하고 차분으로 사용률을 만드는 Collector.
@@ -109,6 +118,11 @@ nonisolated struct CPUSystemMetricsCollector<Reader: CPUTickReading>: CPUSystemM
     }
 
     mutating func collect(at timestamp: ContinuousClock.Instant) throws(CollectorFailure) -> CPUSystemMetrics? {
+        try collect(at: timestamp, maximumTickGap: maximumTickGap)
+    }
+
+    mutating func collect(at timestamp: ContinuousClock.Instant,
+                          maximumTickGap: Duration) throws(CollectorFailure) -> CPUSystemMetrics? {
         let ticks = try reader.readCoreTicks()
         guard !ticks.isEmpty else {
             throw CollectorFailure(

@@ -319,4 +319,25 @@ struct SystemMetricsSampleSourceTests {
         #expect((try? oneSecond?.cpu.get())?.overallUsage == 10)
         #expect(await clock.nowCallCount == 3)
     }
+
+    @Test func issuedTenSecondContextAllowsTwentySecondCPUDelta() async throws {
+        let start = ContinuousClock().now
+        let admission = CollectionAdmission()
+        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
+        _ = admission.advance(.systemMetrics)
+        admission.setPlan(.running(.seconds(10)), revision: 1, for: .systemMetrics)
+        let clock = RecordingMonotonicClock(instants: [start, start + .seconds(20)])
+        let source = SystemMetricsSampleSource(
+            cpuCollector: CPUSystemMetricsCollector(reader: SequenceCPUTickReader(snapshots: [
+                [CPUCoreTicks(user: 0, system: 0, idle: 0, nice: 0)],
+                [CPUCoreTicks(user: 20, system: 0, idle: 180, nice: 0)]
+            ])),
+            memoryCollector: FakeMemoryCollector(outcomes: Array(repeating: .success(memoryFixture), count: 2)),
+            clock: clock, admission: admission)
+        let firstContext = try #require(admission.issue(.systemMetrics))
+        #expect(await source.sample(context: firstContext)?.cpu == .success(nil))
+        let secondContext = try #require(admission.issue(.systemMetrics))
+        let second = try #require(await source.sample(context: secondContext))
+        #expect((try? second.cpu.get())?.overallUsage == 10)
+    }
 }

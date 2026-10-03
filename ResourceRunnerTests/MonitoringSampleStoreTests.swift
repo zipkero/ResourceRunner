@@ -186,6 +186,25 @@ nonisolated private struct SilentSystemMetricsSampleSource: ScheduledSampleSourc
 /// stream이 최신 조합 하나만 보존하는 것을 검증합니다.
 struct MonitoringSampleStoreTests {
 
+    @Test func pointsKeepTheirIssuedGapAndCPUFailureBoundary() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+        let old = CollectionRunContext(axis: .systemMetrics, epoch: 0, generation: 1,
+            planRevision: 1, requestSequence: 1, boundarySequence: 0, interval: .seconds(10))
+        let current = CollectionRunContext(axis: .systemMetrics, epoch: 0, generation: 2,
+            planRevision: 2, requestSequence: 2, boundarySequence: 0, interval: .seconds(1))
+        let first = sample(at: base, cpuUsage: 20)
+        await store.append(TimestampedSample(timestamp: first.timestamp, value: first.value, context: old))
+        let failed = sample(at: base + .seconds(1), cpuUsage: nil)
+        await store.append(failed)
+        let second = sample(at: base + .seconds(2), cpuUsage: 30)
+        await store.append(TimestampedSample(timestamp: second.timestamp, value: second.value, context: current))
+        let points = await store.snapshot().recentHistory
+        #expect(points.count == 2)
+        #expect(points.map(\.maximumConnectedGap) == [.seconds(20), .seconds(10)])
+        #expect(points[0].rateSegment != points[1].rateSegment)
+    }
+
     @Test func shortStopPreservesDistinctEpochsWithoutAddingABaselinePoint() async {
         let store = MonitoringSampleStore()
         let base = ContinuousClock().now
@@ -324,13 +343,12 @@ struct MonitoringSampleStoreTests {
         #expect(displayValue.recentHistory.map(\.overallCPUUsage) == [2, 3, 4])
     }
 
-    /// 링 용량(10분 / 1초 + 1 = 601)을 넘으면 가장 오래된 항목 하나만 교체됩니다.
-    /// 개수 축출만 관찰하려면 602개가 모두 10분 창 안에 있어야 하므로 0.5초 간격으로 채웁니다.
+    /// 1203개 용량을 넘으면 가장 오래된 항목 하나만 교체됩니다.
     @Test func exceedingCapacityReplacesOnlyTheOldestEntry() async {
         let store = MonitoringSampleStore()
         let base = ContinuousClock().now
 
-        for index in 0...601 {
+        for index in 0...1203 {
             await store.append(
                 sample(at: base.advanced(by: .milliseconds(500 * index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
             )
@@ -338,23 +356,21 @@ struct MonitoringSampleStoreTests {
 
         let history = await store.snapshot().recentHistory
 
-        #expect(history.count == 601)
+        #expect(history.count == 1201)
         // 첫 항목(swap 0)만 밀려나고 두 번째 항목부터 순서대로 남습니다.
-        #expect(history.first?.swapUsedBytes == 1)
-        #expect(history.last?.swapUsedBytes == 601)
+        #expect(history.first?.swapUsedBytes == 3)
+        #expect(history.last?.swapUsedBytes == 1203)
     }
 
-    /// 가장 짧은 주기(1초)로 쉬지 않고 채웠을 때 링이 10분 창을 끝까지 덮는지 고정합니다.
-    /// 601개가 정확히 600초를 걸치므로 가장 오래된 항목의 시각이 창의 왼쪽 끝과 같아야 합니다.
-    /// 용량을 `capacity(...)` 결과(600)로 되돌리면 그 항목이 개수로 축출되어 창이 599초로 줄고 이 테스트가 실패합니다.
+    /// 가장 짧은 0.5초 주기로 600초 양 끝점을 보존합니다.
     @Test func ringCoversTheWholeTenMinuteWindowAtTheShortestInterval() async {
         let store = MonitoringSampleStore()
         let base = ContinuousClock().now
-        let sampleCount = 601
+        let sampleCount = 1201
 
         for index in 0..<sampleCount {
             await store.append(
-                sample(at: base.advanced(by: .seconds(index)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
+                sample(at: base.advanced(by: .milliseconds(index * 500)), cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index))
             )
         }
 
@@ -363,6 +379,20 @@ struct MonitoringSampleStoreTests {
         #expect(history.count == sampleCount)
         #expect(history.first?.timestamp == base)
         #expect(history.last?.timestamp == base.advanced(by: HistoryCapacity.defaultTimeRange))
+    }
+
+    @Test func halfSecondOverflowKeepsFixedCapacityAndActualWindow() async {
+        let store = MonitoringSampleStore()
+        let base = ContinuousClock().now
+        for index in 0...1204 {
+            await store.append(sample(at: base + .milliseconds(index * 500),
+                cpuUsage: Double(index % 100), swapUsedBytes: UInt64(index)))
+        }
+        #expect(await store.debugStatusDescription == "history=1203 capacity=1203")
+        let history = await store.snapshot().recentHistory
+        #expect(history.count == 1201)
+        #expect(history.first?.swapUsedBytes == 4)
+        #expect(history.last?.swapUsedBytes == 1204)
     }
 
     /// 1시간 중지를 시각으로 재현합니다.

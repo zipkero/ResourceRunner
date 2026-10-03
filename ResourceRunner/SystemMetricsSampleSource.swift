@@ -83,7 +83,8 @@ actor SystemMetricsSampleSource<
 
         let cpu: Result<CPUSystemMetrics?, CollectorFailure>
         do {
-            cpu = .success(try candidate.collect(at: timestamp))
+            cpu = .success(try candidate.collect(at: timestamp,
+                maximumTickGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1))))
         } catch {
             cpu = .failure(error)
         }
@@ -112,7 +113,7 @@ actor SystemMetricsSampleSource<
         // 기준점 전용 tick의 원인이 새 epoch인지 시각 간격인지 구분해 남깁니다.
         if case .success(.none) = cpu {
             let elapsed = previousTimestamp.map { String(describing: $0.duration(to: timestamp)) } ?? "none"
-            let maximumTickGap = String(describing: SystemMetricsSampling.maximumTickGap)
+            let maximumTickGap = String(describing: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
             let epochReset = debugPreviousCollectionEpoch.map { collectionEpoch > $0 } ?? false
             // 로그 호출 지연이 이 actor의 임계 구간을 늦추지 않도록 별도 Task로 분리합니다.
             Task.detached(priority: .utility) {

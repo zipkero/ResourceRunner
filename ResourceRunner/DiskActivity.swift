@@ -110,7 +110,8 @@ actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
             if let beforeCommit { await beforeCommit() }
             return commit(sample, next: next, context: context, expectedTopologyRevision: startRevision)
         }
-        let (sample, next) = calculate(snapshot, epoch: epoch)
+        let (sample, next) = calculate(snapshot, epoch: epoch,
+            maximumGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
         if let beforeCommit { await beforeCommit() }
         return commit(sample, next: next, context: context,
                       expectedTopologyRevision: snapshot.topologyRevision)
@@ -140,7 +141,8 @@ actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
         return sample
     }
 
-    private func calculate(_ snapshot: DiskCounterSnapshot, epoch: Int) -> (DiskActivitySample, State) {
+    private func calculate(_ snapshot: DiskCounterSnapshot, epoch: Int,
+                           maximumGap: Duration) -> (DiskActivitySample, State) {
         var next = state
         let globalReason: DiskBaselineReason? = if next.epoch == nil { .first }
             else if next.epoch != epoch { .newEpoch }
@@ -183,7 +185,7 @@ actor DiskActivitySource<Reader: DiskCounterReading>: ScheduledSampleSource {
                         let (seconds, attoseconds) = elapsed.components
                         let duration = Double(seconds) + Double(attoseconds) / 1e18
                         if duration <= 0 { gap = .nonpositiveElapsed }
-                        else if duration > 10 { gap = .excessiveGap }
+                        else if elapsed > maximumGap { gap = .excessiveGap }
                         else if read < previous.read || write < previous.write { gap = .counterDecrease }
                         else {
                             rate = RatePair(receivedBytesPerSecond: Double(read - previous.read) / duration,
@@ -277,7 +279,7 @@ actor DiskActivityStore: MonitoringSampleSink {
     private var latest: TimestampedSample<DiskActivitySample>?
     private var lastSuccess: TimestampedSample<DiskActivitySample>?
     private var firstHistoryPointAt: ContinuousClock.Instant?
-    private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
+    private var history = CircularBuffer<RateHistoryPoint>(capacity: 1203)
     nonisolated let updates: AsyncStream<DiskActivityDisplayValue>
     private let continuation: AsyncStream<DiskActivityDisplayValue>.Continuation
 
@@ -295,22 +297,29 @@ actor DiskActivityStore: MonitoringSampleSink {
             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
             lastSuccess = sample
             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
-                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
+                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
+                maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
         }
         continuation.yield(snapshot(at: sample.value.readAt))
     }
 
     func append(_ sample: TimestampedSample<DiskActivitySample>,
                 context: CollectionRunContext) async -> Bool {
-        guard let admission else { append(sample); return true }
+        guard let admission else {
+            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                collectionEpoch: sample.collectionEpoch, context: context))
+            return true
+        }
         return admission.admitOptional(context, phase: .store, timestamp: sample.value.readAt) {
             if let topology {
                 return topology.withCurrentRevision(sample.value.topologyRevision) {
-                    append(sample)
+                    append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                        collectionEpoch: sample.collectionEpoch, context: context))
                     return true
                 }
             }
-            append(sample)
+            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                collectionEpoch: sample.collectionEpoch, context: context))
             return true
         } ?? false
     }

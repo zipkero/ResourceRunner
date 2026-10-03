@@ -89,7 +89,7 @@ nonisolated struct CollectorFailure: Error, Sendable, Equatable {
 /// 두 지표가 한 값에 묶이므로 카드 사이에 시점 차이가 생기지 않습니다.
 nonisolated struct SystemMetricsSample: Sendable, Equatable {
     /// `.success(nil)`은 값을 만들지 않고 기준점만 갱신한 tick입니다.
-    /// 첫 tick이거나 직전 tick과의 간격이 `SystemMetricsSampling.maximumTickGap`을 넘은 경우이며,
+    /// 첫 tick이거나 직전 tick과의 간격이 발급 당시 허용 간격을 넘은 경우이며,
     /// 조회 실패(`.failure`)와 구분됩니다.
     let cpu: Result<CPUSystemMetrics?, CollectorFailure>
     let memory: Result<MemorySystemMetrics, CollectorFailure>
@@ -98,7 +98,11 @@ nonisolated struct SystemMetricsSample: Sendable, Equatable {
 /// 시스템 지표 tick 사이 간격에 대한 판정 기준.
 nonisolated enum SystemMetricsSampling {
     /// 직전 tick과의 간격이 이 값을 넘으면 누적 tick을 차분하지 않고 기준점만 갱신합니다.
-    /// 이 feature가 시스템 지표에 쓰는 가장 느린 주기(lowPower·팝오버 닫힘 5초)의 두 배이므로,
-    /// 정상 주기의 지연은 값을 버리지 않고 중지·재개나 장시간 지연만 걸러집니다.
+    /// 빠른 주기의 최소 허용 간격입니다. 느린 주기는 `maximumTickGap(for:)`가 확장합니다.
     static let maximumTickGap: Duration = .seconds(10)
+
+    /// 발급된 요청의 주기로 판정하며 완료 시점의 설정을 다시 읽지 않습니다.
+    static func maximumTickGap(for interval: Duration) -> Duration {
+        max(maximumTickGap, interval * 2)
+    }
 }

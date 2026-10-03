@@ -41,6 +41,31 @@ private func networkWait(_ condition: () async -> Bool) async {
 struct NetworkActivityTests {
     private let origin = ContinuousClock().now
 
+    @Test func tenSecondContextUsesActualTwentySecondBoundary() async throws {
+        let target = key()
+        let metadata = await metadataStore(1, [record(target)])
+        let admission = gate()
+        admission.setPlan(.running(.seconds(10)), revision: 1, for: .networkActivity)
+        let source = NetworkActivitySource(reader: ScriptedNetworkCounterReader([
+            .success(snapshot(0, [(target, raw(rx: 100, tx: 100))])),
+            .success(snapshot(20, [(target, raw(rx: 300, tx: 200))])),
+            .success(snapshot(41, [(target, raw(rx: 510, tx: 305))])),
+            .success(snapshot(42, [(target, raw(rx: 520, tx: 310))]))
+        ]), metadata: metadata, admission: admission)
+        let first = try #require(admission.issue(.networkActivity))
+        #expect((await source.sample(context: first))?.status == .baselineOnly(.first))
+        let boundaryContext = try #require(admission.issue(.networkActivity))
+        let boundary = try #require(await source.sample(context: boundaryContext))
+        #expect(boundary.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
+        let excessiveContext = try #require(admission.issue(.networkActivity))
+        let excessive = await source.sample(context: excessiveContext)
+        #expect(excessive?.status == .baselineOnly(.excessiveGap))
+        admission.setPlan(.running(.seconds(1)), revision: 2, for: .networkActivity)
+        let resumedContext = try #require(admission.issue(.networkActivity))
+        let resumed = try #require(await source.sample(context: resumedContext))
+        #expect(resumed.representative == RatePair(receivedBytesPerSecond: 10, sentBytesPerSecond: 5))
+    }
+
     private func key(_ name: String = "en0", _ index: UInt16 = 1,
                      registry: UInt64? = 7, lifetime: UInt64 = 1) -> NetworkTargetKey {
         NetworkTargetKey(name: name, index: index, registryID: registry, lifetime: lifetime)
@@ -424,7 +449,7 @@ struct NetworkActivityTests {
                 physicalTotalsComplete: true, status: .rate, rateSegment: 1)
             await store.append(TimestampedSample(timestamp: value.readAt, value: value))
         }
-        #expect(await store.storedHistoryCount == 601)
+        #expect(await store.storedHistoryCount == 605)
         let full = await store.snapshot(at: origin + .seconds(604))
         #expect(full.recentHistory.count == 601)
         #expect(full.recentHistory.first?.rate.receivedBytesPerSecond == 4)
@@ -432,5 +457,22 @@ struct NetworkActivityTests {
         let moved = await store.snapshot(at: origin + .seconds(1000))
         #expect(moved.recentHistory.first?.rate.receivedBytesPerSecond == 400)
         #expect(moved.recentHistory.count == 205)
+    }
+
+    @Test func halfSecondHistoryRetainsBothWindowEndpointsWithBoundedRing() async {
+        let store = NetworkActivityStore()
+        for index in 0...1204 {
+            let time = origin + .milliseconds(index * 500)
+            let rate = RatePair(receivedBytesPerSecond: Double(index), sentBytesPerSecond: 1)!
+            let value = NetworkActivitySample(readAt: time, topologyRevision: 1,
+                interfaces: [], knownPhysicalRates: rate, representative: rate,
+                physicalTotalsComplete: true, status: .rate, rateSegment: 1)
+            await store.append(TimestampedSample(timestamp: time, value: value))
+        }
+        #expect(await store.storedHistoryCount == 1203)
+        let history = await store.snapshot(at: origin + .seconds(602)).recentHistory
+        #expect(history.count == 1201)
+        #expect(history.first?.timestamp == origin + .seconds(2))
+        #expect(history.last?.timestamp == origin + .seconds(602))
     }
 }

@@ -107,7 +107,8 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
         let view = if let metadata { await metadata.classifications(for: snapshot) }
             else { NetworkClassificationView(records: [:], complete: false) }
         if let context, admission?.isCurrent(context) != true { return nil }
-        let (sample, next) = calculate(snapshot, view: view, epoch: collectionEpoch)
+        let (sample, next) = calculate(snapshot, view: view, epoch: collectionEpoch,
+            maximumGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
         return commit(sample, next: next, context: context,
                       topologyRevision: snapshot.topologyRevision)
     }
@@ -137,7 +138,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
     }
 
     private func calculate(_ snapshot: NetworkCounterSnapshot, view: NetworkClassificationView,
-                           epoch: Int) -> (NetworkActivitySample, State) {
+                           epoch: Int, maximumGap: Duration) -> (NetworkActivitySample, State) {
         var next = state
         let classes = Dictionary(uniqueKeysWithValues: snapshot.interfaces.map { item in
             let record = view.records[item.key]
@@ -180,7 +181,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
             }
             let previous = next.baselines[item.key]
             let (rate, gap) = Self.rate(item.raw, at: snapshot.readAt, previous: previous,
-                                        forcedBaseline: globalReason != nil)
+                                        forcedBaseline: globalReason != nil, maximumGap: maximumGap)
             // 비합산 대상의 카운터 이상은 해당 상세 속도만 비웁니다.
             if let gap, firstGap == nil, activePhysicalTarget { firstGap = gap }
             if activePhysicalTarget {
@@ -224,7 +225,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
     }
 
     private static func rate(_ raw: NetworkRawInterface, at timestamp: ContinuousClock.Instant,
-                             previous: CounterBaseline?, forcedBaseline: Bool)
+                             previous: CounterBaseline?, forcedBaseline: Bool, maximumGap: Duration)
         -> (RatePair?, NetworkBaselineReason?) {
         guard !forcedBaseline else { return (nil, nil) }
         guard let previous else { return (nil, .newTarget) }
@@ -232,7 +233,7 @@ actor NetworkActivitySource<Reader: NetworkCounterReading>: ScheduledSampleSourc
         let (seconds, attoseconds) = elapsed.components
         let duration = Double(seconds) + Double(attoseconds) / 1e18
         guard duration > 0 else { return (nil, .nonpositiveElapsed) }
-        guard duration <= 10 else { return (nil, .excessiveGap) }
+        guard elapsed <= maximumGap else { return (nil, .excessiveGap) }
         guard raw.receivedBytes >= previous.received, raw.sentBytes >= previous.sent else {
             return (nil, .counterDecrease)
         }
@@ -250,6 +251,16 @@ nonisolated struct RateHistoryPoint: Sendable, Equatable {
     let rate: RatePair
     let collectionEpoch: Int
     let rateSegment: UInt64
+    let maximumConnectedGap: Duration
+
+    init(timestamp: ContinuousClock.Instant, rate: RatePair, collectionEpoch: Int,
+         rateSegment: UInt64, maximumConnectedGap: Duration = .seconds(10)) {
+        self.timestamp = timestamp
+        self.rate = rate
+        self.collectionEpoch = collectionEpoch
+        self.rateSegment = rateSegment
+        self.maximumConnectedGap = maximumConnectedGap
+    }
 }
 
 nonisolated struct NetworkActivityDisplayValue: Sendable {
@@ -270,14 +281,14 @@ nonisolated struct NetworkActivityDisplayValue: Sendable {
     }
 }
 
-/// 유효한 대표 두 속도만 601개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
+/// 유효한 대표 두 속도만 1203개 링에 보관합니다. 실패·기준점은 최신 상태만 바꾸고 점을 추가하지 않습니다.
 actor NetworkActivityStore: MonitoringSampleSink {
     private let admission: CollectionAdmission?
     private let topology: NetworkTopologyTracker?
     private var latest: TimestampedSample<NetworkActivitySample>?
     private var lastSuccess: TimestampedSample<NetworkActivitySample>?
     private var firstHistoryPointAt: ContinuousClock.Instant?
-    private var history = CircularBuffer<RateHistoryPoint>(capacity: 601)
+    private var history = CircularBuffer<RateHistoryPoint>(capacity: 1203)
     nonisolated let updates: AsyncStream<NetworkActivityDisplayValue>
     private let continuation: AsyncStream<NetworkActivityDisplayValue>.Continuation
 
@@ -295,22 +306,29 @@ actor NetworkActivityStore: MonitoringSampleSink {
             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
             lastSuccess = sample
             history.append(RateHistoryPoint(timestamp: sample.value.readAt, rate: rate,
-                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment))
+                collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
+                maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
         }
         continuation.yield(snapshot(at: sample.value.readAt))
     }
 
     func append(_ sample: TimestampedSample<NetworkActivitySample>,
                 context: CollectionRunContext) async -> Bool {
-        guard let admission else { append(sample); return true }
+        guard let admission else {
+            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                collectionEpoch: sample.collectionEpoch, context: context))
+            return true
+        }
         return admission.admitOptional(context, phase: .store, timestamp: sample.value.readAt) {
             if let topology {
                 return topology.withCurrentRevision(sample.value.topologyRevision) {
-                    append(sample)
+                    append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                        collectionEpoch: sample.collectionEpoch, context: context))
                     return true
                 }
             }
-            append(sample)
+            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                collectionEpoch: sample.collectionEpoch, context: context))
             return true
         } ?? false
     }

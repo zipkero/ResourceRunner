@@ -34,17 +34,17 @@ nonisolated struct TimestampedSample<Value: Sendable>: Sendable {
     }
 }
 
-/// 시간 범위와 수집 주기에서 양의 고정 용량을 계산하는 순수 정책.
-/// 그래프 시간 범위는 `docs/product.md`가 정한 최근 10분 하나입니다.
+/// 시간 범위와 수집 주기에서 양의 용량을 계산하는 순수 정책.
 nonisolated enum HistoryCapacity {
-    /// 이력 링과 표시용 선별이 함께 쓰는 시간 범위. 사용자에게 범위 선택을 노출하지 않습니다.
+    /// 수집 이력의 최대 시간 범위입니다.
     static let defaultTimeRange: Duration = .seconds(600)
 
-    /// 이 feature가 시스템 지표에 쓸 수 있는 가장 짧은 수집 주기(normal·팝오버 열림 1초).
+    /// 지원하는 가장 짧은 수집 주기입니다.
     /// 용량을 그때그때의 유효 주기로 재계산하면 주기가 느려지는 순간 이미 쌓인 이력이 함께 잘려 나가므로,
     /// 가장 짧은 주기 기준으로 한 번 고정하고 이후 다시 계산하지 않습니다.
     /// 주기가 느려지면 링이 덜 찰 뿐이고, 범위를 벗어난 오래된 항목은 표시 직전 선별이 걸러냅니다.
-    static let shortestSamplingInterval: Duration = .seconds(1)
+    static let shortestSamplingInterval: Duration = .milliseconds(500)
+    static let systemHistoryCapacity = 1203
 
     /// `ceil(시간 범위 / 수집 주기)`로 고정 용량을 계산합니다.
     /// 결과는 항상 1 이상입니다.
@@ -117,19 +117,25 @@ nonisolated struct SystemMetricsHistoryPoint: Sendable, Equatable {
     let userRatio: Double
     let swapUsedBytes: UInt64
     let collectionEpoch: Int
+    let maximumConnectedGap: Duration
+    let rateSegment: UInt64
 
     init(
         timestamp: ContinuousClock.Instant,
         overallCPUUsage: Double,
         userRatio: Double,
         swapUsedBytes: UInt64,
-        collectionEpoch: Int = 0
+        collectionEpoch: Int = 0,
+        maximumConnectedGap: Duration = .seconds(10),
+        rateSegment: UInt64 = 0
     ) {
         self.timestamp = timestamp
         self.overallCPUUsage = overallCPUUsage
         self.userRatio = userRatio
         self.swapUsedBytes = swapUsedBytes
         self.collectionEpoch = collectionEpoch
+        self.maximumConnectedGap = maximumConnectedGap
+        self.rateSegment = rateSegment
     }
 }
 
@@ -152,6 +158,7 @@ actor MonitoringSampleStore: MonitoringSampleSink {
     private let timeRange: Duration
     private var history: CircularBuffer<SystemMetricsHistoryPoint>
     private var latest: TimestampedSample<SystemMetricsSample>?
+    private var cpuRateSegment: UInt64 = 0
 #if DEBUG
     private var debugLastHistoryEpoch: Int?
 #endif
@@ -166,15 +173,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
          admission: CollectionAdmission? = nil) {
         self.admission = admission
         self.timeRange = timeRange
-        // `HistoryCapacity.capacity`가 돌려주는 개수(1초 주기에서 600)만 쓰면 항목이 정확히 그 주기로 채워질 때
-        // 가장 오래된 값과 가장 최근 값 사이 구간이 `(개수 - 1) * 주기` = 599초에 그쳐 10분 창을 1초 못 미칩니다.
-        // +1을 더하면 그 구간이 정확히 시간 범위와 같아져 창의 가장 오래된 끝까지 실제로 덮습니다.
-        self.history = CircularBuffer(
-            capacity: HistoryCapacity.capacity(
-                timeRange: timeRange,
-                samplingInterval: HistoryCapacity.shortestSamplingInterval
-            ) + 1
-        )
+        // 0.5초 간격의 양 끝점 1201개와 시각 경계 여유를 고정 보관합니다.
+        self.history = CircularBuffer(capacity: HistoryCapacity.systemHistoryCapacity)
 
         var continuation: AsyncStream<SystemMetricsDisplayValue>.Continuation!
         self.displayValues = AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation = $0 }
@@ -186,7 +186,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
     /// 값을 만들지 못한 tick(`.success(nil)`)과 실패한 tick은 링에 들어가지 않으므로 그 시각이 이력에서 비어 있게 됩니다.
     func append(_ sample: TimestampedSample<SystemMetricsSample>) {
         latest = sample
-        if let point = Self.historyPoint(from: sample) {
+        if case .success(.some) = sample.value.cpu {} else { cpuRateSegment &+= 1 }
+        if let point = Self.historyPoint(from: sample, rateSegment: cpuRateSegment) {
             history.append(point)
 #if DEBUG
             if debugLastHistoryEpoch != point.collectionEpoch {
@@ -215,7 +216,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
     func append(_ sample: TimestampedSample<SystemMetricsSample>, context: CollectionRunContext) async -> Bool {
         guard let admission else { append(sample); return true }
         return admission.admit(context, phase: .store, timestamp: sample.timestamp) {
-            append(sample)
+            append(TimestampedSample(timestamp: sample.timestamp, value: sample.value,
+                collectionEpoch: sample.collectionEpoch, context: context))
             return true
         } ?? false
     }
@@ -240,7 +242,8 @@ actor MonitoringSampleStore: MonitoringSampleSink {
 
     /// 전체 CPU 사용률과 Swap 값이 모두 있는 tick에서만 이력 항목을 만듭니다.
     /// 한쪽이라도 없으면 그 시각은 이력에서 비어 있어야 하므로 값을 지어내지 않고 `nil`을 돌려줍니다.
-    private static func historyPoint(from sample: TimestampedSample<SystemMetricsSample>) -> SystemMetricsHistoryPoint? {
+    private static func historyPoint(from sample: TimestampedSample<SystemMetricsSample>,
+                                     rateSegment: UInt64) -> SystemMetricsHistoryPoint? {
         guard case .success(let cpu) = sample.value.cpu, let cpu,
               case .success(let memory) = sample.value.memory else {
             return nil
@@ -251,7 +254,9 @@ actor MonitoringSampleStore: MonitoringSampleSink {
             overallCPUUsage: cpu.overallUsage,
             userRatio: cpu.userRatio,
             swapUsedBytes: memory.swapUsedBytes,
-            collectionEpoch: sample.collectionEpoch
+            collectionEpoch: sample.collectionEpoch,
+            maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1)),
+            rateSegment: rateSegment
         )
     }
 

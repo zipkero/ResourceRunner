@@ -199,6 +199,26 @@ struct CPUSystemMetricsCollectorTests {
         #expect(metrics?.overallUsage == 10)
     }
 
+    @Test func tenSecondPlanAllowsTwentySecondsButBreaksBeyondIt() throws {
+        let reader = StubCPUTickReader(tickOutcomes: [
+            .success([ticks(user: 0, system: 0, idle: 0)]),
+            .success([ticks(user: 20, system: 0, idle: 180)]),
+            .success([ticks(user: 41, system: 0, idle: 389)]),
+            .success([ticks(user: 51, system: 0, idle: 479)]),
+        ])
+        var collector = CPUSystemMetricsCollector(reader: reader)
+        let gap = SystemMetricsSampling.maximumTickGap(for: .seconds(10))
+        #expect(gap == .seconds(20))
+        #expect(SystemMetricsSampling.maximumTickGap(for: .milliseconds(500)) == .seconds(10))
+        _ = try collector.collect(at: baseInstant, maximumTickGap: gap)
+        let boundary = try collector.collect(at: baseInstant + .seconds(20), maximumTickGap: gap)
+        #expect(boundary?.overallUsage == 10)
+        let beyond = try collector.collect(at: baseInstant + .seconds(41), maximumTickGap: gap)
+        #expect(beyond == nil)
+        let resumed = try collector.collect(at: baseInstant + .seconds(42), maximumTickGap: .seconds(10))
+        #expect(resumed?.overallUsage == 10)
+    }
+
     /// 명시적 중지 없이 수집 주기만 5초에서 1초로 바뀌면 두 차분 모두 유효합니다.
     @Test func fiveSecondToOneSecondIntervalChangeKeepsProducingUsage() throws {
         let reader = StubCPUTickReader(tickOutcomes: [

@@ -2,6 +2,10 @@
 
 저장: 2026-10-03 (통합 요약 UI 최종 승인)
 
+## 최신 Per-Request 수정
+
+사용자가 Memory하단공백제거후main스테이징/커밋/푸시를지시했다. Memory최소199pt를제거했고실제내용높이를쓴다(기본169pt/긴정보184pt). 이전고정높이계약보다이사용자수정이우선한다. 관련DashboardCardHeightTests/IntegratedDashboardSummaryTests 15/15·서명Debug빌드통과, 실제PID30987 본체280×668pt/스크롤없음/하단공백제거를확인했다. source/관련테스트·design/implement/상위design에반영했고 Git작업기준HEAD9212400, branchmain, origin/main보다13개선행이었다. 사용자승인범위에따라이번수정을커밋하고기존main커밋과함께origin/main에푸시한다. 최종상태는git status/log로확인한다.
+
 ## 현재 목표
 
 현재 사용자 UI 요청을 완료했다. CPU·Memory·Network·Disk 전체를 줄여 스크롤 없이 한눈에 표시하고, 지나치게 작은 글씨를 회복했다. Network·Disk 하단 안내 삭제, Disk 수치 옆 미니 그래프, TOP 5 아래3pt 여백을 반영했다. 추가 요청 없이 후속 M3 검증을 자동 시작하지 않는다.

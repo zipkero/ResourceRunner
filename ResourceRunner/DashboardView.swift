@@ -414,7 +414,7 @@ struct MemoryCardView: View {
         }
         .padding(DashboardStyle.Summary.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: 199, alignment: .topLeading)
+        // 긴 정보가 실제로 줄바꿈될 때만 늘어나게 해 하단 예약 공간을 만들지 않습니다.
         .background(
             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
                 .fill(DashboardStyle.CardSurface.fillColor)

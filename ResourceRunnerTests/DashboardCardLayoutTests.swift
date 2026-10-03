@@ -14,7 +14,7 @@ private let baseInstant = ContinuousClock().now
 
 private enum CardHeightBaseline {
     static let cpu: CGFloat = 241
-    static let memory: CGFloat = 199
+    static let memory: CGFloat = 169
     static let previousCPUHeight: CGFloat = 231
 }
 
@@ -668,18 +668,16 @@ struct DashboardCardHeightTests {
         #expect(Set(heights).count == 1, "상태에 따라 Memory 카드 높이가 달라졌습니다: \(heights)")
     }
 
-    /// task-006 검증 조건: 가장 긴 Pressure 라벨·가장 긴 Swap 값 조합에서도 Memory 카드 높이가 늘지 않아야 합니다.
-    /// 비교 대상은 병합 후 기본 내용과 병합 후 최장 내용이며, 병합 **전** 높이와의 대조는 이 테스트에 없습니다.
-    /// 줄 수 제한을 지우는 mutation은 이 높이 단언으로 잡히지 않습니다 —
-    /// production 서식이 어떤 바이트 값도 짧은 문자열로 압축해 병합 줄이 콘텐츠 폭을 넘기지 못하므로
-    /// 줄바꿈 자체가 일어나지 않습니다. 그 자리는 `maximumLineCountIsOne()`의 상한 상수 단언이 맡습니다.
-    @Test func memoryCardHeightIsSameWithLongestPressureSwapLineContent() {
-        let mergedDefaultHeight = measuredHeight(memoryCardView(.normal(memoryPresentation(topApplicationsCount: 5), timestamp: baseInstant)))
-        let longestHeight = measuredHeight(
+    /// 긴 정보가 실제로 두 줄을 사용할 때만 늘어나고 이전 예약 높이까지 빈 공간을 만들지 않습니다.
+    @Test func memoryCardGrowsOnlyWhenPressureSwapContentWraps() {
+        let compactHeight = measuredHeight(memoryCardView(.normal(memoryPresentation(topApplicationsCount: 5), timestamp: baseInstant)))
+        let wrappedHeight = measuredHeight(
             memoryCardView(.normal(memoryPresentationWithLongestPressureSwapLine(), timestamp: baseInstant))
         )
 
-        #expect(mergedDefaultHeight == longestHeight, "가장 긴 Pressure·Swap 병합 줄 내용에서 Memory 카드 높이가 달라졌습니다: 기본 \(mergedDefaultHeight), 최댓값 \(longestHeight)")
+        #expect(compactHeight == CardHeightBaseline.memory)
+        #expect(wrappedHeight > compactHeight)
+        #expect(wrappedHeight < 199)
     }
 
     /// 초점 타이포와 세 묶음 조립을 적용한 Memory 카드가 새 실측값을 지키고 변경 전 상한보다 커지지 않아야 합니다.
@@ -762,7 +760,7 @@ struct DashboardCardHeightTests {
     }
 
     /// 새 표시 요소가 모두 있는 정상 상태와 값이 없는 세 상태, 캐시를 쓰는 실패·중지 상태가
-    /// 각각 현재 기준 높이를 지키는지 한 번에 고정합니다.
+    /// CPU는 고정 높이, Memory는 실제 정보의 줄 수에 따른 자연 높이를 지키는지 확인합니다.
     @Test func cardHeightsMatchBaselinesAcrossEveryStateWithNewElements() {
         let cpuPresentation = cpuPresentation(topApplicationsCount: 5)
         let cpuLastKnown = LastKnownCardValue(presentation: cpuPresentation, timestamp: baseInstant)
@@ -793,7 +791,7 @@ struct DashboardCardHeightTests {
         ]
         let memoryHeights = memoryStates.map { measuredHeight(memoryCardView($0, iconProvider: memoryProvider)) }
 
-        #expect(memoryHeights.allSatisfy { $0 == CardHeightBaseline.memory }, "Memory 카드 상태별 높이가 새 조립 실측값 \(CardHeightBaseline.memory)과 다릅니다: \(memoryHeights)")
+        #expect(memoryHeights.allSatisfy { $0 >= CardHeightBaseline.memory && $0 < 199 }, "Memory 카드에 필요한 내용 높이보다 큰 예약 공간이 남았습니다: \(memoryHeights)")
     }
 }
 

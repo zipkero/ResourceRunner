@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-03 (Task016 승인 후 M3 잔여 검증)
+저장: 2026-10-03 (Task017 승인 후 M3 잔여 검증)
 
 ## 현재 목표
 
@@ -8,8 +8,8 @@
 
 ## 현재 상태
 
-- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. 기준 HEAD 1b15966. Task016 worker FINAL completed와 독립 verifier FINAL approved를 main이 확정했다. 소스·실행 파일 해시와 다운로드/업로드 방향 일치를 확인했고 커밋·푸시 후 Task017을 진행한다. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-016/README.md).
-- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010/011/012/013/016 승인,009철회,014/015/017/018미완료. task014실장치와015잠금·수면·화면수면·사용자전환은 보류이며 완료/철회로 바꾸지 않는다. Ethernet 전환 장비도 미확보다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. 기준 HEAD4487c94。Task017 worker FINAL completed와 독립 verifier FINAL approved를 main이 확정했다. 소스·실행 파일·원자료 해시와 Read/Write 방향 일치를 확인했고 커밋·푸시 후 Task018을 진행한다. [Disk 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-017/README.md). Task016과 함께 SPEC §5.6을 충족한다.
+- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010/011/012/013/016/017 승인,009철회,014/015/018미완료. task014실장치와015잠금·수면·화면수면·사용자전환은 보류이며 완료/철회로 바꾸지 않는다. Ethernet 전환 장비도 미확보다.
 - worker /root/implement_task002의 Task012 FINALcompleted와 verifier /root/verify_compact_task010의 FINALapproved를 main이 인수·확정했다. main만 문서·상태·커밋·푸시를 수행한다.
 - Task012 소스9개·Debug실행파일/실제Swift dylib·Release해시 일치, 관련38/38·Release·서명Debug 통과. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-012/README.md).
 - 실제 현재화면1728×1117(visible1084),scale2: 본체280×668/외곽306×694/스크롤없음, 네상세400×480/외곽426×506, 모두8pt·카드앵커·개폐본체불변·끝스크롤 확인(PID4865).
@@ -42,7 +42,7 @@ Task014실장치와015잠금·절전복귀는보류·미완료다. 외부화면/
 
 ## 다음 작업
 
-- 작업: Task017의 실제 디스크 읽기·쓰기와 iostat 비교를 진행한다. 동일 앱 일반 모드·열린 팝오버에서 각15초 유휴→30초 부하→15초 회복을 관찰한다. iostat 합계와 앱 Read+Write를 같은 물리 범위로 비교하고 방향은 드라이버 원시 바이트로 확인한다. 이어018을 진행한다.
+- 작업: Task018의 임시 관찰 진입점 정리, 전체 단위·서명 UI suite, 실제 네 카드·상세·CPU 부하 메뉴바 통합과 production 구성 확인을 진행한다. 오래된 UI 테스트 치수와 상위 현재 구현 설명은 최신 승인된 스크롤 없는 배치에 맞춘다. XCUITest의 과거 automation mode 초기화 실패가 있어 현재 환경에서 확인하되 글로벌 보안 설정을 임의 변경하지 않는다.
 - 완료 기준: Task마다worker FINAL/독립verifier FINAL을인수하고main이판정·상태·CONTEXT·커밋을반영한다. 보류한실제전환을mock/통합결과로대체하지않는다.
 
 ## 먼저 읽을 파일

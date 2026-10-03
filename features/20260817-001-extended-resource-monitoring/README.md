@@ -21,6 +21,8 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 
 ## 이력
 
+- 2026-10-03: task017 독립 FINAL approved를 main이 확정했습니다. 같은 Sandbox 앱에서 내장 disk0의 Read·Write 부하 상승/회복이 원시 드라이버와 iostat 합계에서 일치했습니다. 최종 해시·서명 Debug·Release를 확인했습니다. task016과 함께 SPEC §5.6을 충족하며 task018 통합 검증을 이어갑니다. 보류한 task014/015와 IMPLEMENT는 미완료입니다.
+
 - 2026-10-03: task016 독립 FINAL approved를 main이 확정했습니다. 같은 Sandbox 앱에서 다운로드·업로드 각각 유휴→부하→회복 방향이 확인된 물리 부분 합계와 netstat에서 일치했습니다. 서명 Debug·Release와 최종 해시를 확인했습니다. task017 디스크 비교를 이어가며 task014/015와 IMPLEMENT는 미완료로 유지합니다.
 
 - 2026-10-03: task013 독립 FINAL approved를 main이 확정했습니다. 기본 키보드 설정의 현재/작은 실제 화면에서 네 단축키·닫기·Escape·AX 포커스·상세 페이지 끝·전체 접근성 정보를 검증했습니다. 전체614/614·Release·서명Debug 통과, 최종 소스/바이너리 해시 일치. 013완료 후016측정비교를 진행하며014실장치/015잠금·절전은보류합니다.

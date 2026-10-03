@@ -1,0 +1,306 @@
+{
+  "scope": {
+    "appPhysicalDriverAndBSD": [
+      [
+        "4294969732",
+        "disk0"
+      ]
+    ],
+    "sameIdentityEveryValidAppSample": true,
+    "iostatTarget": "disk0",
+    "iostatUnit": "MB/s, Read+Write combined",
+    "firstIostatSinceBootRowExcluded": true,
+    "edgeExclusionSeconds": 3,
+    "appStatus": "rate or partial with valid knownPhysicalRates; baseline/failure excluded"
+  },
+  "phases": {
+    "read-idle": {
+      "startUTC": "2026-10-03T04:05:54.982000+00:00",
+      "stopUTC": "2026-10-03T04:06:09.990000+00:00",
+      "app": {
+        "count": 9,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 43696.27726866796,
+        "writeBpsMedian": 27755.521936017045,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 310958.7632531585,
+        "sumBpsMedian": 27755.521936017045,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 349570.2181493437
+      },
+      "card": {
+        "count": 9,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 43696.27726866796,
+        "writeBpsMedian": 27755.521936017045,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 310958.7632531585,
+        "sumBpsMedian": 27755.521936017045,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 349570.2181493437
+      },
+      "cardPartialCount": 0,
+      "iostat": {
+        "count": 8,
+        "MB/sMedian": 0.035,
+        "MB/sMin": 0.0,
+        "MB/sMax": 0.31
+      },
+      "rawDrivers": {
+        "4294969732/disk0": {
+          "firstReadAt": "Instant(_value: 3041486.231246041 seconds)",
+          "lastReadAt": "Instant(_value: 3041495.254731916 seconds)",
+          "readBytesFirst": 1127571525632,
+          "readBytesLast": 1127571570688,
+          "writeBytesFirst": 6074071986176,
+          "writeBytesLast": 6074072809472,
+          "readBytesDelta": 45056,
+          "writeBytesDelta": 823296
+        }
+      },
+      "syntheticLoadBytes": 0
+    },
+    "read-load": {
+      "startUTC": "2026-10-03T04:06:09.992000+00:00",
+      "stopUTC": "2026-10-03T04:06:40+00:00",
+      "app": {
+        "count": 23,
+        "readBpsMedian": 33617206.519100934,
+        "readBpsMin": 33082894.563440327,
+        "readBpsMax": 36278303.16315684,
+        "writeBpsMedian": 45484.46745867148,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 2094681.6109381658,
+        "sumBpsMedian": 33799801.66015187,
+        "sumBpsMin": 33210504.34156211,
+        "sumBpsMax": 36360408.635971494
+      },
+      "card": {
+        "count": 23,
+        "readBpsMedian": 33617206.519100934,
+        "readBpsMin": 33082894.563440327,
+        "readBpsMax": 36278303.16315684,
+        "writeBpsMedian": 45484.46745867148,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 2094681.6109381658,
+        "sumBpsMedian": 33799801.66015187,
+        "sumBpsMin": 33210504.34156211,
+        "sumBpsMax": 36360408.635971494
+      },
+      "cardPartialCount": 0,
+      "iostat": {
+        "count": 23,
+        "MB/sMedian": 31.8,
+        "MB/sMin": 31.68,
+        "MB/sMax": 38.21
+      },
+      "rawDrivers": {
+        "4294969732/disk0": {
+          "firstReadAt": "Instant(_value: 3041501.2531388327 seconds)",
+          "lastReadAt": "Instant(_value: 3041524.246876416 seconds)",
+          "readBytesFirst": 1127664390144,
+          "readBytesLast": 1128438190080,
+          "writeBytesFirst": 6074072944640,
+          "writeBytesLast": 6074082873344,
+          "readBytesDelta": 773799936,
+          "writeBytesDelta": 9928704
+        }
+      },
+      "syntheticLoadBytes": 1006632960
+    },
+    "read-recovery": {
+      "startUTC": "2026-10-03T04:06:40.002000+00:00",
+      "stopUTC": "2026-10-03T04:06:55.009000+00:00",
+      "app": {
+        "count": 8,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 0.0,
+        "writeBpsMedian": 139360.0195157612,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 4354840.050130404,
+        "sumBpsMedian": 139360.0195157612,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 4354840.050130404
+      },
+      "card": {
+        "count": 8,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 0.0,
+        "writeBpsMedian": 139360.0195157612,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 4354840.050130404,
+        "sumBpsMedian": 139360.0195157612,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 4354840.050130404
+      },
+      "cardPartialCount": 0,
+      "iostat": {
+        "count": 8,
+        "MB/sMedian": 0.005,
+        "MB/sMin": 0.0,
+        "MB/sMax": 5.79
+      },
+      "rawDrivers": {
+        "4294969732/disk0": {
+          "firstReadAt": "Instant(_value: 3041532.2431728747 seconds)",
+          "lastReadAt": "Instant(_value: 3041539.2010330833 seconds)",
+          "readBytesFirst": 1128582909952,
+          "readBytesLast": 1128582909952,
+          "writeBytesFirst": 6074083655680,
+          "writeBytesLast": 6074090270720,
+          "readBytesDelta": 0,
+          "writeBytesDelta": 6615040
+        }
+      },
+      "syntheticLoadBytes": 0
+    },
+    "write-idle": {
+      "startUTC": "2026-10-03T04:06:55.011000+00:00",
+      "stopUTC": "2026-10-03T04:07:10.016000+00:00",
+      "app": {
+        "count": 8,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 0.0,
+        "writeBpsMedian": 24585.593693680745,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 851227.894470808,
+        "sumBpsMedian": 24585.593693680745,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 851227.894470808
+      },
+      "card": {
+        "count": 8,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 0.0,
+        "writeBpsMedian": 24585.593693680745,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 851227.894470808,
+        "sumBpsMedian": 24585.593693680745,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 851227.894470808
+      },
+      "cardPartialCount": 0,
+      "iostat": {
+        "count": 8,
+        "MB/sMedian": 0.025,
+        "MB/sMin": 0.0,
+        "MB/sMax": 0.79
+      },
+      "rawDrivers": {
+        "4294969732/disk0": {
+          "firstReadAt": "Instant(_value: 3041547.2538935826 seconds)",
+          "lastReadAt": "Instant(_value: 3041554.248379875 seconds)",
+          "readBytesFirst": 1128582909952,
+          "readBytesLast": 1128582909952,
+          "writeBytesFirst": 6074090422272,
+          "writeBytesLast": 6074091872256,
+          "readBytesDelta": 0,
+          "writeBytesDelta": 1449984
+        }
+      },
+      "syntheticLoadBytes": 0
+    },
+    "write-load": {
+      "startUTC": "2026-10-03T04:07:10.018000+00:00",
+      "stopUTC": "2026-10-03T04:07:40.022000+00:00",
+      "app": {
+        "count": 23,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 176962.2859433742,
+        "writeBpsMedian": 33840600.66028148,
+        "writeBpsMin": 31845754.65775512,
+        "writeBpsMax": 42703262.99027893,
+        "sumBpsMedian": 33840600.66028148,
+        "sumBpsMin": 31845754.65775512,
+        "sumBpsMax": 42707370.65312909
+      },
+      "card": {
+        "count": 23,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 176962.2859433742,
+        "writeBpsMedian": 33840600.66028148,
+        "writeBpsMin": 31845754.65775512,
+        "writeBpsMax": 42703262.99027893,
+        "sumBpsMedian": 33840600.66028148,
+        "sumBpsMin": 31845754.65775512,
+        "sumBpsMax": 42707370.65312909
+      },
+      "cardPartialCount": 0,
+      "iostat": {
+        "count": 23,
+        "MB/sMedian": 31.8,
+        "MB/sMin": 31.69,
+        "MB/sMax": 40.24
+      },
+      "rawDrivers": {
+        "4294969732/disk0": {
+          "firstReadAt": "Instant(_value: 3041561.216326375 seconds)",
+          "lastReadAt": "Instant(_value: 3041585.222183541 seconds)",
+          "readBytesFirst": 1128582909952,
+          "readBytesLast": 1128583258112,
+          "writeBytesFirst": 6074175819776,
+          "writeBytesLast": 6074998362112,
+          "readBytesDelta": 348160,
+          "writeBytesDelta": 822542336
+        }
+      },
+      "syntheticLoadBytes": 1006632960
+    },
+    "write-recovery": {
+      "startUTC": "2026-10-03T04:07:40.024000+00:00",
+      "stopUTC": "2026-10-03T04:07:55.034000+00:00",
+      "app": {
+        "count": 9,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 0.0,
+        "writeBpsMedian": 20805.495041697508,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 3301186.304793461,
+        "sumBpsMedian": 20805.495041697508,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 3301186.304793461
+      },
+      "card": {
+        "count": 9,
+        "readBpsMedian": 0.0,
+        "readBpsMin": 0.0,
+        "readBpsMax": 0.0,
+        "writeBpsMedian": 20805.495041697508,
+        "writeBpsMin": 0.0,
+        "writeBpsMax": 3301186.304793461,
+        "sumBpsMedian": 20805.495041697508,
+        "sumBpsMin": 0.0,
+        "sumBpsMax": 3301186.304793461
+      },
+      "cardPartialCount": 0,
+      "iostat": {
+        "count": 8,
+        "MB/sMedian": 0.01,
+        "MB/sMin": 0.0,
+        "MB/sMax": 4.6
+      },
+      "rawDrivers": {
+        "4294969732/disk0": {
+          "firstReadAt": "Instant(_value: 3041591.23736725 seconds)",
+          "lastReadAt": "Instant(_value: 3041600.253217291 seconds)",
+          "readBytesFirst": 1128583258112,
+          "readBytesLast": 1128583258112,
+          "writeBytesFirst": 6075115864064,
+          "writeBytesLast": 6075121016832,
+          "readBytesDelta": 0,
+          "writeBytesDelta": 5152768
+        }
+      },
+      "syntheticLoadBytes": 0
+    }
+  }
+}

@@ -1,0 +1,12 @@
+tsv_columns {22: 481}
+records {'sample': 120, 'device': 120, 'delivery': 120, 'card': 120}
+sample_status {'baselineOnly(ResourceRunner.DiskBaselineReason.first)': 1, 'rate': 119}
+delivery {'sameReadAt=true': 120}
+epochs {'0': 120}
+revisions {'1': 120}
+segments {'1': 120}
+rate_card_exact 119 mismatch []
+phase_starts [('read-idle', '2026-10-03T04:05:54.982+00:00'), ('read-load', '2026-10-03T04:06:09.992+00:00'), ('read-recovery', '2026-10-03T04:06:40.002+00:00'), ('write-idle', '2026-10-03T04:06:55.011+00:00'), ('write-load', '2026-10-03T04:07:10.018+00:00'), ('write-recovery', '2026-10-03T04:07:40.024+00:00')]
+phase_stops [('read-idle', '2026-10-03T04:06:09.990+00:00'), ('read-load', '2026-10-03T04:06:40.000+00:00'), ('read-recovery', '2026-10-03T04:06:55.009+00:00'), ('write-idle', '2026-10-03T04:07:10.016+00:00'), ('write-load', '2026-10-03T04:07:40.022+00:00'), ('write-recovery', '2026-10-03T04:07:55.034+00:00')]
+io_totals [('read-load', 1006632960), ('write-load', 1006632960)]
+png_count 12

@@ -535,7 +535,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.5, SPEC §5.6, SPEC §5.13,
     DESIGN §1.2, DESIGN §3.3, DESIGN §3.4, DESIGN §4.1, DESIGN §4.4
 
-- [ ] task-017: Disk의 시스템 도구 변화 방향 비교
+- [x] task-017: Disk의 시스템 도구 변화 방향 비교
+  - main 승인(2026-10-03): worker FINAL completed와 독립 verifier FINAL approved를 인수했습니다. 동일 Sandbox 세션의 disk0에서 Read·Write 각각15초 유휴→30초 유효 물리 부하→15초 회복을 확인했습니다. iostat 합계의 단위와 첫 누적 행을 구분하고 원시 드라이버 방향·화면·119개 카드 일치와 최종 해시를 대조했습니다. 근거: [task-017](./evidence/task-017/README.md). 선행 task016과 함께 SPEC §5.6을 충족하며 IMPLEMENT 전체는 미완료입니다.
   - 목적: 실제 대형 파일 읽기·쓰기에서 앱의 물리 Disk I/O와 macOS 도구가
     같은 측정 범위의 변화 방향을 보여 주는지 확인합니다.
   - 접근: 한 Sandbox 앱 세션의 일반 모드·팝오버 열림에서

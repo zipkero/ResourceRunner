@@ -1,0 +1,75 @@
+{"utc": "2026-10-03T04:05:49.870+00:00", "monotonic": 0.033989083, "kind": "prepare_start", "path": "/tmp/rr-task017-synthetic-92ezrvax/read-write.bin", "bytes": 268435456, "fNocache": 48, "filesystem": "/System/Volumes/Data"}
+{"utc": "2026-10-03T04:05:49.958+00:00", "monotonic": 0.121828541, "kind": "prepare_stop", "bytes": 268435456}
+{"utc": "2026-10-03T04:05:54.968+00:00", "monotonic": 5.132165, "kind": "prepare_settled", "seconds": 5}
+{"utc": "2026-10-03T04:05:54.982+00:00", "monotonic": 5.146382833, "kind": "phase_start", "phase": "read-idle", "durationSeconds": 15}
+{"utc": "2026-10-03T04:06:09.990+00:00", "monotonic": 20.1547265, "kind": "phase_stop", "phase": "read-idle"}
+{"utc": "2026-10-03T04:06:09.992+00:00", "monotonic": 20.155949666, "kind": "phase_start", "phase": "read-load", "durationSeconds": 30}
+{"utc": "2026-10-03T04:06:10.998+00:00", "monotonic": 21.162094291, "kind": "io_progress", "phase": "read-load", "operations": 33, "bytes": 34603008, "fNocache": true}
+{"utc": "2026-10-03T04:06:12.002+00:00", "monotonic": 22.165666083, "kind": "io_progress", "phase": "read-load", "operations": 65, "bytes": 68157440, "fNocache": true}
+{"utc": "2026-10-03T04:06:13.003+00:00", "monotonic": 23.166754208, "kind": "io_progress", "phase": "read-load", "operations": 97, "bytes": 101711872, "fNocache": true}
+{"utc": "2026-10-03T04:06:14.027+00:00", "monotonic": 24.191196833, "kind": "io_progress", "phase": "read-load", "operations": 130, "bytes": 136314880, "fNocache": true}
+{"utc": "2026-10-03T04:06:15.032+00:00", "monotonic": 25.196218333, "kind": "io_progress", "phase": "read-load", "operations": 162, "bytes": 169869312, "fNocache": true}
+{"utc": "2026-10-03T04:06:16.064+00:00", "monotonic": 26.227595333, "kind": "io_progress", "phase": "read-load", "operations": 195, "bytes": 204472320, "fNocache": true}
+{"utc": "2026-10-03T04:06:17.065+00:00", "monotonic": 27.228753541, "kind": "io_progress", "phase": "read-load", "operations": 227, "bytes": 238026752, "fNocache": true}
+{"utc": "2026-10-03T04:06:18.097+00:00", "monotonic": 28.260990333, "kind": "io_progress", "phase": "read-load", "operations": 260, "bytes": 272629760, "fNocache": true}
+{"utc": "2026-10-03T04:06:19.122+00:00", "monotonic": 29.285624833, "kind": "io_progress", "phase": "read-load", "operations": 293, "bytes": 307232768, "fNocache": true}
+{"utc": "2026-10-03T04:06:20.128+00:00", "monotonic": 30.29249125, "kind": "io_progress", "phase": "read-load", "operations": 325, "bytes": 340787200, "fNocache": true}
+{"utc": "2026-10-03T04:06:21.159+00:00", "monotonic": 31.323389625, "kind": "io_progress", "phase": "read-load", "operations": 358, "bytes": 375390208, "fNocache": true}
+{"utc": "2026-10-03T04:06:22.188+00:00", "monotonic": 32.352138291, "kind": "io_progress", "phase": "read-load", "operations": 391, "bytes": 409993216, "fNocache": true}
+{"utc": "2026-10-03T04:06:23.221+00:00", "monotonic": 33.385412125, "kind": "io_progress", "phase": "read-load", "operations": 424, "bytes": 444596224, "fNocache": true}
+{"utc": "2026-10-03T04:06:24.250+00:00", "monotonic": 34.413737666, "kind": "io_progress", "phase": "read-load", "operations": 457, "bytes": 479199232, "fNocache": true}
+{"utc": "2026-10-03T04:06:25.280+00:00", "monotonic": 35.443994416, "kind": "io_progress", "phase": "read-load", "operations": 490, "bytes": 513802240, "fNocache": true}
+{"utc": "2026-10-03T04:06:26.314+00:00", "monotonic": 36.4784785, "kind": "io_progress", "phase": "read-load", "operations": 523, "bytes": 548405248, "fNocache": true}
+{"utc": "2026-10-03T04:06:27.345+00:00", "monotonic": 37.509327875, "kind": "io_progress", "phase": "read-load", "operations": 556, "bytes": 583008256, "fNocache": true}
+{"utc": "2026-10-03T04:06:28.347+00:00", "monotonic": 38.510670833, "kind": "io_progress", "phase": "read-load", "operations": 588, "bytes": 616562688, "fNocache": true}
+{"utc": "2026-10-03T04:06:29.373+00:00", "monotonic": 39.537019125, "kind": "io_progress", "phase": "read-load", "operations": 621, "bytes": 651165696, "fNocache": true}
+{"utc": "2026-10-03T04:06:30.408+00:00", "monotonic": 40.571936958, "kind": "io_progress", "phase": "read-load", "operations": 654, "bytes": 685768704, "fNocache": true}
+{"utc": "2026-10-03T04:06:31.438+00:00", "monotonic": 41.602574083, "kind": "io_progress", "phase": "read-load", "operations": 687, "bytes": 720371712, "fNocache": true}
+{"utc": "2026-10-03T04:06:32.462+00:00", "monotonic": 42.626074333, "kind": "io_progress", "phase": "read-load", "operations": 720, "bytes": 754974720, "fNocache": true}
+{"utc": "2026-10-03T04:06:33.472+00:00", "monotonic": 43.636019208, "kind": "io_progress", "phase": "read-load", "operations": 752, "bytes": 788529152, "fNocache": true}
+{"utc": "2026-10-03T04:06:34.473+00:00", "monotonic": 44.637032291, "kind": "io_progress", "phase": "read-load", "operations": 784, "bytes": 822083584, "fNocache": true}
+{"utc": "2026-10-03T04:06:35.502+00:00", "monotonic": 45.665556666, "kind": "io_progress", "phase": "read-load", "operations": 817, "bytes": 856686592, "fNocache": true}
+{"utc": "2026-10-03T04:06:36.534+00:00", "monotonic": 46.6984285, "kind": "io_progress", "phase": "read-load", "operations": 850, "bytes": 891289600, "fNocache": true}
+{"utc": "2026-10-03T04:06:37.564+00:00", "monotonic": 47.727852708, "kind": "io_progress", "phase": "read-load", "operations": 883, "bytes": 925892608, "fNocache": true}
+{"utc": "2026-10-03T04:06:38.565+00:00", "monotonic": 48.729385041, "kind": "io_progress", "phase": "read-load", "operations": 915, "bytes": 959447040, "fNocache": true}
+{"utc": "2026-10-03T04:06:39.566+00:00", "monotonic": 49.729495666, "kind": "io_progress", "phase": "read-load", "operations": 947, "bytes": 993001472, "fNocache": true}
+{"utc": "2026-10-03T04:06:40.000+00:00", "monotonic": 50.164090833, "kind": "io_total", "phase": "read-load", "operations": 960, "bytes": 1006632960}
+{"utc": "2026-10-03T04:06:40.000+00:00", "monotonic": 50.164382875, "kind": "phase_stop", "phase": "read-load"}
+{"utc": "2026-10-03T04:06:40.002+00:00", "monotonic": 50.165833083, "kind": "phase_start", "phase": "read-recovery", "durationSeconds": 15}
+{"utc": "2026-10-03T04:06:55.009+00:00", "monotonic": 65.173017833, "kind": "phase_stop", "phase": "read-recovery"}
+{"utc": "2026-10-03T04:06:55.011+00:00", "monotonic": 65.1753355, "kind": "phase_start", "phase": "write-idle", "durationSeconds": 15}
+{"utc": "2026-10-03T04:07:10.016+00:00", "monotonic": 80.180419291, "kind": "phase_stop", "phase": "write-idle"}
+{"utc": "2026-10-03T04:07:10.018+00:00", "monotonic": 80.1817975, "kind": "phase_start", "phase": "write-load", "durationSeconds": 30}
+{"utc": "2026-10-03T04:07:11.025+00:00", "monotonic": 81.188685916, "kind": "io_progress", "phase": "write-load", "operations": 33, "bytes": 34603008, "fNocache": true}
+{"utc": "2026-10-03T04:07:12.026+00:00", "monotonic": 82.189915708, "kind": "io_progress", "phase": "write-load", "operations": 65, "bytes": 68157440, "fNocache": true}
+{"utc": "2026-10-03T04:07:13.059+00:00", "monotonic": 83.223131541, "kind": "io_progress", "phase": "write-load", "operations": 98, "bytes": 102760448, "fNocache": true}
+{"utc": "2026-10-03T04:07:14.089+00:00", "monotonic": 84.253443291, "kind": "io_progress", "phase": "write-load", "operations": 131, "bytes": 137363456, "fNocache": true}
+{"utc": "2026-10-03T04:07:15.090+00:00", "monotonic": 85.2540525, "kind": "io_progress", "phase": "write-load", "operations": 163, "bytes": 170917888, "fNocache": true}
+{"utc": "2026-10-03T04:07:16.091+00:00", "monotonic": 86.255088958, "kind": "io_progress", "phase": "write-load", "operations": 195, "bytes": 204472320, "fNocache": true}
+{"utc": "2026-10-03T04:07:17.120+00:00", "monotonic": 87.283569083, "kind": "io_progress", "phase": "write-load", "operations": 228, "bytes": 239075328, "fNocache": true}
+{"utc": "2026-10-03T04:07:18.121+00:00", "monotonic": 88.2849285, "kind": "io_progress", "phase": "write-load", "operations": 260, "bytes": 272629760, "fNocache": true}
+{"utc": "2026-10-03T04:07:19.154+00:00", "monotonic": 89.317603708, "kind": "io_progress", "phase": "write-load", "operations": 293, "bytes": 307232768, "fNocache": true}
+{"utc": "2026-10-03T04:07:20.175+00:00", "monotonic": 90.339079208, "kind": "io_progress", "phase": "write-load", "operations": 326, "bytes": 341835776, "fNocache": true}
+{"utc": "2026-10-03T04:07:21.181+00:00", "monotonic": 91.345509291, "kind": "io_progress", "phase": "write-load", "operations": 358, "bytes": 375390208, "fNocache": true}
+{"utc": "2026-10-03T04:07:22.184+00:00", "monotonic": 92.3481915, "kind": "io_progress", "phase": "write-load", "operations": 390, "bytes": 408944640, "fNocache": true}
+{"utc": "2026-10-03T04:07:23.212+00:00", "monotonic": 93.376349041, "kind": "io_progress", "phase": "write-load", "operations": 423, "bytes": 443547648, "fNocache": true}
+{"utc": "2026-10-03T04:07:24.246+00:00", "monotonic": 94.4103045, "kind": "io_progress", "phase": "write-load", "operations": 456, "bytes": 478150656, "fNocache": true}
+{"utc": "2026-10-03T04:07:25.279+00:00", "monotonic": 95.442588625, "kind": "io_progress", "phase": "write-load", "operations": 489, "bytes": 512753664, "fNocache": true}
+{"utc": "2026-10-03T04:07:26.302+00:00", "monotonic": 96.465793708, "kind": "io_progress", "phase": "write-load", "operations": 522, "bytes": 547356672, "fNocache": true}
+{"utc": "2026-10-03T04:07:27.308+00:00", "monotonic": 97.47212525, "kind": "io_progress", "phase": "write-load", "operations": 554, "bytes": 580911104, "fNocache": true}
+{"utc": "2026-10-03T04:07:28.332+00:00", "monotonic": 98.496015, "kind": "io_progress", "phase": "write-load", "operations": 587, "bytes": 615514112, "fNocache": true}
+{"utc": "2026-10-03T04:07:29.341+00:00", "monotonic": 99.50545375, "kind": "io_progress", "phase": "write-load", "operations": 619, "bytes": 649068544, "fNocache": true}
+{"utc": "2026-10-03T04:07:30.365+00:00", "monotonic": 100.528800708, "kind": "io_progress", "phase": "write-load", "operations": 652, "bytes": 683671552, "fNocache": true}
+{"utc": "2026-10-03T04:07:31.370+00:00", "monotonic": 101.534357708, "kind": "io_progress", "phase": "write-load", "operations": 684, "bytes": 717225984, "fNocache": true}
+{"utc": "2026-10-03T04:07:32.400+00:00", "monotonic": 102.563631958, "kind": "io_progress", "phase": "write-load", "operations": 717, "bytes": 751828992, "fNocache": true}
+{"utc": "2026-10-03T04:07:33.400+00:00", "monotonic": 103.563703708, "kind": "io_progress", "phase": "write-load", "operations": 749, "bytes": 785383424, "fNocache": true}
+{"utc": "2026-10-03T04:07:34.401+00:00", "monotonic": 104.565126833, "kind": "io_progress", "phase": "write-load", "operations": 781, "bytes": 818937856, "fNocache": true}
+{"utc": "2026-10-03T04:07:35.404+00:00", "monotonic": 105.56782075, "kind": "io_progress", "phase": "write-load", "operations": 813, "bytes": 852492288, "fNocache": true}
+{"utc": "2026-10-03T04:07:36.434+00:00", "monotonic": 106.597864416, "kind": "io_progress", "phase": "write-load", "operations": 846, "bytes": 887095296, "fNocache": true}
+{"utc": "2026-10-03T04:07:37.464+00:00", "monotonic": 107.628494125, "kind": "io_progress", "phase": "write-load", "operations": 879, "bytes": 921698304, "fNocache": true}
+{"utc": "2026-10-03T04:07:38.465+00:00", "monotonic": 108.62926975, "kind": "io_progress", "phase": "write-load", "operations": 911, "bytes": 955252736, "fNocache": true}
+{"utc": "2026-10-03T04:07:39.465+00:00", "monotonic": 109.629505125, "kind": "io_progress", "phase": "write-load", "operations": 943, "bytes": 988807168, "fNocache": true}
+{"utc": "2026-10-03T04:07:40.022+00:00", "monotonic": 110.186136083, "kind": "io_total", "phase": "write-load", "operations": 960, "bytes": 1006632960}
+{"utc": "2026-10-03T04:07:40.022+00:00", "monotonic": 110.186440541, "kind": "phase_stop", "phase": "write-load"}
+{"utc": "2026-10-03T04:07:40.024+00:00", "monotonic": 110.187916041, "kind": "phase_start", "phase": "write-recovery", "durationSeconds": 15}
+{"utc": "2026-10-03T04:07:55.034+00:00", "monotonic": 125.197940375, "kind": "phase_stop", "phase": "write-recovery"}

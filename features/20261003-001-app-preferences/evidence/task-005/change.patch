@@ -1,0 +1,425 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index b6a7793..264e1a7 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -13,8 +13,19 @@ import AppKit
+ /// `SystemLifecycleObserver`에서 남기므로, 여기서 별도 observer를 만들지 않습니다.
+ final class AppDelegate: NSObject, NSApplicationDelegate {
+     private var coordinator: ApplicationCoordinator?
++    private var preferencesStore: PreferencesStore?
++    private var loginItemController: LoginItemController?
+ 
+     func applicationDidFinishLaunching(_ notification: Notification) {
+-        coordinator = ApplicationCoordinator()
++        let preferences = PreferencesStore()
++        let login = LoginItemController()
++        preferencesStore = preferences
++        loginItemController = login
++        coordinator = ApplicationCoordinator(preferencesStore: preferences,
++            loginItemController: login)
++    }
++
++    func applicationDidBecomeActive(_ notification: Notification) {
++        coordinator?.refreshLoginStatus()
+     }
+ }
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index a34a41f..2179c0b 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -8,6 +8,45 @@
+ import AppKit
+ import OSLog
+ 
++/// 일반 설정의 단일 snapshot을 표시와 lifecycle에 전달합니다.
++/// 최초 시스템 상태가 적용되기 전에는 프로필 변경을 보류하고 가장 최신 snapshot만 보냅니다.
++@MainActor
++final class PreferencesPipelineBinding {
++    private let store: PreferencesStore
++    private let dashboard: DashboardPresentationStore
++    private let lifecycle: MonitoringLifecycleStore
++    private var forwardedProfile: RefreshProfile
++    private var initialApplied = false
++
++    init(store: PreferencesStore, dashboard: DashboardPresentationStore,
++         lifecycle: MonitoringLifecycleStore) {
++        self.store = store
++        self.dashboard = dashboard
++        self.lifecycle = lifecycle
++        forwardedProfile = store.current.preferences.refreshProfile
++        store.onChange = { [weak self] snapshot in self?.apply(snapshot) }
++    }
++
++    func initialMonitoringApplied() {
++        initialApplied = true
++        forwardCurrentProfileIfChanged()
++    }
++
++    private func apply(_ snapshot: PreferencesSnapshot) {
++        dashboard.applyPreferences(snapshot)
++        guard initialApplied else { return }
++        forwardCurrentProfileIfChanged()
++    }
++
++    private func forwardCurrentProfileIfChanged() {
++        let snapshot = store.current
++        guard snapshot.preferences.refreshProfile != forwardedProfile else { return }
++        forwardedProfile = snapshot.preferences.refreshProfile
++        Task { await lifecycle.update(.preferenceProfile(
++            snapshot.preferences.refreshProfile, revision: snapshot.revision)) }
++    }
++}
++
+ /// 앱 수명 동안 필요한 객체를 한 번만 구성하고 소유하는 경계.
+ /// 표시 흐름(`StatusBarController`, `CharacterStateSource`)과 생명주기·수집 흐름
+ /// (`SystemLifecycleObserver`, 여섯 축 `CollectionPipelines`)을
+@@ -15,6 +54,8 @@ import OSLog
+ /// 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다.
+ @MainActor
+ final class ApplicationCoordinator {
++    let preferencesStore: PreferencesStore
++    let loginItemController: LoginItemController
+     let statusBarController: StatusBarController
+     let characterStateSource: CharacterStateSource
+     let systemLifecycleObserver: SystemLifecycleObserver
+@@ -23,6 +64,7 @@ final class ApplicationCoordinator {
+     let dashboardPresentationStore: DashboardPresentationStore
+     let collectionDeliveryStore: CollectionDeliveryStore
+     let processRankingCache: ProcessRankingDeliveryCache
++    let preferencesBinding: PreferencesPipelineBinding
+ 
+     var monitoringSampleStore: MonitoringSampleStore { collectionPipelines.systemStore }
+     var processHistoryStore: ProcessHistoryStore { collectionPipelines.processStore }
+@@ -48,9 +90,12 @@ final class ApplicationCoordinator {
+     private static let debugPipelineLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
+ #endif
+ 
+-    init() {
++    init(preferencesStore: PreferencesStore, loginItemController: LoginItemController) {
++        self.preferencesStore = preferencesStore
++        self.loginItemController = loginItemController
++        let initialPreferences = preferencesStore.current
+         // 팝오버 콘텐츠 뷰가 이 저장소를 관찰하므로, 뷰를 만들기 전에 먼저 만들어야 합니다.
+-        let dashboard = DashboardPresentationStore()
++        let dashboard = DashboardPresentationStore(preferencesSnapshot: initialPreferences)
+         dashboardPresentationStore = dashboard
+ 
+         // 아이콘 캐시 수명은 앱 수명입니다. 여기서 한 번 만들어 뷰에 넘기면 팝오버를 여닫아도
+@@ -90,10 +135,13 @@ final class ApplicationCoordinator {
+             networkMetadataSource: NetworkMetadataSource(
+                 reader: SystemNetworkMetadataReader(topology: networkTopology), admission: admission),
+             storageMetadataSource: StorageMetadataSource(
+-                reader: SystemStorageMetadataReader(topology: diskTopology), admission: admission))
++                reader: SystemStorageMetadataReader(topology: diskTopology), admission: admission),
++            initialProfile: initialPreferences.preferences.refreshProfile)
+         collectionPipelines = pipelines
+         collectionDeliveryStore = CollectionDeliveryStore()
+         processRankingCache = ProcessRankingDeliveryCache()
++        preferencesBinding = PreferencesPipelineBinding(store: preferencesStore,
++            dashboard: dashboard, lifecycle: pipelines.lifecycle)
+         topologyObserver = ResourceTopologyObserver(networkTopology: networkTopology,
+             diskTopology: diskTopology, lifecycle: pipelines.lifecycle)
+         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
+@@ -136,7 +184,13 @@ final class ApplicationCoordinator {
+             topology: diskTopology, admission: admission)
+         collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(pipelines.lifecycle, dashboard: dashboard, admission: admission)
+         // 모든 소비 경로가 준비된 뒤 초기 lifecycle을 적용해야 최초 수집을 잃지 않습니다.
+-        monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle)
++        monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle) { [weak preferencesBinding] in
++            preferencesBinding?.initialMonitoringApplied()
++        }
++    }
++
++    func refreshLoginStatus() {
++        loginItemController.refresh()
+     }
+ 
+     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
+@@ -473,7 +527,8 @@ final class ApplicationCoordinator {
+     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
+     static func startMonitoring(
+         _ source: SystemLifecycleSource,
+-        into store: MonitoringLifecycleStore
++        into store: MonitoringLifecycleStore,
++        onInitialApplied: (@MainActor () -> Void)? = nil
+     ) -> Task<Void, Never> {
+         let subscription = source.start()
+ 
+@@ -487,6 +542,7 @@ final class ApplicationCoordinator {
+         return Task { @MainActor in
+             await store.update(.systemSnapshot(subscription.initial))
+             await store.update(.popoverPresented(false))
++            onInitialApplied?()
+ 
+             for await snapshot in subscription.updates {
+ #if DEBUG
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index 30cce1c..eaf80e7 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -13,12 +13,25 @@ import Foundation
+ /// 들고 있으면 팝오버를 여는 순간 빈 화면이나 로딩 상태를 거칠 경로가 없습니다(ANALYSIS §5 DP10, SPEC §5.9).
+ @MainActor
+ final class DashboardPresentationStore: ObservableObject {
++    @Published private(set) var preferencesSnapshot: PreferencesSnapshot
+     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
+     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
+     @Published private(set) var networkCard: NetworkCardPresentation = .collecting
+     @Published private(set) var diskCard: DiskCardPresentation = .collecting
+     private var lastCollectionBoundarySequence = 0
+ 
++    init(preferencesSnapshot: PreferencesSnapshot = PreferencesSnapshot(
++        preferences: .defaults, revision: 0
++    )) {
++        self.preferencesSnapshot = preferencesSnapshot
++    }
++
++    func applyPreferences(_ snapshot: PreferencesSnapshot) {
++        guard snapshot.revision > preferencesSnapshot.revision else { return }
++        // 카드 모델은 최대 이력과 전체 상세를 보유하고, 표시 선택은 현재 snapshot으로 유도합니다.
++        preferencesSnapshot = snapshot
++    }
++
+     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
+         admission.withCurrentBoundary(boundary) {
+             guard boundary.sequence >= lastCollectionBoundarySequence else { return }
+diff --git a/ResourceRunner/PreferencesStore.swift b/ResourceRunner/PreferencesStore.swift
+index 81682d3..9a7253d 100644
+--- a/ResourceRunner/PreferencesStore.swift
++++ b/ResourceRunner/PreferencesStore.swift
+@@ -36,6 +36,7 @@ nonisolated struct PreferencesSnapshot: Equatable, Sendable {
+ final class PreferencesStore {
+     private let storage: any PreferencesStorage
+     private(set) var current: PreferencesSnapshot
++    var onChange: ((PreferencesSnapshot) -> Void)?
+ 
+     convenience init() {
+         self.init(storage: UserDefaultsPreferencesStorage())
+@@ -65,6 +66,7 @@ final class PreferencesStore {
+         )
+         storage.write(Self.encode(preferences))
+         current = next
++        onChange?(next)
+     }
+ 
+     private static func decode(_ raw: Any?) -> AppPreferences {
+diff --git a/ResourceRunnerTests/ApplicationCoordinatorTests.swift b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+index 90f5a88..34d1561 100644
+--- a/ResourceRunnerTests/ApplicationCoordinatorTests.swift
++++ b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+@@ -18,6 +18,19 @@ private func waitUntil(maxIterations: Int = 10_000, _ condition: () async -> Boo
+     }
+ }
+ 
++@MainActor
++private final class SavedPreferencesStorage: PreferencesStorage {
++    var value: Any?
++    init(_ value: Any?) { self.value = value }
++    func read() -> Any? { value }
++    func write(_ dictionary: [String: Any]) { value = dictionary }
++}
++
++private actor PreferenceScheduleTarget: CollectionScheduleTarget {
++    private(set) var schedules: [CollectionSchedule] = []
++    func apply(_ schedule: CollectionSchedule) async { schedules.append(schedule) }
++}
++
+ /// `MemorySystemLifecycleSource`를 감싸는 최소 이중, 이후 update를 전혀 보내지 않는 소스를 만드는 데 씁니다.
+ /// `startMonitoring`이 stream 소비를 initial·popoverPresented 적용보다 먼저 시작하도록 순서가 바뀌면,
+ /// update가 하나도 오지 않는 이 소스로는 for-await가 영원히 suspend되어 초기 적용이 전혀 일어나지 않으므로
+@@ -25,6 +38,76 @@ private func waitUntil(maxIterations: Int = 10_000, _ condition: () async -> Boo
+ @MainActor
+ struct ApplicationCoordinatorTests {
+ 
++    @Test func persistedChoicesReloadWithoutRestoringCollectionOrProcessHistory() async {
++        let storage = SavedPreferencesStorage(nil)
++        let previous = PreferencesStore(storage: storage)
++        previous.update {
++            $0.showsMemoryCard = false
++            $0.refreshProfile = .fast
++        }
++
++        let relaunched = PreferencesStore(storage: storage)
++        let dashboard = DashboardPresentationStore(preferencesSnapshot: relaunched.current)
++        let system = MonitoringSampleStore()
++        let processes = ProcessHistoryStore()
++        let delivery = CollectionDeliveryStore()
++        let ranking = ProcessRankingDeliveryCache()
++        #expect(dashboard.preferencesSnapshot.preferences.showsMemoryCard == false)
++        #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .fast)
++        #expect(relaunched.current.revision == 0)
++        #expect((await system.snapshot()).latest == nil)
++        #expect((await system.snapshot()).recentHistory.isEmpty)
++        #expect(await processes.snapshot().isEmpty)
++        #expect(delivery.networkActivity == nil && delivery.diskActivity == nil)
++        #expect(ranking.ranking == nil && ranking.groups.isEmpty)
++    }
++
++    @Test func savedSnapshotSeedsFirstDisplayAndScheduleBeforePendingChanges() async {
++        let storage = SavedPreferencesStorage([
++            "schemaVersion": 1, "showsCPUCard": false,
++            "graphTimeRange": "oneMinute", "refreshProfile": "maximumEnergySaving"
++        ])
++        let preferences = PreferencesStore(storage: storage)
++        let first = preferences.current
++        let dashboard = DashboardPresentationStore(preferencesSnapshot: first)
++        let system = PreferenceScheduleTarget()
++        let process = PreferenceScheduleTarget()
++        let lifecycle = MonitoringLifecycleStore(definition: .m3,
++            systemMetricsTarget: system, processSurveyTarget: process,
++            initialProfile: first.preferences.refreshProfile)
++        let binding = PreferencesPipelineBinding(store: preferences, dashboard: dashboard,
++            lifecycle: lifecycle)
++
++        #expect(dashboard.preferencesSnapshot == first)
++        #expect(dashboard.preferencesSnapshot.preferences.showsCPUCard == false)
++        #expect(dashboard.preferencesSnapshot.preferences.graphTimeRange == .oneMinute)
++        #expect(await system.schedules.isEmpty)
++
++        preferences.update { $0.refreshProfile = .fast }
++        preferences.update { $0.refreshProfile = .energySaving }
++        #expect(dashboard.preferencesSnapshot.revision == 2)
++        #expect(await system.schedules.isEmpty)
++
++        let lifecycleSource = MemorySystemLifecycleSource(initialLowPowerMode: false,
++            initialScreenLockState: .unlocked)
++        let task = ApplicationCoordinator.startMonitoring(lifecycleSource, into: lifecycle) {
++            binding.initialMonitoringApplied()
++        }
++        await waitUntil { await system.schedules.count >= 2 }
++        let schedules = await system.schedules
++        #expect(schedules.first == .running(.seconds(10)))
++        #expect(schedules.last == .running(.seconds(5)))
++        #expect(!schedules.contains(.running(.seconds(2))))
++
++        dashboard.applyPreferences(first)
++        #expect(dashboard.preferencesSnapshot.revision == 2)
++        preferences.update { $0.showsDiskCard = false }
++        await waitUntil { dashboard.preferencesSnapshot.revision == 3 }
++        #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .energySaving)
++        #expect(await system.schedules.count == schedules.count)
++        task.cancel()
++    }
++
+     /// task-011 검증 조건: 「system initial snapshot과 초기 popoverPresented = false를 적용하기 전에는
+     /// Scheduler를 시작하지 않는다」를 뒤집어 확인합니다 — update가 전혀 없어도 initial 적용만으로
+     /// Scheduler가 시작(첫 apply)되어야 합니다.
+diff --git a/ResourceRunnerTests/CollectionPipelinesTests.swift b/ResourceRunnerTests/CollectionPipelinesTests.swift
+index 622947e..dc76c6a 100644
+--- a/ResourceRunnerTests/CollectionPipelinesTests.swift
++++ b/ResourceRunnerTests/CollectionPipelinesTests.swift
+@@ -88,6 +88,34 @@ nonisolated private func pipelineDisk(_ at: ContinuousClock.Instant,
+ 
+ @MainActor
+ struct CollectionPipelinesTests {
++    @Test func savedProfileSeedsFirstPipelineSourceContextWithoutStandardInterval() async {
++        let clock = ManualMonotonicClock()
++        let admission = CollectionAdmission()
++        let networkTopology = NetworkTopologyTracker()
++        let diskTopology = DiskTopologyTracker()
++        let preferences = PreferencesSnapshot(preferences: AppPreferences(
++            refreshProfile: .maximumEnergySaving), revision: 0)
++        let system = PipelineSource<SystemMetricsSample> { _ in nil }
++        let process = PipelineSource<ProcessSurveySample> { _ in nil }
++        let network = PipelineSource<NetworkActivitySample> { _ in nil }
++        let disk = PipelineSource<DiskActivitySample> { _ in nil }
++        let networkMetadata = PipelineSource<NetworkMetadataResult> { _ in nil }
++        let storageMetadata = PipelineSource<StorageMetadataResult> { _ in nil }
++        let pipelines = CollectionPipelines.make(clock: clock, admission: admission,
++            networkTopology: networkTopology, diskTopology: diskTopology,
++            systemSource: system, processSource: process,
++            networkSource: { _ in network }, diskSource: disk,
++            networkMetadataSource: networkMetadata, storageMetadataSource: storageMetadata,
++            initialProfile: preferences.preferences.refreshProfile)
++        #expect(await system.contexts.isEmpty)
++        await pipelines.lifecycle.update(.systemSnapshot(initial()))
++        await clock.advance(by: .seconds(10))
++        await pipelineWait { await !system.contexts.isEmpty }
++        #expect(await system.contexts.first?.interval == .seconds(10))
++        #expect(await process.contexts.first?.interval == .seconds(10))
++        #expect(admission.issue(.systemMetrics)?.interval == .seconds(10))
++    }
++
+     private func initial(_ revision: Int = 0, locked: Bool = false,
+                          lowPower: Bool = false, sequence: Int = 0) -> SystemLifecycleSnapshot {
+         SystemLifecycleSnapshot(revision: revision, lowPowerMode: lowPower,
+diff --git a/ResourceRunnerTests/DashboardPresentationTests.swift b/ResourceRunnerTests/DashboardPresentationTests.swift
+index 00a6220..579cbcb 100644
+--- a/ResourceRunnerTests/DashboardPresentationTests.swift
++++ b/ResourceRunnerTests/DashboardPresentationTests.swift
+@@ -13,6 +13,48 @@ import Testing
+ 
+ private let baseInstant = ContinuousClock().now
+ 
++@MainActor
++struct DashboardPreferencesBoundaryTests {
++    @Test func currentSnapshotSurvivesLateSampleFailureAndStopWithoutDiscardingHistory() {
++        let store = DashboardPresentationStore()
++        let fullHistory = [historyPoint(secondsFromBase: -300), historyPoint(secondsFromBase: 0)]
++        let value = SystemMetricsDisplayValue(latest: TimestampedSample(
++            timestamp: baseInstant,
++            value: SystemMetricsSample(cpu: .success(cpuMetrics()),
++                memory: .success(memoryMetricsForTests()))
++        ), recentHistory: fullHistory)
++        store.updateCPUCard(with: value, topApplications: [], currentTimestamp: baseInstant)
++        var oneMinute = AppPreferences.defaults
++        oneMinute.graphTimeRange = .oneMinute
++        oneMinute.showsCPUCard = false
++        store.applyPreferences(PreferencesSnapshot(preferences: oneMinute, revision: 2))
++        store.updateCPUCard(with: value, topApplications: [], currentTimestamp: baseInstant)
++        #expect(store.preferencesSnapshot.revision == 2)
++        #expect(store.cpuCard.lastKnownValue?.presentation.graphPoints.count == 2)
++
++        var fiveMinutes = oneMinute
++        fiveMinutes.graphTimeRange = .fiveMinutes
++        let failure = CollectorFailure(metric: .cpu,
++            cause: .systemCall(name: "injected", code: 1))
++        let failedValue = SystemMetricsDisplayValue(latest: TimestampedSample(
++            timestamp: baseInstant.advanced(by: .seconds(1)),
++            value: SystemMetricsSample(cpu: .failure(failure),
++                memory: .success(memoryMetricsForTests()))
++        ), recentHistory: fullHistory)
++        store.updateCPUCard(with: failedValue, topApplications: [],
++            currentTimestamp: baseInstant.advanced(by: .seconds(1)))
++        store.applyPreferences(PreferencesSnapshot(preferences: fiveMinutes, revision: 3))
++        if case .failure = store.cpuCard {} else { Issue.record("실패 상태가 설정 전달로 사라졌습니다") }
++        #expect(store.cpuCard.lastKnownValue?.presentation.graphPoints.count == 2)
++
++        store.markCollectionStopped()
++        store.applyPreferences(PreferencesSnapshot(preferences: oneMinute, revision: 2))
++        #expect(store.preferencesSnapshot.preferences.graphTimeRange == .fiveMinutes)
++        if case .stopped = store.cpuCard {} else { Issue.record("중지 상태가 설정 전달로 사라졌습니다") }
++        #expect(store.cpuCard.lastKnownValue?.presentation.graphPoints.count == 2)
++    }
++}
++
+ private func cpuMetrics(overallUsage: Double = 42, userRatio: Double = 30, systemRatio: Double = 12) -> CPUSystemMetrics {
+     CPUSystemMetrics(
+         overallUsage: overallUsage,
+diff --git a/ResourceRunnerTests/PreferencesStoreTests.swift b/ResourceRunnerTests/PreferencesStoreTests.swift
+index 9f6c870..a21c1f2 100644
+--- a/ResourceRunnerTests/PreferencesStoreTests.swift
++++ b/ResourceRunnerTests/PreferencesStoreTests.swift
+@@ -22,6 +22,22 @@ private final class RecordingPreferencesStorage: PreferencesStorage {
+ 
+ @MainActor
+ struct PreferencesStoreTests {
++    @Test func changeCallbackPublishesSavedSnapshotOncePerMutation() {
++        let storage = RecordingPreferencesStorage()
++        let store = PreferencesStore(storage: storage)
++        var seen: [PreferencesSnapshot] = []
++        store.onChange = { seen.append($0) }
++        #expect(seen.isEmpty)
++
++        store.update { $0.refreshProfile = .fast }
++        store.restoreDefaults()
++        #expect(seen.count == 2)
++        #expect(seen[0].revision == 1)
++        #expect(seen[0].preferences.refreshProfile == .fast)
++        #expect(seen[1] == store.current)
++        #expect(storage.writes.count == 2)
++    }
++
+     @Test func defaultsAndInitialReadDoNotWrite() {
+         let storage = RecordingPreferencesStorage()
+         let store = PreferencesStore(storage: storage)

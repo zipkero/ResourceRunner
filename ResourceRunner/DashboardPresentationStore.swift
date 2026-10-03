@@ -13,11 +13,24 @@ import Foundation
 /// 들고 있으면 팝오버를 여는 순간 빈 화면이나 로딩 상태를 거칠 경로가 없습니다(ANALYSIS §5 DP10, SPEC §5.9).
 @MainActor
 final class DashboardPresentationStore: ObservableObject {
+    @Published private(set) var preferencesSnapshot: PreferencesSnapshot
     @Published private(set) var cpuCard: ResourceCardState<CPUCardPresentation> = .collecting
     @Published private(set) var memoryCard: ResourceCardState<MemoryCardPresentation> = .collecting
     @Published private(set) var networkCard: NetworkCardPresentation = .collecting
     @Published private(set) var diskCard: DiskCardPresentation = .collecting
     private var lastCollectionBoundarySequence = 0
+
+    init(preferencesSnapshot: PreferencesSnapshot = PreferencesSnapshot(
+        preferences: .defaults, revision: 0
+    )) {
+        self.preferencesSnapshot = preferencesSnapshot
+    }
+
+    func applyPreferences(_ snapshot: PreferencesSnapshot) {
+        guard snapshot.revision > preferencesSnapshot.revision else { return }
+        // 카드 모델은 최대 이력과 전체 상세를 보유하고, 표시 선택은 현재 snapshot으로 유도합니다.
+        preferencesSnapshot = snapshot
+    }
 
     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
         admission.withCurrentBoundary(boundary) {

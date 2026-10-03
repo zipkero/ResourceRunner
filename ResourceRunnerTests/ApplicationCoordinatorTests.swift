@@ -18,12 +18,95 @@ private func waitUntil(maxIterations: Int = 10_000, _ condition: () async -> Boo
     }
 }
 
+@MainActor
+private final class SavedPreferencesStorage: PreferencesStorage {
+    var value: Any?
+    init(_ value: Any?) { self.value = value }
+    func read() -> Any? { value }
+    func write(_ dictionary: [String: Any]) { value = dictionary }
+}
+
+private actor PreferenceScheduleTarget: CollectionScheduleTarget {
+    private(set) var schedules: [CollectionSchedule] = []
+    func apply(_ schedule: CollectionSchedule) async { schedules.append(schedule) }
+}
+
 /// `MemorySystemLifecycleSource`를 감싸는 최소 이중, 이후 update를 전혀 보내지 않는 소스를 만드는 데 씁니다.
 /// `startMonitoring`이 stream 소비를 initial·popoverPresented 적용보다 먼저 시작하도록 순서가 바뀌면,
 /// update가 하나도 오지 않는 이 소스로는 for-await가 영원히 suspend되어 초기 적용이 전혀 일어나지 않으므로
 /// 이 테스트가 그 mutation을 잡습니다.
 @MainActor
 struct ApplicationCoordinatorTests {
+
+    @Test func persistedChoicesReloadWithoutRestoringCollectionOrProcessHistory() async {
+        let storage = SavedPreferencesStorage(nil)
+        let previous = PreferencesStore(storage: storage)
+        previous.update {
+            $0.showsMemoryCard = false
+            $0.refreshProfile = .fast
+        }
+
+        let relaunched = PreferencesStore(storage: storage)
+        let dashboard = DashboardPresentationStore(preferencesSnapshot: relaunched.current)
+        let system = MonitoringSampleStore()
+        let processes = ProcessHistoryStore()
+        let delivery = CollectionDeliveryStore()
+        let ranking = ProcessRankingDeliveryCache()
+        #expect(dashboard.preferencesSnapshot.preferences.showsMemoryCard == false)
+        #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .fast)
+        #expect(relaunched.current.revision == 0)
+        #expect((await system.snapshot()).latest == nil)
+        #expect((await system.snapshot()).recentHistory.isEmpty)
+        #expect(await processes.snapshot().isEmpty)
+        #expect(delivery.networkActivity == nil && delivery.diskActivity == nil)
+        #expect(ranking.ranking == nil && ranking.groups.isEmpty)
+    }
+
+    @Test func savedSnapshotSeedsFirstDisplayAndScheduleBeforePendingChanges() async {
+        let storage = SavedPreferencesStorage([
+            "schemaVersion": 1, "showsCPUCard": false,
+            "graphTimeRange": "oneMinute", "refreshProfile": "maximumEnergySaving"
+        ])
+        let preferences = PreferencesStore(storage: storage)
+        let first = preferences.current
+        let dashboard = DashboardPresentationStore(preferencesSnapshot: first)
+        let system = PreferenceScheduleTarget()
+        let process = PreferenceScheduleTarget()
+        let lifecycle = MonitoringLifecycleStore(definition: .m3,
+            systemMetricsTarget: system, processSurveyTarget: process,
+            initialProfile: first.preferences.refreshProfile)
+        let binding = PreferencesPipelineBinding(store: preferences, dashboard: dashboard,
+            lifecycle: lifecycle)
+
+        #expect(dashboard.preferencesSnapshot == first)
+        #expect(dashboard.preferencesSnapshot.preferences.showsCPUCard == false)
+        #expect(dashboard.preferencesSnapshot.preferences.graphTimeRange == .oneMinute)
+        #expect(await system.schedules.isEmpty)
+
+        preferences.update { $0.refreshProfile = .fast }
+        preferences.update { $0.refreshProfile = .energySaving }
+        #expect(dashboard.preferencesSnapshot.revision == 2)
+        #expect(await system.schedules.isEmpty)
+
+        let lifecycleSource = MemorySystemLifecycleSource(initialLowPowerMode: false,
+            initialScreenLockState: .unlocked)
+        let task = ApplicationCoordinator.startMonitoring(lifecycleSource, into: lifecycle) {
+            binding.initialMonitoringApplied()
+        }
+        await waitUntil { await system.schedules.count >= 2 }
+        let schedules = await system.schedules
+        #expect(schedules.first == .running(.seconds(10)))
+        #expect(schedules.last == .running(.seconds(5)))
+        #expect(!schedules.contains(.running(.seconds(2))))
+
+        dashboard.applyPreferences(first)
+        #expect(dashboard.preferencesSnapshot.revision == 2)
+        preferences.update { $0.showsDiskCard = false }
+        await waitUntil { dashboard.preferencesSnapshot.revision == 3 }
+        #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .energySaving)
+        #expect(await system.schedules.count == schedules.count)
+        task.cancel()
+    }
 
     /// task-011 검증 조건: 「system initial snapshot과 초기 popoverPresented = false를 적용하기 전에는
     /// Scheduler를 시작하지 않는다」를 뒤집어 확인합니다 — update가 전혀 없어도 initial 적용만으로

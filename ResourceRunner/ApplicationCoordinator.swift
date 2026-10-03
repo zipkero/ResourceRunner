@@ -8,6 +8,45 @@
 import AppKit
 import OSLog
 
+/// 일반 설정의 단일 snapshot을 표시와 lifecycle에 전달합니다.
+/// 최초 시스템 상태가 적용되기 전에는 프로필 변경을 보류하고 가장 최신 snapshot만 보냅니다.
+@MainActor
+final class PreferencesPipelineBinding {
+    private let store: PreferencesStore
+    private let dashboard: DashboardPresentationStore
+    private let lifecycle: MonitoringLifecycleStore
+    private var forwardedProfile: RefreshProfile
+    private var initialApplied = false
+
+    init(store: PreferencesStore, dashboard: DashboardPresentationStore,
+         lifecycle: MonitoringLifecycleStore) {
+        self.store = store
+        self.dashboard = dashboard
+        self.lifecycle = lifecycle
+        forwardedProfile = store.current.preferences.refreshProfile
+        store.onChange = { [weak self] snapshot in self?.apply(snapshot) }
+    }
+
+    func initialMonitoringApplied() {
+        initialApplied = true
+        forwardCurrentProfileIfChanged()
+    }
+
+    private func apply(_ snapshot: PreferencesSnapshot) {
+        dashboard.applyPreferences(snapshot)
+        guard initialApplied else { return }
+        forwardCurrentProfileIfChanged()
+    }
+
+    private func forwardCurrentProfileIfChanged() {
+        let snapshot = store.current
+        guard snapshot.preferences.refreshProfile != forwardedProfile else { return }
+        forwardedProfile = snapshot.preferences.refreshProfile
+        Task { await lifecycle.update(.preferenceProfile(
+            snapshot.preferences.refreshProfile, revision: snapshot.revision)) }
+    }
+}
+
 /// 앱 수명 동안 필요한 객체를 한 번만 구성하고 소유하는 경계.
 /// 표시 흐름(`StatusBarController`, `CharacterStateSource`)과 생명주기·수집 흐름
 /// (`SystemLifecycleObserver`, 여섯 축 `CollectionPipelines`)을
@@ -15,6 +54,8 @@ import OSLog
 /// 표시 계층은 수집 actor를 호출하지 않고 수집 actor도 표시 계층을 호출하지 않습니다.
 @MainActor
 final class ApplicationCoordinator {
+    let preferencesStore: PreferencesStore
+    let loginItemController: LoginItemController
     let statusBarController: StatusBarController
     let characterStateSource: CharacterStateSource
     let systemLifecycleObserver: SystemLifecycleObserver
@@ -23,6 +64,7 @@ final class ApplicationCoordinator {
     let dashboardPresentationStore: DashboardPresentationStore
     let collectionDeliveryStore: CollectionDeliveryStore
     let processRankingCache: ProcessRankingDeliveryCache
+    let preferencesBinding: PreferencesPipelineBinding
 
     var monitoringSampleStore: MonitoringSampleStore { collectionPipelines.systemStore }
     var processHistoryStore: ProcessHistoryStore { collectionPipelines.processStore }
@@ -48,9 +90,12 @@ final class ApplicationCoordinator {
     private static let debugPipelineLogger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "CollectionPipeline")
 #endif
 
-    init() {
+    init(preferencesStore: PreferencesStore, loginItemController: LoginItemController) {
+        self.preferencesStore = preferencesStore
+        self.loginItemController = loginItemController
+        let initialPreferences = preferencesStore.current
         // 팝오버 콘텐츠 뷰가 이 저장소를 관찰하므로, 뷰를 만들기 전에 먼저 만들어야 합니다.
-        let dashboard = DashboardPresentationStore()
+        let dashboard = DashboardPresentationStore(preferencesSnapshot: initialPreferences)
         dashboardPresentationStore = dashboard
 
         // 아이콘 캐시 수명은 앱 수명입니다. 여기서 한 번 만들어 뷰에 넘기면 팝오버를 여닫아도
@@ -90,10 +135,13 @@ final class ApplicationCoordinator {
             networkMetadataSource: NetworkMetadataSource(
                 reader: SystemNetworkMetadataReader(topology: networkTopology), admission: admission),
             storageMetadataSource: StorageMetadataSource(
-                reader: SystemStorageMetadataReader(topology: diskTopology), admission: admission))
+                reader: SystemStorageMetadataReader(topology: diskTopology), admission: admission),
+            initialProfile: initialPreferences.preferences.refreshProfile)
         collectionPipelines = pipelines
         collectionDeliveryStore = CollectionDeliveryStore()
         processRankingCache = ProcessRankingDeliveryCache()
+        preferencesBinding = PreferencesPipelineBinding(store: preferencesStore,
+            dashboard: dashboard, lifecycle: pipelines.lifecycle)
         topologyObserver = ResourceTopologyObserver(networkTopology: networkTopology,
             diskTopology: diskTopology, lifecycle: pipelines.lifecycle)
         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
@@ -136,7 +184,13 @@ final class ApplicationCoordinator {
             topology: diskTopology, admission: admission)
         collectionBoundaryTask = Self.consumeCollectionBoundaryEvents(pipelines.lifecycle, dashboard: dashboard, admission: admission)
         // 모든 소비 경로가 준비된 뒤 초기 lifecycle을 적용해야 최초 수집을 잃지 않습니다.
-        monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle)
+        monitoringTask = Self.startMonitoring(systemLifecycleObserver, into: pipelines.lifecycle) { [weak preferencesBinding] in
+            preferencesBinding?.initialMonitoringApplied()
+        }
+    }
+
+    func refreshLoginStatus() {
+        loginItemController.refresh()
     }
 
     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
@@ -473,7 +527,8 @@ final class ApplicationCoordinator {
     /// `init`과 테스트가 같은 경로를 통과하도록 이 로직을 별도로 노출합니다.
     static func startMonitoring(
         _ source: SystemLifecycleSource,
-        into store: MonitoringLifecycleStore
+        into store: MonitoringLifecycleStore,
+        onInitialApplied: (@MainActor () -> Void)? = nil
     ) -> Task<Void, Never> {
         let subscription = source.start()
 
@@ -487,6 +542,7 @@ final class ApplicationCoordinator {
         return Task { @MainActor in
             await store.update(.systemSnapshot(subscription.initial))
             await store.update(.popoverPresented(false))
+            onInitialApplied?()
 
             for await snapshot in subscription.updates {
 #if DEBUG

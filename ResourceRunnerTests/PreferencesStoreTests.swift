@@ -22,6 +22,22 @@ private final class RecordingPreferencesStorage: PreferencesStorage {
 
 @MainActor
 struct PreferencesStoreTests {
+    @Test func changeCallbackPublishesSavedSnapshotOncePerMutation() {
+        let storage = RecordingPreferencesStorage()
+        let store = PreferencesStore(storage: storage)
+        var seen: [PreferencesSnapshot] = []
+        store.onChange = { seen.append($0) }
+        #expect(seen.isEmpty)
+
+        store.update { $0.refreshProfile = .fast }
+        store.restoreDefaults()
+        #expect(seen.count == 2)
+        #expect(seen[0].revision == 1)
+        #expect(seen[0].preferences.refreshProfile == .fast)
+        #expect(seen[1] == store.current)
+        #expect(storage.writes.count == 2)
+    }
+
     @Test func defaultsAndInitialReadDoNotWrite() {
         let storage = RecordingPreferencesStorage()
         let store = PreferencesStore(storage: storage)

@@ -13,6 +13,48 @@ import Testing
 
 private let baseInstant = ContinuousClock().now
 
+@MainActor
+struct DashboardPreferencesBoundaryTests {
+    @Test func currentSnapshotSurvivesLateSampleFailureAndStopWithoutDiscardingHistory() {
+        let store = DashboardPresentationStore()
+        let fullHistory = [historyPoint(secondsFromBase: -300), historyPoint(secondsFromBase: 0)]
+        let value = SystemMetricsDisplayValue(latest: TimestampedSample(
+            timestamp: baseInstant,
+            value: SystemMetricsSample(cpu: .success(cpuMetrics()),
+                memory: .success(memoryMetricsForTests()))
+        ), recentHistory: fullHistory)
+        store.updateCPUCard(with: value, topApplications: [], currentTimestamp: baseInstant)
+        var oneMinute = AppPreferences.defaults
+        oneMinute.graphTimeRange = .oneMinute
+        oneMinute.showsCPUCard = false
+        store.applyPreferences(PreferencesSnapshot(preferences: oneMinute, revision: 2))
+        store.updateCPUCard(with: value, topApplications: [], currentTimestamp: baseInstant)
+        #expect(store.preferencesSnapshot.revision == 2)
+        #expect(store.cpuCard.lastKnownValue?.presentation.graphPoints.count == 2)
+
+        var fiveMinutes = oneMinute
+        fiveMinutes.graphTimeRange = .fiveMinutes
+        let failure = CollectorFailure(metric: .cpu,
+            cause: .systemCall(name: "injected", code: 1))
+        let failedValue = SystemMetricsDisplayValue(latest: TimestampedSample(
+            timestamp: baseInstant.advanced(by: .seconds(1)),
+            value: SystemMetricsSample(cpu: .failure(failure),
+                memory: .success(memoryMetricsForTests()))
+        ), recentHistory: fullHistory)
+        store.updateCPUCard(with: failedValue, topApplications: [],
+            currentTimestamp: baseInstant.advanced(by: .seconds(1)))
+        store.applyPreferences(PreferencesSnapshot(preferences: fiveMinutes, revision: 3))
+        if case .failure = store.cpuCard {} else { Issue.record("실패 상태가 설정 전달로 사라졌습니다") }
+        #expect(store.cpuCard.lastKnownValue?.presentation.graphPoints.count == 2)
+
+        store.markCollectionStopped()
+        store.applyPreferences(PreferencesSnapshot(preferences: oneMinute, revision: 2))
+        #expect(store.preferencesSnapshot.preferences.graphTimeRange == .fiveMinutes)
+        if case .stopped = store.cpuCard {} else { Issue.record("중지 상태가 설정 전달로 사라졌습니다") }
+        #expect(store.cpuCard.lastKnownValue?.presentation.graphPoints.count == 2)
+    }
+}
+
 private func cpuMetrics(overallUsage: Double = 42, userRatio: Double = 30, systemRatio: Double = 12) -> CPUSystemMetrics {
     CPUSystemMetrics(
         overallUsage: overallUsage,

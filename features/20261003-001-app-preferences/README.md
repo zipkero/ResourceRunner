@@ -51,3 +51,5 @@ M4의 첫 범위로 카드·TOP 5 표시, 그래프 시간 범위, 갱신 4단�
 - 2026-10-03: task-003의 당시 주기 G·실제 경과 차분·1203개 링과 연속성 표식을 독립 verifier approved 후 main이 승인했습니다. 관련86case(동적94실행)·Memory6case(동적17실행), 실패/skip0과11파일 해시 대응 확인. 구현 재시도0·근거 재검증0. task-001~003 [x], task-004~011 [ ], IMPLEMENT [ ]입니다. 상위 계약·기존 승인은 유지합니다.
 
 - 2026-10-03: task-004의 actual status adapter·단일 mutation/최신 의도·operation ID·일반 복원/로그인 결과 분리를 독립 verifier approved 후 main이 승인했습니다. signed 주입7/7·실패/skip0, 새3파일 해시 대응 확인. 구현 재시도0·근거 재검증0. 실제 OS mutation 없음. task-001~004 [x], task-005~011 [ ], IMPLEMENT [ ]이며 상위 계약·기존 승인은 유지합니다.
+
+- 2026-10-03: task-005의 동일 저장 snapshot 초기 배선·현재 revision 통지·프로필 변경 전달·활성화 status 읽기를 독립 verifier approved 후 main이 승인했습니다. 기존 전체600초/상세 모델을 유지하고 현재 snapshot으로 선별하는 내부 접근 차이를 목적/조건 의미 유지로 판단해 계획에 반영했습니다. signed42case·실패/skip0·8파일 해시 대응 확인. 구현 재시도0·근거 재검증0, task-001~005 [x], task-006~011 [ ], IMPLEMENT [ ]. 영향받은 설정 저장 회귀도 통과했고 기존 승인은 유지합니다.

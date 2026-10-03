@@ -57,13 +57,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.9, §5.10, §5.11, §5.13; DESIGN §1.1, §1.2, §2.6, §3.5, §4.1, §4.3, §5 DP1, DP8.
   - 승인 근거: 2026-10-03 독립 verifier approved를 main이 확정했습니다. HEADccb1bf8 기준 새3파일 patch/blob·소스 해시와 signed 주입7/7·실패/skip0을 확인했습니다. [task-004 근거](./evidence/task-004/README.md). 구현 재시도0·근거 재검증0; 실제 OS mutation은 수행하지 않았고 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
-- [ ] task-005: 첫 화면·최초 일정과 즉시 변경의 단일 배선
+- [x] task-005: 첫 화면·최초 일정과 즉시 변경의 단일 배선
   - 목적: 처음부터 같은 저장 설정을 사용하고 늦은 수집·설정 전달이 현재 선택을 되돌리지 않게 합니다.
-  - 접근: 선행 task-001~task-004. 출발점은 `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`, `ResourceRunner/CollectionPipelines.swift`, `ResourceRunner/DashboardPresentationStore.swift`, `ResourceRunner/CollectionDeliveryStore.swift`, `ResourceRunner/DashboardPresentation.swift`, `ResourceRunner/ResourceActivityPresentation.swift`입니다. 일반 검증→로그인 실제 조회→같은 snapshot의 Dashboard/pipeline→admission/source/store/소비 연결→최초 lifecycle 일정 순서입니다. 표시 경계에 현재 snapshot/revision을 전달하고 변경은 현재 delivery·최대 이력으로 재조립합니다. profile만 lifecycle에 전달하며 샘플 반영은 현재 설정을 사용합니다.
+  - 접근: 선행 task-001~task-004. 출발점은 `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`, `ResourceRunner/CollectionPipelines.swift`, `ResourceRunner/DashboardPresentationStore.swift`, `ResourceRunner/CollectionDeliveryStore.swift`, `ResourceRunner/DashboardPresentation.swift`, `ResourceRunner/ResourceActivityPresentation.swift`입니다. 일반 검증→로그인 실제 조회→같은 snapshot의 Dashboard/pipeline→admission/source/store/소비 연결→최초 lifecycle 일정 순서입니다. 표시 경계에 현재 snapshot/revision을 전달합니다. 기존 카드 모델이 전체600초 이력·상세를 보유하므로 모델은 유지하고 guarded 현재 snapshot을 게시하며 후속 view006/007이 현재 선택으로 선별합니다. profile만 lifecycle에 전달하며 샘플 반영은 현재 설정을 사용합니다.
   - 검증 조건:
     - 결과: 기본값으로 잠깐 시작했다가 바꾸지 않으며 저장 프로필이 최초 일정부터 적용됩니다. 설정·표시·수집의 원본이 같습니다. 화면 설정은 수집·메뉴바·순위/상세 계산을 바꾸지 않고 그래프 선택은 Memory 계산 창을 바꾸지 않습니다. 초기 읽기·재실행·활성화 재확인으로 로그인 상태를 바꾸지 않습니다.
     - 확인: `ResourceRunnerTests/ApplicationCoordinatorTests.swift`, `CollectionPipelinesTests.swift`, `CollectionAdmissionTests.swift`, `DashboardPresentationTests.swift`, `ResourceActivityPresentationTests.swift`에서 저장 snapshot을 주입해 첫 구성·첫 apply·초기 source를 관찰합니다. 연속/역순 전달·대기 sample/display·실패/중지 last-known에서 현재 revision·최종 프로필·표시 선택을 확인합니다. 재실행 시 설정은 복원되고 수집 이력·프로세스/장치 목록은 빈 메모리로 시작하는지 확인합니다.
   - 참조: SPEC §5.2, §5.4, §5.5, §5.6, §5.7, §5.8, §5.11, §5.13; DESIGN §1.1, §1.4, §2.1, §2.3, §2.5, §2.6, §4.1, §4.2.
+  - 승인 근거: 2026-10-03 독립 verifier approved를 main이 확정했습니다. HEADd119c73 기준8파일 diff·소스 해시와 signed 관련42case·실패/skip0을 확인했습니다. [task-005 근거](./evidence/task-005/README.md). 기존 전체 모델을 유지하고 현재 snapshot으로 표시를 선별하는 내부 접근 차이를 반영했습니다. 구현 재시도0·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
 - [ ] task-006: CPU·Disk의 공통1/5/10분 표시 범위
   - 목적: 최대 이력을 유지하고 CPU·Disk 구간·축·진행·AX를 선택 범위에 즉시 일치시킵니다.

@@ -88,6 +88,34 @@ nonisolated private func pipelineDisk(_ at: ContinuousClock.Instant,
 
 @MainActor
 struct CollectionPipelinesTests {
+    @Test func savedProfileSeedsFirstPipelineSourceContextWithoutStandardInterval() async {
+        let clock = ManualMonotonicClock()
+        let admission = CollectionAdmission()
+        let networkTopology = NetworkTopologyTracker()
+        let diskTopology = DiskTopologyTracker()
+        let preferences = PreferencesSnapshot(preferences: AppPreferences(
+            refreshProfile: .maximumEnergySaving), revision: 0)
+        let system = PipelineSource<SystemMetricsSample> { _ in nil }
+        let process = PipelineSource<ProcessSurveySample> { _ in nil }
+        let network = PipelineSource<NetworkActivitySample> { _ in nil }
+        let disk = PipelineSource<DiskActivitySample> { _ in nil }
+        let networkMetadata = PipelineSource<NetworkMetadataResult> { _ in nil }
+        let storageMetadata = PipelineSource<StorageMetadataResult> { _ in nil }
+        let pipelines = CollectionPipelines.make(clock: clock, admission: admission,
+            networkTopology: networkTopology, diskTopology: diskTopology,
+            systemSource: system, processSource: process,
+            networkSource: { _ in network }, diskSource: disk,
+            networkMetadataSource: networkMetadata, storageMetadataSource: storageMetadata,
+            initialProfile: preferences.preferences.refreshProfile)
+        #expect(await system.contexts.isEmpty)
+        await pipelines.lifecycle.update(.systemSnapshot(initial()))
+        await clock.advance(by: .seconds(10))
+        await pipelineWait { await !system.contexts.isEmpty }
+        #expect(await system.contexts.first?.interval == .seconds(10))
+        #expect(await process.contexts.first?.interval == .seconds(10))
+        #expect(admission.issue(.systemMetrics)?.interval == .seconds(10))
+    }
+
     private func initial(_ revision: Int = 0, locked: Bool = false,
                          lowPower: Bool = false, sequence: Int = 0) -> SystemLifecycleSnapshot {
         SystemLifecycleSnapshot(revision: revision, lowPowerMode: lowPower,

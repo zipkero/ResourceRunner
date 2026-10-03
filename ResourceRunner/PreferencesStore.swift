@@ -36,6 +36,7 @@ nonisolated struct PreferencesSnapshot: Equatable, Sendable {
 final class PreferencesStore {
     private let storage: any PreferencesStorage
     private(set) var current: PreferencesSnapshot
+    var onChange: ((PreferencesSnapshot) -> Void)?
 
     convenience init() {
         self.init(storage: UserDefaultsPreferencesStorage())
@@ -65,6 +66,7 @@ final class PreferencesStore {
         )
         storage.write(Self.encode(preferences))
         current = next
+        onChange?(next)
     }
 
     private static func decode(_ raw: Any?) -> AppPreferences {

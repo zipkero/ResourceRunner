@@ -13,8 +13,19 @@ import AppKit
 /// `SystemLifecycleObserver`에서 남기므로, 여기서 별도 observer를 만들지 않습니다.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: ApplicationCoordinator?
+    private var preferencesStore: PreferencesStore?
+    private var loginItemController: LoginItemController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        coordinator = ApplicationCoordinator()
+        let preferences = PreferencesStore()
+        let login = LoginItemController()
+        preferencesStore = preferences
+        loginItemController = login
+        coordinator = ApplicationCoordinator(preferencesStore: preferences,
+            loginItemController: login)
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        coordinator?.refreshLoginStatus()
     }
 }

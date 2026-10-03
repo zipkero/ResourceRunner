@@ -24,13 +24,16 @@ final class NetworkCardUITests: XCTestCase {
         let cardBefore = network.frame
         let bodyBefore = dashboard.frame
         print("TASK010_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(network.label)")
-        XCTAssertEqual(cardBefore.height, 294, accuracy: 1)
+        XCTAssertEqual(cardBefore.height, 101, accuracy: 1)
 
         network.click()
         let detail = app.descendants(matching: .any).matching(identifier: "NetworkDetail").firstMatch
         XCTAssertTrue(detail.waitForExistence(timeout: 5))
         XCTAssertEqual(app.popovers.count, 2)
         XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
+        let cadence = detail.staticTexts.matching(identifier: "NetworkUpdateCadence").firstMatch
+        XCTAssertTrue(cadence.exists)
+        XCTAssertTrue(cadence.label.contains("별도 느린 주기"))
         let row = detail.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier BEGINSWITH %@", "NetworkInterface-"))
             .firstMatch

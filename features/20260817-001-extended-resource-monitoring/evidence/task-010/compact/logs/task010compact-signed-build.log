@@ -1,0 +1,716 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -derivedDataPath /tmp/ResourceRunner-M3-task010compact-probe build
+
+2026-10-03 00:52:03.287 xcodebuild[80081:48184748] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, name:Any Mac }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'ResourceRunner' in project 'ResourceRunner' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: cbf473775afe6668e94921548e2fe53a
+Build description path: /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/XCBuildData/cbf473775afe6668e94921548e2fe53a.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk /tmp/ResourceRunner-M3-task010compact-probe/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -o /tmp/ResourceRunner-M3-task010compact-probe/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+
+CreateBuildDirectory /tmp/ResourceRunner-M3-task010compact-probe/Build/Products
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/ResourceRunner-M3-task010compact-probe/Build/Products
+
+CreateBuildDirectory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex
+
+CreateBuildDirectory /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug
+
+CreateBuildDirectory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner-8c3503f0990367d409751a2585fa2393-VFS/all-product-headers.yaml
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner-8c3503f0990367d409751a2585fa2393-VFS/all-product-headers.yaml
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-generated-files.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-generated-files.hmap
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.DependencyMetadataFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.DependencyMetadataFileList
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.hmap
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-non-framework-target-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-project-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-project-headers.hmap
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-DebugDylibInstallName-normal-arm64.txt (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-DebugDylibPath-normal-arm64.txt (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-own-target-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-own-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-target-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.DependencyStaticMetadataFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftConstValuesFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.LinkFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.LinkFileList
+
+MkDir /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /bin/mkdir -p /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents
+
+WriteAuxiliaryFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/Entitlements.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    write-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/Entitlements.plist
+
+MkDir /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /bin/mkdir -p /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app
+
+MkDir /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /bin/mkdir -p /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS
+
+MkDir /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /bin/mkdir -p /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources
+
+ProcessProductPackaging "" /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+    Entitlements:
+    
+    {
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.get-task-allow" = 1;
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent
+
+ProcessProductPackagingDER /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent.der (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /usr/bin/derq query -f xml -i /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent.der --raw
+
+Ld /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib normal (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.5 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -O0 -L/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -F/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -install_name @rpath/ResourceRunner.debug.dylib -rdynamic -Xlinker -no_deduplicate -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_dependency_info.dat -Xlinker -no_adhoc_codesign -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib
+
+MkDir /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/thinned (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /bin/mkdir -p /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/thinned
+
+GenerateAssetSymbols /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Assets.xcassets (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Assets.xcassets --compile /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources --output-format human-readable-text --notices --warnings --export-dependency-info /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_dependencies --output-partial-info-plist /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.5 --platform macosx --bundle-identifier com.zipkero.ResourceRunner --generate-swift-asset-symbols /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.h
+/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+MkDir /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/unthinned (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /bin/mkdir -p /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/unthinned
+
+CompileAssetCatalogVariant thinned /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Assets.xcassets (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Assets.xcassets --compile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_dependencies_thinned --output-partial-info-plist /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.5 --platform macosx
+/* com.apple.actool.compilation-results */
+/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist_thinned
+/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/thinned/Assets.car
+
+
+LinkAssetCatalog /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Assets.xcassets (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-linkAssetCatalog --thinned /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/thinned --thinned-dependencies /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist_thinned --unthinned /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_output/unthinned --unthinned-dependencies /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist_unthinned --output /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources --plist-output /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist
+note: Emplaced /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources/Assets.car (in target 'ResourceRunner' from project 'ResourceRunner')
+
+ProcessInfoPlistFile /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-infoPlistUtility /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist -producttype com.apple.product-type.application -genpkginfo /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist
+
+SwiftDriver ResourceRunner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunner -Onone @/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /tmp/ResourceRunner-M3-task010compact-probe/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -F /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64 -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/ResourceRunner-M3-task010compact-probe/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -sdk-module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-generated-files.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-own-target-headers.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-project-headers.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/include -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources-normal/arm64 -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/arm64 -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -working-directory /Users/zipkero/XcodeProjects/ResourceRunner -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/ptrauth-3BCE05W3A5R4LA3X308DPLCGY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/ptrcheck-F5CO8XXT01PWX9VD8LNTKGY5Q.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_stddef-4EWKGU087XGD1XIZ8YVGGAP8B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_float-6OHBTSHSXX45MH835K5BRRNS6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_stdarg-DFM6FP558QZJ1MP94MXO4SEO0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/SwiftShims-ACTM7FFZCZF3GP0U8I7L1S896.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/DeveloperToolsSupport-4GF9VX9K1LFFWC7BG9PA0B1E.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_AvailabilityInternal-9D3S21HZ11NE7ND6H2UIJI1LB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_stdbool-E1LXUXGG8Z3DEJWRSN9GEIZAX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_SwiftConcurrencyShims-BL0T93UJ5XPQDC3M1UL6131Q3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_DarwinFoundation1-A8CRZC2J0VMSE2VJK1W8CVVH4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_limits-AVKBWUZ5LGPUNXUVP1ZY3JXZX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_DarwinFoundation2-CYY1NIPEBZW9V5F0DAFH3OCO1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_tgmath-G3SKPDESXIDT158IQWIDQLDO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_stdint-6AO0UFSUDQY9QGCZFVABCUA6H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/sys_types-8HH7OOI1VXJGDC94UTZOS8LA8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/libDER-GIFHZU7V6DPV5WB6V0L798DZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_intrinsics-2WBX8TJ6IWEMGR6BJMDQ72GOL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_DarwinFoundation3-2KQ3WDYD5PGXXRQV1SIBD3DAI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/OpenGL-VITDIR7B418O5EU88N9IY0HV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_stdatomic-8GHUXKA9QWJEOLD0MWWILL20F.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/_Builtin_inttypes-9H54AS2X02BG90Q24I557SBU4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Darwin-E4YMJIDVU4G79RO05MJT22GZP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/simd-1Z4BBYGIYI10NU3K839D5RRJH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CUPS-2GHRBS2ECJ6XO83NUM7CXP8CU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/MachO-1OVMNYDXTBPPG7LRFTSRX1XPA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/libkern-WJ5ZXBSF7DDGF31RJ6Z5W2M2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/launch-71AM76HV263TN2W1YV3D8JJ3Z.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/ObjectiveC-70JD8QCLJIUQE3KR9XDQUWR0W.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Spatial-CI1YKS2Q7XJOMCOSODN8F3WP7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/os_object-79GEW9NT234OA9MBOW63U5KP8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/os_workgroup-5YTOCSEMW8YRJVAD1OWDY8KD9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Dispatch-2EXDECCEGKVOV8PJXNO35SY14.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/XPC-YT7ZT4E234KUSFZFO3Q17K7H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreFoundation-2S2ZZVP798L1QKUHKOAIGMEU8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/os-3RNDNC5LUJO3OPSDU1NP3BFL5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Security-BOCK2ATAH4COG1RN2JM44JHD1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/ColorSync-ER5AFJSUNNM55IBHXQEAPUH03.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/IOKit-CI4CWNTT76OEIKOIUQ57U8TVE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CFNetwork-EZ1EMAUB8UR7RUM3A9HPC94V5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/SystemConfiguration-UJN9QELFMIYHG4Z7IQTKQ972.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreGraphics-9QZAY7ANFUBMM3IRBS8KFU8NL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/DiskArbitration-1P02RQZAUMSKYBNQ0EUUGS9CZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreServices-DFUGDMCKQT3AB5A2DKJ3SP6H6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreText-272DECBP0YFFMU5GVIUYIAGRW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/ImageIO-463FPHJQ85VGYHVFUT245GGAK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Foundation-6KV1O8EABTQ7NCYNRSWWKOGNS.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/OSLog-DQYZLV7Z5VVSQCE82KN51ESPM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/DataDetection-BXG2LSCXVBO8H75MGMEF6LWCA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Symbols-9ZLTLAU3MK8K7ODNYA4JMZE50.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/UniformTypeIdentifiers-BMTRTG7HTDJB0DSFR4R9JDJGG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/ApplicationServices-4YVWS2DUFG7LPTX3YS49V6895.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/IOSurface-9C08LA4P4YGKMJG50IUZV2H2F.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreData-2VR77ZF4ECRZJCZM1DJBDEZCC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Accessibility-9I0MG987GTP2EZ0JZMYSUPACI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreTransferable-7KC8OVRHWWNUFF3QLRCFNJRWL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Metal-5D8A9QUWGD88BYE9P8Z05818C.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreVideo-5V4W41L3P4VKV0XYS79UR1FW8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/CoreImage-6RRMF3INHVOA2B6LT24B7IEEY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/QuartzCore-DN4NTI3J7148CCH781VZDE8CD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/SwiftUICore-3GQY72Q8ONC5V7AG28WNDAQQQ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/AppKit-4I8Y6YO3Q8BRXT9ISX29TEQ6H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/SwiftUI-83ZN4UW18FI4ISSHD3WH75LSZ.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ ResourceRunner (in target 'ResourceRunner' from project 'ResourceRunner')
+
+EmitSwiftModule normal arm64 (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ ProcessSurvey.swift,\ ProcessSurveyCollector.swift,\ ProcessSurveySampleSource.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessSurvey.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessSurveyCollector.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessSurveySampleSource.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessSurvey.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessSurveyCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessSurveySampleSource.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ SystemMetrics.swift,\ SystemMetricsSampleSource.swift,\ GeneratedAssetSymbols.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/SystemMetrics.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/SystemMetricsSampleSource.swift /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/SystemMetrics.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/SystemMetricsSampleSource.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ ResourceActivityPresentation.swift,\ ResourceQuantityFormatter.swift,\ ResourceRateGraph.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceActivityPresentation.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceQuantityFormatter.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceRateGraph.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceActivityPresentation.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceQuantityFormatter.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceRateGraph.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ ResourceRateGraphView.swift,\ ResourceRunnerApp.swift,\ ResourceTopologyObserver.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceRateGraphView.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceRunnerApp.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceTopologyObserver.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceRateGraphView.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceRunnerApp.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ResourceTopologyObserver.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ NetworkActivity.swift,\ NetworkDashboardView.swift,\ NetworkMetadata.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkActivity.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkDashboardView.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkMetadata.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkActivity.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkDashboardView.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkMetadata.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ DiskNativeAdapter.swift,\ DiskTopology.swift,\ MemorySystemMetricsCollector.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskNativeAdapter.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskTopology.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MemorySystemMetricsCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskNativeAdapter.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskTopology.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MemorySystemMetricsCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ MonitoringLifecycle.swift,\ MonitoringSampleStore.swift,\ MonitoringScheduler.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MonitoringLifecycle.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MonitoringSampleStore.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MonitoringScheduler.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MonitoringLifecycle.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MonitoringSampleStore.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/MonitoringScheduler.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ StatusBarController.swift,\ StorageMetadata.swift,\ SystemLifecycleObserver.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/StatusBarController.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/StorageMetadata.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/SystemLifecycleObserver.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/StatusBarController.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/StorageMetadata.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/SystemLifecycleObserver.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ DashboardView.swift,\ DiskActivity.swift,\ DiskDashboardView.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskActivity.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskDashboardView.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:251:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text("\(Int(lastKnown.presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
+                ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:258:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text("\(Int(lastKnown.presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
+                ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:288:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                            + Text(entry.valueText).dashboardTypography(DashboardStyle.TypographyRole.value)
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:460:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text(" / \(DashboardValueColumn.byteText(presentation.totalPhysicalBytes))")
+                ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:467:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
+                ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:474:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
+                ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:499:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(Image(systemName: name))
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:501:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" \(text)")
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:503:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" · ")
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:505:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text("Swap \(text)")
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:507:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" (\(text))")
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:509:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text("구성 \(text)")
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:529:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(Image(systemName: "square.fill"))
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:532:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" \(text)")
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:534:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text("  ")
+                            ^
+/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardView.swift:1183:25: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                        + Text("\(fmt(load.oneMinute)) / \(fmt(load.fiveMinutes)) / \(fmt(load.fifteenMinutes))")
+                        ^
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskActivity.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DiskDashboardView.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ NetworkNativeAdapter.swift,\ NetworkTopology.swift,\ ProcessHistoryStore.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkNativeAdapter.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkTopology.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessHistoryStore.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkNativeAdapter.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/NetworkTopology.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ProcessHistoryStore.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ DashboardColorPalette.swift,\ DashboardPresentation.swift,\ DashboardPresentationStore.swift,\ DashboardStyle.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardColorPalette.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardPresentation.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardPresentationStore.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardStyle.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardColorPalette.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardPresentation.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardPresentationStore.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/DashboardStyle.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ AppDelegate.swift,\ ApplicationCoordinator.swift,\ ApplicationIconCache.swift,\ ApplicationRanking.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/AppDelegate.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationCoordinator.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationIconCache.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationRanking.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/AppDelegate.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationCoordinator.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationIconCache.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationRanking.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ CollectionDeliveryStore.swift,\ CollectionPipelines.swift,\ CPUActivityStateEvaluator.swift,\ CPUSystemMetricsCollector.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CollectionDeliveryStore.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CollectionPipelines.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CPUActivityStateEvaluator.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CPUSystemMetricsCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CollectionDeliveryStore.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CollectionPipelines.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CPUActivityStateEvaluator.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CPUSystemMetricsCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ ApplicationRowIcon.swift,\ AuxiliaryCollectionScheduler.swift,\ CharacterStateSource.swift,\ CollectionAdmission.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationRowIcon.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/AuxiliaryCollectionScheduler.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CharacterStateSource.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CollectionAdmission.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/ApplicationRowIcon.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/AuxiliaryCollectionScheduler.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CharacterStateSource.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/CollectionAdmission.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for ResourceRunner (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriver\ Compilation\ Requirements ResourceRunner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunner -Onone @/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /tmp/ResourceRunner-M3-task010compact-probe/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -F /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64 -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/ResourceRunner-M3-task010compact-probe/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -sdk-module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-generated-files.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-own-target-headers.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-project-headers.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/include -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources-normal/arm64 -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/arm64 -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -working-directory /Users/zipkero/XcodeProjects/ResourceRunner -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling CollectionDeliveryStore.swift, CollectionPipelines.swift, CPUActivityStateEvaluator.swift, CPUSystemMetricsCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ProcessSurvey.swift, ProcessSurveyCollector.swift, ProcessSurveySampleSource.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ResourceActivityPresentation.swift, ResourceQuantityFormatter.swift, ResourceRateGraph.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftMergeGeneratedHeaders /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/ResourceRunner-Swift.h /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-swiftHeaderTool -arch arm64 /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/ResourceRunner-Swift.h
+
+SwiftDriverJobDiscovery normal arm64 Compiling DiskNativeAdapter.swift, DiskTopology.swift, MemorySystemMetricsCollector.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MonitoringLifecycle.swift, MonitoringSampleStore.swift, MonitoringScheduler.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+Copy /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/arm64-apple-macos.abi.json /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.abi.json (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.abi.json /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/arm64-apple-macos.swiftdoc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftdoc (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftdoc /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/arm64-apple-macos.swiftdoc
+
+Copy /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftsourceinfo (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftsourceinfo /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+Copy /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/arm64-apple-macos.swiftmodule /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.swiftmodule/arm64-apple-macos.swiftmodule
+
+SwiftDriverJobDiscovery normal arm64 Compiling NetworkNativeAdapter.swift, NetworkTopology.swift, ProcessHistoryStore.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ApplicationRowIcon.swift, AuxiliaryCollectionScheduler.swift, CharacterStateSource.swift, CollectionAdmission.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling StatusBarController.swift, StorageMetadata.swift, SystemLifecycleObserver.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SystemMetrics.swift, SystemMetricsSampleSource.swift, GeneratedAssetSymbols.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling DashboardColorPalette.swift, DashboardPresentation.swift, DashboardPresentationStore.swift, DashboardStyle.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ResourceRateGraphView.swift, ResourceRunnerApp.swift, ResourceTopologyObserver.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling NetworkActivity.swift, NetworkDashboardView.swift, NetworkMetadata.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppDelegate.swift, ApplicationCoordinator.swift, ApplicationIconCache.swift, ApplicationRanking.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriverJobDiscovery normal arm64 Compiling DashboardView.swift, DiskActivity.swift, DiskDashboardView.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriver\ Compilation ResourceRunner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunner -Onone @/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /tmp/ResourceRunner-M3-task010compact-probe/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -F /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64 -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/ResourceRunner-M3-task010compact-probe/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -sdk-module-cache-path /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/ResourceRunner-M3-task010compact-probe/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-generated-files.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-own-target-headers.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-project-headers.hmap -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/include -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources-normal/arm64 -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources/arm64 -Xcc -I/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -working-directory /Users/zipkero/XcodeProjects/ResourceRunner -experimental-emit-module-separately -disable-cmo
+
+Ld /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib normal (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.5 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -O0 -L/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -L/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -F/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -filelist /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.LinkFileList -install_name @rpath/ResourceRunner.debug.dylib -Xlinker -rpath -Xlinker @executable_path/../Frameworks -Xlinker -object_path_lto -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule @/tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -Xlinker -no_adhoc_codesign -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+
+ConstructStubExecutorLinkFileList /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-ExecutorLinkFileList-normal-arm64.txt (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    construct-stub-executor-link-file-list /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'ResourceRunner' from project 'ResourceRunner')
+
+Ld /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner normal (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.5 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -O0 -L/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -F/tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/../Frameworks -rdynamic -Xlinker -no_deduplicate -Xlinker -debug_variant -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner-ExecutorLinkFileList-normal-arm64.txt /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib -Xlinker -no_adhoc_codesign -o /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+
+CopySwiftLibs /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib --scan-folder /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks --scan-folder /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns --scan-folder /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Library/SystemExtensions --scan-folder /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ResourceRunner --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk --xcode-version 17F113 --platform-family macOS --deployment-target 26.5 --bundle-identifier com.zipkero.ResourceRunner --output /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/Resources --target-triple arm64-apple-macos26.5 --binary-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner --dependency-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_dependency_info.dat --stringsdata-file /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList --metadata-file-list /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.DependencyMetadataFileList --static-metadata-file-list /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.DependencyStaticMetadataFileList --swift-const-vals-list /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-03 00:52:10.662 appintentsmetadataprocessor[80338:48185416] Starting appintentsmetadataprocessor export
+2026-10-03 00:52:10.663 appintentsmetadataprocessor[80338:48185416] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CodeSign /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+
+CodeSign /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib
+
+CodeSign /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /tmp/ResourceRunner-M3-task010compact-probe/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent --timestamp\=none --generate-entitlement-der /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app
+
+RegisterExecutionPolicyException /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-RegisterExecutionPolicyException /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app
+
+Validate /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-validationUtility /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+RegisterWithLaunchServices /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app
+
+Touch /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /usr/bin/touch -c /tmp/ResourceRunner-M3-task010compact-probe/Build/Products/Debug/ResourceRunner.app
+
+** BUILD SUCCEEDED **
+

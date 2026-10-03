@@ -2,6 +2,9 @@ import SwiftUI
 
 /// 활동 원본과 별도 보조 원본의 상태를 카드 한 슬롯에 배치할 문자열만 만듭니다.
 nonisolated enum NetworkDisplayText {
+    /// lifecycle이 빠른 활동 축과 느린 보조 축의 주기를 별도로 바꾸므로 고정 초 수치를 적지 않습니다.
+    static let updateCadence = "속도는 실시간 수집 주기로 갱신하고, 주소·연결 상태 보조 정보는 별도 느린 주기로 갱신합니다."
+
     static func kind(_ kind: NetworkInterfaceKind) -> String {
         switch kind {
         case .physicalWiFi: "물리 Wi-Fi"
@@ -65,6 +68,42 @@ nonisolated enum NetworkDisplayText {
         return "활성 확인 \(active.count)개 · \(names)\(uncertain)"
     }
 
+    static func compactActiveSummary(_ interfaces: [NetworkInterfacePresentation]) -> String {
+        let active = interfaces.filter { $0.linkActive == true && $0.kind != .loopback }
+        let unknown = interfaces.filter { $0.linkActive == nil && $0.kind != .loopback }
+        guard !active.isEmpty else {
+            return unknown.isEmpty ? "활성 0개" : "활성 미확인 \(unknown.count)개"
+        }
+        let kinds = Set(active.map(\.kind)).sorted { $0.rawValue < $1.rawValue }
+        let names = kinds.map { kind in
+            switch kind {
+            case .physicalWiFi: "Wi-Fi"
+            case .physicalEthernet: "Ethernet"
+            case .physicalOther: "물리"
+            case .logical: "논리"
+            case .virtual: "가상"
+            case .tunnel: "터널"
+            case .vpn: "VPN"
+            case .loopback: "Loopback"
+            case .unknown: "종류 미확인"
+            }
+        }.joined(separator: "·")
+        return "\(names) · 활성 \(active.count)개" +
+            (unknown.isEmpty ? "" : " · 상태 미확인 \(unknown.count)개")
+    }
+
+    static func compactSupplemental(_ phase: SupplementalDisplayPhase, lastKnown: Bool) -> String? {
+        let prefix = lastKnown ? "과거 " : ""
+        switch phase {
+        case .available: return lastKnown ? "과거 보조 정보" : nil
+        case .collecting: return "보조 수집 중"
+        case .refreshing: return prefix + "보조 갱신 중"
+        case .partial: return prefix + "보조 일부 실패"
+        case .failure: return prefix + "보조 조회 실패"
+        case .unsupported: return prefix + "보조 미지원"
+        }
+    }
+
     static func cardStatus(_ presentation: NetworkCardPresentation,
                            now: ContinuousClock.Instant) -> String {
         let state: String = switch presentation.phase {
@@ -95,17 +134,29 @@ nonisolated enum NetworkDisplayText {
         let seconds = max(0, Int(timestamp.duration(to: now).components.seconds))
         return "원본 조회 \(seconds)초 전"
     }
+
+    static func byteRateParts(_ value: Double, locale: Locale) -> (number: String, unit: String) {
+        let formatted = ResourceQuantityFormatter.byteRate(value, locale: locale)
+        guard let separator = formatted.lastIndex(of: " ") else { return (formatted, "B/s") }
+        return (String(formatted[..<separator]), String(formatted[formatted.index(after: separator)...]))
+    }
 }
 
-/// 설계의 다섯 고정 높이와 세 구역 간격을 한곳에서 검증합니다.
+/// 축소 요약의 세 고정 구역은 과도기 248pt 부모와 최종 264pt 부모에서 같은 높이를 갖습니다.
 nonisolated enum NetworkCardLayout {
-    static let title: CGFloat = 12
-    static let rates: CGFloat = 68
-    static let auxiliary: CGFloat = 32
-    static let graph: CGFloat = 118
-    static let spacing: CGFloat = 16
-    static let padding: CGFloat = 8
-    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
+    static let title: CGFloat = 8
+    static let rates: CGFloat = 46
+    static let auxiliary: CGFloat = 27
+    static let spacing: CGFloat = 4
+    static let padding: CGFloat = 6
+    static let total: CGFloat = title + rates + auxiliary + spacing * 2 + padding * 2
+}
+
+private enum NetworkCompactTypography {
+    static let heading = Font.system(size: 10 * 2 / 3, weight: .semibold)
+    static let focus = Font.system(size: 26 * 2 / 3, weight: .semibold).monospacedDigit()
+    static let direction = Font.system(size: 10)
+    static let auxiliary = Font.system(size: 9)
 }
 
 struct NetworkCardView: View {
@@ -115,47 +166,38 @@ struct NetworkCardView: View {
 
     var body: some View {
         let now = fixedNow ?? ContinuousClock().now
-        let graph = ResourceRateGraph.make(history: presentation.recentHistory,
-            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
         return VStack(alignment: .leading, spacing: NetworkCardLayout.spacing) {
-            HStack {
+            HStack(spacing: 3) {
                 Text("Network · 물리 합계")
                 Spacer(minLength: 0)
                 Text(NetworkDisplayText.cardStatus(presentation, now: now))
                     .lineLimit(1)
                 Text("⌘3")
             }
-            .dashboardTypography(DashboardStyle.TypographyRole.heading)
+            .font(NetworkCompactTypography.heading)
+            .foregroundStyle(.secondary)
             .frame(height: NetworkCardLayout.title)
 
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
                 rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
             }
             .frame(height: NetworkCardLayout.rates)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(NetworkDisplayText.activeSummary(presentation.interfaces))
-                    .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NetworkDisplayText.compactActiveSummary(presentation.interfaces))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
                     .accessibilityLabel(NetworkDisplayText.activeSummary(presentation.interfaces))
-                    .frame(height: 14)
-                HStack(spacing: 4) {
-                    Text(NetworkDisplayText.supplemental(presentation.supplemental.phase,
-                         lastKnown: presentation.supplemental.isLastKnown))
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Text(graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
-                         ?? "속도 범위 대기 · B/s")
+                if let supplemental = NetworkDisplayText.compactSupplemental(
+                    presentation.supplemental.phase, lastKnown: presentation.supplemental.isLastKnown) {
+                    Text(supplemental)
                         .lineLimit(1)
                 }
-                .frame(height: 14)
             }
-            .dashboardTypography(DashboardStyle.TypographyRole.label)
+            .font(NetworkCompactTypography.auxiliary)
+            .foregroundStyle(.secondary)
             .frame(height: NetworkCardLayout.auxiliary)
-
-            ResourceRateGraphSlotView(kind: .network, history: presentation.recentHistory,
-                firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow)
-                .frame(height: NetworkCardLayout.graph)
         }
         .padding(NetworkCardLayout.padding)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -175,26 +217,30 @@ struct NetworkCardView: View {
 
     private func rateRow(_ series: ResourceRateGraphSlotView.Series, rate: Double?) -> some View {
         HStack(spacing: 3) {
-            ResourceRateLegendMarkerView(kind: .network, series: series)
             Text(series == .received ? "다운로드" : "업로드")
-                .dashboardTypography(DashboardStyle.TypographyRole.label)
-            Spacer(minLength: 2)
+                .font(NetworkCompactTypography.direction)
+                .foregroundStyle(.secondary)
+                .frame(width: 44, alignment: .leading)
+            Spacer(minLength: 0)
             if let rate {
-                let parts = ResourceQuantityFormatter.byteRate(rate, locale: locale)
-                    .split(separator: " ", maxSplits: 1)
-                Text(String(parts.first ?? ""))
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                let parts = NetworkDisplayText.byteRateParts(rate, locale: locale)
+                Text(parts.number)
+                    .font(NetworkCompactTypography.focus)
                     .lineLimit(1)
-                Text(parts.count > 1 ? String(parts[1]) : "B/s")
-                    .dashboardTypography(DashboardStyle.TypographyRole.label)
+                    .minimumScaleFactor(0.35)
+                    .layoutPriority(1)
+                Text(parts.unit)
+                    .font(NetworkCompactTypography.auxiliary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .frame(width: 24, alignment: .leading)
             } else {
                 Text(NetworkDisplayText.activity(presentation.phase))
-                    .dashboardTypography(DashboardStyle.TypographyRole.label)
+                    .font(NetworkCompactTypography.auxiliary)
                     .lineLimit(1)
             }
         }
-        .frame(height: 32)
+        .frame(height: 22)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(rateAccessibility(series: series, rate: rate))
     }
@@ -235,6 +281,10 @@ struct NetworkDetailPopoverContent: View {
                     Text("현재 속도는 확인된 물리 대상만 합산합니다. VPN·터널은 아래 상세 전용입니다.")
                     Text(NetworkDisplayText.age(presentation.latestReadAt, now: now))
                     Text("\(NetworkDisplayText.supplemental(presentation.supplemental.phase, lastKnown: presentation.supplemental.isLastKnown)) · \(NetworkDisplayText.age(presentation.supplemental.readAt, now: now))")
+                    Text(NetworkDisplayText.updateCadence)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel(NetworkDisplayText.updateCadence)
+                        .accessibilityIdentifier("NetworkUpdateCadence")
                 }
                 .dashboardTypography(DashboardStyle.TypographyRole.label)
                 if presentation.interfaces.isEmpty {

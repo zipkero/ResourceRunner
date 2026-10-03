@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE_OUTPUT"] == "1",
                    let caches = FileManager.default.urls(for: .cachesDirectory,
                        in: .userDomainMask).first {
-                    let output = caches.appending(path: "Task010Probe")
+                    let output = caches.appending(path: "Task010CadenceProbe")
                     try? FileManager.default.createDirectory(at: output,
                         withIntermediateDirectories: true)
                     if let parent = status.popover.contentViewController?.view.window {
@@ -353,7 +353,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let result = AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
             if result == .success, let name = identifier as? String,
                name == "NetworkCard" || name == "NetworkDetail" ||
-               name == "NetworkDetailClose" || name.hasPrefix("NetworkInterface-") {
+               name == "NetworkDetailClose" || name == "NetworkUpdateCadence" ||
+               name.hasPrefix("NetworkInterface-") {
                 var position: CFTypeRef?
                 var size: CFTypeRef?
                 var label: CFTypeRef?
@@ -365,7 +366,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             var valueText: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueText)
             if let content = valueText as? String,
-               content.contains("Network 인터페이스") || content.contains("원시 누적 RX") {
+               content.contains("Network 인터페이스") || content.contains("원시 누적 RX") ||
+               content.contains("별도 느린 주기") {
                 logger.notice("AX text=\(content, privacy: .public)")
             }
             var value: CFTypeRef?

@@ -1,142 +1,64 @@
 # Context
 
-저장: 2026-10-03 00:01 +0900
+저장: 2026-10-03 (축소 UI 승인 반영)
 
 ## 현재 목표
 
-사용자 요청 `$implement-loop M3`로 Task를 위에서부터 구현·검증한다.
-각 Task가 독립 verify에서 승인되면 main이 상태·인수인계를 갱신하고 커밋한 뒤 다음 Task로 진행한다(2026-10-01 추가 지시).
-첫 커밋에는 미커밋 M3 선행 문서도 포함한다.
+사용자가 승인한 280×590pt 축소 샘플을 실제 앱에 적용한다. Network·Disk 하단의 측정/보조 정보/용량 확인 경과 안내를 제거하고 CPU·Memory TOP 5 제목 아래 여백을 추가한다.
+현재 실행 범위는 task-010→011→012의 UI 변경이다. 후속 task-013~018은 이번 요청만으로 자동 착수하지 않는다. 이전 사용자의 Task별 독립 승인 후 main 커밋 지시는 유지한다.
 
 ## 현재 상태
 
-branch `main`, task-011 검증 기준 HEAD `331bdc5`. task-001~011 독립 verify approved를 main이 확정했다.
-SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, task-001~011 `[x]`, task-012~018 `[ ]`다.
-각 승인 Task를 커밋한 뒤 다음 Task를 진행한다. 다음은 task-012 화면별 viewport다.
-
-실행 원자료는 feature `evidence/task-001/`~`task-011/`에 있다. task-011의 최종 근거는 retry/다.
-Network·Disk native adapter는 별도 build-only arm64 Sandbox 앱에서 필수 원본 접근·새 예외 없음을 확인했다.
-Disk는 물리 disk0 바이트·Operations, `/` 용량과 APFS 볼륨 8개 관계를 확인했다.
-Network llw0 unknown·합계 complete=false를 보존하며 실제 VPN·인터페이스·외장 전환은 task-014에서 확인한다.
-
-task-003은 공통 CollectionAdmission의 동기 무효화/반영 검사, 누적 경계·sleep/wake,
-axis planRevision·epoch·generation·request 순서를 기존 두 축과 표시까지 배선했다.
-async witness 우회·늦은 tick token 발급·역순 일정 적용을 보완했고 전용 통합 테스트와
-전체 단위 528/528, Release 빌드가 통과했다. 소스 12개 해시·최종diff는 evidence/task-003와 대응한다.
-실제 OS 전환·UI 통합은 task-015·018의 후속 관문이다.
-Network native reader의 기존 Swift 6 격리 경고는 task-005에서 명시 nonisolated 선언으로 해소했다.
-Network·Disk source/store·여섯 축 production 배선·표시 모델·독립 그래프와 두 카드/상세가 구현됐다. 화면별 viewport·전체 키보드/AX는 아직 남았다. M2 기존 계약과 회귀 기준을 유지한다.
-
-task-004은 .m3 여섯 축 일정·보조 조회 scheduler를 구현했다. 실제 보조 scheduler의
-즉시/신선도/병합/중지중 보류/단일 실행과 느린 보조 조회 중 빠른4축 진행을 확인했다.
-전용6개×5회·전체534/534·Release빌드 통과, 변경소스4개 해시와 원자료는 evidence/task-004에 있다.
-
-task-005는 Network fast/slow native reader·activity/metadata source/store와 topology 수명을 구현했다.
-확인된 물리 속도는 knownPhysicalRates에 보존하고 llw0 unknown 때문에 완전 representative는 nil/partial이다.
-유효 완전 합계만 601링에 들어가며, 불완전 속도는 완전한 그래프 점으로 보관하지 않는다.
-두 reader의 late/역순 tracker 부수효과와 metadata await 중 topology 변경도 현재 gate·revision으로 차단한다.
-집중24/24·전체unit552/552·Release/별도서명Debug·Sandbox baseline/부분속도 probe 통과, PID 종료 확인.
-전체scheme UIrunner는 기동후 진행이 없어 중단했으며 UI 성공 근거는 아직 없다.
-
-
-task-006 독립 verify approved를 main이 확정했다. 기준 HEAD `854c97d`의
-DiskNativeAdapter·AppDelegate·DiskActivity·DiskTopology·StorageMetadata·직접 테스트 2개를 검증했다.
-최종 집중27/27·전체unit572/572·Release/서명Debug·Sandbox PID43148 두 tick이 통과했고
-소스7개 해시 일치와 원자료는 `evidence/task-006/`에 보존했다.
-필수 Bytes 누락의 partial/부분속도, Ops 감소의 IOPS만 기준점 처리,
-전체 관계 미확인과 미마운트 구분, 같은 ID의 마운트 관계 변화 revision을 보완했다.
-task-006 `[x]`이며 `c61f76e`로 커밋했다.
-
-task-007은 실제 앱 저전력 일정 로그 부족의 evidence reject를 보완한 뒤 독립 재verify approved로 확정했다.
-여섯 축 factory·독립 소비·순위 경계·topology 알림·보조 cache replay를 배선했고,
-집중23/23·전체unit579/579·Release/서명Debug·실제Sandbox PID31677과 소스15개 해시를 확인했다.
-실제 OS lowPower=false에서 DEBUG observer snapshot을 true/false로 전달해
-여섯 축 닫힘5/10/120초·열림2/4/60초·일반 복원을 관찰했다. OS 전력 설정은 변경하지 않았다.
-task-007은 `c42a0cd`로 커밋했다. 실제 OS 전환·장치 전환·최종 UI 관문은 미완료다.
-
-task-008 독립 verify approved를 확정했다. 활동/보조 표시 모델·formatter와 네 production 소비 경로를
-표시 store에 연결하고 최종 commit에서 admission·topology를 함께 확인했다.
-과거 값의 원본 readAt·완전 lastKnown·partial/0/baseline·조건부 사유·AX를 검증했으며
-집중23/23·전체unit588/588·Release빌드와 소스7개 해시가 대응하며 `2068184`로 커밋했다.
-
-task-009 독립 verify approved를 확정했다. 속도 graph·공통plot modifier·팔레트역할과
-store 첫 유효 시각을 구현해 원본peak/공백/극값/진행문구를 유지한다.
-집중51/51·전체unit597/597·Release빌드·소스9개/PNG20개 해시를 확인했고 main과verifier가 실제렌더를 검토했다.
-task-009는 `2926498`로 커밋했다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main, 검증 기준 HEAD e63e515(현재 HEAD는 git rev-parse로 확인).
+- 최신 SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`. task-001~008 `[x]`, task-009는 체크박스 없는 철회 이력, task-010 `[x]`, task-011~018 `[ ]`.
+- main이 승인 샘플·footer 삭제·TOP 5 여백을 SPEC에 반영하고 design-init/implement-init analyzer compact_design_revision 후보를 원본과 대조해 적용했다. 기존 ID18개·적용 Task17개·적용 완료 조건18개. 철회 SPEC §5.17은 보존하고 Disk 미니 그래프는 새 §5.19에 매핑한다.
+- task010의갱신주기설명보완후최종독립재verify approved를main이확정했다. 근거evidence/task-010/sample-compact/retry-cadence/와상위패킷. Network집중4/4·Release/서명Debug·실제PID41825 NetworkUpdateCadence AX359×28/카드248×101/상세·닫기/frame·최종해시를확인했다. 전체606/606·최대값직접렌더는상위근거와결합했다. 초기approved철회/rejected/soft reset이력은README에보존,최근reject제거. 상태저장·커밋후task011착수한다.
+- 다른 작업자의 기존 미커밋 변경을 보존한다. 제품 diff에는 이전 compact Network/Disk 공유 경계·관련 테스트·DEBUG probe와 최신010 수정이 함께 있다. 문서/CONTEXT 상태와 커밋은 main 소유다.
+- 과거 task-009~011 승인은 최신 UI 계약의 승인 근거가 아니며 원자료와 이력으로 유지한다. 수집·일정·모델001~008 승인은 유지한다.
+- 제품의 현재 부모 카드 폭은248pt다. 010/011은264×101pt 직접렌더와248×101pt 과도기/실제앱을 확인하고, 본체padding8·최종264pt 실제 네카드590pt 표시/CPU·Memory축소는012에서 확인한다.
 
 ## 현재 작업 문서
 
-task-010은 독립 custom verifier `verify_task010`의 approved 후보를 main이 확정했다.
-최종 집중16/16·전체unit601/601·Release/서명Debug가 통과했고 소스7개/PNG42개 해시가 일치한다.
-실제Sandbox PID77408의 카드248×294·본문306×627·상세400×480·자식426×506,
-native en0/utun 현재·누적·주소·링크 사유와 AXPress닫기·재선택·frame 보존을 확인했다.
-상태별 카드와 긴 이름 상세 렌더, 실제 Caches 캡처를 main/verifier가 직접 확인했다.
-XCUITest는 automation mode 활성timeout으로 본문전에 실패했고 성공으로 주장하지 않는다.
-실제 카드 클릭·전체 키보드/AX·화면 viewport·VPN 전환은 task-012~014 후속 관문이다.
-task-010은 `331bdc5`로 커밋했고 같은 worker `implement_task002`에게 task-011을 맡겼다.
-task-011의 최장 UInt64 용량 말줄임으로 design/scope rejected를 기록하고 사용자 요청으로 중단했다가 재개했다.
-design-init analyzer 후보를 검토해 DESIGN §3.3에 가용 라벨·같은 단위 공유를 반영했고 수치·단위선택·정밀도·로케일·갱신시각·294pt/글꼴/그래프를 유지했다.
-worker 재구현 후 독립 verifier `verify_task010`의 approved 재검증 후보를 main이 확정했다.
-직접5/5·전체unit606/606·Release/서명Debug·소스7개와실행dylib해시/patch 대응을 확인했다.
-5로케일×최장/단위경계/0/작은양수25개248×294렌더의 온전한 두 값을 확인했고 상세/AX 전체 라벨·단위·같은로케일을 유지한다.
-실제Sandbox PID73723의 APFS/볼륨8개/disk0 current·raw·IOPS/외장없음·카드248×294·상세400×480·AXPress닫기/재선택/frame과 실제PNG3개를 확인했다.
-task-011 최근 reject를 제거했고 상태·인수인계를 커밋한 뒤 task-012를 맡긴다. task-012 이후는 아직 진행하지 않았다.
-- [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md) — 승인된 요구사항과 완료 조건 18개
-- [features/20260817-001-extended-resource-monitoring/design.md](./features/20260817-001-extended-resource-monitoring/design.md) — 구조·데이터 흐름·인터페이스·영향 범위와 채택한 DP1~DP7
-- [features/20260817-001-extended-resource-monitoring/implement.md](./features/20260817-001-extended-resource-monitoring/implement.md) — Task 18개와 검증 조건, 완료 조건 매핑
-- [features/20260817-001-extended-resource-monitoring/README.md](./features/20260817-001-extended-resource-monitoring/README.md) — SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`, 승인 이력
-- [ROADMAP.md](./ROADMAP.md) — M3 설계 완료와 M2 잔여 범위
+- [spec.md](./features/20260817-001-extended-resource-monitoring/spec.md): 최신 사용자 요구와 완료 조건. 상세는 이 원본을 따른다.
+- [design.md](./features/20260817-001-extended-resource-monitoring/design.md): 축소 치수·요약 전용 타이포·내부 긴값 적응·미니 그래프·실제 화면/chrome 계약.
+- [implement.md](./features/20260817-001-extended-resource-monitoring/implement.md): 순차010/011/012 결과와 검증, 후속 관문·완료 조건 매핑.
+- [README.md](./features/20260817-001-extended-resource-monitoring/README.md): 현재 상태·승인 이력.
+- [승인 샘플](./features/20260817-001-extended-resource-monitoring/evidence/compact-layout-reference/README.md): 예시 값/대체 아이콘의 배치 기준, 실제 앱 검증을 대신하지 않는다. 원본 /tmp/ResourceRunner-compact-preview-20261003/Preview.swift에도 있다.
 
 ## 확정된 결정
 
-계약의 상세와 확인 근거는 SPEC·DESIGN·IMPLEMENT 원본을 따른다.
-Task의 의존 순서는 implement.md 항목 위치를 따른다. task-001·002는 앱 내부 native adapter 관문이며 이후 공통 경계·일정·수집·표시·실기기 검증으로 진행한다.
+최신 요구사항·설계·Task 의미는 feature 원본이 소유한다. 네 카드 한 열/전체 축소·Network 그래프 없음·Disk 수치 옆 미니 그래프·footer 삭제·TOP 5 여백은 사용자 승인이다. 실제 아이콘·정보 의미·상세·수집을 유지한다.
+과학 표기는 승인되지 않았다. 이전 큰 속도 말줄임은 새 축소 글꼴과 원문 수치의 내부 재배치/필요한 글꼴 축소로 먼저 해결하며 정밀도·단위·그룹 구분을 바꾸지 않는다.
 
-- 기존 두 축에 Network·Disk 활동과 메타데이터 네 축을 추가하고, 일정·실패·느린 조회를 격리한다.
-- Network 대표값은 물리 인터페이스 합계이며 VPN 터널은 상세 전용이다. Disk는 물리 드라이버별 중복을 제거하고 APFS 볼륨 용량을 합산하지 않는다.
-- 중지·sleep 복귀·대상 변경·카운터 초기화에서 첫 샘플은 기준점 전용이다. epoch·수집 축 generation·요청 순서와 커밋 경계로 늦은 결과를 차단한다.
-- 최근 10분의 두 계열 속도 그래프는 같은 축에 겹쳐 표시한다. 공통 그래프 판과 미수집 구간의 공백을 유지한다.
-- 본체는 단일 열 세로 스크롤로 네 카드를 제공하고 본체·상세 크기를 실제 화면 가용 영역에 맞춘다. 카드별 그래프 높이를 다르게 줄이지 않는다.
-- 연결 속도·IOPS는 조건부 지표다. 필수 속도·저장 공간 접근 실패는 요구사항 변경 없이 완료로 처리하지 않는다.
-- M3 비교는 시스템 도구와 변화 방향을 확인한다. 최종 수치 정확성·성능·장기 안정성은 M5 소관이다.
+과거 Task012 부분 제품 구현은 git stash `0ef806c85321a92c7a07226de4b0080a7cc1eb48`에 보존한다. 원본 계약과 맞는 부분만012에서 선별 재사용한다. stash 전체를010/011 작업에 적용하지 않는다.
+stash에는 DashboardViewport·StatusBarController·DashboardView/Network·Disk 상세·ApplicationCoordinator·AppDelegate viewport probe가 있다. 현재 제품에 DashboardViewport.swift는 없다. 과거 viewport는1221/601·329/224/294/294 기준이며 최신590pt 결과가 아니다.
 
 ## 미확정 판단
 
-승인된 SPEC·DESIGN의 의미는 유지한다. task-011의 최장 용량 표시 문제는 DESIGN §3.3 보완·실제 렌더·AX와 독립 재verify로 해소됐다.
-실제 배포 Sandbox에서 필수 API 접근이 불가능하면 근거와 영향을 정리해 SPEC 소유 단계로 반환한다.
-구현 중 카드 프레임·실제 화면 관문을 만족하지 못해 설계 변경이 필요하면 DESIGN으로 반환한다.
+- task010은갱신주기설명보완후최종독립approved다. 최종264 실제배선은012에서 검증하며 승인된 내부 적응으로도 필수값이 읽히지 않으면 소유 단계로 반환한다.
+- 최신011 Disk 극값/미니 판/용량·012 CPU/Memory 상태/긴값/TOP5/실제네카드/화면chrome 근거는 미확보다.
+- 실제 네트워크/VPN/외장 전환·OS sleep/wake·전체 키보드/AX·시스템 도구 비교·production 통합 관문013~018은 미완료다. UI 요청 완료를 M3 전체 완료로 보고하지 않는다.
 
 ## 다음 작업
 
-- 작업: task-012 네 카드 본체와 상세의 화면별 viewport를 worker로 구현·독립 verify한다.
-- 완료 기준: implement.md task-012의 콘텐츠1221pt·viewport최대601pt·실제화면visibleFrame/chrome/8pt여유·첫/중간/마지막상세·마우스스크롤도달·상태별frame보존을 확인한다. approved 후 저장·커밋하고 task-013으로 진행한다.
+- 작업: 최종approved task010 변경을커밋하고같은worker implement_task002에게task011 Disk101pt·미니42pt·footer삭제·극값용량·실제앱검증을맡긴다.
+- 완료 기준: 최신Task010의 상태/원문수치/로케일·footer/그래프제거·상세/AX·실제개폐·공유경계가검증돼야한다. 이후011→012를순차완료하고최종실제화면을사용자에게보여준다.
 
 ## 먼저 읽을 파일
 
-- [ResourceRunner/DiskNativeAdapter.swift](./ResourceRunner/DiskNativeAdapter.swift)
-- [ResourceRunner/NetworkActivity.swift](./ResourceRunner/NetworkActivity.swift)
-- [ResourceRunner/NetworkMetadata.swift](./ResourceRunner/NetworkMetadata.swift)
-- [ResourceRunner/NetworkTopology.swift](./ResourceRunner/NetworkTopology.swift)
-
-- [ResourceRunner/CollectionAdmission.swift](./ResourceRunner/CollectionAdmission.swift)
-- [ResourceRunner/AuxiliaryCollectionScheduler.swift](./ResourceRunner/AuxiliaryCollectionScheduler.swift)
-
-- [ResourceRunner/NetworkNativeAdapter.swift](./ResourceRunner/NetworkNativeAdapter.swift)
-- [ResourceRunner/AppDelegate.swift](./ResourceRunner/AppDelegate.swift)
-- [ResourceRunnerTests/NetworkNativeAdapterTests.swift](./ResourceRunnerTests/NetworkNativeAdapterTests.swift)
-- [features/20260817-001-extended-resource-monitoring/evidence/task-001/environment.txt](./features/20260817-001-extended-resource-monitoring/evidence/task-001/environment.txt)
-- [features/20260817-001-extended-resource-monitoring/implement.md](./features/20260817-001-extended-resource-monitoring/implement.md)
-- [features/20260817-001-extended-resource-monitoring/README.md](./features/20260817-001-extended-resource-monitoring/README.md)
-- [features/20260817-001-extended-resource-monitoring/spec.md](./features/20260817-001-extended-resource-monitoring/spec.md)
-- [features/20260817-001-extended-resource-monitoring/design.md](./features/20260817-001-extended-resource-monitoring/design.md)
-- [ROADMAP.md](./ROADMAP.md)
-- [ResourceRunner/ApplicationCoordinator.swift](./ResourceRunner/ApplicationCoordinator.swift)
-- [ResourceRunner/MonitoringLifecycle.swift](./ResourceRunner/MonitoringLifecycle.swift)
-- [ResourceRunner/MonitoringScheduler.swift](./ResourceRunner/MonitoringScheduler.swift)
-- [ResourceRunner/DashboardView.swift](./ResourceRunner/DashboardView.swift)
-- [ResourceRunner/DashboardPresentation.swift](./ResourceRunner/DashboardPresentation.swift)
+- [NetworkDashboardView.swift](./ResourceRunner/NetworkDashboardView.swift)
+- [DiskDashboardView.swift](./ResourceRunner/DiskDashboardView.swift)
+- [DashboardView.swift](./ResourceRunner/DashboardView.swift)
+- [DashboardStyle.swift](./ResourceRunner/DashboardStyle.swift)
+- [ResourceRateGraphView.swift](./ResourceRunner/ResourceRateGraphView.swift)
+- [StatusBarController.swift](./ResourceRunner/StatusBarController.swift)
+- [ApplicationCoordinator.swift](./ResourceRunner/ApplicationCoordinator.swift)
+- [AppDelegate.swift](./ResourceRunner/AppDelegate.swift)
+- [NetworkDashboardViewTests.swift](./ResourceRunnerTests/NetworkDashboardViewTests.swift)
+- [DiskDashboardViewTests.swift](./ResourceRunnerTests/DiskDashboardViewTests.swift)
+- [DashboardCardLayoutTests.swift](./ResourceRunnerTests/DashboardCardLayoutTests.swift)
+- ~/.codex/skills/implement-loop/SKILL.md, implement/SKILL.md, verify/SKILL.md, context-save/SKILL.md 및 ~/.codex/docs/phased-state.md
 
 ## 문서 반영 필요
 
-`docs/product.md`·`docs/design.md`의 미확정 목록에는 기존 M3 SPEC에서 확정된 VPN 합산과 프로세스별 Disk I/O 항목이 남아 있다.
-통합 문서 정리 시 feature 결정을 반영해야 한다. 현재 선행 계약은 SPEC §1.2에 복원돼 있고 이번 DESIGN도 그 확정 결정을 사용했다.
+상위 docs/product.md·docs/design.md·README·ROADMAP에 최신 승인 요약치수·그래프정책·진행중 상태를 반영했다. 최종012승인후 ROADMAP·CONTEXT진행상태를맞춘다. 미확정VPN합산/프로세스별Disk I/O목록은featureSPEC의확정결정을다시미확정으로만들지않는다.

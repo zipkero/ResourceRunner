@@ -50,10 +50,10 @@ struct NetworkDashboardViewTests {
 
     private func render(_ presentation: NetworkCardPresentation,
                         appearance name: NSAppearance.Name, label: String,
-                        locale: Locale = .current) throws -> NSBitmapImageRep {
+                        locale: Locale = .current, width: CGFloat = 248) throws -> NSBitmapImageRep {
         let appearance = try #require(NSAppearance(named: name))
         let view = NetworkCardView(presentation: presentation, fixedNow: now)
-            .frame(width: 248)
+            .frame(width: width)
             .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
             .environment(\.locale, locale)
         var image: NSBitmapImageRep?
@@ -63,21 +63,25 @@ struct NetworkDashboardViewTests {
             image = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
         }
         let bitmap = try #require(image)
-        #expect(bitmap.pixelsWide == 248)
-        #expect(bitmap.pixelsHigh == 294)
+        #expect(bitmap.pixelsWide == Int(width))
+        #expect(bitmap.pixelsHigh == 101)
         Attachment.record(try #require(bitmap.representation(using: .png, properties: [:])),
-            named: "network-card-\(label)-\(name == .darkAqua ? "dark" : "light").png")
+            named: "network-card-\(Int(width))-\(label)-\(name == .darkAqua ? "dark" : "light").png")
         return bitmap
     }
 
     @Test func fixedSlotsCoverInitialNormalPartialFailureStoppedAndAuxiliaryFailure() throws {
-        #expect(NetworkCardLayout.total == 294)
-        #expect(NetworkCardLayout.title == 12)
-        #expect(NetworkCardLayout.rates == 68)
-        #expect(NetworkCardLayout.auxiliary == 32)
-        #expect(NetworkCardLayout.graph == 118)
+        #expect(NetworkCardLayout.total == 101)
+        #expect(NetworkCardLayout.title == 8)
+        #expect(NetworkCardLayout.rates == 46)
+        #expect(NetworkCardLayout.auxiliary == 27)
         let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 1_024,
                                                sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
+        let manyKinds: [NetworkInterfaceKind] = [.physicalWiFi, .physicalEthernet,
+            .physicalOther, .logical, .virtual, .tunnel, .vpn, .unknown]
+        let busyInterfaces = manyKinds.enumerated().map { index, kind in
+            item(kind: kind, name: "target\(index)", index: UInt16(index + 1))
+        }
         let fixtures: [(String, NetworkCardPresentation)] = [
             ("initial", .collecting),
             ("normal", card()),
@@ -86,16 +90,37 @@ struct NetworkDashboardViewTests {
             ("stopped", card(.stopped, current: nil, lastKnown: past)),
             ("aux-failure", card(auxiliary: .failure("addresses unavailable"))),
             ("disconnected", card(.disconnected, current: nil, interfaces: [])),
+            ("baseline", card(.baseline("first native read"), current: nil)),
+            ("no-physical", card(.noPhysicalDevice, current: nil, interfaces: [])),
             ("long-value", card(current: RatePair(receivedBytesPerSecond: 1_023,
-                                                  sentBytesPerSecond: 1_073_741_823)))
+                                                  sentBytesPerSecond: 1_073_741_823))),
+            ("small-positive", card(current: RatePair(receivedBytesPerSecond: 0.01,
+                                                      sentBytesPerSecond: 1_024))),
+            ("many-kinds-aux-failure", card(auxiliary: .failure("addresses unavailable"),
+                interfaces: busyInterfaces))
         ]
         for (label, fixture) in fixtures {
             for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
-                _ = try render(fixture, appearance: appearance, label: label)
+                for width: CGFloat in [248, 264] {
+                    _ = try render(fixture, appearance: appearance, label: label, width: width)
+                }
             }
         }
         _ = try render(card(), appearance: .aqua, label: "german-locale",
             locale: Locale(identifier: "de_DE"))
+        for identifier in ["en_US", "gez_ER", "my_MM", "ko_KR", "fr_FR"] {
+            for width: CGFloat in [248, 264] {
+                _ = try render(card(current: RatePair(receivedBytesPerSecond: Double(UInt64.max),
+                                                      sentBytesPerSecond: Double(UInt64.max))),
+                    appearance: .aqua, label: "long-\(identifier)",
+                    locale: Locale(identifier: identifier), width: width)
+            }
+            let locale = Locale(identifier: identifier)
+            let value = Double(UInt64.max)
+            let parts = NetworkDisplayText.byteRateParts(value, locale: locale)
+            #expect(parts.number + " " + parts.unit == ResourceQuantityFormatter.byteRate(value, locale: locale))
+            #expect(parts.unit == "GB/s")
+        }
         #expect(ResourceQuantityFormatter.byteRate(1_024,
             locale: Locale(identifier: "de_DE")) == "1,0 KB/s")
     }
@@ -106,11 +131,19 @@ struct NetworkDashboardViewTests {
         let tunnel = item(kind: .tunnel)
         #expect(NetworkDisplayText.activeSummary([physical, vpn, tunnel]).contains("3개"))
         #expect(NetworkDisplayText.activeSummary([physical, vpn, tunnel]).contains("VPN"))
+        #expect(NetworkDisplayText.compactActiveSummary([physical, vpn, tunnel])
+            .contains("Wi-Fi·터널·VPN · 활성 3개"))
         let uncertain = NetworkInterfacePresentation(key: key, kind: .unknown,
             classificationReason: "classification unavailable", linkActive: nil,
             receivedBytes: 0, sentBytes: 0, rate: nil, ipv4: [], ipv6: [], linkSpeed: .collecting)
         #expect(NetworkDisplayText.activeSummary([uncertain]) == "활성 미확인 1개")
+        #expect(NetworkDisplayText.compactActiveSummary([uncertain]) == "활성 미확인 1개")
         #expect(NetworkDisplayText.activeSummary([physical, uncertain]).contains("상태 미확인 1개"))
+        #expect(NetworkDisplayText.compactSupplemental(.available, lastKnown: false) == nil)
+        #expect(NetworkDisplayText.compactSupplemental(.failure("addresses unavailable"),
+            lastKnown: true) == "과거 보조 조회 실패")
+        #expect(NetworkDisplayText.updateCadence.contains("속도는 실시간 수집 주기"))
+        #expect(NetworkDisplayText.updateCadence.contains("주소·연결 상태 보조 정보는 별도 느린 주기"))
         #expect(NetworkDisplayText.kind(.tunnel) == "터널")
         #expect(NetworkDisplayText.link(.unsupported("unsupported: unknown"))
             .contains("미지원"))

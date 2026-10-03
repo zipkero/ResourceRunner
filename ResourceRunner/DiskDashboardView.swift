@@ -113,13 +113,14 @@ nonisolated enum DiskDisplayText {
 }
 
 nonisolated enum DiskCardLayout {
-    static let title = NetworkCardLayout.title
-    static let rates = NetworkCardLayout.rates
-    static let auxiliary = NetworkCardLayout.auxiliary
-    static let graph = NetworkCardLayout.graph
-    static let spacing = NetworkCardLayout.spacing
-    static let padding = NetworkCardLayout.padding
-    static let total = NetworkCardLayout.total
+    // Disk 축소는 task-011에서 진행하므로 현재 승인된 그래프 슬롯을 독립적으로 보존합니다.
+    static let title: CGFloat = 12
+    static let rates: CGFloat = 68
+    static let auxiliary: CGFloat = 32
+    static let graph: CGFloat = 118
+    static let spacing: CGFloat = 16
+    static let padding: CGFloat = 8
+    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
 }
 
 struct DiskCardView: View {

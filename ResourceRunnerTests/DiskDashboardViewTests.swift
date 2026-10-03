@@ -77,7 +77,6 @@ struct DiskDashboardViewTests {
     }
 
     @Test func fixedSlotsAndStatesKeepRateAndCapacityIndependent() throws {
-        #expect(DiskCardLayout.total == NetworkCardLayout.total)
         #expect(DiskCardLayout.total == 294)
         #expect(DiskCardLayout.title == 12)
         #expect(DiskCardLayout.rates == 68)

@@ -21,7 +21,7 @@ CPU · Memory · Network · Disk 대시보드
 ## 주요 기능
 
 - CPU 부하와 Memory Pressure를 반영하는 메뉴바 캐릭터
-- CPU·Memory·Network·Disk 카드와 최근 1분·5분·10분 그래프
+- CPU·Memory·Network·Disk 카드, CPU·Disk의 최근 흐름과 Memory 구성 표시
 - CPU·Memory 사용량 TOP 5와 앱 단위 프로세스 집계
 - 카드별 상세 지표와 독립적인 수집 실패 상태
 - 갱신 속도, 그래프 범위와 애니메이션 설정

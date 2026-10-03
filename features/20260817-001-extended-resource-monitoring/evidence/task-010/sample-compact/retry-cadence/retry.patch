@@ -1,0 +1,85 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 689e1dd..20630bf 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+                 if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE_OUTPUT"] == "1",
+                    let caches = FileManager.default.urls(for: .cachesDirectory,
+                        in: .userDomainMask).first {
+-                    let output = caches.appending(path: "Task010CompactProbe")
++                    let output = caches.appending(path: "Task010CadenceProbe")
+                     try? FileManager.default.createDirectory(at: output,
+                         withIntermediateDirectories: true)
+                     if let parent = status.popover.contentViewController?.view.window {
+@@ -353,7 +353,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+             let result = AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier)
+             if result == .success, let name = identifier as? String,
+                name == "NetworkCard" || name == "NetworkDetail" ||
+-               name == "NetworkDetailClose" || name.hasPrefix("NetworkInterface-") {
++               name == "NetworkDetailClose" || name == "NetworkUpdateCadence" ||
++               name.hasPrefix("NetworkInterface-") {
+                 var position: CFTypeRef?
+                 var size: CFTypeRef?
+                 var label: CFTypeRef?
+@@ -365,7 +366,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+             var valueText: CFTypeRef?
+             _ = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueText)
+             if let content = valueText as? String,
+-               content.contains("Network 인터페이스") || content.contains("원시 누적 RX") {
++               content.contains("Network 인터페이스") || content.contains("원시 누적 RX") ||
++               content.contains("별도 느린 주기") {
+                 logger.notice("AX text=\(content, privacy: .public)")
+             }
+             var value: CFTypeRef?
+diff --git a/ResourceRunner/NetworkDashboardView.swift b/ResourceRunner/NetworkDashboardView.swift
+index 5f1e7fb..aa8b719 100644
+--- a/ResourceRunner/NetworkDashboardView.swift
++++ b/ResourceRunner/NetworkDashboardView.swift
+@@ -2,6 +2,9 @@ import SwiftUI
+ 
+ /// 활동 원본과 별도 보조 원본의 상태를 카드 한 슬롯에 배치할 문자열만 만듭니다.
+ nonisolated enum NetworkDisplayText {
++    /// lifecycle이 빠른 활동 축과 느린 보조 축의 주기를 별도로 바꾸므로 고정 초 수치를 적지 않습니다.
++    static let updateCadence = "속도는 실시간 수집 주기로 갱신하고, 주소·연결 상태 보조 정보는 별도 느린 주기로 갱신합니다."
++
+     static func kind(_ kind: NetworkInterfaceKind) -> String {
+         switch kind {
+         case .physicalWiFi: "물리 Wi-Fi"
+@@ -278,6 +281,10 @@ struct NetworkDetailPopoverContent: View {
+                     Text("현재 속도는 확인된 물리 대상만 합산합니다. VPN·터널은 아래 상세 전용입니다.")
+                     Text(NetworkDisplayText.age(presentation.latestReadAt, now: now))
+                     Text("\(NetworkDisplayText.supplemental(presentation.supplemental.phase, lastKnown: presentation.supplemental.isLastKnown)) · \(NetworkDisplayText.age(presentation.supplemental.readAt, now: now))")
++                    Text(NetworkDisplayText.updateCadence)
++                        .fixedSize(horizontal: false, vertical: true)
++                        .accessibilityLabel(NetworkDisplayText.updateCadence)
++                        .accessibilityIdentifier("NetworkUpdateCadence")
+                 }
+                 .dashboardTypography(DashboardStyle.TypographyRole.label)
+                 if presentation.interfaces.isEmpty {
+diff --git a/ResourceRunnerTests/NetworkDashboardViewTests.swift b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+index 70ac129..fb731a0 100644
+--- a/ResourceRunnerTests/NetworkDashboardViewTests.swift
++++ b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+@@ -142,6 +142,8 @@ struct NetworkDashboardViewTests {
+         #expect(NetworkDisplayText.compactSupplemental(.available, lastKnown: false) == nil)
+         #expect(NetworkDisplayText.compactSupplemental(.failure("addresses unavailable"),
+             lastKnown: true) == "과거 보조 조회 실패")
++        #expect(NetworkDisplayText.updateCadence.contains("속도는 실시간 수집 주기"))
++        #expect(NetworkDisplayText.updateCadence.contains("주소·연결 상태 보조 정보는 별도 느린 주기"))
+         #expect(NetworkDisplayText.kind(.tunnel) == "터널")
+         #expect(NetworkDisplayText.link(.unsupported("unsupported: unknown"))
+             .contains("미지원"))
+diff --git a/ResourceRunnerUITests/NetworkCardUITests.swift b/ResourceRunnerUITests/NetworkCardUITests.swift
+index 5bcb85e..167fc23 100644
+--- a/ResourceRunnerUITests/NetworkCardUITests.swift
++++ b/ResourceRunnerUITests/NetworkCardUITests.swift
+@@ -31,6 +31,9 @@ final class NetworkCardUITests: XCTestCase {
+         XCTAssertTrue(detail.waitForExistence(timeout: 5))
+         XCTAssertEqual(app.popovers.count, 2)
+         XCTAssertEqual(detail.frame.size, CGSize(width: 400, height: 480))
++        let cadence = detail.staticTexts.matching(identifier: "NetworkUpdateCadence").firstMatch
++        XCTAssertTrue(cadence.exists)
++        XCTAssertTrue(cadence.label.contains("별도 느린 주기"))
+         let row = detail.descendants(matching: .any)
+             .matching(NSPredicate(format: "identifier BEGINSWITH %@", "NetworkInterface-"))
+             .firstMatch

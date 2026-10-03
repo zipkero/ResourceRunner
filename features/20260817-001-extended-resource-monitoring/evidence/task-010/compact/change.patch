@@ -1,0 +1,170 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index dfd9ca3..689e1dd 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+                 if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE_OUTPUT"] == "1",
+                    let caches = FileManager.default.urls(for: .cachesDirectory,
+                        in: .userDomainMask).first {
+-                    let output = caches.appending(path: "Task010Probe")
++                    let output = caches.appending(path: "Task010CompactProbe")
+                     try? FileManager.default.createDirectory(at: output,
+                         withIntermediateDirectories: true)
+                     if let parent = status.popover.contentViewController?.view.window {
+diff --git a/ResourceRunner/DiskDashboardView.swift b/ResourceRunner/DiskDashboardView.swift
+index 458ed64..0e6f348 100644
+--- a/ResourceRunner/DiskDashboardView.swift
++++ b/ResourceRunner/DiskDashboardView.swift
+@@ -113,13 +113,14 @@ nonisolated enum DiskDisplayText {
+ }
+ 
+ nonisolated enum DiskCardLayout {
+-    static let title = NetworkCardLayout.title
+-    static let rates = NetworkCardLayout.rates
+-    static let auxiliary = NetworkCardLayout.auxiliary
+-    static let graph = NetworkCardLayout.graph
+-    static let spacing = NetworkCardLayout.spacing
+-    static let padding = NetworkCardLayout.padding
+-    static let total = NetworkCardLayout.total
++    // Disk 축소는 task-011에서 진행하므로 현재 승인된 그래프 슬롯을 독립적으로 보존합니다.
++    static let title: CGFloat = 12
++    static let rates: CGFloat = 68
++    static let auxiliary: CGFloat = 32
++    static let graph: CGFloat = 118
++    static let spacing: CGFloat = 16
++    static let padding: CGFloat = 8
++    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
+ }
+ 
+ struct DiskCardView: View {
+diff --git a/ResourceRunner/NetworkDashboardView.swift b/ResourceRunner/NetworkDashboardView.swift
+index f64876d..19c6afc 100644
+--- a/ResourceRunner/NetworkDashboardView.swift
++++ b/ResourceRunner/NetworkDashboardView.swift
+@@ -97,15 +97,14 @@ nonisolated enum NetworkDisplayText {
+     }
+ }
+ 
+-/// 설계의 다섯 고정 높이와 세 구역 간격을 한곳에서 검증합니다.
++/// 그래프 없는 요약의 세 고정 구역과 두 구역 간격입니다.
+ nonisolated enum NetworkCardLayout {
+     static let title: CGFloat = 12
+     static let rates: CGFloat = 68
+     static let auxiliary: CGFloat = 32
+-    static let graph: CGFloat = 118
+     static let spacing: CGFloat = 16
+     static let padding: CGFloat = 8
+-    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
++    static let total: CGFloat = title + rates + auxiliary + spacing * 2 + padding * 2
+ }
+ 
+ struct NetworkCardView: View {
+@@ -115,8 +114,6 @@ struct NetworkCardView: View {
+ 
+     var body: some View {
+         let now = fixedNow ?? ContinuousClock().now
+-        let graph = ResourceRateGraph.make(history: presentation.recentHistory,
+-            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
+         return VStack(alignment: .leading, spacing: NetworkCardLayout.spacing) {
+             HStack {
+                 Text("Network · 물리 합계")
+@@ -144,18 +141,13 @@ struct NetworkCardView: View {
+                          lastKnown: presentation.supplemental.isLastKnown))
+                         .lineLimit(1)
+                     Spacer(minLength: 0)
+-                    Text(graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
+-                         ?? "속도 범위 대기 · B/s")
++                    Text(NetworkDisplayText.age(presentation.supplemental.readAt, now: now))
+                         .lineLimit(1)
+                 }
+                 .frame(height: 14)
+             }
+             .dashboardTypography(DashboardStyle.TypographyRole.label)
+             .frame(height: NetworkCardLayout.auxiliary)
+-
+-            ResourceRateGraphSlotView(kind: .network, history: presentation.recentHistory,
+-                firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow)
+-                .frame(height: NetworkCardLayout.graph)
+         }
+         .padding(NetworkCardLayout.padding)
+         .frame(maxWidth: .infinity, alignment: .leading)
+@@ -175,7 +167,6 @@ struct NetworkCardView: View {
+ 
+     private func rateRow(_ series: ResourceRateGraphSlotView.Series, rate: Double?) -> some View {
+         HStack(spacing: 3) {
+-            ResourceRateLegendMarkerView(kind: .network, series: series)
+             Text(series == .received ? "다운로드" : "업로드")
+                 .dashboardTypography(DashboardStyle.TypographyRole.label)
+             Spacer(minLength: 2)
+diff --git a/ResourceRunnerTests/DiskDashboardViewTests.swift b/ResourceRunnerTests/DiskDashboardViewTests.swift
+index d89b579..f4cdaee 100644
+--- a/ResourceRunnerTests/DiskDashboardViewTests.swift
++++ b/ResourceRunnerTests/DiskDashboardViewTests.swift
+@@ -77,7 +77,6 @@ struct DiskDashboardViewTests {
+     }
+ 
+     @Test func fixedSlotsAndStatesKeepRateAndCapacityIndependent() throws {
+-        #expect(DiskCardLayout.total == NetworkCardLayout.total)
+         #expect(DiskCardLayout.total == 294)
+         #expect(DiskCardLayout.title == 12)
+         #expect(DiskCardLayout.rates == 68)
+diff --git a/ResourceRunnerTests/NetworkDashboardViewTests.swift b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+index d8f67c3..bf427ba 100644
+--- a/ResourceRunnerTests/NetworkDashboardViewTests.swift
++++ b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+@@ -64,18 +64,17 @@ struct NetworkDashboardViewTests {
+         }
+         let bitmap = try #require(image)
+         #expect(bitmap.pixelsWide == 248)
+-        #expect(bitmap.pixelsHigh == 294)
++        #expect(bitmap.pixelsHigh == 160)
+         Attachment.record(try #require(bitmap.representation(using: .png, properties: [:])),
+             named: "network-card-\(label)-\(name == .darkAqua ? "dark" : "light").png")
+         return bitmap
+     }
+ 
+     @Test func fixedSlotsCoverInitialNormalPartialFailureStoppedAndAuxiliaryFailure() throws {
+-        #expect(NetworkCardLayout.total == 294)
++        #expect(NetworkCardLayout.total == 160)
+         #expect(NetworkCardLayout.title == 12)
+         #expect(NetworkCardLayout.rates == 68)
+         #expect(NetworkCardLayout.auxiliary == 32)
+-        #expect(NetworkCardLayout.graph == 118)
+         let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 1_024,
+                                                sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
+         let fixtures: [(String, NetworkCardPresentation)] = [
+@@ -86,6 +85,8 @@ struct NetworkDashboardViewTests {
+             ("stopped", card(.stopped, current: nil, lastKnown: past)),
+             ("aux-failure", card(auxiliary: .failure("addresses unavailable"))),
+             ("disconnected", card(.disconnected, current: nil, interfaces: [])),
++            ("baseline", card(.baseline("first native read"), current: nil)),
++            ("no-physical", card(.noPhysicalDevice, current: nil, interfaces: [])),
+             ("long-value", card(current: RatePair(receivedBytesPerSecond: 1_023,
+                                                   sentBytesPerSecond: 1_073_741_823)))
+         ]
+@@ -96,6 +97,12 @@ struct NetworkDashboardViewTests {
+         }
+         _ = try render(card(), appearance: .aqua, label: "german-locale",
+             locale: Locale(identifier: "de_DE"))
++        for identifier in ["en_US", "gez_ER", "my_MM", "ko_KR"] {
++            _ = try render(card(current: RatePair(receivedBytesPerSecond: Double(UInt64.max),
++                                                  sentBytesPerSecond: Double(UInt64.max))),
++                appearance: .aqua, label: "long-\(identifier)",
++                locale: Locale(identifier: identifier))
++        }
+         #expect(ResourceQuantityFormatter.byteRate(1_024,
+             locale: Locale(identifier: "de_DE")) == "1,0 KB/s")
+     }
+diff --git a/ResourceRunnerUITests/NetworkCardUITests.swift b/ResourceRunnerUITests/NetworkCardUITests.swift
+index cea656d..8711528 100644
+--- a/ResourceRunnerUITests/NetworkCardUITests.swift
++++ b/ResourceRunnerUITests/NetworkCardUITests.swift
+@@ -24,7 +24,7 @@ final class NetworkCardUITests: XCTestCase {
+         let cardBefore = network.frame
+         let bodyBefore = dashboard.frame
+         print("TASK010_ACTUAL_UI cardBefore=\(cardBefore) bodyBefore=\(bodyBefore) label=\(network.label)")
+-        XCTAssertEqual(cardBefore.height, 294, accuracy: 1)
++        XCTAssertEqual(cardBefore.height, 160, accuracy: 1)
+ 
+         network.click()
+         let detail = app.descendants(matching: .any).matching(identifier: "NetworkDetail").firstMatch

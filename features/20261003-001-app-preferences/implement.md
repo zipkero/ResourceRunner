@@ -48,13 +48,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.5, §5.6, §5.7, §5.13; DESIGN §2.4, §2.5, §3.4, §4.1, §4.2, §5 DP5, DP6.
   - 승인 근거: 2026-10-03 독립 verifier approved를 main이 확정했습니다. HEAD429906e 기준11파일 diff·소스/로그 해시 대응과 관련86case(동적94실행)·Memory6case(동적17실행), 실패/skip0을 확인했습니다. [task-003 근거](./evidence/task-003/README.md). 구현 재시도0·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
-- [ ] task-004: 실제 로그인 상태와 직렬 요청·복원 결과
+- [x] task-004: 실제 로그인 상태와 직렬 요청·복원 결과
   - 목적: 일반 설정과 독립된 macOS 로그인 상태를 관리하고 명시적 요청·복원 결과를 구분합니다.
   - 접근: 선행 task-001. 새 `LoginItemService` adapter·`LoginItemController`를 구성합니다. 출발점은 `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`이며 일반 복원은 task-001 store를 사용합니다. native 경계는 `SMAppService.mainApp.status`, 명시적 register/unregister, 사용자 버튼의 `openSystemSettingsLoginItems()`입니다. mutation 하나·operation ID·새 의도 직렬화를 유지합니다. 완료/실패 뒤 재조회 상태와 요청 결과를 분리합니다. 시작·활성화는 task-005, UI는 task-009, 실제 OS는 task-011이 소유합니다.
   - 검증 조건:
     - 결과: enabled만 켜기 성공이며 승인 대기·notFound·알 수 없는 상태·throw는 성공으로 추정하지 않습니다. 조회는 mutation·시스템 설정 열기를 실행하지 않습니다. 일반 복원과 로그인 해제 결과를 분리하며 notRegistered는 불필요한 unregister가 없습니다. 로그인 실패로 일반 복원을 취소하지 않습니다.
     - 확인: 주입 adapter로 모든 상태·등록/해제 실패·승인 대기·OS 변경·중복 요청·복원 경합·늦은 결과를 확인합니다. 초기 mutation0회·재조회 순서·최대 mutation1회·stale 결과 거부·일반 복원 한 번과 결과 분리를 검증합니다. mainApp 외 서비스·자동 시스템 설정 열기·저장된 로그인 의도가 없는지 원본을 대조합니다. mock은 실제 다음 로그인 근거를 대체하지 않습니다.
   - 참조: SPEC §5.9, §5.10, §5.11, §5.13; DESIGN §1.1, §1.2, §2.6, §3.5, §4.1, §4.3, §5 DP1, DP8.
+  - 승인 근거: 2026-10-03 독립 verifier approved를 main이 확정했습니다. HEADccb1bf8 기준 새3파일 patch/blob·소스 해시와 signed 주입7/7·실패/skip0을 확인했습니다. [task-004 근거](./evidence/task-004/README.md). 구현 재시도0·근거 재검증0; 실제 OS mutation은 수행하지 않았고 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
 - [ ] task-005: 첫 화면·최초 일정과 즉시 변경의 단일 배선
   - 목적: 처음부터 같은 저장 설정을 사용하고 늦은 수집·설정 전달이 현재 선택을 되돌리지 않게 합니다.

@@ -49,3 +49,5 @@ M4의 첫 범위로 카드·TOP 5 표시, 그래프 시간 범위, 갱신 4단�
 - 2026-10-03: task-002 correctness 재시도1에서 두 Scheduler의 적용 plan revision 검사를 보완하고 역순 실행·캐시·pending 회귀3개를 추가했습니다. 독립 verifier의 approved를 main이 확정했습니다. 관련7suite50case(동적56실행)·실패/skip0, 현재 소스·패치·로그 해시 대응 확인. task-001/002 [x], task-003~011 [ ], IMPLEMENT [ ]입니다. 근거 재검증0이며 이전 reject는 이력으로 보존하고 현재 필드에서는 제거했습니다. 상위 계약과 영향 없는 승인은 유지합니다.
 
 - 2026-10-03: task-003의 당시 주기 G·실제 경과 차분·1203개 링과 연속성 표식을 독립 verifier approved 후 main이 승인했습니다. 관련86case(동적94실행)·Memory6case(동적17실행), 실패/skip0과11파일 해시 대응 확인. 구현 재시도0·근거 재검증0. task-001~003 [x], task-004~011 [ ], IMPLEMENT [ ]입니다. 상위 계약·기존 승인은 유지합니다.
+
+- 2026-10-03: task-004의 actual status adapter·단일 mutation/최신 의도·operation ID·일반 복원/로그인 결과 분리를 독립 verifier approved 후 main이 승인했습니다. signed 주입7/7·실패/skip0, 새3파일 해시 대응 확인. 구현 재시도0·근거 재검증0. 실제 OS mutation 없음. task-001~004 [x], task-005~011 [ ], IMPLEMENT [ ]이며 상위 계약·기존 승인은 유지합니다.

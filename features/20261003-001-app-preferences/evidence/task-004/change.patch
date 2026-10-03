@@ -1,0 +1,416 @@
+diff --git a/ResourceRunner/LoginItemService.swift b/ResourceRunner/LoginItemService.swift
+new file mode 100644
+index 0000000..9ec1896
+--- /dev/null
++++ b/ResourceRunner/LoginItemService.swift
+@@ -0,0 +1,45 @@
++import ServiceManagement
++
++nonisolated enum LoginItemStatus: Equatable, Sendable {
++    case enabled
++    case notRegistered
++    case requiresApproval
++    case notFound
++    case unknown(Int)
++
++    var isEnabled: Bool { self == .enabled }
++}
++
++@MainActor
++protocol LoginItemServing {
++    func status() -> LoginItemStatus
++    func register() async throws
++    func unregister() async throws
++    func openSystemSettingsLoginItems()
++}
++
++@MainActor
++struct MainAppLoginItemService: LoginItemServing {
++    func status() -> LoginItemStatus {
++        let nativeStatus = SMAppService.mainApp.status
++        return switch nativeStatus {
++        case .enabled: .enabled
++        case .notRegistered: .notRegistered
++        case .requiresApproval: .requiresApproval
++        case .notFound: .notFound
++        @unknown default: .unknown(nativeStatus.rawValue)
++        }
++    }
++
++    func register() async throws {
++        try SMAppService.mainApp.register()
++    }
++
++    func unregister() async throws {
++        try await SMAppService.mainApp.unregister()
++    }
++
++    func openSystemSettingsLoginItems() {
++        SMAppService.openSystemSettingsLoginItems()
++    }
++}
+diff --git a/ResourceRunner/LoginItemController.swift b/ResourceRunner/LoginItemController.swift
+new file mode 100644
+index 0000000..fea818e
+--- /dev/null
++++ b/ResourceRunner/LoginItemController.swift
+@@ -0,0 +1,137 @@
++import Foundation
++import Observation
++
++nonisolated enum LoginItemRequestOutcome: Equatable, Sendable {
++    case succeeded
++    case alreadySatisfied
++    case requiresApproval
++    case unconfirmed
++    case failed(String)
++}
++
++nonisolated struct LoginItemRequestResult: Equatable, Sendable {
++    let operationID: UInt64
++    let requestedEnabled: Bool
++    let actualStatus: LoginItemStatus
++    let outcome: LoginItemRequestOutcome
++}
++
++nonisolated struct PreferencesRestoreResult: Equatable, Sendable {
++    let preferences: PreferencesSnapshot
++    let loginOperationID: UInt64
++}
++
++@Observable
++@MainActor
++final class LoginItemController {
++    private let service: any LoginItemServing
++    private var nextOperationID: UInt64 = 0
++    private var pending: (id: UInt64, enabled: Bool)?
++    private var mutationInFlight = false
++
++    private(set) var actualStatus: LoginItemStatus
++    private(set) var activeOperationID: UInt64?
++    private(set) var lastResult: LoginItemRequestResult?
++
++    convenience init() {
++        self.init(service: MainAppLoginItemService())
++    }
++
++    init(service: any LoginItemServing) {
++        self.service = service
++        actualStatus = service.status()
++    }
++
++    @discardableResult
++    func refresh() -> LoginItemStatus {
++        let status = service.status()
++        actualStatus = status
++        return status
++    }
++
++    @discardableResult
++    func requestEnabled(_ enabled: Bool) -> UInt64 {
++        if activeOperationID != nil, pending == nil, mutationInFlight,
++           activeIntent == enabled {
++            return activeOperationID!
++        }
++        if let pending, pending.enabled == enabled {
++            return pending.id
++        }
++
++        nextOperationID &+= 1
++        let id = nextOperationID
++        activeOperationID = id
++        lastResult = nil
++        pending = (id, enabled)
++        if !mutationInFlight {
++            Task { await drainRequests() }
++        }
++        return id
++    }
++
++    @discardableResult
++    func restoreDefaults(in preferencesStore: PreferencesStore) -> PreferencesRestoreResult {
++        preferencesStore.restoreDefaults()
++        let id = requestEnabled(false)
++        return PreferencesRestoreResult(preferences: preferencesStore.current, loginOperationID: id)
++    }
++
++    func openSystemSettingsLoginItems() {
++        service.openSystemSettingsLoginItems()
++    }
++
++    private var activeIntent: Bool? {
++        running?.enabled
++    }
++
++    private var running: (id: UInt64, enabled: Bool)?
++
++    private func drainRequests() async {
++        guard !mutationInFlight else { return }
++        mutationInFlight = true
++        defer { mutationInFlight = false }
++
++        while let request = pending {
++            pending = nil
++            running = request
++            let before = service.status()
++            var failure: String?
++            var attempted = false
++
++            if request.enabled {
++                if before != .enabled && before != .requiresApproval {
++                    attempted = true
++                    do { try await service.register() }
++                    catch { failure = error.localizedDescription }
++                }
++            } else if before != .notRegistered {
++                attempted = true
++                do { try await service.unregister() }
++                catch { failure = error.localizedDescription }
++            }
++
++            // 진행 중 새 의도가 생겨도 실제 호출이 끝난 뒤에만 다음 호출을 시작합니다.
++            let after = service.status()
++            running = nil
++            guard activeOperationID == request.id else { continue }
++            actualStatus = after
++            let outcome: LoginItemRequestOutcome
++            if let failure {
++                outcome = .failed(failure)
++            } else if request.enabled && after == .requiresApproval {
++                outcome = .requiresApproval
++            } else if after.isEnabled == request.enabled &&
++                        (after == .enabled || after == .notRegistered) {
++                outcome = attempted ? .succeeded : .alreadySatisfied
++            } else {
++                outcome = .unconfirmed
++            }
++            lastResult = LoginItemRequestResult(
++                operationID: request.id, requestedEnabled: request.enabled,
++                actualStatus: after, outcome: outcome
++            )
++            activeOperationID = nil
++        }
++    }
++}
+diff --git a/ResourceRunnerTests/LoginItemControllerTests.swift b/ResourceRunnerTests/LoginItemControllerTests.swift
+new file mode 100644
+index 0000000..381336d
+--- /dev/null
++++ b/ResourceRunnerTests/LoginItemControllerTests.swift
+@@ -0,0 +1,216 @@
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++private final class ControlledLoginItemService: LoginItemServing {
++    var currentStatus: LoginItemStatus = .notRegistered
++    var calls: [String] = []
++    var readCount = 0
++    var activeMutations = 0
++    var maximumMutations = 0
++    var pauseMutations = false
++    private var continuations: [CheckedContinuation<Void, Error>] = []
++
++    func status() -> LoginItemStatus {
++        readCount += 1
++        calls.append("status")
++        return currentStatus
++    }
++
++    func register() async throws { try await mutate("register") }
++    func unregister() async throws { try await mutate("unregister") }
++
++    private func mutate(_ name: String) async throws {
++        calls.append(name)
++        activeMutations += 1
++        maximumMutations = max(maximumMutations, activeMutations)
++        defer { activeMutations -= 1 }
++        if pauseMutations {
++            try await withCheckedThrowingContinuation { continuations.append($0) }
++        }
++    }
++
++    func finish(_ result: Result<Void, Error> = .success(())) {
++        continuations.removeFirst().resume(with: result)
++    }
++
++    func openSystemSettingsLoginItems() { calls.append("openSettings") }
++}
++
++@MainActor
++private final class RestoreStorage: PreferencesStorage {
++    var writes = 0
++    func read() -> Any? { nil }
++    func write(_ dictionary: [String: Any]) { writes += 1 }
++}
++
++@MainActor
++private func eventually(_ condition: @MainActor () -> Bool) async {
++    for _ in 0..<1_000 where !condition() { await Task.yield() }
++    #expect(condition())
++}
++
++@MainActor
++struct LoginItemControllerTests {
++    @Test func initialAndRefreshOnlyReadActualState() {
++        let service = ControlledLoginItemService()
++        let controller = LoginItemController(service: service)
++        #expect(controller.actualStatus == .notRegistered)
++        #expect(service.calls == ["status"])
++
++        for status: LoginItemStatus in [.enabled, .requiresApproval, .notFound, .unknown(99), .notRegistered] {
++            service.currentStatus = status
++            #expect(controller.refresh() == status)
++            #expect(controller.actualStatus == status)
++        }
++        #expect(service.calls.allSatisfy { $0 == "status" })
++        controller.openSystemSettingsLoginItems()
++        #expect(service.calls.last == "openSettings")
++    }
++
++    @Test func onSucceedsOnlyAfterEnabledStatusAndReadsAfterMutation() async {
++        let service = ControlledLoginItemService()
++        let controller = LoginItemController(service: service)
++        let id = controller.requestEnabled(true)
++        await eventually { controller.lastResult != nil }
++        #expect(controller.lastResult == LoginItemRequestResult(
++            operationID: id, requestedEnabled: true,
++            actualStatus: .notRegistered, outcome: .unconfirmed
++        ))
++        #expect(service.calls == ["status", "status", "register", "status"])
++
++        service.currentStatus = .enabled
++        let second = controller.requestEnabled(true)
++        await eventually { controller.lastResult?.operationID == second }
++        #expect(controller.lastResult?.outcome == .alreadySatisfied)
++        #expect(service.calls.filter { $0 == "register" }.count == 1)
++    }
++
++    @Test func completedMutationsUseRefreshedStatusForSuccessAndApproval() async {
++        let service = ControlledLoginItemService()
++        service.pauseMutations = true
++        let controller = LoginItemController(service: service)
++
++        let approvalID = controller.requestEnabled(true)
++        await eventually { service.activeMutations == 1 }
++        service.currentStatus = .requiresApproval
++        service.finish()
++        await eventually { controller.lastResult?.operationID == approvalID }
++        #expect(controller.lastResult?.outcome == .requiresApproval)
++
++        let offID = controller.requestEnabled(false)
++        await eventually { service.activeMutations == 1 }
++        service.currentStatus = .notRegistered
++        service.finish()
++        await eventually { controller.lastResult?.operationID == offID }
++        #expect(controller.lastResult?.outcome == .succeeded)
++
++        let onID = controller.requestEnabled(true)
++        await eventually { service.activeMutations == 1 }
++        service.currentStatus = .enabled
++        service.finish()
++        await eventually { controller.lastResult?.operationID == onID }
++        #expect(controller.lastResult?.outcome == .succeeded)
++        #expect(service.maximumMutations == 1)
++    }
++
++    @Test func approvalFailureAndUnknownRemainDistinctFromActualState() async {
++        let service = ControlledLoginItemService()
++        service.currentStatus = .requiresApproval
++        let controller = LoginItemController(service: service)
++        let approvalID = controller.requestEnabled(true)
++        await eventually { controller.lastResult?.operationID == approvalID }
++        #expect(controller.lastResult?.outcome == .requiresApproval)
++        #expect(!controller.actualStatus.isEnabled)
++        #expect(!service.calls.contains("register"))
++
++        service.currentStatus = .notFound
++        service.pauseMutations = true
++        let id = controller.requestEnabled(true)
++        await eventually { service.activeMutations == 1 }
++        service.currentStatus = .unknown(81)
++        service.finish(.failure(NSError(domain: "test", code: 8)))
++        await eventually { controller.lastResult?.operationID == id }
++        if case .failed(let message) = controller.lastResult?.outcome {
++            #expect(!message.isEmpty)
++        } else {
++            Issue.record("throw 결과가 실패로 분류되지 않았습니다")
++        }
++        #expect(controller.actualStatus == .unknown(81))
++    }
++
++    @Test func offAlreadyNotRegisteredSkipsMutationAndFailedOffDoesNotClaimSuccess() async {
++        let service = ControlledLoginItemService()
++        let controller = LoginItemController(service: service)
++        let first = controller.requestEnabled(false)
++        await eventually { controller.lastResult?.operationID == first }
++        #expect(controller.lastResult?.outcome == .alreadySatisfied)
++        #expect(!service.calls.contains("unregister"))
++
++        service.currentStatus = .enabled
++        service.pauseMutations = true
++        let second = controller.requestEnabled(false)
++        await eventually { service.activeMutations == 1 }
++        service.finish(.failure(NSError(domain: "test", code: 9)))
++        await eventually { controller.lastResult?.operationID == second }
++        #expect(controller.actualStatus == .enabled)
++        if case .failed = controller.lastResult?.outcome {} else {
++            Issue.record("해제 throw를 성공으로 분류했습니다")
++        }
++    }
++
++    @Test func latestIntentWaitsForMutationAndStaleCompletionCannotPublish() async {
++        let service = ControlledLoginItemService()
++        service.pauseMutations = true
++        let controller = LoginItemController(service: service)
++        let old = controller.requestEnabled(true)
++        await eventually { service.activeMutations == 1 }
++        #expect(controller.requestEnabled(true) == old)
++        let intermediate = controller.requestEnabled(false)
++        let latest = controller.requestEnabled(true)
++        #expect(intermediate != latest)
++        #expect(controller.activeOperationID == latest)
++        service.currentStatus = .enabled
++        service.finish()
++        await eventually { controller.lastResult?.operationID == latest }
++        #expect(controller.lastResult?.outcome == .alreadySatisfied)
++        #expect(service.calls.filter { $0 == "register" }.count == 1)
++        #expect(!service.calls.contains("unregister"))
++        #expect(service.maximumMutations == 1)
++        #expect(controller.actualStatus == .enabled)
++    }
++
++    @Test func restoreWritesOrdinaryPreferencesOnceAndSerializesOffAfterPendingOn() async {
++        let service = ControlledLoginItemService()
++        service.pauseMutations = true
++        let controller = LoginItemController(service: service)
++        let storage = RestoreStorage()
++        let preferences = PreferencesStore(storage: storage)
++        preferences.update { $0.showsCPUCard = false }
++        let on = controller.requestEnabled(true)
++        await eventually { service.activeMutations == 1 }
++        let restored = controller.restoreDefaults(in: preferences)
++        #expect(storage.writes == 2)
++        #expect(restored.preferences.preferences == .defaults)
++        #expect(restored.preferences.revision == 2)
++        #expect(restored.loginOperationID != on)
++        #expect(controller.lastResult == nil)
++
++        service.currentStatus = .enabled
++        service.finish()
++        await eventually { service.calls.contains("unregister") }
++        #expect(controller.lastResult == nil)
++        #expect(controller.activeOperationID == restored.loginOperationID)
++        #expect(service.maximumMutations == 1)
++        service.currentStatus = .notRegistered
++        service.finish(.failure(NSError(domain: "test", code: 10)))
++        await eventually { controller.lastResult?.operationID == restored.loginOperationID }
++        #expect(controller.actualStatus == .notRegistered)
++        if case .failed = controller.lastResult?.outcome {} else {
++            Issue.record("복원 로그인 실패가 별도 결과로 남지 않았습니다")
++        }
++        #expect(preferences.current.preferences == .defaults)
++        #expect(storage.writes == 2)
++    }
++}

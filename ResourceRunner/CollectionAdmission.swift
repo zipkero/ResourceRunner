@@ -22,6 +22,18 @@ nonisolated struct CollectionRunContext: Sendable, Equatable {
     let planRevision: Int
     let requestSequence: Int
     let boundarySequence: Int
+    let interval: Duration
+
+    init(axis: CollectionAxis, epoch: Int, generation: Int, planRevision: Int,
+         requestSequence: Int, boundarySequence: Int, interval: Duration = .seconds(1)) {
+        self.axis = axis
+        self.epoch = epoch
+        self.generation = generation
+        self.planRevision = planRevision
+        self.requestSequence = requestSequence
+        self.boundarySequence = boundarySequence
+        self.interval = interval
+    }
 }
 
 /// 생명주기와 세 반영 지점이 같은 lock 아래에서 현재 실행권을 확인합니다.
@@ -36,6 +48,7 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
     private var boundary = CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: true)
     private var generations: [CollectionAxis: Int] = [:]
     private var planRevisions: [CollectionAxis: Int] = [:]
+    private var planIntervals: [CollectionAxis: Duration] = [:]
     private var nextRequests: [CollectionAxis: Int] = [:]
     private var accepted: [CollectionAxis: [CollectionAdmissionPhase: Watermark]] = [:]
 
@@ -49,6 +62,16 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
     func setPlanRevision(_ revision: Int, for axis: CollectionAxis) {
         lock.withLock {
             if revision > (planRevisions[axis] ?? 0) { planRevisions[axis] = revision }
+        }
+    }
+
+    /// revision과 당시 주기를 같은 임계 구간에서 바꿔 새 context가 서로 다른 계획을 섞지 않게 합니다.
+    func setPlan(_ schedule: CollectionSchedule, revision: Int, for axis: CollectionAxis) {
+        lock.withLock {
+            guard revision > (planRevisions[axis] ?? 0) else { return }
+            planRevisions[axis] = revision
+            if case .running(let interval) = schedule { planIntervals[axis] = interval }
+            else { planIntervals.removeValue(forKey: axis) }
         }
     }
 
@@ -78,7 +101,8 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
             return CollectionRunContext(axis: axis, epoch: boundary.epoch,
                 generation: generations[axis] ?? 0, planRevision: planRevisions[axis] ?? 0,
                 requestSequence: request,
-                boundarySequence: boundary.sequence)
+                boundarySequence: boundary.sequence,
+                interval: planIntervals[axis] ?? .seconds(1))
         }
     }
 
@@ -93,7 +117,8 @@ nonisolated final class CollectionAdmission: @unchecked Sendable {
             return CollectionRunContext(axis: axis, epoch: expectedEpoch,
                 generation: expectedGeneration, planRevision: expectedPlanRevision,
                 requestSequence: request,
-                boundarySequence: boundary.sequence)
+                boundarySequence: boundary.sequence,
+                interval: planIntervals[axis] ?? .seconds(1))
         }
     }
 

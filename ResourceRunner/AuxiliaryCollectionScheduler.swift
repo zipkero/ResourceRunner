@@ -31,6 +31,7 @@ where Sink.Value == Source.Value {
     private var collectionEpoch = 0
     private var timer: Task<Void, Never>?
     private var query: Task<Void, Never>?
+    private var nextQueryID = 0
     private var inFlight = false
     private var pendingRefresh = false
     private var lastQueryStartedAt: ContinuousClock.Instant?
@@ -50,17 +51,28 @@ where Sink.Value == Source.Value {
     func apply(_ next: CollectionSchedule, revision: Int) async {
         guard revision >= lastRevision,
               admission.planRevision(for: axis) == revision else { return }
-        lastRevision = revision
-        await apply(next)
+        await apply(next, expectedPlanRevision: revision)
     }
 
     func apply(_ next: CollectionSchedule) async {
+        await apply(next, expectedPlanRevision: nil)
+    }
+
+    private func apply(_ next: CollectionSchedule, expectedPlanRevision: Int?) async {
+        let currentPlanRevision = admission.planRevision(for: axis)
+        if let expectedPlanRevision {
+            guard expectedPlanRevision >= lastRevision,
+                  currentPlanRevision == expectedPlanRevision else { return }
+            lastRevision = expectedPlanRevision
+        }
+        if schedule == next && collectionEpoch == admission.currentBoundary.epoch &&
+            admittedPlanRevision == currentPlanRevision { return }
         generation += 1
         let localGeneration = generation
         schedule = next
         collectionEpoch = admission.currentBoundary.epoch
         admittedGeneration = admission.advance(axis)
-        admittedPlanRevision = admission.planRevision(for: axis)
+        admittedPlanRevision = currentPlanRevision
 #if DEBUG
         let debugAxis = String(describing: axis)
         let debugSchedule = String(describing: next)
@@ -126,6 +138,8 @@ where Sink.Value == Source.Value {
         guard expected == generation else { return }
         // 대기 중 병합 요청으로 이미 이 deadline 이후 조회가 시작됐으면 보충하지 않습니다.
         if let lastQueryStartedAt, lastQueryStartedAt >= deadline { return }
+        // 타이머 tick은 실행 중인 native 조회를 끝낸 뒤 소급 실행하지 않습니다.
+        if inFlight { return }
         pendingRefresh = true
         startIfPossible(at: now)
     }
@@ -139,6 +153,8 @@ where Sink.Value == Source.Value {
         inFlight = true
         lastQueryStartedAt = timestamp
         startedQueryCount += 1
+        nextQueryID += 1
+        let queryID = nextQueryID
 #if DEBUG
         let debugAxis = String(describing: axis)
         let debugCount = startedQueryCount
@@ -149,12 +165,13 @@ where Sink.Value == Source.Value {
             do { value = try await source.sample(context: context) }
             catch { value = nil }
             let timestamp = await clock.now()
-            await self?.finish(value, context: context, timestamp: timestamp)
+            await self?.finish(value, queryID: queryID, context: context, timestamp: timestamp)
         }
     }
 
-    private func finish(_ value: Source.Value?, context: CollectionRunContext,
+    private func finish(_ value: Source.Value?, queryID: Int, context: CollectionRunContext,
                         timestamp: ContinuousClock.Instant) async {
+        guard queryID == nextQueryID else { return }
         defer {
             inFlight = false
             query = nil

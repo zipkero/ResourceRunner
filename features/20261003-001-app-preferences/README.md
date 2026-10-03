@@ -45,3 +45,5 @@ M4의 첫 범위로 카드·TOP 5 표시, 그래프 시간 범위, 갱신 4단�
   Task 순서·참조·조건 매핑·문서 링크·변경 범위를 확인했고 제품 코드·실행 앱·OS 상태는 변경하지 않았습니다.
   이번 요청은 구현 계획까지만입니다.
 - 2026-10-03: 사용자 `$implement-loop M4`에 따라 task-001을 worker가 구현하고 독립 verifier가 승인 후보를 반환했습니다. main은 엄격한 설정 복구·단일 snapshot 저장/게시·개인정보 경계와 현재 소스/검증 해시 대응을 확인해 승인했습니다. 전용 signed 단위5/5 통과, loop 재시도·근거 재검증0입니다. SPEC/DESIGN [x], IMPLEMENT [ ]; task-002~011 미완료입니다. 상위 계약·M3 승인은 유지됩니다.
+- 2026-10-03: task-002의 47개 관련 case와 최종 Scheduler14개는 통과했으나 독립 verifier가 A→B→A target 역순의 최신 revision 미적용을 correctness로 거절했습니다. main이 reject를 확정하고 구현 소유 재시도1을 요청합니다. task-002 [ ]·후속 Task 미착수, 근거 재검증0입니다. 승인된 task-001과 상위 계약·M3 승인은 영향 없어 유지합니다.
+- 2026-10-03: task-002 correctness 재시도1에서 두 Scheduler의 적용 plan revision 검사를 보완하고 역순 실행·캐시·pending 회귀3개를 추가했습니다. 독립 verifier의 approved를 main이 확정했습니다. 관련7suite50case(동적56실행)·실패/skip0, 현재 소스·패치·로그 해시 대응 확인. task-001/002 [x], task-003~011 [ ], IMPLEMENT [ ]입니다. 근거 재검증0이며 이전 reject는 이력으로 보존하고 현재 필드에서는 제거했습니다. 상위 계약과 영향 없는 승인은 유지합니다.

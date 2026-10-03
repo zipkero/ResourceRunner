@@ -6,15 +6,22 @@ private actor AuxiliaryIntSource: ScheduledSampleSource {
     private let blockFirst: Bool
     private var first: CheckedContinuation<Void, Never>?
     private(set) var calls = 0
+    private(set) var contexts: [CollectionRunContext] = []
 
     init(blockFirst: Bool = false) { self.blockFirst = blockFirst }
 
     func sample(collectionEpoch: Int) async -> Int? {
         calls += 1
+        let call = calls
         if blockFirst && calls == 1 {
             await withCheckedContinuation { first = $0 }
         }
-        return calls
+        return call
+    }
+
+    func sample(context: CollectionRunContext) async -> Int? {
+        contexts.append(context)
+        return await sample(collectionEpoch: context.epoch)
     }
 
     func releaseFirst() {
@@ -26,6 +33,7 @@ private actor AuxiliaryIntSource: ScheduledSampleSource {
 private actor AuxiliaryIntSink: MonitoringSampleSink {
     private let admission: CollectionAdmission
     private(set) var samples: [TimestampedSample<Int>] = []
+    private(set) var replayedContexts: [CollectionRunContext] = []
 
     init(admission: CollectionAdmission) { self.admission = admission }
 
@@ -35,6 +43,11 @@ private actor AuxiliaryIntSink: MonitoringSampleSink {
             samples.append(sample)
             return true
         } ?? false
+    }
+    func replayCached(_ sample: TimestampedSample<Int>, context: CollectionRunContext) async -> Bool {
+        guard admission.isCurrent(context) else { return false }
+        replayedContexts.append(context)
+        return true
     }
 }
 
@@ -55,6 +68,109 @@ struct AuxiliaryCollectionSchedulerTests {
         let gate = CollectionAdmission()
         gate.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
         return gate
+    }
+
+    @Test func reversedABAPlanDeliveryRebindsCacheAndRefresh() async {
+        let gate = runningGate()
+        let clock = ManualMonotonicClock()
+        let source = AuxiliaryIntSource()
+        let sink = AuxiliaryIntSink(admission: gate)
+        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
+            admission: gate, axis: .networkMetadata)
+        let original = CollectionSchedule.running(.seconds(60))
+        let alternate = CollectionSchedule.running(.seconds(30))
+
+        gate.setPlan(original, revision: 1, for: .networkMetadata)
+        await scheduler.apply(original, revision: 1)
+        await awaitCondition { await sink.samples.count == 1 }
+        #expect(await sink.samples.first?.context?.planRevision == 1)
+
+        // B의 target 전달만 지연시키고 C를 먼저 적용합니다.
+        gate.setPlan(alternate, revision: 2, for: .networkMetadata)
+        gate.setPlan(original, revision: 3, for: .networkMetadata)
+        await scheduler.apply(original, revision: 3)
+        await scheduler.apply(alternate, revision: 2)
+        await scheduler.apply(original, revision: 3)
+        await awaitCondition { await sink.replayedContexts.count == 1 }
+        #expect(await sink.replayedContexts.map(\.planRevision) == [3])
+        #expect(await source.calls == 1)
+
+        await scheduler.requestRefresh()
+        await awaitCondition { await sink.samples.count == 2 }
+        #expect(await sink.samples.map { $0.context?.planRevision } == [1, 3])
+        #expect(await scheduler.startedQueryCount == 2)
+        await scheduler.apply(.paused)
+    }
+
+    @Test func reversedABAPlanDeliveryRunsPendingRefreshWithNewestLease() async {
+        let gate = runningGate()
+        let clock = ManualMonotonicClock()
+        let source = AuxiliaryIntSource(blockFirst: true)
+        let sink = AuxiliaryIntSink(admission: gate)
+        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
+            admission: gate, axis: .storageMetadata)
+        let original = CollectionSchedule.running(.seconds(60))
+        let alternate = CollectionSchedule.running(.seconds(30))
+
+        gate.setPlan(original, revision: 1, for: .storageMetadata)
+        await scheduler.apply(original, revision: 1)
+        await awaitCondition { await source.calls == 1 }
+        gate.setPlan(alternate, revision: 2, for: .storageMetadata)
+        gate.setPlan(original, revision: 3, for: .storageMetadata)
+        await scheduler.apply(original, revision: 3)
+        await scheduler.apply(alternate, revision: 2)
+        await scheduler.apply(original, revision: 3)
+        #expect(await scheduler.startedQueryCount == 1)
+        await source.releaseFirst()
+        await awaitCondition { await sink.samples.count == 1 }
+        #expect(await source.contexts.map(\.planRevision) == [1, 3])
+        #expect(await sink.samples.map { $0.context?.planRevision } == [3])
+        #expect(await scheduler.startedQueryCount == 2)
+        await scheduler.apply(.paused)
+    }
+
+    @Test func allProfileIntervalsAndUnobservableSignalsMatchApprovedTable() {
+        let rows: [(RefreshProfile, Bool, Bool, [Duration])] = [
+            (.fast, false, true, [.milliseconds(500), .seconds(1), .seconds(30)]),
+            (.fast, false, false, [.seconds(1), .seconds(5), .seconds(60)]),
+            (.standard, false, true, [.seconds(1), .seconds(2), .seconds(30)]),
+            (.standard, false, false, [.seconds(2), .seconds(5), .seconds(60)]),
+            (.energySaving, false, true, [.seconds(2), .seconds(4), .seconds(30)]),
+            (.energySaving, false, false, [.seconds(5), .seconds(8), .seconds(60)]),
+            (.maximumEnergySaving, false, true, [.seconds(5), .seconds(5), .seconds(30)]),
+            (.maximumEnergySaving, false, false, [.seconds(10), .seconds(10), .seconds(60)]),
+            (.fast, true, true, [.seconds(2), .seconds(4), .seconds(60)]),
+            (.fast, true, false, [.seconds(5), .seconds(10), .seconds(120)]),
+            (.standard, true, true, [.seconds(2), .seconds(4), .seconds(60)]),
+            (.standard, true, false, [.seconds(5), .seconds(10), .seconds(120)]),
+            (.energySaving, true, true, [.seconds(2), .seconds(4), .seconds(60)]),
+            (.energySaving, true, false, [.seconds(5), .seconds(10), .seconds(120)]),
+            (.maximumEnergySaving, true, true, [.seconds(5), .seconds(5), .seconds(60)]),
+            (.maximumEnergySaving, true, false, [.seconds(10), .seconds(10), .seconds(120)])
+        ]
+        let axes: [CollectionAxis] = [.systemMetrics, .processSurvey, .networkActivity,
+            .diskActivity, .networkMetadata, .storageMetadata]
+        for (profile, lowPower, presented, expected) in rows {
+            for lock in [ScreenLockState.unlocked, .locked, .unknown] {
+                for displayAsleep in [false, true] {
+                    for sessionActive in [false, true] {
+                        for systemAsleep in [false, true] {
+                            let lifecycle = MonitoringLifecycle(popoverPresented: presented,
+                                lowPowerMode: lowPower, screenLockState: lock,
+                                displayAsleep: displayAsleep, sessionActive: sessionActive,
+                                systemAsleep: systemAsleep)
+                            let plan = CollectionSchedulePolicy.plan(for: lifecycle,
+                                definition: .profile(profile))
+                            let observable = lock == .unlocked && !displayAsleep && sessionActive && !systemAsleep
+                            for (index, axis) in axes.enumerated() {
+                                let column = index == 1 ? expected[1] : index >= 4 ? expected[2] : expected[0]
+                                #expect(plan[axis] == (observable ? .running(column) : .paused))
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Test func allSixAxisSchedulesMatchTheApprovedTable() {

@@ -1,0 +1,627 @@
+diff --git a/ResourceRunner/AuxiliaryCollectionScheduler.swift b/ResourceRunner/AuxiliaryCollectionScheduler.swift
+index bb2bc12..a322754 100644
+--- a/ResourceRunner/AuxiliaryCollectionScheduler.swift
++++ b/ResourceRunner/AuxiliaryCollectionScheduler.swift
+@@ -31,6 +31,7 @@ where Sink.Value == Source.Value {
+     private var collectionEpoch = 0
+     private var timer: Task<Void, Never>?
+     private var query: Task<Void, Never>?
++    private var nextQueryID = 0
+     private var inFlight = false
+     private var pendingRefresh = false
+     private var lastQueryStartedAt: ContinuousClock.Instant?
+@@ -50,17 +51,28 @@ where Sink.Value == Source.Value {
+     func apply(_ next: CollectionSchedule, revision: Int) async {
+         guard revision >= lastRevision,
+               admission.planRevision(for: axis) == revision else { return }
+-        lastRevision = revision
+-        await apply(next)
++        await apply(next, expectedPlanRevision: revision)
+     }
+ 
+     func apply(_ next: CollectionSchedule) async {
++        await apply(next, expectedPlanRevision: nil)
++    }
++
++    private func apply(_ next: CollectionSchedule, expectedPlanRevision: Int?) async {
++        let currentPlanRevision = admission.planRevision(for: axis)
++        if let expectedPlanRevision {
++            guard expectedPlanRevision >= lastRevision,
++                  currentPlanRevision == expectedPlanRevision else { return }
++            lastRevision = expectedPlanRevision
++        }
++        if schedule == next && collectionEpoch == admission.currentBoundary.epoch &&
++            admittedPlanRevision == currentPlanRevision { return }
+         generation += 1
+         let localGeneration = generation
+         schedule = next
+         collectionEpoch = admission.currentBoundary.epoch
+         admittedGeneration = admission.advance(axis)
+-        admittedPlanRevision = admission.planRevision(for: axis)
++        admittedPlanRevision = currentPlanRevision
+ #if DEBUG
+         let debugAxis = String(describing: axis)
+         let debugSchedule = String(describing: next)
+@@ -126,6 +138,8 @@ where Sink.Value == Source.Value {
+         guard expected == generation else { return }
+         // 대기 중 병합 요청으로 이미 이 deadline 이후 조회가 시작됐으면 보충하지 않습니다.
+         if let lastQueryStartedAt, lastQueryStartedAt >= deadline { return }
++        // 타이머 tick은 실행 중인 native 조회를 끝낸 뒤 소급 실행하지 않습니다.
++        if inFlight { return }
+         pendingRefresh = true
+         startIfPossible(at: now)
+     }
+@@ -139,6 +153,8 @@ where Sink.Value == Source.Value {
+         inFlight = true
+         lastQueryStartedAt = timestamp
+         startedQueryCount += 1
++        nextQueryID += 1
++        let queryID = nextQueryID
+ #if DEBUG
+         let debugAxis = String(describing: axis)
+         let debugCount = startedQueryCount
+@@ -149,12 +165,13 @@ where Sink.Value == Source.Value {
+             do { value = try await source.sample(context: context) }
+             catch { value = nil }
+             let timestamp = await clock.now()
+-            await self?.finish(value, context: context, timestamp: timestamp)
++            await self?.finish(value, queryID: queryID, context: context, timestamp: timestamp)
+         }
+     }
+ 
+-    private func finish(_ value: Source.Value?, context: CollectionRunContext,
++    private func finish(_ value: Source.Value?, queryID: Int, context: CollectionRunContext,
+                         timestamp: ContinuousClock.Instant) async {
++        guard queryID == nextQueryID else { return }
+         defer {
+             inFlight = false
+             query = nil
+diff --git a/ResourceRunner/MonitoringScheduler.swift b/ResourceRunner/MonitoringScheduler.swift
+index edd6ad5..7918887 100644
+--- a/ResourceRunner/MonitoringScheduler.swift
++++ b/ResourceRunner/MonitoringScheduler.swift
+@@ -29,7 +29,7 @@ struct SystemMonotonicClock: MonotonicClock {
+     }
+ }
+ 
+-/// 한 tick의 샘플을 비동기로 반환하고 취소를 따르는 계약.
++/// 한 tick의 샘플을 비동기로 반환하는 계약. 취소를 무시하는 native 조회도 scheduler가 완료까지 기다립니다.
+ /// 공급자 실패(`throw`)는 `MonitoringScheduler`가 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
+ nonisolated protocol ScheduledSampleSource: Sendable {
+     associatedtype Value: Sendable
+@@ -75,9 +75,9 @@ nonisolated enum MonitoringSchedulerDebugLog {
+ }
+ #endif
+ 
+-/// 적용 일정, 단일 Task와 generation별 실행을 직렬화하는 actor.
++/// 적용 일정, 타이머와 실제 조회 실행권을 축별로 직렬화하는 actor.
+ /// 일정·취소·generation을 소유하고, 공유 admission의 실행권을 source와 sink에 전달합니다.
+-/// `apply(_:)` 호출마다 기존 작업을 취소하고 새 generation 하나만 시작하며,
++/// 달라진 일정은 기존 타이머를 취소하고 새 generation 하나만 시작하며,
+ /// interval은 마지막 실행 완료 시점이 아니라 기준 deadline을 전진시켜 계산합니다.
+ actor MonitoringScheduler<
+     Clock: MonotonicClock,
+@@ -92,7 +92,11 @@ actor MonitoringScheduler<
+     private var lastRevision = -1
+ 
+     private var task: Task<Void, Never>?
++    private var query: Task<Void, Never>?
++    private(set) var inFlight = false
++    private var nextQueryID = 0
+     private var appliedSchedule: CollectionSchedule?
++    private var appliedPlanRevision: Int?
+     private(set) var collectionEpoch = 0
+ 
+     /// `apply(_:)`가 새 작업을 시작할 때만 전진하는 세대 번호.
+@@ -129,17 +133,31 @@ actor MonitoringScheduler<
+         guard revision >= lastRevision else { return }
+         if let admission, let axis,
+            admission.planRevision(for: axis) != revision { return }
+-        lastRevision = revision
+-        await apply(schedule)
++        await apply(schedule, expectedPlanRevision: revision)
+     }
+ 
+     /// 계산된 일정을 적용합니다.
+     /// `paused`는 실행 중인 작업만 취소하고 쌓인 이력을 그대로 둡니다.
+-    /// `running(interval)`은 새 generation 하나로 시작하며,
++    /// 달라진 `running(interval)`은 새 generation 하나로 시작하며,
+     /// 이전 generation의 실행 결과나 취소·공급자 실패는 저장하지 않습니다.
+     /// 일정이 바뀌어도 저장 대상의 용량은 건드리지 않습니다 — 주기로 용량을 다시 잡으면
+     /// 주기가 느려지는 순간 이미 쌓인 최근 10분 이력의 일부가 사라지기 때문입니다.
+     func apply(_ schedule: CollectionSchedule) async {
++        await apply(schedule, expectedPlanRevision: nil)
++    }
++
++    private func apply(_ schedule: CollectionSchedule, expectedPlanRevision: Int?) async {
++        let currentPlanRevision: Int? = if let admission, let axis {
++            admission.planRevision(for: axis)
++        } else { nil }
++        if let expectedPlanRevision {
++            guard expectedPlanRevision >= lastRevision else { return }
++            if admission != nil, currentPlanRevision != expectedPlanRevision { return }
++            lastRevision = expectedPlanRevision
++        }
++        if appliedSchedule == schedule &&
++            (admission == nil || (collectionEpoch == admission?.currentBoundary.epoch &&
++                                  appliedPlanRevision == currentPlanRevision)) { return }
+         applyCallCount += 1
+ 
+         // 공유 admission이 없는 기존 직접 호출 경로만 자체 epoch를 관리합니다.
+@@ -148,9 +166,11 @@ actor MonitoringScheduler<
+         }
+         if let admission { collectionEpoch = admission.currentBoundary.epoch }
+         appliedSchedule = schedule
++        appliedPlanRevision = currentPlanRevision
+ 
+         task?.cancel()
+         task = nil
++        query?.cancel()
+         // generation은 취소와 같은 동기 구간에서 즉시 전진시킵니다. 뒤에 오는 `await clock.now()`
+         // 같은 suspension 지점 이후로 미루면, 그 구간에서 이전 세대 작업이 이미 취소 확인을 통과해 두고
+         // actor 차례를 기다리던 `appendIfCurrentGeneration` 호출이 끼어들었을 때 아직 갱신 전인
+@@ -184,10 +204,6 @@ actor MonitoringScheduler<
+             let currentGeneration = generation
+             let currentCollectionEpoch = collectionEpoch
+             let clock = clock
+-            let source = source
+-            let sink = sink
+-            let admission = admission
+-            let axis = axis
+             let expectedAdmissionGeneration = admittedGeneration
+             let expectedPlanRevision = admittedPlanRevision
+             // 기준 deadline은 apply(_:)가 실행되는 이 시점에 고정합니다. Task 본문 안에서 다시 now()를
+@@ -215,36 +231,57 @@ actor MonitoringScheduler<
+                     if Task.isCancelled { return }
+ 
+                     let timestamp = await clock.now()
+-                    let context: CollectionRunContext? = if let admission, let axis,
+-                        let expectedAdmissionGeneration, let expectedPlanRevision {
+-                        admission.issue(axis, expectedEpoch: currentCollectionEpoch,
+-                            expectedGeneration: expectedAdmissionGeneration,
+-                            expectedPlanRevision: expectedPlanRevision)
+-                    } else { nil }
+-                    if admission != nil && context == nil { continue }
+-                    let value: Source.Value?
+-                    do {
+-                        if let context { value = try await source.sample(context: context) }
+-                        else { value = try await source.sample(collectionEpoch: currentCollectionEpoch) }
+-                    } catch {
+-                        // 공급자 실패는 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
+-                        continue
+-                    }
+-                    guard let value else { continue }
+-                    if Task.isCancelled { return }
+-
+                     guard let self else { return }
+-                    await self.appendIfCurrentGeneration(
+-                        currentGeneration,
+-                        sample: TimestampedSample(timestamp: timestamp, value: value,
+-                            collectionEpoch: currentCollectionEpoch, context: context),
+-                        context: context, into: sink
+-                    )
++                    await self.startQueryIfPossible(generation: currentGeneration,
++                        epoch: currentCollectionEpoch, admissionGeneration: expectedAdmissionGeneration,
++                        planRevision: expectedPlanRevision, timestamp: timestamp)
++                    // 원래 기준 격자를 유지하되 이미 지난 tick은 보충하지 않습니다.
++                    while deadline.advanced(by: interval) <= timestamp {
++                        deadline = deadline.advanced(by: interval)
++                    }
+                 }
+             }
+         }
+     }
+ 
++    private func startQueryIfPossible(generation expected: Int, epoch: Int,
++                                      admissionGeneration: Int?, planRevision: Int?,
++                                      timestamp: ContinuousClock.Instant) {
++        guard expected == generation, !inFlight, case .running = appliedSchedule else { return }
++        let context: CollectionRunContext? = if let admission, let axis,
++            let admissionGeneration, let planRevision {
++            admission.issue(axis, expectedEpoch: epoch,
++                expectedGeneration: admissionGeneration, expectedPlanRevision: planRevision)
++        } else { nil }
++        if admission != nil && context == nil { return }
++        inFlight = true
++        nextQueryID += 1
++        let queryID = nextQueryID
++        query = Task { [weak self, source] in
++            let value: Source.Value?
++            do {
++                if let context { value = try await source.sample(context: context) }
++                else { value = try await source.sample(collectionEpoch: epoch) }
++            } catch { value = nil }
++            await self?.finishQuery(queryID, generation: expected, epoch: epoch,
++                value: value, timestamp: timestamp, context: context)
++        }
++    }
++
++    private func finishQuery(_ queryID: Int, generation expected: Int, epoch: Int,
++                             value: Source.Value?, timestamp: ContinuousClock.Instant,
++                             context: CollectionRunContext?) async {
++        guard queryID == nextQueryID else { return }
++        defer {
++            inFlight = false
++            query = nil
++        }
++        guard let value, expected == generation else { return }
++        await appendIfCurrentGeneration(expected,
++            sample: TimestampedSample(timestamp: timestamp, value: value,
++                collectionEpoch: epoch, context: context), context: context, into: sink)
++    }
++
+     /// 이전 generation인 실행 결과는 저장하지 않습니다.
+     private func appendIfCurrentGeneration(
+         _ resultGeneration: Int,
+diff --git a/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift b/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift
+index 86d10ca..951d513 100644
+--- a/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift
++++ b/ResourceRunnerTests/AuxiliaryCollectionSchedulerTests.swift
+@@ -6,15 +6,22 @@ private actor AuxiliaryIntSource: ScheduledSampleSource {
+     private let blockFirst: Bool
+     private var first: CheckedContinuation<Void, Never>?
+     private(set) var calls = 0
++    private(set) var contexts: [CollectionRunContext] = []
+ 
+     init(blockFirst: Bool = false) { self.blockFirst = blockFirst }
+ 
+     func sample(collectionEpoch: Int) async -> Int? {
+         calls += 1
++        let call = calls
+         if blockFirst && calls == 1 {
+             await withCheckedContinuation { first = $0 }
+         }
+-        return calls
++        return call
++    }
++
++    func sample(context: CollectionRunContext) async -> Int? {
++        contexts.append(context)
++        return await sample(collectionEpoch: context.epoch)
+     }
+ 
+     func releaseFirst() {
+@@ -26,6 +33,7 @@ private actor AuxiliaryIntSource: ScheduledSampleSource {
+ private actor AuxiliaryIntSink: MonitoringSampleSink {
+     private let admission: CollectionAdmission
+     private(set) var samples: [TimestampedSample<Int>] = []
++    private(set) var replayedContexts: [CollectionRunContext] = []
+ 
+     init(admission: CollectionAdmission) { self.admission = admission }
+ 
+@@ -36,6 +44,11 @@ private actor AuxiliaryIntSink: MonitoringSampleSink {
+             return true
+         } ?? false
+     }
++    func replayCached(_ sample: TimestampedSample<Int>, context: CollectionRunContext) async -> Bool {
++        guard admission.isCurrent(context) else { return false }
++        replayedContexts.append(context)
++        return true
++    }
+ }
+ 
+ private actor AxisScheduleRecorder: CollectionScheduleTarget {
+@@ -57,6 +70,109 @@ struct AuxiliaryCollectionSchedulerTests {
+         return gate
+     }
+ 
++    @Test func reversedABAPlanDeliveryRebindsCacheAndRefresh() async {
++        let gate = runningGate()
++        let clock = ManualMonotonicClock()
++        let source = AuxiliaryIntSource()
++        let sink = AuxiliaryIntSink(admission: gate)
++        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
++            admission: gate, axis: .networkMetadata)
++        let original = CollectionSchedule.running(.seconds(60))
++        let alternate = CollectionSchedule.running(.seconds(30))
++
++        gate.setPlan(original, revision: 1, for: .networkMetadata)
++        await scheduler.apply(original, revision: 1)
++        await awaitCondition { await sink.samples.count == 1 }
++        #expect(await sink.samples.first?.context?.planRevision == 1)
++
++        // B의 target 전달만 지연시키고 C를 먼저 적용합니다.
++        gate.setPlan(alternate, revision: 2, for: .networkMetadata)
++        gate.setPlan(original, revision: 3, for: .networkMetadata)
++        await scheduler.apply(original, revision: 3)
++        await scheduler.apply(alternate, revision: 2)
++        await scheduler.apply(original, revision: 3)
++        await awaitCondition { await sink.replayedContexts.count == 1 }
++        #expect(await sink.replayedContexts.map(\.planRevision) == [3])
++        #expect(await source.calls == 1)
++
++        await scheduler.requestRefresh()
++        await awaitCondition { await sink.samples.count == 2 }
++        #expect(await sink.samples.map { $0.context?.planRevision } == [1, 3])
++        #expect(await scheduler.startedQueryCount == 2)
++        await scheduler.apply(.paused)
++    }
++
++    @Test func reversedABAPlanDeliveryRunsPendingRefreshWithNewestLease() async {
++        let gate = runningGate()
++        let clock = ManualMonotonicClock()
++        let source = AuxiliaryIntSource(blockFirst: true)
++        let sink = AuxiliaryIntSink(admission: gate)
++        let scheduler = AuxiliaryCollectionScheduler(clock: clock, source: source, sink: sink,
++            admission: gate, axis: .storageMetadata)
++        let original = CollectionSchedule.running(.seconds(60))
++        let alternate = CollectionSchedule.running(.seconds(30))
++
++        gate.setPlan(original, revision: 1, for: .storageMetadata)
++        await scheduler.apply(original, revision: 1)
++        await awaitCondition { await source.calls == 1 }
++        gate.setPlan(alternate, revision: 2, for: .storageMetadata)
++        gate.setPlan(original, revision: 3, for: .storageMetadata)
++        await scheduler.apply(original, revision: 3)
++        await scheduler.apply(alternate, revision: 2)
++        await scheduler.apply(original, revision: 3)
++        #expect(await scheduler.startedQueryCount == 1)
++        await source.releaseFirst()
++        await awaitCondition { await sink.samples.count == 1 }
++        #expect(await source.contexts.map(\.planRevision) == [1, 3])
++        #expect(await sink.samples.map { $0.context?.planRevision } == [3])
++        #expect(await scheduler.startedQueryCount == 2)
++        await scheduler.apply(.paused)
++    }
++
++    @Test func allProfileIntervalsAndUnobservableSignalsMatchApprovedTable() {
++        let rows: [(RefreshProfile, Bool, Bool, [Duration])] = [
++            (.fast, false, true, [.milliseconds(500), .seconds(1), .seconds(30)]),
++            (.fast, false, false, [.seconds(1), .seconds(5), .seconds(60)]),
++            (.standard, false, true, [.seconds(1), .seconds(2), .seconds(30)]),
++            (.standard, false, false, [.seconds(2), .seconds(5), .seconds(60)]),
++            (.energySaving, false, true, [.seconds(2), .seconds(4), .seconds(30)]),
++            (.energySaving, false, false, [.seconds(5), .seconds(8), .seconds(60)]),
++            (.maximumEnergySaving, false, true, [.seconds(5), .seconds(5), .seconds(30)]),
++            (.maximumEnergySaving, false, false, [.seconds(10), .seconds(10), .seconds(60)]),
++            (.fast, true, true, [.seconds(2), .seconds(4), .seconds(60)]),
++            (.fast, true, false, [.seconds(5), .seconds(10), .seconds(120)]),
++            (.standard, true, true, [.seconds(2), .seconds(4), .seconds(60)]),
++            (.standard, true, false, [.seconds(5), .seconds(10), .seconds(120)]),
++            (.energySaving, true, true, [.seconds(2), .seconds(4), .seconds(60)]),
++            (.energySaving, true, false, [.seconds(5), .seconds(10), .seconds(120)]),
++            (.maximumEnergySaving, true, true, [.seconds(5), .seconds(5), .seconds(60)]),
++            (.maximumEnergySaving, true, false, [.seconds(10), .seconds(10), .seconds(120)])
++        ]
++        let axes: [CollectionAxis] = [.systemMetrics, .processSurvey, .networkActivity,
++            .diskActivity, .networkMetadata, .storageMetadata]
++        for (profile, lowPower, presented, expected) in rows {
++            for lock in [ScreenLockState.unlocked, .locked, .unknown] {
++                for displayAsleep in [false, true] {
++                    for sessionActive in [false, true] {
++                        for systemAsleep in [false, true] {
++                            let lifecycle = MonitoringLifecycle(popoverPresented: presented,
++                                lowPowerMode: lowPower, screenLockState: lock,
++                                displayAsleep: displayAsleep, sessionActive: sessionActive,
++                                systemAsleep: systemAsleep)
++                            let plan = CollectionSchedulePolicy.plan(for: lifecycle,
++                                definition: .profile(profile))
++                            let observable = lock == .unlocked && !displayAsleep && sessionActive && !systemAsleep
++                            for (index, axis) in axes.enumerated() {
++                                let column = index == 1 ? expected[1] : index >= 4 ? expected[2] : expected[0]
++                                #expect(plan[axis] == (observable ? .running(column) : .paused))
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    }
++
+     @Test func allSixAxisSchedulesMatchTheApprovedTable() {
+         let expected: [(Bool, Bool, [Duration])] = [
+             (false, true, [.seconds(1), .seconds(2), .seconds(1), .seconds(1), .seconds(30), .seconds(30)]),
+diff --git a/ResourceRunnerTests/MonitoringLifecycleTests.swift b/ResourceRunnerTests/MonitoringLifecycleTests.swift
+index c009f5c..35cae6b 100644
+--- a/ResourceRunnerTests/MonitoringLifecycleTests.swift
++++ b/ResourceRunnerTests/MonitoringLifecycleTests.swift
+@@ -644,7 +644,153 @@ struct MonitoringLifecycleStoreTests {
+ /// resume 시 놓친 실행 미따라잡기, 취소·이전 generation·공급자 실패가
+ /// 0 샘플로 바뀌지 않음을 검증합니다.
+ /// 주기 변경이 이력 용량을 건드리지 않는다는 것은 저장소 쪽 `MonitoringSampleStoreTests`가 고정합니다.
++private actor LeaseCountingSource: ScheduledSampleSource {
++    private(set) var calls = 0
++    func sample(collectionEpoch: Int) -> Int? {
++        calls += 1
++        return calls
++    }
++}
++
++private actor ProfileHeldSource: ScheduledSampleSource {
++    private var first: CheckedContinuation<Void, Never>?
++    private(set) var contexts: [CollectionRunContext] = []
++    func sample(collectionEpoch: Int) -> Int? { nil }
++    func sample(context: CollectionRunContext) async -> Int? {
++        contexts.append(context)
++        let call = contexts.count
++        if call == 1 { await withCheckedContinuation { first = $0 } }
++        return call
++    }
++    func releaseFirst() {
++        first?.resume()
++        first = nil
++    }
++}
++
++private actor WaitingLeaseSink: MonitoringSampleSink {
++    private var continuation: CheckedContinuation<Void, Never>?
++    private(set) var entered = false
++    private(set) var values: [Int] = []
++
++    func append(_ sample: TimestampedSample<Int>) async {
++        if values.isEmpty {
++            entered = true
++            await withCheckedContinuation { continuation = $0 }
++        }
++        values.append(sample.value)
++    }
++
++    func release() {
++        continuation?.resume()
++        continuation = nil
++    }
++}
++
+ struct MonitoringSchedulerTests {
++    @Test func reversedABAPlanDeliveryRebindsSameFastSchedule() async {
++        let clock = ManualMonotonicClock()
++        let admission = CollectionAdmission()
++        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
++        let source = ProfileHeldSource()
++        let sink = MemorySampleSink<Int>()
++        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink,
++            admission: admission, axis: .systemMetrics)
++        let original = CollectionSchedule.running(.seconds(1))
++        let alternate = CollectionSchedule.running(.seconds(2))
++
++        admission.setPlan(original, revision: 1, for: .systemMetrics)
++        await scheduler.apply(original, revision: 1)
++        await Task.yield()
++        await clock.advance(by: .seconds(1))
++        await waitUntil { await source.contexts.count == 1 }
++        #expect(await source.contexts.first?.planRevision == 1)
++
++        // B의 target 전달만 지연시키고 C를 먼저 적용합니다.
++        admission.setPlan(alternate, revision: 2, for: .systemMetrics)
++        admission.setPlan(original, revision: 3, for: .systemMetrics)
++        await scheduler.apply(original, revision: 3)
++        await scheduler.apply(alternate, revision: 2)
++        await scheduler.apply(original, revision: 3)
++        #expect(await scheduler.applyCallCount == 2)
++        #expect(await scheduler.generation == 2)
++        await source.releaseFirst()
++        await waitUntil { await !scheduler.inFlight }
++        await clock.advance(by: .seconds(1))
++        await waitUntil { await source.contexts.count == 2 }
++        #expect(await source.contexts.last?.planRevision == 3)
++        #expect(await source.contexts.last?.interval == .seconds(1))
++        await waitUntil { await !scheduler.inFlight }
++        #expect(await sink.values == [2])
++        await scheduler.apply(.paused)
++    }
++
++    @Test func rapidProfileChangesKeepLatestPlanAndOneActualSource() async {
++        let clock = ManualMonotonicClock()
++        let admission = CollectionAdmission()
++        let source = ProfileHeldSource()
++        let sink = MemorySampleSink<Int>()
++        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink,
++            admission: admission, axis: .systemMetrics)
++        let ranking = MonitoringScheduler(clock: clock,
++            source: MemoryScheduledSampleSource(outcomes: []), sink: MemorySampleSink<Int>(),
++            admission: admission, axis: .processSurvey)
++        let lifecycle = MonitoringLifecycleStore(definition: .m3,
++            systemMetricsTarget: scheduler, processSurveyTarget: ranking,
++            initialProfile: .fast, admission: admission)
++
++        await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: 0)))
++        await clock.advance(by: .seconds(1))
++        await waitUntil { await source.contexts.count == 1 }
++        let first = await source.contexts[0]
++        let boundary = admission.currentBoundary
++        await lifecycle.update(.preferenceProfile(.maximumEnergySaving, revision: 1))
++        await lifecycle.update(.preferenceProfile(.energySaving, revision: 2))
++        await lifecycle.update(.preferenceProfile(.fast, revision: 3))
++        await lifecycle.update(.preferenceProfile(.maximumEnergySaving, revision: 2))
++        #expect(admission.currentBoundary == boundary)
++        #expect(!admission.isCurrent(first))
++        await clock.advance(by: .seconds(10))
++        // 깨운 tick이 inFlight를 확인하도록 actor 차례를 넘긴 뒤 첫 조회를 종료합니다.
++        for _ in 0..<100 { await Task.yield() }
++        #expect(await source.contexts.count == 1)
++        await source.releaseFirst()
++        await waitUntil { await !scheduler.inFlight }
++        #expect(await source.contexts.count == 1)
++        await clock.advance(by: .seconds(1))
++        await waitUntil { await source.contexts.count == 2 }
++        let second = await source.contexts[1]
++        #expect(second.interval == .seconds(1))
++        #expect(second.planRevision == admission.planRevision(for: .systemMetrics))
++        await waitUntil { await !scheduler.inFlight }
++        #expect(await !scheduler.inFlight)
++        #expect(await sink.values == [2])
++        await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: 1,
++            screenLockState: .locked)))
++    }
++    @Test func waitingSinkHoldsQueryLeaseAcrossSeveralTimerTicks() async {
++        let clock = ManualMonotonicClock()
++        let source = LeaseCountingSource()
++        let sink = WaitingLeaseSink()
++        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
++
++        await scheduler.apply(.running(.seconds(1)))
++        await clock.advance(by: .seconds(1))
++        await waitUntil { await sink.entered }
++        #expect(await scheduler.inFlight)
++        await clock.advance(by: .seconds(5))
++        #expect(await source.calls == 1)
++        await sink.release()
++        await waitUntil { await !scheduler.inFlight }
++        #expect(await sink.values == [1])
++        #expect(await source.calls == 1)
++        await clock.advance(by: .seconds(1))
++        await waitUntil { await source.calls == 2 }
++        await waitUntil { await !scheduler.inFlight }
++        #expect(await !scheduler.inFlight)
++        #expect(await sink.values == [1, 2])
++        await scheduler.apply(.paused)
++    }
+ 
+     @Test func collectionEpochAdvancesOnlyOnRunningToPausedTransition() async {
+         let scheduler = MonitoringScheduler(
+@@ -709,15 +855,14 @@ struct MonitoringSchedulerTests {
+ 
+         await scheduler.apply(.running(.seconds(1)))
+         await clock.advance(by: .seconds(1))
++        #expect(await source.epochs == [0])
++        await source.finishFirstCall()
++        await waitUntil { await !scheduler.inFlight }
++        await clock.advance(by: .seconds(1))
+         await waitUntil { await sink.samples.count == 1 }
+         #expect(await source.epochs == [0, 1])
+         #expect(await sink.samples.map(\.collectionEpoch) == [1])
+         #expect(await sink.values == [2])
+-
+-        await source.finishFirstCall()
+-        await waitUntil { await source.firstCallFinished }
+-        #expect(await sink.samples.map(\.collectionEpoch) == [1])
+-        #expect(await sink.values == [2])
+     }
+ 
+     @Test func runningScheduleAppendsOneSamplePerTickUsingAnchoredDeadline() async {
+@@ -851,9 +996,9 @@ struct MonitoringSchedulerTests {
+ 
+         await scheduler.apply(.running(.seconds(1)))
+         // 아직 deadline(1초)에 도달하기 전에 곧바로 다음 세대로 교체합니다.
+-        await scheduler.apply(.running(.seconds(1)))
++        await scheduler.apply(.running(.seconds(2)))
+ 
+-        await clock.advance(by: .seconds(1))
++        await clock.advance(by: .seconds(2))
+         await waitUntil { await sink.samples.count >= 1 }
+ 
+         // 이전 generation의 결과는 저장되지 않고, 살아있는 새 generation의 결과만 하나 저장됩니다.
+@@ -900,12 +1045,8 @@ struct MonitoringSchedulerTests {
+         #expect(await sink.values == [1]) // 직전 성공값을 재사용한 추가 샘플이 없어야 함
+     }
+ 
+-    @Test func repeatedApplyWithSameScheduleWouldRestartWork() async {
+-        // MonitoringScheduler.apply(_:) 자체는 호출될 때마다 항상 작업을 재시작합니다.
+-        // 「같은 일정 반복에도 중복 수집이 없다」는 보장은 MonitoringLifecycleStore가
+-        // 같은 결과일 때 apply를 다시 호출하지 않는 데서 나오지, Scheduler 내부에서 막는 것이 아닙니다.
+-        // 이 테스트는 그 경계를 고정합니다: Scheduler에 같은 일정을 두 번 apply하면
+-        // applyCallCount가 그대로 2가 되어야 합니다(Scheduler가 스스로 중복을 걸러내지 않음).
++    @Test func repeatedApplyWithSameScheduleDoesNotRestartWork() async {
++        // 같은 계획의 직접 재적용도 기존 타이머와 조회 실행권을 유지합니다.
+         let clock = ManualMonotonicClock()
+         let sink = MemorySampleSink<Int>()
+         let source = MemoryScheduledSampleSource(outcomes: [.success(1)])
+@@ -914,7 +1055,7 @@ struct MonitoringSchedulerTests {
+         await scheduler.apply(.running(.seconds(1)))
+         await scheduler.apply(.running(.seconds(1)))
+ 
+-        #expect(await scheduler.applyCallCount == 2)
++        #expect(await scheduler.applyCallCount == 1)
+     }
+ }
+ 

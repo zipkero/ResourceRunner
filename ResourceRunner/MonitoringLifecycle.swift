@@ -40,6 +40,7 @@ nonisolated struct MonitoringLifecycle: Sendable, Equatable {
 nonisolated enum MonitoringLifecycleEvent: Sendable {
     case popoverPresented(Bool)
     case systemSnapshot(SystemLifecycleSnapshot)
+    case preferenceProfile(RefreshProfile, revision: UInt64)
 }
 
 /// `CollectionSchedulePolicy`가 계산하는 결과. `MonitoringScheduler.apply(_:)`의 입력이기도 합니다.
@@ -150,6 +151,35 @@ nonisolated struct CollectionScheduleDefinition: Sendable, Equatable {
         storageMetadata: AxisIntervals(normalPresented: .seconds(30), normalDismissed: .seconds(60),
                                        lowPowerPresented: .seconds(60), lowPowerDismissed: .seconds(120))
     )
+
+    static func profile(_ profile: RefreshProfile) -> CollectionScheduleDefinition {
+        let fast: (Duration, Duration)
+        let ranking: (Duration, Duration)
+        switch profile {
+        case .fast:
+            fast = (.milliseconds(500), .seconds(1))
+            ranking = (.seconds(1), .seconds(5))
+        case .standard:
+            fast = (.seconds(1), .seconds(2))
+            ranking = (.seconds(2), .seconds(5))
+        case .energySaving:
+            fast = (.seconds(2), .seconds(5))
+            ranking = (.seconds(4), .seconds(8))
+        case .maximumEnergySaving:
+            fast = (.seconds(5), .seconds(10))
+            ranking = (.seconds(5), .seconds(10))
+        }
+        let fastIntervals = AxisIntervals(normalPresented: fast.0, normalDismissed: fast.1,
+            lowPowerPresented: max(fast.0, .seconds(2)),
+            lowPowerDismissed: max(fast.1, .seconds(5)))
+        let rankingIntervals = AxisIntervals(normalPresented: ranking.0, normalDismissed: ranking.1,
+            lowPowerPresented: max(ranking.0, .seconds(4)),
+            lowPowerDismissed: max(ranking.1, .seconds(10)))
+        return CollectionScheduleDefinition(systemMetrics: fastIntervals,
+            processSurvey: rankingIntervals, networkActivity: fastIntervals,
+            diskActivity: fastIntervals, networkMetadata: m3.networkMetadata,
+            storageMetadata: m3.storageMetadata)
+    }
 }
 
 /// 일정 정의와 최종 snapshot에서 여섯 축의 일정을 함께 계산하는 순수 정책.
@@ -210,6 +240,8 @@ nonisolated extension CollectionScheduleTarget {
 /// `apply(_:)`를 호출해 중복 수집과 불필요한 재시작을 막습니다.
 actor MonitoringLifecycleStore {
     private let definition: CollectionScheduleDefinition
+    private var profile: RefreshProfile?
+    private var lastPreferenceRevision: UInt64?
     private let systemMetricsTarget: any CollectionScheduleTarget
     private let processSurveyTarget: any CollectionScheduleTarget
     private let networkActivityTarget: (any CollectionScheduleTarget)?
@@ -248,9 +280,12 @@ actor MonitoringLifecycleStore {
         diskActivityTarget: (any CollectionScheduleTarget)? = nil,
         networkMetadataTarget: (any AuxiliaryCollectionTarget)? = nil,
         storageMetadataTarget: (any AuxiliaryCollectionTarget)? = nil,
+        initialProfile: RefreshProfile? = nil,
         admission: CollectionAdmission = CollectionAdmission()
     ) {
         self.definition = definition
+        self.profile = initialProfile
+        self.lastPreferenceRevision = initialProfile == nil ? nil : 0
         self.systemMetricsTarget = systemMetricsTarget
         self.processSurveyTarget = processSurveyTarget
         self.networkActivityTarget = networkActivityTarget
@@ -302,9 +337,14 @@ actor MonitoringLifecycleStore {
                 sessionActive: snapshot.sessionActive,
                 systemAsleep: snapshot.systemAsleep
             )
+        case .preferenceProfile(let next, let revision):
+            if let lastPreferenceRevision, revision <= lastPreferenceRevision { return }
+            lastPreferenceRevision = revision
+            profile = next
         }
 
-        let plan = CollectionSchedulePolicy.plan(for: lifecycle, definition: definition)
+        let plan = CollectionSchedulePolicy.plan(for: lifecycle,
+            definition: profile.map(CollectionScheduleDefinition.profile) ?? definition)
         let previousPlan = lastAppliedPlan
         let stopped = plan.systemMetrics == .paused
         let changedStop = previousPlan != nil && stopped != lastBoundary.stopped
@@ -343,34 +383,34 @@ actor MonitoringLifecycleStore {
         let applyStorageMetadata = storageMetadataTarget != nil &&
             (plan.storageMetadata != previousPlan?.storageMetadata || boundaryChanged)
         // actor의 첫 await 전에 축별 계획을 확정해 이전 update의 늦은 apply와 tick을 거부합니다.
-        if applySystem { admission.setPlanRevision(revisionForTargets, for: .systemMetrics) }
-        if applyProcess { admission.setPlanRevision(revisionForTargets, for: .processSurvey) }
-        if applyNetwork { admission.setPlanRevision(revisionForTargets, for: .networkActivity) }
-        if applyDisk { admission.setPlanRevision(revisionForTargets, for: .diskActivity) }
-        if applyNetworkMetadata { admission.setPlanRevision(revisionForTargets, for: .networkMetadata) }
-        if applyStorageMetadata { admission.setPlanRevision(revisionForTargets, for: .storageMetadata) }
-        if applySystem {
-            await systemMetricsTarget.apply(plan.systemMetrics, revision: revisionForTargets)
-        }
-        guard revisionForTargets == planRevision else { return }
-        if applyProcess {
-            await processSurveyTarget.apply(plan.processSurvey, revision: revisionForTargets)
-        }
-        guard revisionForTargets == planRevision else { return }
-        if applyNetwork {
-            await networkActivityTarget?.apply(plan.networkActivity, revision: revisionForTargets)
-        }
-        guard revisionForTargets == planRevision else { return }
-        if applyDisk {
-            await diskActivityTarget?.apply(plan.diskActivity, revision: revisionForTargets)
-        }
-        guard revisionForTargets == planRevision else { return }
-        if applyNetworkMetadata {
-            await networkMetadataTarget?.apply(plan.networkMetadata, revision: revisionForTargets)
-        }
-        guard revisionForTargets == planRevision else { return }
-        if applyStorageMetadata {
-            await storageMetadataTarget?.apply(plan.storageMetadata, revision: revisionForTargets)
+        if applySystem { admission.setPlan(plan.systemMetrics, revision: revisionForTargets, for: .systemMetrics) }
+        if applyProcess { admission.setPlan(plan.processSurvey, revision: revisionForTargets, for: .processSurvey) }
+        if applyNetwork { admission.setPlan(plan.networkActivity, revision: revisionForTargets, for: .networkActivity) }
+        if applyDisk { admission.setPlan(plan.diskActivity, revision: revisionForTargets, for: .diskActivity) }
+        if applyNetworkMetadata { admission.setPlan(plan.networkMetadata, revision: revisionForTargets, for: .networkMetadata) }
+        if applyStorageMetadata { admission.setPlan(plan.storageMetadata, revision: revisionForTargets, for: .storageMetadata) }
+        // 모두 첫 await 전에 예약합니다. 한 target의 지연이 다른 축의 새 계획 적용을 막지 않습니다.
+        await withTaskGroup(of: Void.self) { group in
+            if applySystem {
+                let target = systemMetricsTarget
+                group.addTask { await target.apply(plan.systemMetrics, revision: revisionForTargets) }
+            }
+            if applyProcess {
+                let target = processSurveyTarget
+                group.addTask { await target.apply(plan.processSurvey, revision: revisionForTargets) }
+            }
+            if applyNetwork, let target = networkActivityTarget {
+                group.addTask { await target.apply(plan.networkActivity, revision: revisionForTargets) }
+            }
+            if applyDisk, let target = diskActivityTarget {
+                group.addTask { await target.apply(plan.diskActivity, revision: revisionForTargets) }
+            }
+            if applyNetworkMetadata, let target = networkMetadataTarget {
+                group.addTask { await target.apply(plan.networkMetadata, revision: revisionForTargets) }
+            }
+            if applyStorageMetadata, let target = storageMetadataTarget {
+                group.addTask { await target.apply(plan.storageMetadata, revision: revisionForTargets) }
+            }
         }
     }
 }

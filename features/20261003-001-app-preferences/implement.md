@@ -30,13 +30,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.7, §5.8, §5.9, §5.13; DESIGN §1.1, §1.2, §2.1, §4.1, §4.2, §5 DP1.
   - 승인 근거: 2026-10-03 main이 독립 verifier의 approved를 확정했습니다. HEAD cf9bc683 기준 세 파일 패치·해시와 signed PreferencesStoreTests 5/5·실패/skip0의 현재 대응을 확인했습니다. [task-001 근거](./evidence/task-001/README.md). loop 구현 재시도0·근거 재검증0이며 이번 Task로 마지막 매핑이 완료되는 SPEC 조건은 없습니다.
 
-- [ ] task-002: 네 프로필 일정과 실제 단일 조회 실행권
+- [x] task-002: 네 프로필 일정과 실제 단일 조회 실행권
   - 목적: 프로필·생명주기 변경을 다음 유효 일정에 반영하고 취소를 무시하는 조회까지 축별 실행 하나로 제한합니다.
   - 접근: 선행 task-001. 출발점은 `ResourceRunner/MonitoringLifecycle.swift`, `ResourceRunner/CollectionPipelines.swift`, `ResourceRunner/MonitoringScheduler.swift`, `ResourceRunner/AuxiliaryCollectionScheduler.swift`, `ResourceRunner/CollectionAdmission.swift`입니다. 순수 프로필 정책을 주입하고 preference/system/plan revision을 분리합니다. 바뀐 축의 plan revision·interval을 첫 target await 전에 같은 admission 임계 구간에서 확정하고 context에 당시 interval `P`를 불변 값으로 넣습니다. 타이머와 실제 조회 실행권을 분리하며 최신 계획 하나·조회 ID·실제 완료까지 실행권을 유지합니다. 보조 pending refresh·캐시 재전달에도 같은 규칙을 적용합니다.
   - 검증 조건:
     - 결과: 일정 열은 `(열림 빠른 지표, 열림 순위, 닫힘 빠른 지표, 닫힘 순위, 열림 보조, 닫힘 보조)`, 단위는 초입니다. 일반은 빠름 `(0.5,1,1,5,30,60)`, 기본 `(1,2,2,5,30,60)`, 절전 `(2,4,5,8,30,60)`, 매우 절전 `(5,5,10,10,30,60)`입니다. 저전력은 빠름·기본·절전 `(2,4,5,10,60,120)`, 매우 절전 `(5,5,10,10,60,120)`입니다. 비가시 신호는 여섯 축 paused가 우선합니다. 같은 계획은 재시작하지 않고 지난 deadline을 보충하지 않습니다.
     - 확인: `ResourceRunnerTests/MonitoringLifecycleTests.swift`, `CollectionPipelinesTests.swift`, `CollectionAdmissionTests.swift`, `AuxiliaryCollectionSchedulerTests.swift`의 수동 시계·대기 source/sink 패턴으로 네 프로필×열림/닫힘×일반/저전력·모든 중지 신호를 확인합니다. 연속·역순 변경, 같은 계획 반복, 취소 무시 source, 대기 sink, 보조 refresh 병합에서 최대 실제 조회1·유효 타이머1·최신 계획·타 축 독립·stale 거부·보충 없음·revision/P 일치를 검증합니다.
   - 참조: SPEC §5.5, §5.6, §5.13; DESIGN §1.4, §2.1, §2.2, §2.3, §2.4, §4.2, §5 DP3~DP5.
+  - 승인 근거: 2026-10-03 main이 독립 재검증 approved를 확정했습니다. HEAD1647242 기준 전체9파일 소스 해시·최종 수정4파일 diff/로그가 일치하고 관련7suite50case(동적56실행)·실패/skip0입니다. A→B→A 최신 revision 누락을 수정하고 두 Scheduler의 역순 조회/캐시/pending 회귀를 확인했습니다. [task-002 근거](./evidence/task-002/README.md). 구현 재시도1·근거 재검증0; 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
 - [ ] task-003: 당시 주기의 차분·단절과 제한된10분 이력
   - 목적: 긴 정상 주기도 실제 경과 시간으로 계산하고 빠름의10분 이력을 제한된 메모리에 보존합니다.

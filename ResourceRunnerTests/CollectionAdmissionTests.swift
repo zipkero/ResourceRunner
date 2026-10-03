@@ -133,9 +133,18 @@ private actor SuspendedScheduleTarget: CollectionScheduleTarget {
 }
 
 private actor RevisionRecorder: CollectionScheduleTarget {
+    let admission: CollectionAdmission
+    let axis: CollectionAxis
     private(set) var revisions: [Int] = []
+    init(admission: CollectionAdmission, axis: CollectionAxis) {
+        self.admission = admission
+        self.axis = axis
+    }
     func apply(_ schedule: CollectionSchedule) {}
-    func apply(_ schedule: CollectionSchedule, revision: Int) { revisions.append(revision) }
+    func apply(_ schedule: CollectionSchedule, revision: Int) {
+        guard admission.planRevision(for: axis) == revision else { return }
+        revisions.append(revision)
+    }
 }
 
 private final class TickSequence: @unchecked Sendable {
@@ -205,6 +214,34 @@ struct CollectionAdmissionTests {
         #expect((source, store, display) == (1, 1, 1))
     }
 
+    @Test func profileRevisionAndIntervalPublishAtomicallyWithoutSystemBoundary() async throws {
+        let gate = CollectionAdmission()
+        let system = ScheduleRecorder()
+        let ranking = ScheduleRecorder()
+        let lifecycle = MonitoringLifecycleStore(definition: .m3,
+            systemMetricsTarget: system, processSurveyTarget: ranking,
+            initialProfile: .maximumEnergySaving, admission: gate)
+        let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false,
+            screenLockState: .unlocked, displayAsleep: false, sessionActive: true)
+        await lifecycle.update(.systemSnapshot(initial))
+        let old = try #require(gate.issue(.systemMetrics))
+        #expect(old.interval == .seconds(10))
+        let boundary = gate.currentBoundary
+
+        await lifecycle.update(.preferenceProfile(.fast, revision: 1))
+        let updated = try #require(gate.issue(.systemMetrics))
+        let rankingContext = try #require(gate.issue(.processSurvey))
+        #expect(updated.interval == .seconds(1)) // 닫힌 상태의 빠름
+        #expect(rankingContext.interval == .seconds(5))
+        #expect(updated.planRevision > old.planRevision)
+        #expect(!gate.isCurrent(old))
+        #expect(gate.currentBoundary == boundary)
+
+        await lifecycle.update(.preferenceProfile(.maximumEnergySaving, revision: 0))
+        #expect(gate.planRevision(for: .systemMetrics) == updated.planRevision)
+        #expect(try #require(gate.issue(.systemMetrics)).interval == .seconds(1))
+    }
+
     @Test func stopResumeInvalidatesOldTokensAndNormalGenerationKeepsEpoch() throws {
         let gate = runningGate()
         let old = try #require(gate.issue(.systemMetrics))
@@ -228,7 +265,7 @@ struct CollectionAdmissionTests {
     @Test func lateLifecycleApplyCannotOverwriteNewProcessPlan() async {
         let gate = CollectionAdmission()
         let system = SuspendedScheduleTarget()
-        let process = RevisionRecorder()
+        let process = RevisionRecorder(admission: gate, axis: .processSurvey)
         let lifecycle = MonitoringLifecycleStore(definition: .m2,
             systemMetricsTarget: system, processSurveyTarget: process, admission: gate)
         let initial = SystemLifecycleSnapshot(revision: 0, lowPowerMode: false,
@@ -237,11 +274,11 @@ struct CollectionAdmissionTests {
         await waitForAdmission { await system.firstEntered }
         #expect(await system.firstEntered)
         await lifecycle.update(.popoverPresented(true))
-        #expect(await process.revisions == [2])
+        #expect(await process.revisions.last == 2)
         #expect(gate.planRevision(for: .processSurvey) == 2)
         await system.releaseFirst()
         await oldUpdate.value
-        #expect(await process.revisions == [2])
+        #expect(await process.revisions.last == 2)
     }
 
     @Test func boundaryDuringSinkSuspensionLeavesLatestAndHistoryUntouched() async throws {

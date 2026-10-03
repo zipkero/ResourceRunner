@@ -31,7 +31,8 @@ struct CollectionPipelines {
         networkSource: (NetworkMetadataStore) -> NetworkSource,
         diskSource: DiskSource,
         networkMetadataSource: NetworkMetadataSourceType,
-        storageMetadataSource: StorageMetadataSourceType
+        storageMetadataSource: StorageMetadataSourceType,
+        initialProfile: RefreshProfile = .standard
     ) -> CollectionPipelines
     where SystemSource.Value == SystemMetricsSample,
           ProcessSource.Value == ProcessSurveySample,
@@ -64,7 +65,8 @@ struct CollectionPipelines {
             systemMetricsTarget: systemScheduler, processSurveyTarget: processScheduler,
             networkActivityTarget: networkScheduler, diskActivityTarget: diskScheduler,
             networkMetadataTarget: networkMetadataScheduler,
-            storageMetadataTarget: storageMetadataScheduler, admission: admission)
+            storageMetadataTarget: storageMetadataScheduler,
+            initialProfile: initialProfile, admission: admission)
         return CollectionPipelines(admission: admission, lifecycle: lifecycle,
             systemStore: systemStore, processStore: processStore, networkStore: networkStore,
             diskStore: diskStore, networkMetadataStore: networkMetadataStore,

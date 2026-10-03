@@ -29,7 +29,7 @@ struct SystemMonotonicClock: MonotonicClock {
     }
 }
 
-/// 한 tick의 샘플을 비동기로 반환하고 취소를 따르는 계약.
+/// 한 tick의 샘플을 비동기로 반환하는 계약. 취소를 무시하는 native 조회도 scheduler가 완료까지 기다립니다.
 /// 공급자 실패(`throw`)는 `MonitoringScheduler`가 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
 nonisolated protocol ScheduledSampleSource: Sendable {
     associatedtype Value: Sendable
@@ -75,9 +75,9 @@ nonisolated enum MonitoringSchedulerDebugLog {
 }
 #endif
 
-/// 적용 일정, 단일 Task와 generation별 실행을 직렬화하는 actor.
+/// 적용 일정, 타이머와 실제 조회 실행권을 축별로 직렬화하는 actor.
 /// 일정·취소·generation을 소유하고, 공유 admission의 실행권을 source와 sink에 전달합니다.
-/// `apply(_:)` 호출마다 기존 작업을 취소하고 새 generation 하나만 시작하며,
+/// 달라진 일정은 기존 타이머를 취소하고 새 generation 하나만 시작하며,
 /// interval은 마지막 실행 완료 시점이 아니라 기준 deadline을 전진시켜 계산합니다.
 actor MonitoringScheduler<
     Clock: MonotonicClock,
@@ -92,7 +92,11 @@ actor MonitoringScheduler<
     private var lastRevision = -1
 
     private var task: Task<Void, Never>?
+    private var query: Task<Void, Never>?
+    private(set) var inFlight = false
+    private var nextQueryID = 0
     private var appliedSchedule: CollectionSchedule?
+    private var appliedPlanRevision: Int?
     private(set) var collectionEpoch = 0
 
     /// `apply(_:)`가 새 작업을 시작할 때만 전진하는 세대 번호.
@@ -129,17 +133,31 @@ actor MonitoringScheduler<
         guard revision >= lastRevision else { return }
         if let admission, let axis,
            admission.planRevision(for: axis) != revision { return }
-        lastRevision = revision
-        await apply(schedule)
+        await apply(schedule, expectedPlanRevision: revision)
     }
 
     /// 계산된 일정을 적용합니다.
     /// `paused`는 실행 중인 작업만 취소하고 쌓인 이력을 그대로 둡니다.
-    /// `running(interval)`은 새 generation 하나로 시작하며,
+    /// 달라진 `running(interval)`은 새 generation 하나로 시작하며,
     /// 이전 generation의 실행 결과나 취소·공급자 실패는 저장하지 않습니다.
     /// 일정이 바뀌어도 저장 대상의 용량은 건드리지 않습니다 — 주기로 용량을 다시 잡으면
     /// 주기가 느려지는 순간 이미 쌓인 최근 10분 이력의 일부가 사라지기 때문입니다.
     func apply(_ schedule: CollectionSchedule) async {
+        await apply(schedule, expectedPlanRevision: nil)
+    }
+
+    private func apply(_ schedule: CollectionSchedule, expectedPlanRevision: Int?) async {
+        let currentPlanRevision: Int? = if let admission, let axis {
+            admission.planRevision(for: axis)
+        } else { nil }
+        if let expectedPlanRevision {
+            guard expectedPlanRevision >= lastRevision else { return }
+            if admission != nil, currentPlanRevision != expectedPlanRevision { return }
+            lastRevision = expectedPlanRevision
+        }
+        if appliedSchedule == schedule &&
+            (admission == nil || (collectionEpoch == admission?.currentBoundary.epoch &&
+                                  appliedPlanRevision == currentPlanRevision)) { return }
         applyCallCount += 1
 
         // 공유 admission이 없는 기존 직접 호출 경로만 자체 epoch를 관리합니다.
@@ -148,9 +166,11 @@ actor MonitoringScheduler<
         }
         if let admission { collectionEpoch = admission.currentBoundary.epoch }
         appliedSchedule = schedule
+        appliedPlanRevision = currentPlanRevision
 
         task?.cancel()
         task = nil
+        query?.cancel()
         // generation은 취소와 같은 동기 구간에서 즉시 전진시킵니다. 뒤에 오는 `await clock.now()`
         // 같은 suspension 지점 이후로 미루면, 그 구간에서 이전 세대 작업이 이미 취소 확인을 통과해 두고
         // actor 차례를 기다리던 `appendIfCurrentGeneration` 호출이 끼어들었을 때 아직 갱신 전인
@@ -184,10 +204,6 @@ actor MonitoringScheduler<
             let currentGeneration = generation
             let currentCollectionEpoch = collectionEpoch
             let clock = clock
-            let source = source
-            let sink = sink
-            let admission = admission
-            let axis = axis
             let expectedAdmissionGeneration = admittedGeneration
             let expectedPlanRevision = admittedPlanRevision
             // 기준 deadline은 apply(_:)가 실행되는 이 시점에 고정합니다. Task 본문 안에서 다시 now()를
@@ -215,34 +231,55 @@ actor MonitoringScheduler<
                     if Task.isCancelled { return }
 
                     let timestamp = await clock.now()
-                    let context: CollectionRunContext? = if let admission, let axis,
-                        let expectedAdmissionGeneration, let expectedPlanRevision {
-                        admission.issue(axis, expectedEpoch: currentCollectionEpoch,
-                            expectedGeneration: expectedAdmissionGeneration,
-                            expectedPlanRevision: expectedPlanRevision)
-                    } else { nil }
-                    if admission != nil && context == nil { continue }
-                    let value: Source.Value?
-                    do {
-                        if let context { value = try await source.sample(context: context) }
-                        else { value = try await source.sample(collectionEpoch: currentCollectionEpoch) }
-                    } catch {
-                        // 공급자 실패는 0 샘플로 바꾸지 않고 다음 실행으로 넘어갑니다.
-                        continue
-                    }
-                    guard let value else { continue }
-                    if Task.isCancelled { return }
-
                     guard let self else { return }
-                    await self.appendIfCurrentGeneration(
-                        currentGeneration,
-                        sample: TimestampedSample(timestamp: timestamp, value: value,
-                            collectionEpoch: currentCollectionEpoch, context: context),
-                        context: context, into: sink
-                    )
+                    await self.startQueryIfPossible(generation: currentGeneration,
+                        epoch: currentCollectionEpoch, admissionGeneration: expectedAdmissionGeneration,
+                        planRevision: expectedPlanRevision, timestamp: timestamp)
+                    // 원래 기준 격자를 유지하되 이미 지난 tick은 보충하지 않습니다.
+                    while deadline.advanced(by: interval) <= timestamp {
+                        deadline = deadline.advanced(by: interval)
+                    }
                 }
             }
         }
+    }
+
+    private func startQueryIfPossible(generation expected: Int, epoch: Int,
+                                      admissionGeneration: Int?, planRevision: Int?,
+                                      timestamp: ContinuousClock.Instant) {
+        guard expected == generation, !inFlight, case .running = appliedSchedule else { return }
+        let context: CollectionRunContext? = if let admission, let axis,
+            let admissionGeneration, let planRevision {
+            admission.issue(axis, expectedEpoch: epoch,
+                expectedGeneration: admissionGeneration, expectedPlanRevision: planRevision)
+        } else { nil }
+        if admission != nil && context == nil { return }
+        inFlight = true
+        nextQueryID += 1
+        let queryID = nextQueryID
+        query = Task { [weak self, source] in
+            let value: Source.Value?
+            do {
+                if let context { value = try await source.sample(context: context) }
+                else { value = try await source.sample(collectionEpoch: epoch) }
+            } catch { value = nil }
+            await self?.finishQuery(queryID, generation: expected, epoch: epoch,
+                value: value, timestamp: timestamp, context: context)
+        }
+    }
+
+    private func finishQuery(_ queryID: Int, generation expected: Int, epoch: Int,
+                             value: Source.Value?, timestamp: ContinuousClock.Instant,
+                             context: CollectionRunContext?) async {
+        guard queryID == nextQueryID else { return }
+        defer {
+            inFlight = false
+            query = nil
+        }
+        guard let value, expected == generation else { return }
+        await appendIfCurrentGeneration(expected,
+            sample: TimestampedSample(timestamp: timestamp, value: value,
+                collectionEpoch: epoch, context: context), context: context, into: sink)
     }
 
     /// 이전 generation인 실행 결과는 저장하지 않습니다.

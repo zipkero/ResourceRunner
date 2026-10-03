@@ -56,7 +56,7 @@
 | M1. 메뉴바 기반 | 완료 | Dock 없는 메뉴바 항목과 transient 팝오버, 주입 상태의 접근성 이름 전환, 수집 일정·최근 데이터 순환 버퍼·생명주기 제어가 동작하고, 실제 화면 잠금·해제와 저전력 전환을 실행 환경에서 관찰 |
 | M2. 핵심 리소스 모니터링 | 진행 중 | core-resource-monitoring feature IMPLEMENT 완료 — 2026-10-01 task-012 독립 verify 승인으로 Task 16개 모두 완료. CPU·Memory Collector, 두 카드·상세 팝업·최근 10분 그래프와 앱 단위 TOP 5가 동작하며, 약 12분 55초 잠금 중 두 축 샘플 수 불변·복귀 직후 빈 그래프·오른쪽 재충전의 실기기 근거를 확보함. 정확성 비교 9회에서 전체 CPU 최대 차이 3.41%p, Memory 구성 최대 차이 1.96%, 물리 36GB·Swap 0 및 Memory 상위 3개 앱 키 9/9 일치를 확인. App Sandbox에서 시스템·프로세스 CPU·Resident Memory 접근을 검증했고 Physical Footprint는 사용할 수 없음. 표시 개선 feature 여섯(resource-visualization·detail-popover-readability·dashboard-visual-refinement·graph-legibility-and-color·dashboard-visual-language·graph-plot-surface)도 모두 완료. **캐릭터 자산과 메뉴바 애니메이션은 M2 잔여 중 마지막에 착수합니다(2026-09-14 사용자 결정).** CPU·Memory 검증 선행 조건은 해소됐으며 M3를 먼저 시작합니다. 아래 M3의 「의존 관계: M2」에서 이 두 항목과 관련 M2 전환 기준 세 줄(캐릭터 애니메이션 전환·정적 표현·저전력과 화면 잠금)은 M3 착수의 선행 조건이 아닙니다. M2 전체 완료는 두 항목이 끝나는 시점이며 M3보다 뒤일 수 있습니다 |
 | M3. 확장 리소스 모니터링 | 진행 중 | extended-resource-monitoring SPEC·DESIGN `[x]`, IMPLEMENT `[ ]`. 수집·일정·baseline·이력·표시 모델 task-001~008과 화면 task-010~013, 시스템 도구 비교 task-016/017, 통합·production 정리 task-018 승인. task-009는 철회 이력으로 보존. 읽을 수 있는 네 카드의 스크롤 없는 한 열 배치·Memory 자연 높이·Network 그래프 제거·Disk 미니 그래프·TOP 5 여백, 실제 두 화면 모드의 창 여유와 키보드/AX를 확인. unit614/614·Debug/Release 및 보완 재실행을 포함한 UI30개와 정상 앱의 실제 CPU 메뉴바 반응을 검증. task-014 VPN·외장 디스크와 task-015 잠금·절전 복귀는 사용자 보류이며 Ethernet 전환 장비도 미확보. 보류 항목을 전체 완료로 간주하지 않음 |
-| M4. 앱 설정 | 진행 중 | app-preferences SPEC/DESIGN `[x]`, IMPLEMENT `[ ]`. 카드·TOP 5 표시, 그래프1/5/10분, 갱신4단계, 로그인 자동 실행, 기본값 복원의 설계와 task-001~011 구현 계획을 확정. 13개 완료 조건을 매핑하고 실제 다음 로그인은 독립 필수 관문으로 유지. 모든 Task 미착수, 제품 구현은 아직 없음. 추가 표시·일반 설정과 캐릭터/애니메이션은 후속 범위. M3 보류 검증의 착수 예외와 전체 미완료 상태 유지 |
+| M4. 앱 설정 | 진행 중 | app-preferences SPEC/DESIGN `[x]`, IMPLEMENT `[ ]`. 11개 Task와13개 조건을 매핑. task-001 설정 저장/복원과 task-002 프로필·단일 조회 승인(전용5case·관련50case, 동적56실행), task-003~011 미완료. 첫 앱 배선·설정창·실제 다음 로그인은 후속이며 로그인은 독립 필수 관문. 추가 표시·일반 설정과 캐릭터/애니메이션은 후속 범위. M3 보류 검증의 착수 예외와 전체 미완료 상태 유지 |
 | M5. 출시 준비 | 예정 | 정확성·성능·장기 안정성 검증과 배포 산출물 없음 |
 
 ## 마일스톤
@@ -151,7 +151,7 @@ Network와 Disk를 추가하고 네 가지 리소스를 일관된 대시보드 �
     시스템 프로세스 필터·상세 정원·팝오버 자동 닫기 옵션과 캐릭터/애니메이션 설정은 후속 범위로 둡니다.
     구체적인 요구사항은 [app-preferences SPEC](./features/20261003-001-app-preferences/spec.md)을 따릅니다.
     [app-preferences DESIGN](./features/20261003-001-app-preferences/design.md)에서 첫 범위의 내부 결정과 후속 검증 관문을 확정했습니다.
-    [app-preferences 구현 계획](./features/20261003-001-app-preferences/implement.md)은11개 Task이며 실제 구현·검증은 미착수입니다.
+    [app-preferences 구현 계획](./features/20261003-001-app-preferences/implement.md)은11개 Task이며 task-001/002 승인 후 순차 구현·검증 중입니다.
 - 전환 기준:
   - 모든 설정 변경이 앱 재시작 없이 즉시 반영됩니다.
   - 설정값이 앱 재시작 후에도 유지되고 기본값 복원이 가능합니다.

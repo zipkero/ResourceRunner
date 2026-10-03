@@ -7,6 +7,8 @@ private actor PipelineSource<Value: Sendable>: ScheduledSampleSource {
     private let response: @Sendable (CollectionRunContext) async -> Value?
     private(set) var calls = 0
     private(set) var contexts: [CollectionRunContext] = []
+    private(set) var activeCalls = 0
+    private(set) var maximumActiveCalls = 0
 
     init(_ response: @escaping @Sendable (CollectionRunContext) async -> Value?) {
         self.response = response
@@ -15,6 +17,9 @@ private actor PipelineSource<Value: Sendable>: ScheduledSampleSource {
     func sample(context: CollectionRunContext) async -> Value? {
         calls += 1
         contexts.append(context)
+        activeCalls += 1
+        maximumActiveCalls = max(maximumActiveCalls, activeCalls)
+        defer { activeCalls -= 1 }
         return await response(context)
     }
 }
@@ -266,7 +271,7 @@ struct CollectionPipelinesTests {
         if case .failure = dashboard.memoryCard {} else { Issue.record("Memory failure cause should remain visible") }
     }
 
-    @Test func cancellationIgnoringOldNetworkResultCannotReplaceResumedDelivery() async throws {
+    @Test func cancellationIgnoringOldNetworkResultFinishesBeforeResumedQuery() async throws {
         let clock = ManualMonotonicClock()
         let admission = CollectionAdmission()
         let networkTopology = NetworkTopologyTracker()
@@ -309,15 +314,21 @@ struct CollectionPipelinesTests {
         await pipelines.lifecycle.update(.systemSnapshot(initial(1, locked: true, sequence: 1)))
         await pipelines.lifecycle.update(.systemSnapshot(initial(2, sequence: 2)))
         await clock.advance(by: .seconds(2))
+        let networkScheduler = try #require(pipelines.networkScheduler as?
+            MonitoringScheduler<ManualMonotonicClock, PipelineSource<NetworkActivitySample>, NetworkActivityStore>)
+        #expect(await network.calls == 1)
+        await hold.resume()
+        await pipelineWait { await !networkScheduler.inFlight }
+        #expect(await !networkScheduler.inFlight)
+        await clock.advance(by: .seconds(2))
         await pipelineWait { await network.calls >= 2 }
         await pipelineWait { delivery.networkActivity?.latest?.value.status == .rate }
         let resumedContext = delivery.networkActivity?.latest?.context
-        await hold.resume()
-        await pipelineWait { await network.calls >= 2 }
         for _ in 0..<100 { await Task.yield() }
         #expect(delivery.networkActivity?.latest?.value.status == .rate)
         #expect(delivery.networkActivity?.latest?.context == resumedContext)
         #expect(resumedContext?.epoch == admission.currentBoundary.epoch)
+        #expect(await network.maximumActiveCalls == 1)
     }
 
     @Test func mountNotificationsAndNetworkSignalsAdvanceCumulativeRevision() async throws {

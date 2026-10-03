@@ -644,7 +644,153 @@ struct MonitoringLifecycleStoreTests {
 /// resume 시 놓친 실행 미따라잡기, 취소·이전 generation·공급자 실패가
 /// 0 샘플로 바뀌지 않음을 검증합니다.
 /// 주기 변경이 이력 용량을 건드리지 않는다는 것은 저장소 쪽 `MonitoringSampleStoreTests`가 고정합니다.
+private actor LeaseCountingSource: ScheduledSampleSource {
+    private(set) var calls = 0
+    func sample(collectionEpoch: Int) -> Int? {
+        calls += 1
+        return calls
+    }
+}
+
+private actor ProfileHeldSource: ScheduledSampleSource {
+    private var first: CheckedContinuation<Void, Never>?
+    private(set) var contexts: [CollectionRunContext] = []
+    func sample(collectionEpoch: Int) -> Int? { nil }
+    func sample(context: CollectionRunContext) async -> Int? {
+        contexts.append(context)
+        let call = contexts.count
+        if call == 1 { await withCheckedContinuation { first = $0 } }
+        return call
+    }
+    func releaseFirst() {
+        first?.resume()
+        first = nil
+    }
+}
+
+private actor WaitingLeaseSink: MonitoringSampleSink {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private(set) var entered = false
+    private(set) var values: [Int] = []
+
+    func append(_ sample: TimestampedSample<Int>) async {
+        if values.isEmpty {
+            entered = true
+            await withCheckedContinuation { continuation = $0 }
+        }
+        values.append(sample.value)
+    }
+
+    func release() {
+        continuation?.resume()
+        continuation = nil
+    }
+}
+
 struct MonitoringSchedulerTests {
+    @Test func reversedABAPlanDeliveryRebindsSameFastSchedule() async {
+        let clock = ManualMonotonicClock()
+        let admission = CollectionAdmission()
+        admission.transition(CollectionBoundary(revision: 0, sequence: 0, epoch: 0, stopped: false))
+        let source = ProfileHeldSource()
+        let sink = MemorySampleSink<Int>()
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink,
+            admission: admission, axis: .systemMetrics)
+        let original = CollectionSchedule.running(.seconds(1))
+        let alternate = CollectionSchedule.running(.seconds(2))
+
+        admission.setPlan(original, revision: 1, for: .systemMetrics)
+        await scheduler.apply(original, revision: 1)
+        await Task.yield()
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await source.contexts.count == 1 }
+        #expect(await source.contexts.first?.planRevision == 1)
+
+        // B의 target 전달만 지연시키고 C를 먼저 적용합니다.
+        admission.setPlan(alternate, revision: 2, for: .systemMetrics)
+        admission.setPlan(original, revision: 3, for: .systemMetrics)
+        await scheduler.apply(original, revision: 3)
+        await scheduler.apply(alternate, revision: 2)
+        await scheduler.apply(original, revision: 3)
+        #expect(await scheduler.applyCallCount == 2)
+        #expect(await scheduler.generation == 2)
+        await source.releaseFirst()
+        await waitUntil { await !scheduler.inFlight }
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await source.contexts.count == 2 }
+        #expect(await source.contexts.last?.planRevision == 3)
+        #expect(await source.contexts.last?.interval == .seconds(1))
+        await waitUntil { await !scheduler.inFlight }
+        #expect(await sink.values == [2])
+        await scheduler.apply(.paused)
+    }
+
+    @Test func rapidProfileChangesKeepLatestPlanAndOneActualSource() async {
+        let clock = ManualMonotonicClock()
+        let admission = CollectionAdmission()
+        let source = ProfileHeldSource()
+        let sink = MemorySampleSink<Int>()
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink,
+            admission: admission, axis: .systemMetrics)
+        let ranking = MonitoringScheduler(clock: clock,
+            source: MemoryScheduledSampleSource(outcomes: []), sink: MemorySampleSink<Int>(),
+            admission: admission, axis: .processSurvey)
+        let lifecycle = MonitoringLifecycleStore(definition: .m3,
+            systemMetricsTarget: scheduler, processSurveyTarget: ranking,
+            initialProfile: .fast, admission: admission)
+
+        await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: 0)))
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await source.contexts.count == 1 }
+        let first = await source.contexts[0]
+        let boundary = admission.currentBoundary
+        await lifecycle.update(.preferenceProfile(.maximumEnergySaving, revision: 1))
+        await lifecycle.update(.preferenceProfile(.energySaving, revision: 2))
+        await lifecycle.update(.preferenceProfile(.fast, revision: 3))
+        await lifecycle.update(.preferenceProfile(.maximumEnergySaving, revision: 2))
+        #expect(admission.currentBoundary == boundary)
+        #expect(!admission.isCurrent(first))
+        await clock.advance(by: .seconds(10))
+        // 깨운 tick이 inFlight를 확인하도록 actor 차례를 넘긴 뒤 첫 조회를 종료합니다.
+        for _ in 0..<100 { await Task.yield() }
+        #expect(await source.contexts.count == 1)
+        await source.releaseFirst()
+        await waitUntil { await !scheduler.inFlight }
+        #expect(await source.contexts.count == 1)
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await source.contexts.count == 2 }
+        let second = await source.contexts[1]
+        #expect(second.interval == .seconds(1))
+        #expect(second.planRevision == admission.planRevision(for: .systemMetrics))
+        await waitUntil { await !scheduler.inFlight }
+        #expect(await !scheduler.inFlight)
+        #expect(await sink.values == [2])
+        await lifecycle.update(.systemSnapshot(lifecycleSnapshot(revision: 1,
+            screenLockState: .locked)))
+    }
+    @Test func waitingSinkHoldsQueryLeaseAcrossSeveralTimerTicks() async {
+        let clock = ManualMonotonicClock()
+        let source = LeaseCountingSource()
+        let sink = WaitingLeaseSink()
+        let scheduler = MonitoringScheduler(clock: clock, source: source, sink: sink)
+
+        await scheduler.apply(.running(.seconds(1)))
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await sink.entered }
+        #expect(await scheduler.inFlight)
+        await clock.advance(by: .seconds(5))
+        #expect(await source.calls == 1)
+        await sink.release()
+        await waitUntil { await !scheduler.inFlight }
+        #expect(await sink.values == [1])
+        #expect(await source.calls == 1)
+        await clock.advance(by: .seconds(1))
+        await waitUntil { await source.calls == 2 }
+        await waitUntil { await !scheduler.inFlight }
+        #expect(await !scheduler.inFlight)
+        #expect(await sink.values == [1, 2])
+        await scheduler.apply(.paused)
+    }
 
     @Test func collectionEpochAdvancesOnlyOnRunningToPausedTransition() async {
         let scheduler = MonitoringScheduler(
@@ -709,13 +855,12 @@ struct MonitoringSchedulerTests {
 
         await scheduler.apply(.running(.seconds(1)))
         await clock.advance(by: .seconds(1))
+        #expect(await source.epochs == [0])
+        await source.finishFirstCall()
+        await waitUntil { await !scheduler.inFlight }
+        await clock.advance(by: .seconds(1))
         await waitUntil { await sink.samples.count == 1 }
         #expect(await source.epochs == [0, 1])
-        #expect(await sink.samples.map(\.collectionEpoch) == [1])
-        #expect(await sink.values == [2])
-
-        await source.finishFirstCall()
-        await waitUntil { await source.firstCallFinished }
         #expect(await sink.samples.map(\.collectionEpoch) == [1])
         #expect(await sink.values == [2])
     }
@@ -851,9 +996,9 @@ struct MonitoringSchedulerTests {
 
         await scheduler.apply(.running(.seconds(1)))
         // 아직 deadline(1초)에 도달하기 전에 곧바로 다음 세대로 교체합니다.
-        await scheduler.apply(.running(.seconds(1)))
+        await scheduler.apply(.running(.seconds(2)))
 
-        await clock.advance(by: .seconds(1))
+        await clock.advance(by: .seconds(2))
         await waitUntil { await sink.samples.count >= 1 }
 
         // 이전 generation의 결과는 저장되지 않고, 살아있는 새 generation의 결과만 하나 저장됩니다.
@@ -900,12 +1045,8 @@ struct MonitoringSchedulerTests {
         #expect(await sink.values == [1]) // 직전 성공값을 재사용한 추가 샘플이 없어야 함
     }
 
-    @Test func repeatedApplyWithSameScheduleWouldRestartWork() async {
-        // MonitoringScheduler.apply(_:) 자체는 호출될 때마다 항상 작업을 재시작합니다.
-        // 「같은 일정 반복에도 중복 수집이 없다」는 보장은 MonitoringLifecycleStore가
-        // 같은 결과일 때 apply를 다시 호출하지 않는 데서 나오지, Scheduler 내부에서 막는 것이 아닙니다.
-        // 이 테스트는 그 경계를 고정합니다: Scheduler에 같은 일정을 두 번 apply하면
-        // applyCallCount가 그대로 2가 되어야 합니다(Scheduler가 스스로 중복을 걸러내지 않음).
+    @Test func repeatedApplyWithSameScheduleDoesNotRestartWork() async {
+        // 같은 계획의 직접 재적용도 기존 타이머와 조회 실행권을 유지합니다.
         let clock = ManualMonotonicClock()
         let sink = MemorySampleSink<Int>()
         let source = MemoryScheduledSampleSource(outcomes: [.success(1)])
@@ -914,7 +1055,7 @@ struct MonitoringSchedulerTests {
         await scheduler.apply(.running(.seconds(1)))
         await scheduler.apply(.running(.seconds(1)))
 
-        #expect(await scheduler.applyCallCount == 2)
+        #expect(await scheduler.applyCallCount == 1)
     }
 }
 

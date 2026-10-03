@@ -1,56 +1,51 @@
 # Context
 
-저장: 2026-10-03 (Task018 최종 승인)
+저장: 2026-10-03 (M4 SPEC 완료)
 
 ## 현재 목표
 
-사용자 지시로 M3 잔여 작업을 진행했고, 보류 범위를 제외한 검증·정리를 완료했다. main 스테이징·커밋·푸시 승인이 유지된다.
+사용자 `$spec-init m4` 요청과 “권장” 범위 선택에 따라 M4 첫 명세를 완료했다. 이번 요청은 SPEC까지만이며 DESIGN·IMPLEMENT에는 자동 진입하지 않는다. main 스테이징·커밋·푸시 승인은 유지된다.
 
 ## 현재 상태
 
-- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. Task018 구현 커밋4757b28을 origin/main에 푸시하고 clean·원격 동기화를 확인했다. worker FINAL completed와 독립 verifier FINAL approved를 main이 인수·확정했다. Task012(54a89e1),013(1b15966),016(5aedfa4·CSV 원본 보정4487c94),017(32189a5)도 푸시 완료했다.
-- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010~013/016~018 승인,009철회,014/015 미완료. task014의 VPN·외장 디스크와 task015의 잠금·수면·화면 수면·사용자 전환은 사용자 보류다. Ethernet 전환 장비도 미확보이며 연결 없음/복귀는 실행하지 않았다.
-- Task018 unit614/614·Debug/Release 통과. 서명 UI 전체29/30 뒤 유일 실패인 NetworkUpdateCadence의 AXLabel 단독 단언을 label+value로 보완한 해당1/1이 통과했다. 단일 실행30/30 성공을 주장하지 않는다. 글로벌 보안/TCC 설정은 변경하지 않았다.
-- 임시 DEBUG probe·긴 Memory/저전력 주입 경로를 제거했다. Collector·일정·baseline·저장·표시·키보드의 production 동작은 유지했다. 최종 소스/Debug stub·실제 Swift dylib/Release 해시10개가 일치한다.
-- 정상 서명 Sandbox 앱 PID95172(/private/tmp/rr-task018-debug/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner) 하나에서 네 카드·상세·끝 페이지와 CPU18~19%→실제 부하93~95%→회복18~20%, 메뉴바 낮음→매우 높음→낮음을 확인했다. 부하 자식은 종료했고 정상 앱 하나를 실행 중으로 남겼다. Release는 빌드 확인용 미서명이며 실제 관찰은 서명 Debug다.
-- 이번018 승인으로 SPEC §5.1·§5.2·§5.10·§5.12·§5.14·§5.16을 충족했다. 016/017로 §5.6도 충족했다. 나머지 조건과 M3/IMPLEMENT 전체를 완료로 표시하지 않는다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. 명세 작성 기준 HEAD는 0b01a9b다. 신규 feature는 features/20261003-001-app-preferences/이다.
+- main이 승인된 기본 범위로 spec.md·README.md를 작성했다. SPEC [x], DESIGN/IMPLEMENT [ ]. 완료 조건은 SPEC §5.1~§5.13이다. 제품 코드·빌드 설정·실행 중인 앱을 변경하지 않았다.
+- ROADMAP에 M4 착수에서 M3 보류 task014/015를 선행 조건의 예외로 두는 결정을 기록했다. 제품 정의에도 이번 첫 범위와 후속 설정을 구분했다. 기존 M3 SPEC·DESIGN/승인된 Task·IMPLEMENT 미완료 상태는 유지된다.
+- M3의 마지막 구현 커밋은4757b28, 완료 인수인계는0b01a9b로 origin/main에 푸시했다. M3 Tasks001~008/010~013/016~018 승인,009철회,014/015 미완료다. VPN·외장 디스크와 잠금·절전 복귀는 사용자 보류이고 Ethernet 전환 장비도 미확보다.
+- 이전 M3 근거: 단위614/614, 서명 UI 전체29/30 뒤 유일한 AXLabel 단언 보완 후 해당1/1 통과, Debug/Release 빌드·정상 Sandbox 네 카드/상세/CPU 부하 메뉴바 반응·최종 해시 확인. 이 결과는 M4 구현 검증으로 간주하지 않는다.
 
 ## 현재 작업 문서
 
-- [기능 상태](./features/20260817-001-extended-resource-monitoring/README.md)
-- [SPEC](./features/20260817-001-extended-resource-monitoring/spec.md)
-- [DESIGN](./features/20260817-001-extended-resource-monitoring/design.md)
-- [IMPLEMENT](./features/20260817-001-extended-resource-monitoring/implement.md)
-- [Task018 통합 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-018/README.md)
-- [Task016 Network 비교](./features/20260817-001-extended-resource-monitoring/evidence/task-016/README.md), [Task017 Disk 비교](./features/20260817-001-extended-resource-monitoring/evidence/task-017/README.md)
-- [Task012 실제 화면](./features/20260817-001-extended-resource-monitoring/evidence/task-012/README.md), [Task013 키보드·접근성](./features/20260817-001-extended-resource-monitoring/evidence/task-013/README.md)
-- [Task014 환경·미실행 기록](./features/20260817-001-extended-resource-monitoring/evidence/task-014/README.md)
+- [M4 상태](./features/20261003-001-app-preferences/README.md)
+- [M4 SPEC](./features/20261003-001-app-preferences/spec.md)
+- [ROADMAP](./ROADMAP.md), [제품 정의](./docs/product.md), [기술 설계](./docs/design.md)
+- 선행 [M3 상태](./features/20260817-001-extended-resource-monitoring/README.md), [M3 통합 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-018/README.md)
 
 ## 확정된 결정
 
-본체 스크롤 없이 네 카드가 한 화면에 보여야 하며 글씨를 과도하게 줄이지 않는다. Memory는 예약 하단 공백 없이 자연 높이를 사용한다. Network 그래프·Network/Disk 하단 측정 안내를 제거하고 Disk 수치 옆 미니 그래프와 CPU 그래프·Memory 구성·TOP 5 아래 여백을 유지한다. 상세 정보와 내부 스크롤은 보존한다.
-
-현재 실제 화면1728×1117(visible1084)/scale2에서 본체280×668·외곽306×694와 네 상세400×480을 확인했다. task012는 실제1168×755(visible729) 모드와 긴 Memory 자연 높이까지 검증했고018 cleanup의 production geometry 경로는 불변이다. 전체 화면 정책과 구체 치수는 최신 feature 문서를 따른다.
-
-Network는 unknown 대상 때문에 부분 합계이며 완전한 대표 합계로 주장하지 않는다. 동일한 확인된 물리 집합의 시간 차분·변화 방향만 비교했다. Disk는 내장 disk0의 실제 F_NOCACHE 합성 부하를 iostat Read+Write 합계와 비교했고 방향은 raw driver 바이트로 확인했다.
+- M4 첫 범위는 카드별 표시·CPU/Memory TOP 5 표시, 그래프1/5/10분, 갱신4단계, 로그인 자동 실행, 기본값 복원이다. 기본 표시를 유지하며 시스템 프로세스 필터·상세 정원·팝오버 자동 닫기 옵션과 캐릭터/애니메이션 설정·업데이트 확인은 후속 범위다.
+- 기존 수집 자동 감속·중지·기준점·속도 정의·메모리 이력과 부분 합계 의미를 보존한다. 설정값만 저장하고 수집값·순위·그래프를 영속화하지 않는다. 로그인 상태는 macOS 실제 상태를 기준으로 한다.
+- 본체 스크롤 없는 읽을 수 있는 네 카드, Memory 자연 높이·예약 공백 제거, Network 그래프 없음·Disk 미니 그래프·TOP 5 여백과 상세/접근성을 유지한다. 작은 화면 정책 경계를 임의 변경하지 않는다.
+- M3 보류 관문은 M4 착수를 막지 않지만 M3 전체 완료로 처리하지 않는다. 이전 Task012 stash0ef806c85321a92c7a07226de4b0080a7cc1eb48은 구치수이므로 전체 적용하지 않는다.
 
 ## 미확정 판단
 
-Task014/015를 mock이나 통합 결과로 대체하지 않는다. 외부 물리 화면은 없었고 본체와 chrome가 들어가지 않는 더 작은 화면의 정책은 미확정이다. 이전 Task012 stash0ef806c85321a92c7a07226de4b0080a7cc1eb48은 구치수이므로 전체 적용하지 않는다.
+SPEC 요구사항의 미확정 항목은 없다. API·설정 화면 배치·저장 키·저전력/닫힘/프로필의 구체적인 일정 병합은 DESIGN에서 확정할 설계 사항이다. 이 단계에서는 design.md·implement.md를 생성하지 않았다.
 
 ## 다음 작업
 
-- 작업: 현재 승인 범위의 남은 작업은 없다. 보류014/015는 사용자가 재개하고 필요한 환경을 확보할 때만 진행한다.
-- 완료 기준: M3 전체 완료는 보류 Task의 실제 관문이 충족된 뒤 판단한다. 현재 결과·문서·CONTEXT와 main 커밋·푸시는 완료했다.
+- 작업: 사용자가 DESIGN을 요청하면 design-init으로 M4의 승인된 SPEC과 현재 원본을 조사해 설계한다.
+- 완료 기준: SPEC §5.1~§5.13을 빠짐없이 설계에 연결하고, 기존 수집 경계·표시·로그인 실제 상태와 설정 저장의 책임을 설명한다. 보류한 M3 검증은 별도 재개 지시와 환경 확보 후 진행한다.
 
 ## 먼저 읽을 파일
 
-- [IMPLEMENT](./features/20260817-001-extended-resource-monitoring/implement.md)
-- [Task018 근거](./features/20260817-001-extended-resource-monitoring/evidence/task-018/README.md)
-- [AppDelegate.swift](./ResourceRunner/AppDelegate.swift), [ApplicationCoordinator.swift](./ResourceRunner/ApplicationCoordinator.swift)
-- [DashboardViewport.swift](./ResourceRunner/DashboardViewport.swift), [DashboardView.swift](./ResourceRunner/DashboardView.swift)
-- ~/.codex/skills/implement-loop/SKILL.md, implement/SKILL.md, verify/SKILL.md, context-save/SKILL.md, ~/.codex/docs/phased-state.md
+- [M4 SPEC](./features/20261003-001-app-preferences/spec.md), [상태](./features/20261003-001-app-preferences/README.md)
+- [ResourceRunnerApp.swift](./ResourceRunner/ResourceRunnerApp.swift), [ApplicationCoordinator.swift](./ResourceRunner/ApplicationCoordinator.swift)
+- [MonitoringLifecycle.swift](./ResourceRunner/MonitoringLifecycle.swift)
+- [DashboardPresentationStore.swift](./ResourceRunner/DashboardPresentationStore.swift), [DashboardView.swift](./ResourceRunner/DashboardView.swift), [DashboardViewport.swift](./ResourceRunner/DashboardViewport.swift)
+- [MonitoringSampleStore.swift](./ResourceRunner/MonitoringSampleStore.swift), [ResourceRateGraph.swift](./ResourceRunner/ResourceRateGraph.swift), [ApplicationRanking.swift](./ResourceRunner/ApplicationRanking.swift)
+- ~/.codex/skills/design-init/SKILL.md, ~/.codex/docs/phased-state.md
 
 ## 문서 반영 필요
 
-없음. 현재 구현 설명·ROADMAP·feature 승인 상태를 main이 반영했다.
+없음. 사용자 선택과 M4 착수 예외를 SPEC·ROADMAP·제품 정의에 반영했다.

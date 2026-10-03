@@ -82,6 +82,7 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
     - 결과: 네 카드·두 TOP 5가 독립 즉시 반영되며 다른 저장 선택을 바꾸지 않습니다. 예약 frame·최소 높이·빈 순위 공간·본체 ScrollView·기본 footer가 없습니다. CPU 대표값/User/System/그래프·Memory 구성/Pressure/Swap·상세 목록을 유지합니다. 숨긴 AX·선택을 제거하고 늦은 닫힘은 새 선택을 지우지 않습니다. 기본 글꼴·Memory 자연 높이·TOP 5 여백·네 카드 배치를 유지합니다.
     - 확인: `ResourceRunnerTests/IntegratedDashboardSummaryTests.swift`, `DashboardPresentationTests.swift`와 `ResourceRunnerUITests/DashboardCPUCardUITests.swift`, `DashboardMemoryCardUITests.swift`, `DashboardCardSelectionUITests.swift`로16개 카드 조합·두 TOP 5 각각의 on/off 조합을 확인합니다. 열린 상세 숨김·빠른 재표시·늦은 닫힘·전체 숨김의 frame/AX/selection을 관찰하고 기존 기본 수치·글꼴·무스크롤 근거와 대조합니다.
   - 참조: SPEC §5.1, §5.2, §5.3, §5.12, §5.13; DESIGN §1.2, §1.4, §2.1, §3.2, §4.2, §5 DP7.
+  - 진행/차단: 2026-10-03 worker blocked를 main이 인수했습니다. 기준 HEADccee0f6, 부분 구현10파일 미커밋·최종 signed 단위40/40/6suite와64렌더 조합 통과. UI는 두 번 모두 본문 전 LocalAuthentication Code=-4로 차단돼 미승인입니다. [부분 구현/차단 근거](./evidence/task-007/README.md). 인증 종료 후 동일 signed UI→독립 verify로 재개하며 task-008~011은 미착수입니다. 구현 재시도0·근거 재검증0, verifier reject는 없습니다.
 
 - [ ] task-008: 표시 조합의 포커스·단축키·현재 앵커
   - 목적: 제거 뒤 키보드 복귀와 마지막 표시 카드의 상세 공간을 안정적으로 유지합니다.

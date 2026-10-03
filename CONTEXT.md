@@ -1,6 +1,6 @@
 # Context
 
-저장: 2026-10-03 (M4 task-006 승인)
+저장: 2026-10-03 (M4 task-007 환경 차단)
 
 ## 현재 목표
 
@@ -16,6 +16,7 @@
 - task-004 새3파일을 인수했다. 기준 HEADccb1bf8, 독립 verifier approved를 main이 확정했다. signed 주입7/7·실패/skip0·patch/blob·소스 해시 대응 확인. 실제 native OS mutation은 수행하지 않았다.
 - task-005 제품4개·검증4개를 인수했다. 기준 HEADd119c73, 독립 verifier approved 확정. signed42case·실패/skip0·전체8파일 해시 대응. 기존 전체 모델+현재 snapshot 선별의 내부 접근 차이를 Task에 반영했으며 그래프/카드 표시 자체는006/007이다. 실제 로그인 mutation 없음.
 - task-006 제품5개·검증4개를 인수했다. 기준 HEAD8345f58, 독립 verifier approved 확정. signed serial86case(동적90실행)·실패/skip0·9파일 해시/패치 대응. 이전 불완전한 병렬 결과는 제외. 내장 verifier 호출 제한을 확인해 동일 gpt-6-sol/high 읽기 전용 역할을 로컬 CLI로 실행했다. 실제 설정창/앱 통합은 후속이다.
+- task-007 worker blocked를 인수했다. 기준 HEADccee0f6(승인006 제품까지 main pushed), 미커밋10파일 부분 구현과 evidence/task-007 근거를 보존했다. signed 단위40/40·6suite/64렌더 조합 통과지만 UI 두 번 모두 본문 전 LocalAuthentication Code=-4로 차단됐다. main은 coreautha PID55055 실행·테스트 runner 잔존 없음 확인. 인증/TCC/시스템 프로세스 변경 없음. 인증 대기 창 처리 여부를 사용자에게 async 요청했으나 저장 시 답변 없음. task007 loop 구현0/근거0, verifier 판정 없음. task008~011 미착수, 첫 미완료007을 건너뛰지 않는다.
 - M3 task014/015 보류와 기존 승인은 유지한다. M4 실제 로그인 관문은 별도다. 기존 M3 검증을 M4 통과로 사용하지 않는다.
 
 ## 현재 작업 문서
@@ -36,14 +37,16 @@
 
 ## 미확정 판단
 
-task-001~006은 승인됐다. 상위 결정의 부족은 없다. 후속 실제 UI·로그인 결과는 아직 없으며 task-011의 실제 세션 전환 권한·환경은 해당 착수 시 main이 확인한다.
+task-001~006은 승인됐다. task-007은 부분 구현 후 UI 인증 충돌로 blocked이며 상위 결정의 부족은 없다. 후속 실제 UI·로그인 결과는 아직 없으며 task-011의 실제 세션 전환 권한·환경은 해당 착수 시 main이 확인한다.
 
 ## 다음 작업
 
-- 작업: 첫 미완료 task-007을 worker에게 맡겨 카드/TOP5 조건부 표시·자연 높이·선택 정리·전체 숨김 callback을 구현하고 verify한다.
-- 완료 기준: Task별 현재 원본·diff·검증 근거로 승인하고 상태·이력을 갱신한다. SPEC §5.1~§5.13의 모든 매핑 Task가 승인되기 전에는 IMPLEMENT를 완료로 표시하지 않는다. 필수 실제 관문 미확인은 남긴다.
+- 작업: macOS 인증이 끝난 뒤 task-007의 저장된 signed UI 명령을 재실행한다. 실제 UI근거를 확보하면 독립 verify와 main 승인 후 task-008로 진행한다.
+- 완료 기준: task-007의 필수 UI 본문이 실행되어 AX/frame·전체 숨김·상세 숨김/재표시를 확인하고 현재10파일 해시/diff와 단위/UI 근거가 대응해야 한다. Task별 현재 원본·diff·검증 근거로 승인하고 상태·이력을 갱신한다. SPEC §5.1~§5.13의 모든 매핑 Task가 승인되기 전에는 IMPLEMENT를 완료로 표시하지 않는다. 필수 실제 관문 미확인은 남긴다.
 
 ## 먼저 읽을 파일
+
+- [task-007 근거/재개 명령](./features/20261003-001-app-preferences/evidence/task-007/README.md), [worker 결과](./features/20261003-001-app-preferences/evidence/task-007/worker-result.md), [현재 코드 해시](./features/20261003-001-app-preferences/evidence/task-007/source-sha256.txt)
 
 - [M4 구현 계획](./features/20261003-001-app-preferences/implement.md), [SPEC](./features/20261003-001-app-preferences/spec.md), [DESIGN](./features/20261003-001-app-preferences/design.md), [상태](./features/20261003-001-app-preferences/README.md)
 - [AppDelegate.swift](./ResourceRunner/AppDelegate.swift), [ApplicationCoordinator.swift](./ResourceRunner/ApplicationCoordinator.swift)

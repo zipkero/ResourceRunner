@@ -1,0 +1,767 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 264e1a7..532bb12 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -17,7 +17,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     private var loginItemController: LoginItemController?
+ 
+     func applicationDidFinishLaunching(_ notification: Notification) {
++#if DEBUG
++        let preferences: PreferencesStore
++        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
++            let environment = ProcessInfo.processInfo.environment
++            let cardMask = Int(environment["RR_DASHBOARD_CARD_MASK"] ?? "15") ?? 15
++            let topMask = Int(environment["RR_DASHBOARD_TOP_MASK"] ?? "3") ?? 3
++            var fixture = AppPreferences.defaults
++            fixture.showsCPUCard = cardMask & 1 != 0
++            fixture.showsMemoryCard = cardMask & 2 != 0
++            fixture.showsNetworkCard = cardMask & 4 != 0
++            fixture.showsDiskCard = cardMask & 8 != 0
++            fixture.showsCPUTopApplications = topMask & 1 != 0
++            fixture.showsMemoryTopApplications = topMask & 2 != 0
++            preferences = PreferencesStore(storage: DashboardUITestPreferencesStorage(initial: fixture))
++        } else {
++            preferences = PreferencesStore()
++        }
++#else
+         let preferences = PreferencesStore()
++#endif
+         let login = LoginItemController()
+         preferencesStore = preferences
+         loginItemController = login
+@@ -29,3 +48,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+         coordinator?.refreshLoginStatus()
+     }
+ }
++
++#if DEBUG
++/// UI 테스트 설정은 프로세스 안에서만 유지해 기존 사용자 설정을 건드리지 않습니다.
++@MainActor
++private final class DashboardUITestPreferencesStorage: PreferencesStorage {
++    private var value: [String: Any]
++
++    init(initial: AppPreferences) {
++        value = [
++            "schemaVersion": 1,
++            "showsCPUCard": initial.showsCPUCard,
++            "showsMemoryCard": initial.showsMemoryCard,
++            "showsNetworkCard": initial.showsNetworkCard,
++            "showsDiskCard": initial.showsDiskCard,
++            "showsCPUTopApplications": initial.showsCPUTopApplications,
++            "showsMemoryTopApplications": initial.showsMemoryTopApplications,
++        ]
++    }
++
++    func read() -> Any? { value }
++    func write(_ dictionary: [String: Any]) { value = dictionary }
++}
++#endif
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 2179c0b..a700736 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -156,6 +156,19 @@ final class ApplicationCoordinator {
+         statusBarController.debugStateInjector = { [characterStateSource] state in
+             characterStateSource.send(state)
+         }
++        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
++            statusBarController.debugCardVisibilityInjector = { [preferencesStore] card in
++                preferencesStore.update { preferences in
++                    switch card {
++                    case .cpu: preferences.showsCPUCard.toggle()
++                    case .memory: preferences.showsMemoryCard.toggle()
++                    case .network: preferences.showsNetworkCard.toggle()
++                    case .disk: preferences.showsDiskCard.toggle()
++                    case .none: break
++                    }
++                }
++            }
++        }
+ #endif
+ 
+         let sink: CharacterPresentationSink = statusBarController
+diff --git a/ResourceRunner/DashboardPresentation.swift b/ResourceRunner/DashboardPresentation.swift
+index 938a9e1..2767475 100644
+--- a/ResourceRunner/DashboardPresentation.swift
++++ b/ResourceRunner/DashboardPresentation.swift
+@@ -214,6 +214,26 @@ nonisolated enum DashboardSelection: Sendable, Hashable {
+     case disk
+ }
+ 
++nonisolated extension AppPreferences {
++    func showsCard(_ card: DashboardSelection) -> Bool {
++        switch card {
++        case .none: false
++        case .cpu: showsCPUCard
++        case .memory: showsMemoryCard
++        case .network: showsNetworkCard
++        case .disk: showsDiskCard
++        }
++    }
++
++    var visibleCards: [DashboardSelection] {
++        DashboardSelection.cardOrder.filter(showsCard)
++    }
++}
++
++nonisolated extension DashboardSelection {
++    static let cardOrder: [DashboardSelection] = [.cpu, .memory, .network, .disk]
++}
++
+ /// CPU 카드 표시 값. 전체 사용률, User·System 비율, 최근 10분 그래프 점, 앱 단위 CPU TOP 5를 담습니다.
+ nonisolated struct CPUCardPresentation: Sendable, Equatable {
+     let overallUsage: Double
+@@ -555,6 +575,7 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
+     }
+ 
+     func cpuAccessibilityLabel(timeRange: GraphTimeRange,
++                               showsTopApplications: Bool = true,
+                                now: ContinuousClock.Instant? = nil) -> String {
+         let shortcut = "단축키 \(CPUCardPresentation.selectionShortcutDisplayText)"
+         let duration = Duration.seconds(timeRange.duration)
+@@ -566,10 +587,10 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
+         case .normal(let presentation, let timestamp):
+             let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints,
+                 currentTimestamp: now ?? timestamp, timeRange: duration)
++            let ranking = showsTopApplications
++                ? ", \(CPUCardPresentation.topApplicationsAccessibilityText)" : ""
+             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
+-                + "\(timeAxis.accessibilityLabel), "
+-                + CPUCardPresentation.topApplicationsAccessibilityText
+-                + ", \(shortcut)"
++                + "\(timeAxis.accessibilityLabel)\(ranking), \(shortcut)"
+         case .failure(let lastKnown):
+             guard let lastKnown else {
+                 let timeAxis = HistoryGraphTimeAxis.make(points: [],
+@@ -1254,14 +1275,18 @@ extension ResourceCardState where Presentation == MemoryCardPresentation {
+     /// Memory 카드의 접근성 이름. 현재 단계와 사용 중·구성 수치, 병합 줄 수치,
+     /// 선택·복귀 단축키를 포함합니다.
+     var memoryAccessibilityLabel: String {
++        memoryAccessibilityLabel(showsTopApplications: true)
++    }
++
++    func memoryAccessibilityLabel(showsTopApplications: Bool) -> String {
+         let shortcut = "단축키 \(MemoryCardPresentation.selectionShortcutDisplayText)"
+         switch self {
+         case .collecting:
+             return "Memory 카드, 수집 중, \(shortcut)"
+         case .normal(let presentation, _):
+-            return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel), "
+-                + MemoryCardPresentation.topApplicationsAccessibilityText
+-                + ", \(shortcut)"
++            let ranking = showsTopApplications
++                ? ", \(MemoryCardPresentation.topApplicationsAccessibilityText)" : ""
++            return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel)\(ranking), \(shortcut)"
+         case .failure(let lastKnown):
+             guard let lastKnown else {
+                 return "Memory 카드, 수집 실패, \(shortcut)"
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index eaf80e7..f8fe0d4 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -28,10 +28,18 @@ final class DashboardPresentationStore: ObservableObject {
+ 
+     func applyPreferences(_ snapshot: PreferencesSnapshot) {
+         guard snapshot.revision > preferencesSnapshot.revision else { return }
++        if selection != .none && !snapshot.preferences.showsCard(selection) {
++            selection = .none
++            selectionGeneration &+= 1
++        }
+         // 카드 모델은 최대 이력과 전체 상세를 보유하고, 표시 선택은 현재 snapshot으로 유도합니다.
+         preferencesSnapshot = snapshot
+     }
+ 
++    func isCardVisible(_ card: DashboardSelection) -> Bool {
++        preferencesSnapshot.preferences.showsCard(card)
++    }
++
+     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
+         admission.withCurrentBoundary(boundary) {
+             guard boundary.sequence >= lastCollectionBoundarySequence else { return }
+@@ -55,6 +63,7 @@ final class DashboardPresentationStore: ObservableObject {
+     /// 이미 선택된 카드를 다시 활성화하면 선택이 해제되어 요약 상태로 돌아가고,
+     /// 다른 카드를 활성화하면 선택이 그 카드로 바뀝니다(SPEC §5.2).
+     func selectCard(_ card: DashboardSelection) {
++        guard isCardVisible(card) else { return }
+         selection = (selection == card) ? .none : card
+         selectionGeneration &+= 1
+     }
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index 6b41f3c..ab6427d 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -9,7 +9,7 @@ import SwiftUI
+ 
+ /// 대시보드 팝오버 셸. CPU·Memory·Network·Disk 카드와 카드 옆 상세 팝업을 담습니다.
+ ///
+-/// 본체는 네 카드를 한 열에 모두 표시하며 상세를 위한 자리를 예약하지 않습니다.
++/// 본체는 켜진 카드를 고정 순서의 한 열에 표시하며 상세를 위한 자리를 예약하지 않습니다.
+ /// 본체 폭과 각 카드의 최소 높이는 선택 상태와 무관하므로 카드를 선택하거나 해제해도
+ /// 본체 창 크기가 흔들리지 않습니다 — 상세는 그 카드에 앵커한 별도 자식 팝업으로 열려 본체 레이아웃에 참여하지
+ /// 않습니다(ANALYSIS §1 「표시 경계」, §5 DP14). 자식 팝오버를 카드에 붙여도 부모 팝오버가 닫히지 않고
+@@ -24,97 +24,122 @@ struct DashboardView: View {
+     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
+     /// 같은 앱의 아이콘을 다시 얻게 됩니다(ANALYSIS §1 「아이콘 경계」, §5 DP11).
+     let iconProvider: any ApplicationIconProviding
++    var onOpenSettings: () -> Void = {}
+ 
+     var body: some View {
+         VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
++            let preferences = store.preferencesSnapshot.preferences
+             // `Button`은 macOS에서 표준 포커스 가능 컨트롤이라 키보드 탐색(Full Keyboard Access)을 켠 환경에서는
+             // Tab 이동과 Space·Return 활성화가 그대로 동작합니다. 다만 이 설정은 기본값이 꺼짐이고,
+             // 꺼진 상태에서는 Tab이 텍스트 필드·목록만 순회해 버튼에 닿지 않는 것을 실행 중인 앱에서 확인했습니다.
+             // 그래서 `keyboardShortcut(_:modifiers:)`로 키보드 탐색 설정과 무관하게 항상 동작하는 단축키를
+             // 함께 둡니다(ANALYSIS §5 DP15) — 이 단축키가 기본 설정 환경에서 SPEC §5.13을 성립시키는 수단입니다.
+-            Button(action: { store.selectCard(.cpu) }) {
+-                CPUCardView(state: store.cpuCard, iconProvider: iconProvider,
+-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
+-            }
+-            .buttonStyle(.plain)
+-            .focusable()
+-            .focused($focusedCard, equals: .cpu)
+-            .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
+-            .accessibilityElement(children: .ignore)
+-            .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
+-                timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
+-                now: ContinuousClock().now))
+-            .accessibilityAddTraits(.isButton)
+-            // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
+-            // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
+-            .accessibilityIdentifier("CPUCard")
+-            .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
+-                let generation = store.selectionGeneration
+-                CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
+-                    viewport: viewport,
+-                    onClose: { store.dismissDetail(for: .cpu, generation: generation) })
++            if preferences.showsCPUCard {
++                Button(action: { store.selectCard(.cpu) }) {
++                    CPUCardView(state: store.cpuCard, iconProvider: iconProvider,
++                        timeRange: preferences.graphTimeRange,
++                        showsTopApplications: preferences.showsCPUTopApplications)
++                }
++                .buttonStyle(.plain)
++                .focusable()
++                .focused($focusedCard, equals: .cpu)
++                .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
++                .accessibilityElement(children: .ignore)
++                .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
++                    timeRange: preferences.graphTimeRange,
++                    showsTopApplications: preferences.showsCPUTopApplications,
++                    now: ContinuousClock().now))
++                .accessibilityAddTraits(.isButton)
++                // XCUITest가 카드를 찾는 안정적인 식별자입니다. 접근성 이름 자체는 사용률에 따라 계속 바뀌므로
++                // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
++                .accessibilityIdentifier("CPUCard")
++                .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
++                    let generation = store.selectionGeneration
++                    CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
++                        viewport: viewport,
++                        onClose: { store.dismissDetail(for: .cpu, generation: generation) })
++                }
+             }
+ 
+-            Button(action: { store.selectCard(.memory) }) {
+-                MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
+-            }
+-            .buttonStyle(.plain)
+-            .focusable()
+-            .focused($focusedCard, equals: .memory)
+-            .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
+-            .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
+-            .accessibilityElement(children: .ignore)
+-            .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel)
+-            .accessibilityAddTraits(.isButton)
+-            // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
+-            .accessibilityIdentifier("MemoryCard")
+-            .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
+-                let generation = store.selectionGeneration
+-                MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
+-                    viewport: viewport,
+-                    onClose: { store.dismissDetail(for: .memory, generation: generation) })
+-            }
+-            Button(action: { store.selectCard(.network) }) {
+-                NetworkCardView(presentation: store.networkCard)
++            if preferences.showsMemoryCard {
++                Button(action: { store.selectCard(.memory) }) {
++                    MemoryCardView(state: store.memoryCard, iconProvider: iconProvider,
++                        showsTopApplications: preferences.showsMemoryTopApplications)
++                }
++                .buttonStyle(.plain)
++                .focusable()
++                .focused($focusedCard, equals: .memory)
++                .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
++                .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
++                .accessibilityElement(children: .ignore)
++                .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel(
++                    showsTopApplications: preferences.showsMemoryTopApplications))
++                .accessibilityAddTraits(.isButton)
++                // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
++                .accessibilityIdentifier("MemoryCard")
++                .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
++                    let generation = store.selectionGeneration
++                    MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
++                        viewport: viewport,
++                        onClose: { store.dismissDetail(for: .memory, generation: generation) })
++                }
+             }
+-            .buttonStyle(.plain)
+-            .focusable()
+-            .focused($focusedCard, equals: .network)
+-            .keyboardShortcut("3", modifiers: .command)
+-            .accessibilityElement(children: .ignore)
+-            .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
+-                NetworkDisplayText.activeSummary(store.networkCard.interfaces) + ", 단축키 ⌘3")
+-            .accessibilityAddTraits(.isButton)
+-            .accessibilityIdentifier("NetworkCard")
+-            .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
+-                let generation = store.selectionGeneration
+-                NetworkDetailPopoverContent(presentation: store.networkCard,
+-                    onClose: { store.dismissDetail(for: .network, generation: generation) },
+-                    viewport: viewport)
++            if preferences.showsNetworkCard {
++                Button(action: { store.selectCard(.network) }) {
++                    NetworkCardView(presentation: store.networkCard)
++                }
++                .buttonStyle(.plain)
++                .focusable()
++                .focused($focusedCard, equals: .network)
++                .keyboardShortcut("3", modifiers: .command)
++                .accessibilityElement(children: .ignore)
++                .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
++                    NetworkDisplayText.activeSummary(store.networkCard.interfaces) + ", 단축키 ⌘3")
++                .accessibilityAddTraits(.isButton)
++                .accessibilityIdentifier("NetworkCard")
++                .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
++                    let generation = store.selectionGeneration
++                    NetworkDetailPopoverContent(presentation: store.networkCard,
++                        onClose: { store.dismissDetail(for: .network, generation: generation) },
++                        viewport: viewport)
++                }
+             }
+-            Button(action: { store.selectCard(.disk) }) {
+-                DiskCardView(presentation: store.diskCard,
+-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
++            if preferences.showsDiskCard {
++                Button(action: { store.selectCard(.disk) }) {
++                    DiskCardView(presentation: store.diskCard,
++                        timeRange: preferences.graphTimeRange)
++                }
++                .buttonStyle(.plain)
++                .focusable()
++                .focused($focusedCard, equals: .disk)
++                .background(DashboardLowestAnchorCapture(viewport: viewport))
++                .keyboardShortcut("4", modifiers: .command)
++                .accessibilityElement(children: .ignore)
++                .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
++                    DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
++                        now: ContinuousClock().now,
++                        timeRange: preferences.graphTimeRange,
++                        locale: locale) + ", 단축키 ⌘4")
++                .accessibilityAddTraits(.isButton)
++                .accessibilityIdentifier("DiskCard")
++                .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
++                    let generation = store.selectionGeneration
++                    DiskDetailPopoverContent(presentation: store.diskCard,
++                        onClose: { store.dismissDetail(for: .disk, generation: generation) },
++                        viewport: viewport,
++                        timeRange: preferences.graphTimeRange)
++                }
+             }
+-            .buttonStyle(.plain)
+-            .focusable()
+-            .focused($focusedCard, equals: .disk)
+-            .background(DashboardLowestAnchorCapture(viewport: viewport))
+-            .keyboardShortcut("4", modifiers: .command)
+-            .accessibilityElement(children: .ignore)
+-            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+-                DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
+-                    now: ContinuousClock().now,
+-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange,
+-                    locale: locale) + ", 단축키 ⌘4")
+-            .accessibilityAddTraits(.isButton)
+-            .accessibilityIdentifier("DiskCard")
+-            .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+-                let generation = store.selectionGeneration
+-                DiskDetailPopoverContent(presentation: store.diskCard,
+-                    onClose: { store.dismissDetail(for: .disk, generation: generation) },
+-                    viewport: viewport,
+-                    timeRange: store.preferencesSnapshot.preferences.graphTimeRange)
++            if preferences.visibleCards.isEmpty {
++                VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
++                    Text("표시할 카드가 없습니다")
++                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                    Text("설정에서 카드를 다시 켤 수 있습니다")
++                        .dashboardTypography(DashboardStyle.TypographyRole.label)
++                    Button("설정 열기", action: onOpenSettings)
++                        .accessibilityIdentifier("DashboardOpenSettings")
++                }
++                .accessibilityIdentifier("DashboardAllCardsHidden")
+             }
+         }
+         .padding(DashboardStyle.Summary.bodyPadding)
+@@ -126,7 +151,8 @@ struct DashboardView: View {
+                 // 자식 팝오버가 key를 반환한 뒤 해당 카드에 초점을 둡니다. 빠른 재선택이 시작되면 폐기합니다.
+                 DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
+                     guard store.selection == .none,
+-                          store.selectionGeneration == generation else { return }
++                          store.selectionGeneration == generation,
++                          store.isCardVisible(old) else { return }
+                     viewport.requestBodyFocus?()
+                     focusedCard = old
+                 }
+@@ -215,6 +241,7 @@ struct CPUCardView: View {
+     /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
+     let iconProvider: any ApplicationIconProviding
+     var timeRange: GraphTimeRange = .tenMinutes
++    var showsTopApplications = true
+ 
+     /// 요약 카드의 제목·그래프·순위 구역을 읽을 수 있는 간격으로 묶습니다.
+     static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
+@@ -242,11 +269,11 @@ struct CPUCardView: View {
+ 
+             HistoryGraphSlotView(points: cached?.graphPoints, timeRange: timeRange)
+ 
+-            rankingSlot
++            if showsTopApplications { rankingSlot }
+         }
+         .padding(DashboardStyle.Summary.cardPadding)
+         .frame(maxWidth: .infinity, alignment: .leading)
+-        .frame(minHeight: 241, alignment: .topLeading)
++        .frame(minHeight: showsTopApplications ? 241 : nil, alignment: .topLeading)
+         .background(
+             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
+                 .fill(DashboardStyle.CardSurface.fillColor)
+@@ -423,6 +450,7 @@ struct MemoryCardView: View {
+     let state: ResourceCardState<MemoryCardPresentation>
+     /// CPU 카드와 같은 이유로 전달만 받습니다.
+     let iconProvider: any ApplicationIconProviding
++    var showsTopApplications = true
+ 
+     /// CPU 카드의 같은 상수와 같은 뜻입니다.
+     static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
+@@ -450,7 +478,7 @@ struct MemoryCardView: View {
+                 compositionLegendLine
+             }
+ 
+-            rankingSlot
++            if showsTopApplications { rankingSlot }
+         }
+         .padding(DashboardStyle.Summary.cardPadding)
+         .frame(maxWidth: .infinity, alignment: .leading)
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index 33f990c..e7a09f7 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -41,6 +41,7 @@ final class StatusBarController: NSObject {
+ #if DEBUG
+     /// 우클릭 디버그 메뉴에서 상태를 고르면 호출되는 콜백. Release 빌드에는 이 진입점이 존재하지 않습니다.
+     var debugStateInjector: ((CharacterActivityState) -> Void)?
++    var debugCardVisibilityInjector: ((DashboardSelection) -> Void)?
+ #endif
+ 
+     init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
+@@ -210,6 +211,16 @@ final class StatusBarController: NSObject {
+             item.representedObject = state
+             menu.addItem(item)
+         }
++        if debugCardVisibilityInjector != nil {
++            menu.addItem(.separator())
++            for card in DashboardSelection.cardOrder {
++                let item = NSMenuItem(title: "Toggle \(card) Card",
++                    action: #selector(toggleDebugCard(_:)), keyEquivalent: "")
++                item.target = self
++                item.representedObject = card
++                menu.addItem(item)
++            }
++        }
+         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
+     }
+ 
+@@ -217,6 +228,11 @@ final class StatusBarController: NSObject {
+         guard let state = sender.representedObject as? CharacterActivityState else { return }
+         debugStateInjector?(state)
+     }
++
++    @objc private func toggleDebugCard(_ sender: NSMenuItem) {
++        guard let card = sender.representedObject as? DashboardSelection else { return }
++        debugCardVisibilityInjector?(card)
++    }
+ #endif
+ }
+ 
+diff --git a/ResourceRunnerTests/DashboardCardLayoutTests.swift b/ResourceRunnerTests/DashboardCardLayoutTests.swift
+index 52a64ed..ad9f6ff 100644
+--- a/ResourceRunnerTests/DashboardCardLayoutTests.swift
++++ b/ResourceRunnerTests/DashboardCardLayoutTests.swift
+@@ -578,6 +578,36 @@ private func measuredIdealWidth(_ view: some View) -> CGFloat {
+ @MainActor
+ struct DashboardCardHeightTests {
+ 
++    @Test func hidingTopApplicationsRemovesWholeRankingHeightAcrossStates() {
++        let cpuValue = cpuPresentation(topApplicationsCount: 5)
++        let memoryValue = memoryPresentation(topApplicationsCount: 5)
++        let cpuStates: [ResourceCardState<CPUCardPresentation>] = [
++            .collecting, .normal(cpuValue, timestamp: baseInstant),
++            .failure(lastKnown: nil), .stopped(lastKnown: nil),
++        ]
++        let memoryStates: [ResourceCardState<MemoryCardPresentation>] = [
++            .collecting, .normal(memoryValue, timestamp: baseInstant),
++            .failure(lastKnown: nil), .stopped(lastKnown: nil),
++        ]
++        for state in cpuStates {
++            let full = measuredHeight(CPUCardView(state: state,
++                iconProvider: StubApplicationIconProvider(), showsTopApplications: true))
++            let hidden = measuredHeight(CPUCardView(state: state,
++                iconProvider: StubApplicationIconProvider(), showsTopApplications: false))
++            #expect(hidden < full - 50)
++        }
++        for state in memoryStates {
++            let full = measuredHeight(MemoryCardView(state: state,
++                iconProvider: StubApplicationIconProvider(), showsTopApplications: true))
++            let hidden = measuredHeight(MemoryCardView(state: state,
++                iconProvider: StubApplicationIconProvider(), showsTopApplications: false))
++            #expect(hidden < full - 50)
++        }
++        #expect(CardRankingSlotView.headingSpacing == 3)
++        #expect(DashboardStyle.Summary.cpuPlotHeight == 66.67)
++        #expect(measuredHeight(memoryCardView(.normal(memoryValue, timestamp: baseInstant))) == 169)
++    }
++
+     // MARK: - CPU 카드
+ 
+     @Test func cpuCardHeightIsSameRegardlessOfTopApplicationsCount() {
+diff --git a/ResourceRunnerTests/DashboardPresentationTests.swift b/ResourceRunnerTests/DashboardPresentationTests.swift
+index 54d18aa..5b2d2bb 100644
+--- a/ResourceRunnerTests/DashboardPresentationTests.swift
++++ b/ResourceRunnerTests/DashboardPresentationTests.swift
+@@ -706,6 +706,21 @@ struct CPUCardPresentationAssembleTests {
+ /// task-008 검증 조건: 카드의 접근성 이름에 현재 사용률과 상태, TOP 5의 안내 문구가 포함됩니다.
+ struct CPUCardAccessibilityLabelTests {
+ 
++    @Test func hiddenTopApplicationsRemoveOnlyRankingFromAccessibility() {
++        let presentation = CPUCardPresentation.assemble(
++            cpu: cpuMetrics(overallUsage: 55, userRatio: 40, systemRatio: 15),
++            history: [], topApplications: [], currentTimestamp: baseInstant)
++        let state = ResourceCardState.normal(presentation, timestamp: baseInstant)
++        let label = state.cpuAccessibilityLabel(timeRange: .tenMinutes,
++            showsTopApplications: false, now: baseInstant)
++        #expect(!label.contains(CPUCardPresentation.topApplicationsAccessibilityText))
++        #expect(label.contains("전체 사용률 55%"))
++        #expect(label.contains("User 40%"))
++        #expect(label.contains("System 15%"))
++        #expect(label.contains("최근 10분 그래프"))
++        #expect(label.contains(CPUCardPresentation.selectionShortcutDisplayText))
++    }
++
+     @Test func collectingStateDescribesCollectingWithoutAUsageValue() {
+         let state = ResourceCardState<CPUCardPresentation>.collecting
+ 
+@@ -1150,6 +1165,21 @@ struct MemoryCardPresentationAssembleTests {
+ /// task-009 검증 조건: 카드 접근성 이름에 현재 단계와 사용 중 메모리가 포함됩니다.
+ struct MemoryCardAccessibilityLabelTests {
+ 
++    @Test func hiddenTopApplicationsKeepCompositionPressureAndSwapInAccessibility() {
++        let presentation = MemoryCardPresentation.assemble(
++            memory: memoryMetricsForTests(swapUsedBytes: 3 * 1024 * 1024 * 1024,
++                pressureLevel: .warning), history: [], topApplications: [],
++            currentTimestamp: baseInstant)
++        let state = ResourceCardState.normal(presentation, timestamp: baseInstant)
++        let label = state.memoryAccessibilityLabel(showsTopApplications: false)
++        #expect(!label.contains(MemoryCardPresentation.topApplicationsAccessibilityText))
++        #expect(label.contains("Memory Pressure 경고"))
++        #expect(label.contains("Swap"))
++        #expect(label.contains("App"))
++        #expect(label.contains("Wired"))
++        #expect(label.contains(MemoryCardPresentation.selectionShortcutDisplayText))
++    }
++
+     @Test func collectingStateDescribesCollectingWithoutAValue() {
+         let state = ResourceCardState<MemoryCardPresentation>.collecting
+ 
+diff --git a/ResourceRunnerTests/DashboardPreferencesVisibilityTests.swift b/ResourceRunnerTests/DashboardPreferencesVisibilityTests.swift
+new file mode 100644
+index 0000000..41332f0
+--- /dev/null
++++ b/ResourceRunnerTests/DashboardPreferencesVisibilityTests.swift
+@@ -0,0 +1,99 @@
++import AppKit
++import SwiftUI
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++struct DashboardPreferencesVisibilityTests {
++    private let icons = StubApplicationIconProvider(images: [:])
++
++    private func preferences(cards: Int, top: Int) -> AppPreferences {
++        var value = AppPreferences.defaults
++        value.showsCPUCard = cards & 1 != 0
++        value.showsMemoryCard = cards & 2 != 0
++        value.showsNetworkCard = cards & 4 != 0
++        value.showsDiskCard = cards & 8 != 0
++        value.showsCPUTopApplications = top & 1 != 0
++        value.showsMemoryTopApplications = top & 2 != 0
++        return value
++    }
++
++    private func renderHeight(cards: Int, top: Int) throws -> CGFloat {
++        let snapshot = PreferencesSnapshot(preferences: preferences(cards: cards, top: top), revision: 0)
++        let view = DashboardView(store: DashboardPresentationStore(preferencesSnapshot: snapshot),
++            iconProvider: icons).frame(width: 280)
++        let renderer = ImageRenderer(content: view)
++        renderer.scale = 1
++        return try #require(renderer.nsImage).size.height
++    }
++
++    @Test func allSixtyFourCardAndTopCombinationsUseOnlyVisibleNaturalHeights() throws {
++        var checked = 0
++        for top in 0..<4 {
++            let empty = try renderHeight(cards: 0, top: top)
++            var single: [CGFloat] = []
++            for index in 0..<4 {
++                single.append(try renderHeight(cards: 1 << index, top: top))
++            }
++            for cards in 0..<16 {
++                let actual = try renderHeight(cards: cards, top: top)
++                let count = cards.nonzeroBitCount
++                if count == 0 {
++                    #expect(actual == empty)
++                } else {
++                    let bodyPadding = 2 * DashboardStyle.Summary.bodyPadding
++                    let expected = single.enumerated().reduce(bodyPadding + CGFloat(max(0, count - 1))
++                        * DashboardView.cardSpacing) {
++                        result, entry in
++                        result + (cards & (1 << entry.offset) != 0 ? entry.element - bodyPadding : 0)
++                    }
++                    #expect(abs(actual - expected) <= 2,
++                        "cards=\(cards), top=\(top): \(actual), expected \(expected)")
++                }
++                checked += 1
++            }
++            #expect(single.allSatisfy { $0 > empty })
++        }
++        #expect(checked == 64)
++        #expect(try renderHeight(cards: 1, top: 0) < renderHeight(cards: 1, top: 1))
++        #expect(try renderHeight(cards: 2, top: 0) < renderHeight(cards: 2, top: 2))
++        #expect(try renderHeight(cards: 4, top: 0) == renderHeight(cards: 4, top: 3))
++        #expect(try renderHeight(cards: 8, top: 0) == renderHeight(cards: 8, top: 3))
++    }
++
++    @Test func hidingSelectedCardAdvancesGenerationAndRejectsHiddenEntryAndLateClose() {
++        let store = DashboardPresentationStore()
++        store.selectCard(.cpu)
++        let oldGeneration = store.selectionGeneration
++        var next = AppPreferences.defaults
++        next.showsCPUCard = false
++        next.showsCPUTopApplications = false
++        store.applyPreferences(PreferencesSnapshot(preferences: next, revision: 1))
++        #expect(store.selection == .none)
++        #expect(store.selectionGeneration > oldGeneration)
++        let hiddenGeneration = store.selectionGeneration
++        store.selectCard(.cpu)
++        #expect(store.selection == .none)
++        #expect(store.selectionGeneration == hiddenGeneration)
++        store.selectCard(.memory)
++        #expect(store.selection == .memory)
++        store.dismissDetail(for: .cpu, generation: oldGeneration)
++        #expect(store.selection == .memory)
++        next.showsCPUCard = true
++        store.applyPreferences(PreferencesSnapshot(preferences: next, revision: 2))
++        #expect(store.selection == .memory)
++        #expect(!store.preferencesSnapshot.preferences.showsCPUTopApplications)
++        store.selectCard(.cpu)
++        #expect(store.selection == .cpu)
++        store.dismissDetail(for: .cpu, generation: oldGeneration)
++        #expect(store.selection == .cpu)
++    }
++
++    @Test func allOffSettingsActionUsesInjectedCallback() {
++        var opens = 0
++        let view = DashboardView(store: DashboardPresentationStore(), iconProvider: icons,
++            onOpenSettings: { opens += 1 })
++        view.onOpenSettings()
++        #expect(opens == 1)
++    }
++}
+diff --git a/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift b/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift
+new file mode 100644
+index 0000000..ecc3b4b
+--- /dev/null
++++ b/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift
+@@ -0,0 +1,75 @@
++import XCTest
++
++final class DashboardPreferencesVisibilityUITests: XCTestCase {
++    override func setUpWithError() throws { continueAfterFailure = false }
++
++    private func app(cards: Int, top: Int = 3) -> XCUIApplication {
++        let app = XCUIApplication()
++        app.launchArguments.append("--dashboard-preferences-ui-test")
++        app.launchEnvironment["RR_DASHBOARD_CARD_MASK"] = String(cards)
++        app.launchEnvironment["RR_DASHBOARD_TOP_MASK"] = String(top)
++        app.launch()
++        return app
++    }
++
++    private func openDashboard(_ app: XCUIApplication) -> XCUIElement {
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        let container = app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch
++        XCTAssertTrue(container.waitForExistence(timeout: 5))
++        return container
++    }
++
++    @MainActor
++    func testAllOffShowsSettingsActionAndNoCardAccessibilityElements() {
++        let app = app(cards: 0)
++        let container = openDashboard(app)
++        XCTAssertTrue(container.exists)
++        XCTAssertTrue(app.buttons["DashboardOpenSettings"].exists)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch.exists)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "MemoryCard").firstMatch.exists)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "NetworkCard").firstMatch.exists)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "DiskCard").firstMatch.exists)
++    }
++
++    @MainActor
++    func testLiveHideAndReshowRemovesCardAndRankingButKeepsDetail() {
++        let app = app(cards: 3, top: 0)
++        let container = openDashboard(app)
++        let cpu = app.descendants(matching: .any).matching(identifier: "CPUCard").firstMatch
++        let memory = app.descendants(matching: .any).matching(identifier: "MemoryCard").firstMatch
++        XCTAssertTrue(cpu.exists)
++        XCTAssertTrue(memory.exists)
++        XCTAssertFalse(cpu.label.contains("TOP 5"))
++        XCTAssertFalse(memory.label.contains("TOP 5"))
++        let initialHeight = container.frame.height
++
++        cpu.click()
++        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "DashboardDetail")
++            .firstMatch.waitForExistence(timeout: 2))
++
++        let status = app.statusItems.firstMatch
++        status.rightClick()
++        let hide = app.menuItems["Toggle cpu Card"]
++        XCTAssertTrue(hide.waitForExistence(timeout: 2))
++        hide.click()
++        status.click()
++        XCTAssertFalse(cpu.exists)
++        XCTAssertTrue(memory.waitForExistence(timeout: 2))
++        XCTAssertLessThan(container.frame.height, initialHeight)
++        app.typeKey("1", modifierFlags: .command)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "DashboardDetail")
++            .firstMatch.exists)
++
++        status.rightClick()
++        let show = app.menuItems["Toggle cpu Card"]
++        XCTAssertTrue(show.waitForExistence(timeout: 2))
++        show.click()
++        status.click()
++        XCTAssertTrue(cpu.waitForExistence(timeout: 2))
++        XCTAssertFalse(cpu.label.contains("TOP 5"))
++        XCTAssertTrue(memory.exists)
++    }
++}

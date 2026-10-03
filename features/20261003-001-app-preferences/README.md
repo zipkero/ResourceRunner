@@ -55,3 +55,5 @@ M4의 첫 범위로 카드·TOP 5 표시, 그래프 시간 범위, 갱신 4단�
 - 2026-10-03: task-005의 동일 저장 snapshot 초기 배선·현재 revision 통지·프로필 변경 전달·활성화 status 읽기를 독립 verifier approved 후 main이 승인했습니다. 기존 전체600초/상세 모델을 유지하고 현재 snapshot으로 선별하는 내부 접근 차이를 목적/조건 의미 유지로 판단해 계획에 반영했습니다. signed42case·실패/skip0·8파일 해시 대응 확인. 구현 재시도0·근거 재검증0, task-001~005 [x], task-006~011 [ ], IMPLEMENT [ ]. 영향받은 설정 저장 회귀도 통과했고 기존 승인은 유지합니다.
 
 - 2026-10-03: task-006의 공통1/5/10분 구간/축/진행/AX·당시G/연속성 연결·가시 극값과 기본표현 보존을 독립 verifier approved 후 main이 승인했습니다. 내장 역할 재호출/신규 호출이 agent thread 제한으로 실패해 동일 gpt-6-sol/high 읽기 전용 verifier를 로컬 CLI로 실행했습니다. 최종 signed serial86case(동적90실행)·실패/skip0,9파일 해시/패치 대응 확인. 불완전한 이전 번들은 근거에서 제외했습니다. 구현 재시도0·근거 재검증0. task-001~006 [x], task-007~011 [ ], IMPLEMENT [ ]이며 기존 승인은 유지합니다.
+
+- 2026-10-03: task-007 worker가 카드/TOP5 조건부 표시·자연 높이·선택 정리와 검증10파일을 부분 구현하고 blocked로 반환했습니다. 최종 signed 단위40/40·6suite/64렌더조합 통과, UI는 두 번 모두 본문 전 LocalAuthentication Code=-4 “System authentication is running”으로 차단됐습니다. main은 현재 권한에서 인증/TCC를 조작하지 않고 환경 해소 뒤 같은 UI 실행·독립 verify를 재개 조건으로 기록했습니다. task-007 [ ]·코드 미커밋, task-008~011 미착수, IMPLEMENT [ ]입니다. loop 재시도/근거 재검증0, verifier 판정 없음. 승인001~006·상위 계약·M3 상태는 유지합니다.

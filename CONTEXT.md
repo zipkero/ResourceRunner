@@ -8,7 +8,7 @@
 
 ## 현재 상태
 
-- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. Task018 구현 기준 HEAD는32189a5다. Task012(54a89e1),013(1b15966),016(5aedfa4·CSV 원본 보정4487c94),017(32189a5)은 origin/main에 푸시했다. Task018도 worker FINAL completed와 독립 verifier FINAL approved를 main이 인수·확정했으며 최종 변경을 커밋·푸시한다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. Task018 구현 커밋4757b28을 origin/main에 푸시하고 clean·원격 동기화를 확인했다. worker FINAL completed와 독립 verifier FINAL approved를 main이 인수·확정했다. Task012(54a89e1),013(1b15966),016(5aedfa4·CSV 원본 보정4487c94),017(32189a5)도 푸시 완료했다.
 - SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010~013/016~018 승인,009철회,014/015 미완료. task014의 VPN·외장 디스크와 task015의 잠금·수면·화면 수면·사용자 전환은 사용자 보류다. Ethernet 전환 장비도 미확보이며 연결 없음/복귀는 실행하지 않았다.
 - Task018 unit614/614·Debug/Release 통과. 서명 UI 전체29/30 뒤 유일 실패인 NetworkUpdateCadence의 AXLabel 단독 단언을 label+value로 보완한 해당1/1이 통과했다. 단일 실행30/30 성공을 주장하지 않는다. 글로벌 보안/TCC 설정은 변경하지 않았다.
 - 임시 DEBUG probe·긴 Memory/저전력 주입 경로를 제거했다. Collector·일정·baseline·저장·표시·키보드의 production 동작은 유지했다. 최종 소스/Debug stub·실제 Swift dylib/Release 해시10개가 일치한다.
@@ -40,8 +40,8 @@ Task014/015를 mock이나 통합 결과로 대체하지 않는다. 외부 물리
 
 ## 다음 작업
 
-- 작업: 최종 main 커밋·푸시 후 Git 동기화를 확인한다. 이후 보류014/015는 사용자가 재개하고 필요한 환경을 확보할 때만 진행한다.
-- 완료 기준: 승인된018 결과와 문서·CONTEXT를 저장하고 origin/main 동기화를 확인한다. M3 전체 완료는 보류 Task의 실제 관문이 충족된 뒤 판단한다.
+- 작업: 현재 승인 범위의 남은 작업은 없다. 보류014/015는 사용자가 재개하고 필요한 환경을 확보할 때만 진행한다.
+- 완료 기준: M3 전체 완료는 보류 Task의 실제 관문이 충족된 뒤 판단한다. 현재 결과·문서·CONTEXT와 main 커밋·푸시는 완료했다.
 
 ## 먼저 읽을 파일
 

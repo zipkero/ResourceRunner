@@ -1,0 +1,19 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-03 12:19:57.368 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] keyboardMode=0 screen=Optional((0.0, 0.0, 1728.0, 1084.0)) scale=<private>
+2026-10-03 12:20:02.115 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] body=(957.0, 382.0, 306.0, 694.0) noScroll=true
+2026-10-03 12:20:02.307 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=18 command=true target=43924 selection=none generation=2 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:02.500 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=19 command=true target=43924 selection=none generation=4 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:02.690 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=20 command=true target=43924 selection=none generation=6 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:02.880 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=18 command=true target=43924 selection=none generation=8 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:03.083 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=18 command=true target=43924 selection=none generation=10 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:03.275 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=18 command=true target=43924 selection=none generation=12 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:03.381 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] opened card=cpu owned=false childKey=false cardAX=Optional((978.0, 62.0, 264.0, 241.0)) closeAX=false
+2026-10-03 12:20:03.567 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=19 command=true target=43924 selection=none generation=14 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:03.594 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] opened card=memory owned=false childKey=false cardAX=Optional((978.0, 309.0, 264.0, 169.0)) closeAX=false
+2026-10-03 12:20:03.792 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=20 command=true target=43924 selection=none generation=16 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:03.822 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] opened card=network owned=false childKey=false cardAX=Optional((978.0, 484.0, 264.0, 112.0)) closeAX=false
+2026-10-03 12:20:04.043 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=21 command=true target=43924 selection=none generation=18 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:04.055 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] opened card=disk owned=false childKey=false cardAX=Optional((978.0, 602.0, 264.0, 112.0)) closeAX=false
+2026-10-03 12:20:04.250 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=21 command=true target=43924 selection=none generation=20 keyWindow=Optional(43924) focused=none detail=nil
+2026-10-03 12:20:04.459 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] key code=53 command=false target=43924 selection=none generation=20 keyWindow=nil focused=none detail=nil
+2026-10-03 12:20:04.492 Df ResourceRunner[25745:2f433a0] [com.zipkero.ResourceRunner:KeyboardProbe] integrated AX traversal visited=167

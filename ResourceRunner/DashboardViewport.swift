@@ -49,6 +49,7 @@ final class DashboardViewport: ObservableObject {
     weak var detailWindow: NSWindow?
     private(set) var detailSelection: DashboardSelection?
     var requestCorrection: (() -> Void)?
+    var requestBodyFocus: (() -> Void)?
     weak var lowestAnchorView: NSView?
     weak var memoryCardView: NSView?
 

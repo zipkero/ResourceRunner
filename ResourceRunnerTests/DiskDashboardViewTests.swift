@@ -263,10 +263,10 @@ struct DiskDashboardViewTests {
         #expect(store.selection == .none)
         store.selectCard(.disk)
         store.selectCard(.network)
-        store.dismissDetail(for: .disk)
+        store.dismissDetail(for: .disk, generation: store.selectionGeneration)
         #expect(store.selection == .network)
         store.selectCard(.disk)
-        store.dismissDetail(for: .disk)
+        store.dismissDetail(for: .disk, generation: store.selectionGeneration)
         #expect(store.selection == .none)
     }
 }

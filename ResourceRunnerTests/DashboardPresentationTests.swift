@@ -1987,7 +1987,7 @@ struct DashboardSelectionTests {
         store.selectCard(.cpu)
         #expect(store.selection == .cpu)
 
-        store.dismissDetail(for: .cpu)
+        store.dismissDetail(for: .cpu, generation: store.selectionGeneration)
         #expect(store.selection == .none)
     }
 
@@ -1996,7 +1996,7 @@ struct DashboardSelectionTests {
         store.selectCard(.memory)
         #expect(store.selection == .memory)
 
-        store.dismissDetail(for: .memory)
+        store.dismissDetail(for: .memory, generation: store.selectionGeneration)
         #expect(store.selection == .none)
     }
 
@@ -2009,7 +2009,7 @@ struct DashboardSelectionTests {
         store.selectCard(.memory)
         #expect(store.selection == .memory)
 
-        store.dismissDetail(for: .cpu)
+        store.dismissDetail(for: .cpu, generation: store.selectionGeneration)
         #expect(store.selection == .memory, "이미 다른 카드로 옮겨간 선택을 지우면 안 됩니다.")
     }
 
@@ -2017,7 +2017,21 @@ struct DashboardSelectionTests {
     @Test func dismissDetailWhileNoSelectionStaysNone() {
         let store = DashboardPresentationStore()
 
-        store.dismissDetail(for: .cpu)
+        store.dismissDetail(for: .cpu, generation: store.selectionGeneration)
+        #expect(store.selection == .none)
+    }
+
+    @Test func oldSameCardCloseCannotDismissANewSelectionSession() {
+        let store = DashboardPresentationStore()
+        store.selectCard(.cpu)
+        let oldCPU = store.selectionGeneration
+        store.selectCard(.network)
+        store.selectCard(.cpu)
+        #expect(store.selection == .cpu)
+        store.dismissDetail(for: .cpu, generation: oldCPU)
+        #expect(store.selection == .cpu)
+        let currentCPU = store.selectionGeneration
+        store.dismissDetail(for: .cpu, generation: currentCPU)
         #expect(store.selection == .none)
     }
 }

@@ -287,10 +287,18 @@ private struct GridWithoutEmptySlots: View {
 private struct CPUValuelessReference: View {
     var body: some View {
         ScrollView {
-            Text("아직 CPU 값이 수집되지 않았습니다.")
-                .dashboardTypography(DashboardStyle.TypographyRole.label)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("CPU 상세")
+                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                    Spacer()
+                    Button("닫기") {}
+                }
+                Text("아직 CPU 값이 수집되지 않았습니다.")
+                    .dashboardTypography(DashboardStyle.TypographyRole.label)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
         .background(DashboardColorPalette.cardSurface)
@@ -404,7 +412,7 @@ struct DetailPopoverValuelessStateTests {
         #expect(memorySizes.allSatisfy { $0 == CGSize(width: 400, height: 480) }, "Memory 상태별 프레임: \(memorySizes)")
     }
 
-    @Test("수집 중·실패·중지는 같은 안내 문구 하나만 그린다")
+    @Test("수집 중·실패·중지는 같은 닫기 머리글과 안내 문구를 그린다")
     func valuelessStatesRenderTheSameSingleMessage() throws {
         let states: [ResourceCardState<CPUCardPresentation>] = [
             .collecting,
@@ -418,7 +426,7 @@ struct DetailPopoverValuelessStateTests {
         let reference = try #require(detailPopupBitmap(CPUValuelessReference()))
 
         for bitmap in bitmaps {
-            #expect(differentPixelCount(bitmap, reference) == 0, "값 없음 콘텐츠가 안내 문구 하나의 기준 조립과 다릅니다")
+            #expect(differentPixelCount(bitmap, reference) == 0, "값 없음 콘텐츠가 머리글·안내 문구의 기준 조립과 다릅니다")
         }
         #expect(differentPixelCount(bitmaps[0], bitmaps[1]) == 0)
         #expect(differentPixelCount(bitmaps[1], bitmaps[2]) == 0)

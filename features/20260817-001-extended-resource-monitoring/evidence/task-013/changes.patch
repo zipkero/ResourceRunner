@@ -1,0 +1,657 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 3e73449..0da9a57 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -20,6 +20,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidFinishLaunching(_ notification: Notification) {
+         coordinator = ApplicationCoordinator()
+ #if DEBUG
++        if ProcessInfo.processInfo.environment["RR_KEYBOARD_PROBE"] == "1" {
++            Task { @MainActor [weak self] in
++                guard let self, let coordinator = self.coordinator else { return }
++                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "KeyboardProbe")
++                let status = coordinator.statusBarController
++                let store = coordinator.dashboardPresentationStore
++                logger.notice("keyboardMode=\(UserDefaults.standard.object(forKey: "AppleKeyboardUIMode") as? Int ?? -1) screen=\(String(describing: NSScreen.main?.visibleFrame), privacy: .public) scale=\(NSScreen.main?.backingScaleFactor ?? 0)")
++                try? await Task.sleep(for: .seconds(4))
++                status.togglePopover()
++                try? await Task.sleep(for: .milliseconds(600))
++                guard let body = status.popover.contentViewController?.view.window else { return }
++                logger.notice("body=\(String(describing: body.frame), privacy: .public) noScroll=\(Self.firstScrollView(in: body.contentView ?? NSView()) == nil)")
++                @MainActor func send(_ keyCode: UInt16, _ characters: String, command: Bool = false,
++                          window: NSWindow? = nil, delay: Int = 180) async {
++                    let target = window ?? status.viewport?.detailWindow ?? body
++                    guard let event = NSEvent.keyEvent(with: .keyDown, location: .zero,
++                        modifierFlags: command ? .command : [], timestamp: ProcessInfo.processInfo.systemUptime,
++                        windowNumber: target.windowNumber, context: nil,
++                        characters: characters, charactersIgnoringModifiers: characters,
++                        isARepeat: false, keyCode: keyCode) else { return }
++                    NSApp.sendEvent(event)
++                    try? await Task.sleep(for: .milliseconds(delay))
++                    logger.notice("key code=\(keyCode) command=\(command) target=\(target.windowNumber) selection=\(String(describing: store.selection), privacy: .public) generation=\(store.selectionGeneration) keyWindow=\(String(describing: NSApp.keyWindow?.windowNumber), privacy: .public) focused=\(Self.probeFocusedIdentifier() ?? "none", privacy: .public) detail=\(String(describing: status.viewport?.detailWindow?.frame), privacy: .public)")
++                }
++                await send(18, "1", command: true, window: body)
++                await send(19, "2", command: true)
++                await send(20, "3", command: true)
++                await send(18, "1", command: true)
++                await send(18, "1", command: true)
++                for (key, code, card, cardID, closeID) in [
++                    ("1", UInt16(18), DashboardSelection.cpu, "CPUCard", "CPUDetailClose"),
++                    ("2", UInt16(19), .memory, "MemoryCard", "MemoryDetailClose"),
++                    ("3", UInt16(20), .network, "NetworkCard", "NetworkDetailClose"),
++                    ("4", UInt16(21), .disk, "DiskCard", "DiskDetailClose")
++                ] {
++                    await send(code, key, command: true, window: body)
++                    let child = status.viewport?.detailWindow
++                    logger.notice("opened card=\(String(describing: card), privacy: .public) owned=\(status.viewport?.detailSelection == card) childKey=\(NSApp.keyWindow === child) cardAX=\(String(describing: Self.probeAXFrame(identifier: cardID)), privacy: .public) closeAX=\(Self.probeAXElement(identifier: closeID) != nil)")
++                    if card == .network || card == .disk {
++                        Self.logKeyboardAccessibility(logger: logger)
++                    }
++                    if let child, let content = child.contentView,
++                       let scroll = Self.firstScrollView(in: content) {
++                        let clip = scroll.contentView
++                        let documentHeight = scroll.documentView?.frame.height ?? 0
++                        let pages = min(100, Int(ceil(documentHeight / max(1, clip.bounds.height))) + 1)
++                        let start = clip.bounds.minY
++                        for _ in 0..<pages { await send(121, "", window: body, delay: 15) }
++                        logger.notice("pageEnd card=\(String(describing: card), privacy: .public) pages=\(pages) start=\(start) document=\(documentHeight) clip=\(String(describing: clip.bounds), privacy: .public) expectedEnd=\(max(0, documentHeight - clip.bounds.height))")
++                        if card == .network || card == .disk {
++                            Self.logKeyboardAccessibility(logger: logger)
++                        }
++                        await send(116, "", window: body, delay: 40)
++                        logger.notice("pageUp card=\(String(describing: card), privacy: .public) clip=\(String(describing: clip.bounds), privacy: .public)")
++                    }
++                    if let close = Self.probeAXElement(identifier: closeID) {
++                        let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
++                        try? await Task.sleep(for: .milliseconds(220))
++                        logger.notice("AXClose card=\(String(describing: card), privacy: .public) result=\(result.rawValue) selection=\(String(describing: store.selection), privacy: .public) keyWindow=\(String(describing: NSApp.keyWindow?.windowNumber), privacy: .public) responder=\(String(describing: NSApp.keyWindow?.firstResponder), privacy: .public) focused=\(Self.probeFocusedIdentifier() ?? "none", privacy: .public)")
++                    }
++                    await send(code, key, command: true, window: body)
++                    await send(53, "", window: body)
++                    logger.notice("escape card=\(String(describing: card), privacy: .public) selection=\(String(describing: store.selection), privacy: .public) bodyShown=\(status.popover.isShown) focused=\(Self.probeFocusedIdentifier() ?? "none", privacy: .public)")
++                    await send(code, key, command: true, window: body)
++                    await send(code, key, command: true, window: body)
++                }
++                Self.logIntegratedAccessibility(logger: logger)
++                status.togglePopover()
++            }
++        }
+         if ProcessInfo.processInfo.environment["RR_VIEWPORT_PROBE"] == "1" {
+             Task { @MainActor [weak self] in
+                 guard let self, let coordinator = self.coordinator else { return }
+@@ -392,6 +462,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     }
+ 
+ #if DEBUG
++    @MainActor private static func probeAXElement(identifier: String) -> AXUIElement? {
++        let root = AXUIElementCreateApplication(getpid())
++        func search(_ element: AXUIElement, depth: Int) -> AXUIElement? {
++            guard depth < 18 else { return nil }
++            var value: CFTypeRef?
++            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &value) == .success,
++               value as? String == identifier { return element }
++            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
++                  let children = value as? [AXUIElement] else { return nil }
++            for child in children {
++                if let found = search(child, depth: depth + 1) { return found }
++            }
++            return nil
++        }
++        return search(root, depth: 0)
++    }
++
++    @MainActor private static func probeFocusedIdentifier() -> String? {
++        let root = AXUIElementCreateApplication(getpid())
++        var focused: CFTypeRef?
++        guard AXUIElementCopyAttributeValue(root, kAXFocusedUIElementAttribute as CFString,
++            &focused) == .success, let element = focused as! AXUIElement? else { return nil }
++        var identifier: CFTypeRef?
++        guard AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString,
++            &identifier) == .success else { return nil }
++        return identifier as? String
++    }
++
++    @MainActor private static func logKeyboardAccessibility(logger: Logger) {
++        let root = AXUIElementCreateApplication(getpid())
++        var visited = 0
++        func walk(_ element: AXUIElement, depth: Int) {
++            guard depth < 20, visited < 2000 else { return }
++            visited += 1
++            var value: CFTypeRef?
++            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString,
++                &value) == .success, let identifier = value as? String,
++               identifier.hasPrefix("NetworkInterface-")
++                || identifier.hasPrefix("DiskVolume-")
++                || identifier.hasPrefix("DiskDevice-")
++                || ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard", "NetworkUpdateCadence",
++                    "NetworkDetail", "DiskSummary", "DiskDetail", "DiskMiniGraph"].contains(identifier) {
++                var description: CFTypeRef?
++                var title: CFTypeRef?
++                var axValue: CFTypeRef?
++                var frame: CFTypeRef?
++                var size: CFTypeRef?
++                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString,
++                    &description)
++                _ = AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &title)
++                _ = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &axValue)
++                _ = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &frame)
++                _ = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
++                var point = CGPoint.zero
++                var dimensions = CGSize.zero
++                if let frame { _ = AXValueGetValue(frame as! AXValue, .cgPoint, &point) }
++                if let size { _ = AXValueGetValue(size as! AXValue, .cgSize, &dimensions) }
++                logger.notice("detailAX id=\(identifier, privacy: .public) description=\(String(describing: description), privacy: .public) title=\(String(describing: title), privacy: .public) value=\(String(describing: axValue), privacy: .public) frame=\(String(describing: CGRect(origin: point, size: dimensions)), privacy: .public)")
++            }
++            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString,
++                &value) == .success, let children = value as? [AXUIElement] else { return }
++            for child in children { walk(child, depth: depth + 1) }
++        }
++        walk(root, depth: 0)
++        logger.notice("detailAX visited=\(visited)")
++    }
++
+     /// probe에서 카드 AX frame을 읽어 자식 창이 선택 카드 옆에 남는지 확인합니다.
+     @MainActor private static func probeAXFrame(identifier: String) -> CGRect? {
+         let root = AXUIElementCreateApplication(getpid())
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 9412cb8..a34a41f 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -60,6 +60,12 @@ final class ApplicationCoordinator {
+             popoverContent: DashboardView(store: dashboard, viewport: viewport,
+                 iconProvider: ApplicationIconCache()), viewport: viewport
+         )
++        statusBarController.keyboardDismiss = { [weak dashboard] in
++            guard let dashboard, dashboard.selection != .none else { return false }
++            dashboard.dismissDetail(for: dashboard.selection,
++                generation: dashboard.selectionGeneration)
++            return true
++        }
+         characterStateSource = CharacterStateSource()
+ 
+         // 여섯 축 모두 같은 구성 함수를 지나며, 빠른 counter와 느린 metadata는 각각 별도 actor·scheduler입니다.
+diff --git a/ResourceRunner/DashboardPresentation.swift b/ResourceRunner/DashboardPresentation.swift
+index e8c3633..64f3efb 100644
+--- a/ResourceRunner/DashboardPresentation.swift
++++ b/ResourceRunner/DashboardPresentation.swift
+@@ -193,7 +193,7 @@ extension ResourceCardState {
+ /// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지.
+ /// 전이는 `DashboardPresentationStore.selectCard(_:)`(카드 활성화)와 `dismissDetail(for:)`(팝업 자신의 닫힘) 둘로만 일어나고,
+ /// 수집 갱신이나 수집 실패는 이 값을 바꾸지 않습니다(SPEC §5.2).
+-nonisolated enum DashboardSelection: Sendable, Equatable {
++nonisolated enum DashboardSelection: Sendable, Hashable {
+     case none
+     case cpu
+     case memory
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index 569131c..5956318 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -39,21 +39,24 @@ final class DashboardPresentationStore: ObservableObject {
+     /// 이 값이 바로 카드 옆 상세 팝업의 표시 여부를 유도하는 바인딩 원본입니다 —
+     /// 팝업이 스스로 닫히면 `dismissDetail(for:)`가 그 사실을 이 값으로 되돌립니다(ANALYSIS §5 DP14).
+     @Published private(set) var selection: DashboardSelection = .none
++    private(set) var selectionGeneration: UInt64 = 0
+ 
+     /// 카드 활성화 하나로만 선택 상태를 전이시킵니다.
+     /// 이미 선택된 카드를 다시 활성화하면 선택이 해제되어 요약 상태로 돌아가고,
+     /// 다른 카드를 활성화하면 선택이 그 카드로 바뀝니다(SPEC §5.2).
+     func selectCard(_ card: DashboardSelection) {
+         selection = (selection == card) ? .none : card
++        selectionGeneration &+= 1
+     }
+ 
+     /// 카드 옆 상세 팝업이 스스로 닫힐 때(예: 팝업 밖 클릭) 선택을 해제하는 진입점입니다.
+-    /// `card`가 그 시점에도 여전히 선택 상태일 때만 선택을 지웁니다 — 이미 다른 카드로 선택이 옮겨간 뒤라면
+-    /// (예: CPU 팝업이 열린 채 ⌘2로 Memory를 선택해 CPU 팝업이 닫히는 경우) 그 자기 닫힘 신호는 무시합니다
++    /// 같은 종류여도 이전 선택 세션의 늦은 콜백은 무시합니다. CPU→Network→CPU 전환 뒤 첫 CPU의 닫힘이
++    /// 새 CPU를 지우지 않도록 종류와 세대를 함께 검사합니다.
+     /// (task-010, ANALYSIS §2 「팝오버 열림과 카드 선택」, §5 DP14).
+-    func dismissDetail(for card: DashboardSelection) {
+-        guard selection == card else { return }
++    func dismissDetail(for card: DashboardSelection, generation: UInt64) {
++        guard selection == card, generation == selectionGeneration else { return }
+         selection = .none
++        selectionGeneration &+= 1
+     }
+ 
+     /// 시스템 지표 tick 하나를 CPU 카드 표시 상태로 반영합니다.
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index 649cf6e..1f22a79 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -18,6 +18,7 @@ import SwiftUI
+ struct DashboardView: View {
+     @ObservedObject var store: DashboardPresentationStore
+     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
++    @FocusState private var focusedCard: DashboardSelection?
+     @Environment(\.locale) private var locale
+     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
+     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
+@@ -35,6 +36,8 @@ struct DashboardView: View {
+                 CPUCardView(state: store.cpuCard, iconProvider: iconProvider)
+             }
+             .buttonStyle(.plain)
++            .focusable()
++            .focused($focusedCard, equals: .cpu)
+             .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
+             .accessibilityElement(children: .ignore)
+             .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel)
+@@ -43,14 +46,18 @@ struct DashboardView: View {
+             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
+             .accessibilityIdentifier("CPUCard")
+             .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
++                let generation = store.selectionGeneration
+                 CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
+-                    viewport: viewport)
++                    viewport: viewport,
++                    onClose: { store.dismissDetail(for: .cpu, generation: generation) })
+             }
+ 
+             Button(action: { store.selectCard(.memory) }) {
+                 MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
+             }
+             .buttonStyle(.plain)
++            .focusable()
++            .focused($focusedCard, equals: .memory)
+             .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
+             .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
+             .accessibilityElement(children: .ignore)
+@@ -59,13 +66,17 @@ struct DashboardView: View {
+             // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
+             .accessibilityIdentifier("MemoryCard")
+             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
++                let generation = store.selectionGeneration
+                 MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
+-                    viewport: viewport)
++                    viewport: viewport,
++                    onClose: { store.dismissDetail(for: .memory, generation: generation) })
+             }
+             Button(action: { store.selectCard(.network) }) {
+                 NetworkCardView(presentation: store.networkCard)
+             }
+             .buttonStyle(.plain)
++            .focusable()
++            .focused($focusedCard, equals: .network)
+             .keyboardShortcut("3", modifiers: .command)
+             .accessibilityElement(children: .ignore)
+             .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
+@@ -73,13 +84,17 @@ struct DashboardView: View {
+             .accessibilityAddTraits(.isButton)
+             .accessibilityIdentifier("NetworkCard")
+             .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
++                let generation = store.selectionGeneration
+                 NetworkDetailPopoverContent(presentation: store.networkCard,
+-                    onClose: { store.dismissDetail(for: .network) }, viewport: viewport)
++                    onClose: { store.dismissDetail(for: .network, generation: generation) },
++                    viewport: viewport)
+             }
+             Button(action: { store.selectCard(.disk) }) {
+                 DiskCardView(presentation: store.diskCard)
+             }
+             .buttonStyle(.plain)
++            .focusable()
++            .focused($focusedCard, equals: .disk)
+             .background(DashboardLowestAnchorCapture(viewport: viewport))
+             .keyboardShortcut("4", modifiers: .command)
+             .accessibilityElement(children: .ignore)
+@@ -89,13 +104,27 @@ struct DashboardView: View {
+             .accessibilityAddTraits(.isButton)
+             .accessibilityIdentifier("DiskCard")
+             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
++                let generation = store.selectionGeneration
+                 DiskDetailPopoverContent(presentation: store.diskCard,
+-                    onClose: { store.dismissDetail(for: .disk) }, viewport: viewport)
++                    onClose: { store.dismissDetail(for: .disk, generation: generation) },
++                    viewport: viewport)
+             }
+         }
+         .padding(DashboardStyle.Summary.bodyPadding)
+         .frame(width: 280, alignment: .topLeading)
+-        .onChange(of: store.selection) { _, _ in viewport.requestCorrection?() }
++        .onChange(of: store.selection) { old, new in
++            viewport.requestCorrection?()
++            if new == .none, old != .none {
++                let generation = store.selectionGeneration
++                // 자식 팝오버가 key를 반환한 뒤 해당 카드에 초점을 둡니다. 빠른 재선택이 시작되면 폐기합니다.
++                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
++                    guard store.selection == .none,
++                          store.selectionGeneration == generation else { return }
++                    viewport.requestBodyFocus?()
++                    focusedCard = old
++                }
++            }
++        }
+         .background(DashboardColorPalette.popoverBackground)
+         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
+         .accessibilityElement(children: .contain)
+@@ -124,15 +153,15 @@ struct DashboardView: View {
+     static let detailPopupHeight: CGFloat = 480
+ 
+     /// CPU 상세 팝업의 표시 여부. `get`은 `store.selection`을 그대로 반영하고,
+-    /// `set`은 팝업이 스스로 닫힐 때만(예: 팝업 밖 클릭) 호출되며 `store.dismissDetail(for:)`에 그 사실을 넘깁니다.
+-    /// 선택 해제 여부 자체는 그 진입점이 판단하므로(선택이 이미 다른 카드로 옮겨간 뒤라면 무시), 이 바인딩은
+-    /// 판단 없이 신호만 전달합니다.
++    /// `set`은 팝업이 스스로 닫힐 때만 호출됩니다. 바인딩 생성 때의 세대를 캡처해
++    /// 같은 종류의 새 선택까지 이전 팝업의 닫힘이 지우지 못하게 합니다.
+     private var cpuDetailIsPresented: Binding<Bool> {
+-        Binding(
++        let generation = store.selectionGeneration
++        return Binding(
+             get: { store.selection == .cpu },
+             set: { isPresented in
+                 if !isPresented {
+-                    store.dismissDetail(for: .cpu)
++                    store.dismissDetail(for: .cpu, generation: generation)
+                 }
+             }
+         )
+@@ -140,30 +169,33 @@ struct DashboardView: View {
+ 
+     /// Memory 상세 팝업의 표시 여부. CPU 쪽과 같은 이유로 같은 형태의 바인딩을 씁니다.
+     private var memoryDetailIsPresented: Binding<Bool> {
+-        Binding(
++        let generation = store.selectionGeneration
++        return Binding(
+             get: { store.selection == .memory },
+             set: { isPresented in
+                 if !isPresented {
+-                    store.dismissDetail(for: .memory)
++                    store.dismissDetail(for: .memory, generation: generation)
+                 }
+             }
+         )
+     }
+ 
+     private var diskDetailIsPresented: Binding<Bool> {
+-        Binding(
++        let generation = store.selectionGeneration
++        return Binding(
+             get: { store.selection == .disk },
+             set: { isPresented in
+-                if !isPresented { store.dismissDetail(for: .disk) }
++                if !isPresented { store.dismissDetail(for: .disk, generation: generation) }
+             }
+         )
+     }
+ 
+     private var networkDetailIsPresented: Binding<Bool> {
+-        Binding(
++        let generation = store.selectionGeneration
++        return Binding(
+             get: { store.selection == .network },
+             set: { isPresented in
+-                if !isPresented { store.dismissDetail(for: .network) }
++                if !isPresented { store.dismissDetail(for: .network, generation: generation) }
+             }
+         )
+     }
+@@ -1059,6 +1091,7 @@ struct CPUDetailPopoverContent: View {
+     let state: ResourceCardState<CPUCardPresentation>
+     let iconProvider: any ApplicationIconProviding
+     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
++    var onClose: () -> Void = {}
+ 
+     /// 이 상태에서 상세 본문이 조립하는 이 feature의 새 표시 요소.
+     /// 정상 목록을 `CPUDetailView`의 production 조립에서 가져오므로 하위 조립에 요소가 더해지면
+@@ -1070,7 +1103,15 @@ struct CPUDetailPopoverContent: View {
+ 
+     var body: some View {
+         ScrollView {
+-            detailContent
++            VStack(alignment: .leading) {
++                HStack {
++                    Text("CPU 상세")
++                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                    Spacer()
++                    Button("닫기", action: onClose).accessibilityIdentifier("CPUDetailClose")
++                }
++                detailContent
++            }
+             .padding()
+             .frame(maxWidth: .infinity, alignment: .leading)
+         }
+@@ -1098,15 +1139,24 @@ struct MemoryDetailPopoverContent: View {
+     let state: ResourceCardState<MemoryCardPresentation>
+     let iconProvider: any ApplicationIconProviding
+     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
++    var onClose: () -> Void = {}
+ 
+     var body: some View {
+         ScrollView {
+-            Group {
+-                if case .normal(let presentation, _) = state {
+-                    MemoryDetailView(presentation: presentation, iconProvider: iconProvider)
+-                } else {
+-                    Text("아직 Memory 값이 수집되지 않았습니다.")
+-                        .dashboardTypography(DashboardStyle.TypographyRole.label)
++            VStack(alignment: .leading) {
++                HStack {
++                    Text("Memory 상세")
++                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                    Spacer()
++                    Button("닫기", action: onClose).accessibilityIdentifier("MemoryDetailClose")
++                }
++                Group {
++                    if case .normal(let presentation, _) = state {
++                        MemoryDetailView(presentation: presentation, iconProvider: iconProvider)
++                    } else {
++                        Text("아직 Memory 값이 수집되지 않았습니다.")
++                            .dashboardTypography(DashboardStyle.TypographyRole.label)
++                    }
+                 }
+             }
+             .padding()
+diff --git a/ResourceRunner/DashboardViewport.swift b/ResourceRunner/DashboardViewport.swift
+index 5dac5a3..990493a 100644
+--- a/ResourceRunner/DashboardViewport.swift
++++ b/ResourceRunner/DashboardViewport.swift
+@@ -49,6 +49,7 @@ final class DashboardViewport: ObservableObject {
+     weak var detailWindow: NSWindow?
+     private(set) var detailSelection: DashboardSelection?
+     var requestCorrection: (() -> Void)?
++    var requestBodyFocus: (() -> Void)?
+     weak var lowestAnchorView: NSView?
+     weak var memoryCardView: NSView?
+ 
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index 69e4790..33f990c 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -33,6 +33,8 @@ final class StatusBarController: NSObject {
+     let viewport: DashboardViewport?
+     private var screenObserver: NSObjectProtocol?
+     private var correctionScheduled = false
++    private var keyMonitor: Any?
++    var keyboardDismiss: (() -> Bool)?
+ 
+     weak var output: StatusBarControllerOutput?
+ 
+@@ -52,6 +54,12 @@ final class StatusBarController: NSObject {
+ 
+         popover.delegate = self
+         viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
++        viewport?.requestBodyFocus = { [weak self] in
++            self?.popover.contentViewController?.view.window?.makeKey()
++        }
++        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
++            MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
++        }
+         screenObserver = NotificationCenter.default.addObserver(
+             forName: NSApplication.didChangeScreenParametersNotification,
+             object: nil, queue: .main
+@@ -74,6 +82,41 @@ final class StatusBarController: NSObject {
+         }
+     }
+ 
++    deinit {
++        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
++    }
++
++    /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
++    private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
++        guard let window = event.window,
++              window === popover.contentViewController?.view.window
++                || window === viewport?.detailWindow else { return event }
++        let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
++        guard modifiers.isEmpty else { return event }
++        if event.keyCode == 53, keyboardDismiss?() == true { return nil }
++        if event.keyCode == 116 || event.keyCode == 121,
++           let detail = viewport?.detailWindow, detail.isVisible,
++           let content = detail.contentView,
++           let scroll = Self.firstScrollView(in: content) {
++            let clip = scroll.contentView
++            let end = max(0, (scroll.documentView?.frame.height ?? 0) - clip.bounds.height)
++            let next = min(end, max(0, clip.bounds.minY
++                + (event.keyCode == 121 ? clip.bounds.height : -clip.bounds.height)))
++            clip.scroll(to: CGPoint(x: clip.bounds.minX, y: next))
++            scroll.reflectScrolledClipView(clip)
++            return nil
++        }
++        return event
++    }
++
++    private static func firstScrollView(in view: NSView) -> NSScrollView? {
++        if let scroll = view as? NSScrollView { return scroll }
++        for child in view.subviews {
++            if let scroll = firstScrollView(in: child) { return scroll }
++        }
++        return nil
++    }
++
+     /// 팝오버가 닫혀 있으면 버튼에 고정해 열고, 열려 있으면 닫습니다.
+     ///
+     /// 여는 경로에서 앱을 활성화하고 팝오버 창을 key로 만듭니다.
+diff --git a/ResourceRunnerTests/DashboardPresentationTests.swift b/ResourceRunnerTests/DashboardPresentationTests.swift
+index 62537e3..00a6220 100644
+--- a/ResourceRunnerTests/DashboardPresentationTests.swift
++++ b/ResourceRunnerTests/DashboardPresentationTests.swift
+@@ -1987,7 +1987,7 @@ struct DashboardSelectionTests {
+         store.selectCard(.cpu)
+         #expect(store.selection == .cpu)
+ 
+-        store.dismissDetail(for: .cpu)
++        store.dismissDetail(for: .cpu, generation: store.selectionGeneration)
+         #expect(store.selection == .none)
+     }
+ 
+@@ -1996,7 +1996,7 @@ struct DashboardSelectionTests {
+         store.selectCard(.memory)
+         #expect(store.selection == .memory)
+ 
+-        store.dismissDetail(for: .memory)
++        store.dismissDetail(for: .memory, generation: store.selectionGeneration)
+         #expect(store.selection == .none)
+     }
+ 
+@@ -2009,7 +2009,7 @@ struct DashboardSelectionTests {
+         store.selectCard(.memory)
+         #expect(store.selection == .memory)
+ 
+-        store.dismissDetail(for: .cpu)
++        store.dismissDetail(for: .cpu, generation: store.selectionGeneration)
+         #expect(store.selection == .memory, "이미 다른 카드로 옮겨간 선택을 지우면 안 됩니다.")
+     }
+ 
+@@ -2017,7 +2017,21 @@ struct DashboardSelectionTests {
+     @Test func dismissDetailWhileNoSelectionStaysNone() {
+         let store = DashboardPresentationStore()
+ 
+-        store.dismissDetail(for: .cpu)
++        store.dismissDetail(for: .cpu, generation: store.selectionGeneration)
++        #expect(store.selection == .none)
++    }
++
++    @Test func oldSameCardCloseCannotDismissANewSelectionSession() {
++        let store = DashboardPresentationStore()
++        store.selectCard(.cpu)
++        let oldCPU = store.selectionGeneration
++        store.selectCard(.network)
++        store.selectCard(.cpu)
++        #expect(store.selection == .cpu)
++        store.dismissDetail(for: .cpu, generation: oldCPU)
++        #expect(store.selection == .cpu)
++        let currentCPU = store.selectionGeneration
++        store.dismissDetail(for: .cpu, generation: currentCPU)
+         #expect(store.selection == .none)
+     }
+ }
+diff --git a/ResourceRunnerTests/DetailPopoverValuelessStateTests.swift b/ResourceRunnerTests/DetailPopoverValuelessStateTests.swift
+index 30da338..2f12bf3 100644
+--- a/ResourceRunnerTests/DetailPopoverValuelessStateTests.swift
++++ b/ResourceRunnerTests/DetailPopoverValuelessStateTests.swift
+@@ -287,10 +287,18 @@ private struct GridWithoutEmptySlots: View {
+ private struct CPUValuelessReference: View {
+     var body: some View {
+         ScrollView {
+-            Text("아직 CPU 값이 수집되지 않았습니다.")
+-                .dashboardTypography(DashboardStyle.TypographyRole.label)
+-                .padding()
+-                .frame(maxWidth: .infinity, alignment: .leading)
++            VStack(alignment: .leading) {
++                HStack {
++                    Text("CPU 상세")
++                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
++                    Spacer()
++                    Button("닫기") {}
++                }
++                Text("아직 CPU 값이 수집되지 않았습니다.")
++                    .dashboardTypography(DashboardStyle.TypographyRole.label)
++            }
++            .padding()
++            .frame(maxWidth: .infinity, alignment: .leading)
+         }
+         .frame(width: DashboardView.detailPopupWidth, height: DashboardView.detailPopupHeight)
+         .background(DashboardColorPalette.cardSurface)
+@@ -404,7 +412,7 @@ struct DetailPopoverValuelessStateTests {
+         #expect(memorySizes.allSatisfy { $0 == CGSize(width: 400, height: 480) }, "Memory 상태별 프레임: \(memorySizes)")
+     }
+ 
+-    @Test("수집 중·실패·중지는 같은 안내 문구 하나만 그린다")
++    @Test("수집 중·실패·중지는 같은 닫기 머리글과 안내 문구를 그린다")
+     func valuelessStatesRenderTheSameSingleMessage() throws {
+         let states: [ResourceCardState<CPUCardPresentation>] = [
+             .collecting,
+@@ -418,7 +426,7 @@ struct DetailPopoverValuelessStateTests {
+         let reference = try #require(detailPopupBitmap(CPUValuelessReference()))
+ 
+         for bitmap in bitmaps {
+-            #expect(differentPixelCount(bitmap, reference) == 0, "값 없음 콘텐츠가 안내 문구 하나의 기준 조립과 다릅니다")
++            #expect(differentPixelCount(bitmap, reference) == 0, "값 없음 콘텐츠가 머리글·안내 문구의 기준 조립과 다릅니다")
+         }
+         #expect(differentPixelCount(bitmaps[0], bitmaps[1]) == 0)
+         #expect(differentPixelCount(bitmaps[1], bitmaps[2]) == 0)
+diff --git a/ResourceRunnerTests/DiskDashboardViewTests.swift b/ResourceRunnerTests/DiskDashboardViewTests.swift
+index 28d6888..43183ec 100644
+--- a/ResourceRunnerTests/DiskDashboardViewTests.swift
++++ b/ResourceRunnerTests/DiskDashboardViewTests.swift
+@@ -263,10 +263,10 @@ struct DiskDashboardViewTests {
+         #expect(store.selection == .none)
+         store.selectCard(.disk)
+         store.selectCard(.network)
+-        store.dismissDetail(for: .disk)
++        store.dismissDetail(for: .disk, generation: store.selectionGeneration)
+         #expect(store.selection == .network)
+         store.selectCard(.disk)
+-        store.dismissDetail(for: .disk)
++        store.dismissDetail(for: .disk, generation: store.selectionGeneration)
+         #expect(store.selection == .none)
+     }
+ }
+diff --git a/ResourceRunnerTests/NetworkDashboardViewTests.swift b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+index 2717591..3f4289a 100644
+--- a/ResourceRunnerTests/NetworkDashboardViewTests.swift
++++ b/ResourceRunnerTests/NetworkDashboardViewTests.swift
+@@ -172,10 +172,10 @@ struct NetworkDashboardViewTests {
+         #expect(store.selection == .none)
+         store.selectCard(.network)
+         store.selectCard(.cpu)
+-        store.dismissDetail(for: .network)
++        store.dismissDetail(for: .network, generation: store.selectionGeneration)
+         #expect(store.selection == .cpu)
+         store.selectCard(.network)
+-        store.dismissDetail(for: .network)
++        store.dismissDetail(for: .network, generation: store.selectionGeneration)
+         #expect(store.selection == .none)
+     }
+ 

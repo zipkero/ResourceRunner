@@ -33,6 +33,8 @@ final class StatusBarController: NSObject {
     let viewport: DashboardViewport?
     private var screenObserver: NSObjectProtocol?
     private var correctionScheduled = false
+    private var keyMonitor: Any?
+    var keyboardDismiss: (() -> Bool)?
 
     weak var output: StatusBarControllerOutput?
 
@@ -52,6 +54,12 @@ final class StatusBarController: NSObject {
 
         popover.delegate = self
         viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
+        viewport?.requestBodyFocus = { [weak self] in
+            self?.popover.contentViewController?.view.window?.makeKey()
+        }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
+        }
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main
@@ -72,6 +80,41 @@ final class StatusBarController: NSObject {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
 #endif
         }
+    }
+
+    deinit {
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+    }
+
+    /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
+    private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
+        guard let window = event.window,
+              window === popover.contentViewController?.view.window
+                || window === viewport?.detailWindow else { return event }
+        let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        guard modifiers.isEmpty else { return event }
+        if event.keyCode == 53, keyboardDismiss?() == true { return nil }
+        if event.keyCode == 116 || event.keyCode == 121,
+           let detail = viewport?.detailWindow, detail.isVisible,
+           let content = detail.contentView,
+           let scroll = Self.firstScrollView(in: content) {
+            let clip = scroll.contentView
+            let end = max(0, (scroll.documentView?.frame.height ?? 0) - clip.bounds.height)
+            let next = min(end, max(0, clip.bounds.minY
+                + (event.keyCode == 121 ? clip.bounds.height : -clip.bounds.height)))
+            clip.scroll(to: CGPoint(x: clip.bounds.minX, y: next))
+            scroll.reflectScrolledClipView(clip)
+            return nil
+        }
+        return event
+    }
+
+    private static func firstScrollView(in view: NSView) -> NSScrollView? {
+        if let scroll = view as? NSScrollView { return scroll }
+        for child in view.subviews {
+            if let scroll = firstScrollView(in: child) { return scroll }
+        }
+        return nil
     }
 
     /// 팝오버가 닫혀 있으면 버튼에 고정해 열고, 열려 있으면 닫습니다.

@@ -193,7 +193,7 @@ extension ResourceCardState {
 /// 어느 카드의 상세 팝업이 카드 옆에 열려 있는지.
 /// 전이는 `DashboardPresentationStore.selectCard(_:)`(카드 활성화)와 `dismissDetail(for:)`(팝업 자신의 닫힘) 둘로만 일어나고,
 /// 수집 갱신이나 수집 실패는 이 값을 바꾸지 않습니다(SPEC §5.2).
-nonisolated enum DashboardSelection: Sendable, Equatable {
+nonisolated enum DashboardSelection: Sendable, Hashable {
     case none
     case cpu
     case memory

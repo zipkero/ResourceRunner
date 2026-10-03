@@ -18,6 +18,7 @@ import SwiftUI
 struct DashboardView: View {
     @ObservedObject var store: DashboardPresentationStore
     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+    @FocusState private var focusedCard: DashboardSelection?
     @Environment(\.locale) private var locale
     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
@@ -35,6 +36,8 @@ struct DashboardView: View {
                 CPUCardView(state: store.cpuCard, iconProvider: iconProvider)
             }
             .buttonStyle(.plain)
+            .focusable()
+            .focused($focusedCard, equals: .cpu)
             .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel)
@@ -43,14 +46,18 @@ struct DashboardView: View {
             // 텍스트가 아니라 이 식별자로 요소를 특정합니다.
             .accessibilityIdentifier("CPUCard")
             .popover(isPresented: cpuDetailIsPresented, arrowEdge: .trailing) {
+                let generation = store.selectionGeneration
                 CPUDetailPopoverContent(state: store.cpuCard, iconProvider: iconProvider,
-                    viewport: viewport)
+                    viewport: viewport,
+                    onClose: { store.dismissDetail(for: .cpu, generation: generation) })
             }
 
             Button(action: { store.selectCard(.memory) }) {
                 MemoryCardView(state: store.memoryCard, iconProvider: iconProvider)
             }
             .buttonStyle(.plain)
+            .focusable()
+            .focused($focusedCard, equals: .memory)
             .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
             .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
             .accessibilityElement(children: .ignore)
@@ -59,13 +66,17 @@ struct DashboardView: View {
             // CPU 카드와 같은 이유로 텍스트 대신 이 식별자를 씁니다.
             .accessibilityIdentifier("MemoryCard")
             .popover(isPresented: memoryDetailIsPresented, arrowEdge: .trailing) {
+                let generation = store.selectionGeneration
                 MemoryDetailPopoverContent(state: store.memoryCard, iconProvider: iconProvider,
-                    viewport: viewport)
+                    viewport: viewport,
+                    onClose: { store.dismissDetail(for: .memory, generation: generation) })
             }
             Button(action: { store.selectCard(.network) }) {
                 NetworkCardView(presentation: store.networkCard)
             }
             .buttonStyle(.plain)
+            .focusable()
+            .focused($focusedCard, equals: .network)
             .keyboardShortcut("3", modifiers: .command)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
@@ -73,13 +84,17 @@ struct DashboardView: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("NetworkCard")
             .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
+                let generation = store.selectionGeneration
                 NetworkDetailPopoverContent(presentation: store.networkCard,
-                    onClose: { store.dismissDetail(for: .network) }, viewport: viewport)
+                    onClose: { store.dismissDetail(for: .network, generation: generation) },
+                    viewport: viewport)
             }
             Button(action: { store.selectCard(.disk) }) {
                 DiskCardView(presentation: store.diskCard)
             }
             .buttonStyle(.plain)
+            .focusable()
+            .focused($focusedCard, equals: .disk)
             .background(DashboardLowestAnchorCapture(viewport: viewport))
             .keyboardShortcut("4", modifiers: .command)
             .accessibilityElement(children: .ignore)
@@ -89,13 +104,27 @@ struct DashboardView: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("DiskCard")
             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+                let generation = store.selectionGeneration
                 DiskDetailPopoverContent(presentation: store.diskCard,
-                    onClose: { store.dismissDetail(for: .disk) }, viewport: viewport)
+                    onClose: { store.dismissDetail(for: .disk, generation: generation) },
+                    viewport: viewport)
             }
         }
         .padding(DashboardStyle.Summary.bodyPadding)
         .frame(width: 280, alignment: .topLeading)
-        .onChange(of: store.selection) { _, _ in viewport.requestCorrection?() }
+        .onChange(of: store.selection) { old, new in
+            viewport.requestCorrection?()
+            if new == .none, old != .none {
+                let generation = store.selectionGeneration
+                // 자식 팝오버가 key를 반환한 뒤 해당 카드에 초점을 둡니다. 빠른 재선택이 시작되면 폐기합니다.
+                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
+                    guard store.selection == .none,
+                          store.selectionGeneration == generation else { return }
+                    viewport.requestBodyFocus?()
+                    focusedCard = old
+                }
+            }
+        }
         .background(DashboardColorPalette.popoverBackground)
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
         .accessibilityElement(children: .contain)
@@ -124,15 +153,15 @@ struct DashboardView: View {
     static let detailPopupHeight: CGFloat = 480
 
     /// CPU 상세 팝업의 표시 여부. `get`은 `store.selection`을 그대로 반영하고,
-    /// `set`은 팝업이 스스로 닫힐 때만(예: 팝업 밖 클릭) 호출되며 `store.dismissDetail(for:)`에 그 사실을 넘깁니다.
-    /// 선택 해제 여부 자체는 그 진입점이 판단하므로(선택이 이미 다른 카드로 옮겨간 뒤라면 무시), 이 바인딩은
-    /// 판단 없이 신호만 전달합니다.
+    /// `set`은 팝업이 스스로 닫힐 때만 호출됩니다. 바인딩 생성 때의 세대를 캡처해
+    /// 같은 종류의 새 선택까지 이전 팝업의 닫힘이 지우지 못하게 합니다.
     private var cpuDetailIsPresented: Binding<Bool> {
-        Binding(
+        let generation = store.selectionGeneration
+        return Binding(
             get: { store.selection == .cpu },
             set: { isPresented in
                 if !isPresented {
-                    store.dismissDetail(for: .cpu)
+                    store.dismissDetail(for: .cpu, generation: generation)
                 }
             }
         )
@@ -140,30 +169,33 @@ struct DashboardView: View {
 
     /// Memory 상세 팝업의 표시 여부. CPU 쪽과 같은 이유로 같은 형태의 바인딩을 씁니다.
     private var memoryDetailIsPresented: Binding<Bool> {
-        Binding(
+        let generation = store.selectionGeneration
+        return Binding(
             get: { store.selection == .memory },
             set: { isPresented in
                 if !isPresented {
-                    store.dismissDetail(for: .memory)
+                    store.dismissDetail(for: .memory, generation: generation)
                 }
             }
         )
     }
 
     private var diskDetailIsPresented: Binding<Bool> {
-        Binding(
+        let generation = store.selectionGeneration
+        return Binding(
             get: { store.selection == .disk },
             set: { isPresented in
-                if !isPresented { store.dismissDetail(for: .disk) }
+                if !isPresented { store.dismissDetail(for: .disk, generation: generation) }
             }
         )
     }
 
     private var networkDetailIsPresented: Binding<Bool> {
-        Binding(
+        let generation = store.selectionGeneration
+        return Binding(
             get: { store.selection == .network },
             set: { isPresented in
-                if !isPresented { store.dismissDetail(for: .network) }
+                if !isPresented { store.dismissDetail(for: .network, generation: generation) }
             }
         )
     }
@@ -1059,6 +1091,7 @@ struct CPUDetailPopoverContent: View {
     let state: ResourceCardState<CPUCardPresentation>
     let iconProvider: any ApplicationIconProviding
     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+    var onClose: () -> Void = {}
 
     /// 이 상태에서 상세 본문이 조립하는 이 feature의 새 표시 요소.
     /// 정상 목록을 `CPUDetailView`의 production 조립에서 가져오므로 하위 조립에 요소가 더해지면
@@ -1070,7 +1103,15 @@ struct CPUDetailPopoverContent: View {
 
     var body: some View {
         ScrollView {
-            detailContent
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("CPU 상세")
+                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                    Spacer()
+                    Button("닫기", action: onClose).accessibilityIdentifier("CPUDetailClose")
+                }
+                detailContent
+            }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -1098,15 +1139,24 @@ struct MemoryDetailPopoverContent: View {
     let state: ResourceCardState<MemoryCardPresentation>
     let iconProvider: any ApplicationIconProviding
     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+    var onClose: () -> Void = {}
 
     var body: some View {
         ScrollView {
-            Group {
-                if case .normal(let presentation, _) = state {
-                    MemoryDetailView(presentation: presentation, iconProvider: iconProvider)
-                } else {
-                    Text("아직 Memory 값이 수집되지 않았습니다.")
-                        .dashboardTypography(DashboardStyle.TypographyRole.label)
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("Memory 상세")
+                        .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                    Spacer()
+                    Button("닫기", action: onClose).accessibilityIdentifier("MemoryDetailClose")
+                }
+                Group {
+                    if case .normal(let presentation, _) = state {
+                        MemoryDetailView(presentation: presentation, iconProvider: iconProvider)
+                    } else {
+                        Text("아직 Memory 값이 수집되지 않았습니다.")
+                            .dashboardTypography(DashboardStyle.TypographyRole.label)
+                    }
                 }
             }
             .padding()

@@ -172,10 +172,10 @@ struct NetworkDashboardViewTests {
         #expect(store.selection == .none)
         store.selectCard(.network)
         store.selectCard(.cpu)
-        store.dismissDetail(for: .network)
+        store.dismissDetail(for: .network, generation: store.selectionGeneration)
         #expect(store.selection == .cpu)
         store.selectCard(.network)
-        store.dismissDetail(for: .network)
+        store.dismissDetail(for: .network, generation: store.selectionGeneration)
         #expect(store.selection == .none)
     }
 

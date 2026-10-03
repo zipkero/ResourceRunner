@@ -20,6 +20,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         coordinator = ApplicationCoordinator()
 #if DEBUG
+        if ProcessInfo.processInfo.environment["RR_KEYBOARD_PROBE"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self, let coordinator = self.coordinator else { return }
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "KeyboardProbe")
+                let status = coordinator.statusBarController
+                let store = coordinator.dashboardPresentationStore
+                logger.notice("keyboardMode=\(UserDefaults.standard.object(forKey: "AppleKeyboardUIMode") as? Int ?? -1) screen=\(String(describing: NSScreen.main?.visibleFrame), privacy: .public) scale=\(NSScreen.main?.backingScaleFactor ?? 0)")
+                try? await Task.sleep(for: .seconds(4))
+                status.togglePopover()
+                try? await Task.sleep(for: .milliseconds(600))
+                guard let body = status.popover.contentViewController?.view.window else { return }
+                logger.notice("body=\(String(describing: body.frame), privacy: .public) noScroll=\(Self.firstScrollView(in: body.contentView ?? NSView()) == nil)")
+                @MainActor func send(_ keyCode: UInt16, _ characters: String, command: Bool = false,
+                          window: NSWindow? = nil, delay: Int = 180) async {
+                    let target = window ?? status.viewport?.detailWindow ?? body
+                    guard let event = NSEvent.keyEvent(with: .keyDown, location: .zero,
+                        modifierFlags: command ? .command : [], timestamp: ProcessInfo.processInfo.systemUptime,
+                        windowNumber: target.windowNumber, context: nil,
+                        characters: characters, charactersIgnoringModifiers: characters,
+                        isARepeat: false, keyCode: keyCode) else { return }
+                    NSApp.sendEvent(event)
+                    try? await Task.sleep(for: .milliseconds(delay))
+                    logger.notice("key code=\(keyCode) command=\(command) target=\(target.windowNumber) selection=\(String(describing: store.selection), privacy: .public) generation=\(store.selectionGeneration) keyWindow=\(String(describing: NSApp.keyWindow?.windowNumber), privacy: .public) focused=\(Self.probeFocusedIdentifier() ?? "none", privacy: .public) detail=\(String(describing: status.viewport?.detailWindow?.frame), privacy: .public)")
+                }
+                await send(18, "1", command: true, window: body)
+                await send(19, "2", command: true)
+                await send(20, "3", command: true)
+                await send(18, "1", command: true)
+                await send(18, "1", command: true)
+                for (key, code, card, cardID, closeID) in [
+                    ("1", UInt16(18), DashboardSelection.cpu, "CPUCard", "CPUDetailClose"),
+                    ("2", UInt16(19), .memory, "MemoryCard", "MemoryDetailClose"),
+                    ("3", UInt16(20), .network, "NetworkCard", "NetworkDetailClose"),
+                    ("4", UInt16(21), .disk, "DiskCard", "DiskDetailClose")
+                ] {
+                    await send(code, key, command: true, window: body)
+                    let child = status.viewport?.detailWindow
+                    logger.notice("opened card=\(String(describing: card), privacy: .public) owned=\(status.viewport?.detailSelection == card) childKey=\(NSApp.keyWindow === child) cardAX=\(String(describing: Self.probeAXFrame(identifier: cardID)), privacy: .public) closeAX=\(Self.probeAXElement(identifier: closeID) != nil)")
+                    if card == .network || card == .disk {
+                        Self.logKeyboardAccessibility(logger: logger)
+                    }
+                    if let child, let content = child.contentView,
+                       let scroll = Self.firstScrollView(in: content) {
+                        let clip = scroll.contentView
+                        let documentHeight = scroll.documentView?.frame.height ?? 0
+                        let pages = min(100, Int(ceil(documentHeight / max(1, clip.bounds.height))) + 1)
+                        let start = clip.bounds.minY
+                        for _ in 0..<pages { await send(121, "", window: body, delay: 15) }
+                        logger.notice("pageEnd card=\(String(describing: card), privacy: .public) pages=\(pages) start=\(start) document=\(documentHeight) clip=\(String(describing: clip.bounds), privacy: .public) expectedEnd=\(max(0, documentHeight - clip.bounds.height))")
+                        if card == .network || card == .disk {
+                            Self.logKeyboardAccessibility(logger: logger)
+                        }
+                        await send(116, "", window: body, delay: 40)
+                        logger.notice("pageUp card=\(String(describing: card), privacy: .public) clip=\(String(describing: clip.bounds), privacy: .public)")
+                    }
+                    if let close = Self.probeAXElement(identifier: closeID) {
+                        let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
+                        try? await Task.sleep(for: .milliseconds(220))
+                        logger.notice("AXClose card=\(String(describing: card), privacy: .public) result=\(result.rawValue) selection=\(String(describing: store.selection), privacy: .public) keyWindow=\(String(describing: NSApp.keyWindow?.windowNumber), privacy: .public) responder=\(String(describing: NSApp.keyWindow?.firstResponder), privacy: .public) focused=\(Self.probeFocusedIdentifier() ?? "none", privacy: .public)")
+                    }
+                    await send(code, key, command: true, window: body)
+                    await send(53, "", window: body)
+                    logger.notice("escape card=\(String(describing: card), privacy: .public) selection=\(String(describing: store.selection), privacy: .public) bodyShown=\(status.popover.isShown) focused=\(Self.probeFocusedIdentifier() ?? "none", privacy: .public)")
+                    await send(code, key, command: true, window: body)
+                    await send(code, key, command: true, window: body)
+                }
+                Self.logIntegratedAccessibility(logger: logger)
+                status.togglePopover()
+            }
+        }
         if ProcessInfo.processInfo.environment["RR_VIEWPORT_PROBE"] == "1" {
             Task { @MainActor [weak self] in
                 guard let self, let coordinator = self.coordinator else { return }
@@ -392,6 +462,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
 #if DEBUG
+    @MainActor private static func probeAXElement(identifier: String) -> AXUIElement? {
+        let root = AXUIElementCreateApplication(getpid())
+        func search(_ element: AXUIElement, depth: Int) -> AXUIElement? {
+            guard depth < 18 else { return nil }
+            var value: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &value) == .success,
+               value as? String == identifier { return element }
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+                  let children = value as? [AXUIElement] else { return nil }
+            for child in children {
+                if let found = search(child, depth: depth + 1) { return found }
+            }
+            return nil
+        }
+        return search(root, depth: 0)
+    }
+
+    @MainActor private static func probeFocusedIdentifier() -> String? {
+        let root = AXUIElementCreateApplication(getpid())
+        var focused: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(root, kAXFocusedUIElementAttribute as CFString,
+            &focused) == .success, let element = focused as! AXUIElement? else { return nil }
+        var identifier: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString,
+            &identifier) == .success else { return nil }
+        return identifier as? String
+    }
+
+    @MainActor private static func logKeyboardAccessibility(logger: Logger) {
+        let root = AXUIElementCreateApplication(getpid())
+        var visited = 0
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 20, visited < 2000 else { return }
+            visited += 1
+            var value: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString,
+                &value) == .success, let identifier = value as? String,
+               identifier.hasPrefix("NetworkInterface-")
+                || identifier.hasPrefix("DiskVolume-")
+                || identifier.hasPrefix("DiskDevice-")
+                || ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard", "NetworkUpdateCadence",
+                    "NetworkDetail", "DiskSummary", "DiskDetail", "DiskMiniGraph"].contains(identifier) {
+                var description: CFTypeRef?
+                var title: CFTypeRef?
+                var axValue: CFTypeRef?
+                var frame: CFTypeRef?
+                var size: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString,
+                    &description)
+                _ = AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &title)
+                _ = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &axValue)
+                _ = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &frame)
+                _ = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
+                var point = CGPoint.zero
+                var dimensions = CGSize.zero
+                if let frame { _ = AXValueGetValue(frame as! AXValue, .cgPoint, &point) }
+                if let size { _ = AXValueGetValue(size as! AXValue, .cgSize, &dimensions) }
+                logger.notice("detailAX id=\(identifier, privacy: .public) description=\(String(describing: description), privacy: .public) title=\(String(describing: title), privacy: .public) value=\(String(describing: axValue), privacy: .public) frame=\(String(describing: CGRect(origin: point, size: dimensions)), privacy: .public)")
+            }
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString,
+                &value) == .success, let children = value as? [AXUIElement] else { return }
+            for child in children { walk(child, depth: depth + 1) }
+        }
+        walk(root, depth: 0)
+        logger.notice("detailAX visited=\(visited)")
+    }
+
     /// probe에서 카드 AX frame을 읽어 자식 창이 선택 카드 옆에 남는지 확인합니다.
     @MainActor private static func probeAXFrame(identifier: String) -> CGRect? {
         let root = AXUIElementCreateApplication(getpid())

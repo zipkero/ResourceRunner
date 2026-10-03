@@ -8,8 +8,8 @@
 
 ## 현재 상태
 
-- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main, 기준 HEAD43de4d3. 승인 Task012를 main이 커밋·푸시한 뒤 다음 Task로 진행한다.
-- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010/011/012 승인,009철회,013~018미완료. task014실장치와015잠금·수면·화면수면·사용자전환은 보류이며 완료/철회로 바꾸지 않는다. Ethernet 전환 장비도 미확보다.
+- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. Task012는 54a89e1로 커밋·origin/main 푸시를 완료했다. Task013의 worker FINALcompleted와 독립 verifier FINALapproved를 main이 확정했고, 커밋·푸시 후016을 진행한다.
+- SPEC·DESIGN [x], IMPLEMENT [ ]. Tasks001~008/010/011/012/013 승인,009철회,014~018미완료. task014실장치와015잠금·수면·화면수면·사용자전환은 보류이며 완료/철회로 바꾸지 않는다. Ethernet 전환 장비도 미확보다.
 - worker /root/implement_task002의 Task012 FINALcompleted와 verifier /root/verify_compact_task010의 FINALapproved를 main이 인수·확정했다. main만 문서·상태·커밋·푸시를 수행한다.
 - Task012 소스9개·Debug실행파일/실제Swift dylib·Release해시 일치, 관련38/38·Release·서명Debug 통과. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-012/README.md).
 - 실제 현재화면1728×1117(visible1084),scale2: 본체280×668/외곽306×694/스크롤없음, 네상세400×480/외곽426×506, 모두8pt·카드앵커·개폐본체불변·끝스크롤 확인(PID4865).
@@ -18,6 +18,8 @@
 - 이전owned Task011일반앱PID34093은정확한실행경로대조후종료했다. 마지막에는일반앱하나만실행한다.
 
 ## 현재 작업 문서
+
+Task013: 전체 unit614/614·Release·서명Debug 통과. 최종 소스11개/Debug stub·Swift dylib/Release 해시14개가 일치한다. 기본 keyboardMode0에서 현재 PID39610/추가1168×755 PID40448의 네 단축키·명시적 닫기/Escape·선택 카드 AX포커스·네 상세 Page끝/역이동·전체 AX값/주기를 확인했다. 화면 모드 복원·관찰앱 종료 완료. [근거](./features/20260817-001-extended-resource-monitoring/evidence/task-013/README.md). 초기 중복 단축키·구 픽셀 reference 실패는 최종 로그와 분리했다. XCUITest·외부 물리 키보드·VoiceOver 음성 성공은 주장하지 않는다.
 
 - [spec.md](./features/20260817-001-extended-resource-monitoring/spec.md)
 - [design.md](./features/20260817-001-extended-resource-monitoring/design.md)
@@ -40,7 +42,7 @@ Task014실장치와015잠금·절전복귀는보류·미완료다. 외부화면/
 
 ## 다음 작업
 
-- 작업: Task012를main에커밋·푸시한뒤worker에게Task013키보드·포커스·실제AX검증을위임한다. 이어016→017→018을진행한다.
+- 작업: Task013을커밋·푸시한뒤Task016 실제다운로드/업로드와netstat 비교를위임한다. 이어017→018을진행한다.
 - 완료 기준: Task마다worker FINAL/독립verifier FINAL을인수하고main이판정·상태·CONTEXT·커밋을반영한다. 보류한실제전환을mock/통합결과로대체하지않는다.
 
 ## 먼저 읽을 파일
@@ -54,4 +56,4 @@ Task014실장치와015잠금·절전복귀는보류·미완료다. 외부화면/
 
 ## 문서 반영 필요
 
-없음。 미완료Task최종근거·승인은확인후main이반영한다.
+없음. 미완료 Task 최종 근거·승인은 확인 후 main이 반영한다.

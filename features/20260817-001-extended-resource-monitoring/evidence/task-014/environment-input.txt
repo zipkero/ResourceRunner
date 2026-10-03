@@ -1,0 +1,80 @@
+Task014 environment input only; not actual transition verification
+2026-10-03T11:46:56.679552+09:00
+$ /usr/bin/sw_vers
+exit=0
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+
+
+$ /usr/sbin/scutil --nc list
+exit=0
+Available network connection services in the current set (*=enabled):
+
+
+$ /usr/sbin/networksetup -listallhardwareports
+exit=0
+
+Hardware Port: Ethernet Adapter (en4)
+Device: en4
+Ethernet Address: a6:72:ea:40:2a:4f
+
+Hardware Port: Ethernet Adapter (en5)
+Device: en5
+Ethernet Address: a6:72:ea:40:2a:50
+
+Hardware Port: Ethernet Adapter (en6)
+Device: en6
+Ethernet Address: a6:72:ea:40:2a:51
+
+Hardware Port: Thunderbolt Bridge
+Device: bridge0
+Ethernet Address: 36:e1:ac:1e:76:40
+
+Hardware Port: Wi-Fi
+Device: en0
+Ethernet Address: 60:3e:5f:5f:d1:d7
+
+Hardware Port: Thunderbolt 1
+Device: en1
+Ethernet Address: 36:e1:ac:1e:76:40
+
+Hardware Port: Thunderbolt 2
+Device: en2
+Ethernet Address: 36:e1:ac:1e:76:44
+
+Hardware Port: Thunderbolt 3
+Device: en3
+Ethernet Address: 36:e1:ac:1e:76:48
+
+VLAN Configurations
+===================
+
+
+$ /usr/sbin/scutil --nwi
+exit=0
+Network information
+
+IPv4 network interface information
+     en0 : flags      : 0x5 (IPv4,DNS)
+           address    : 192.168.45.238
+           reach      : 0x00000002 (Reachable)
+
+   REACH : flags 0x00000002 (Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+Network interfaces: en0
+
+
+$ /usr/sbin/diskutil list external
+exit=0
+
+
+$ /usr/sbin/diskutil list external physical
+exit=0
+

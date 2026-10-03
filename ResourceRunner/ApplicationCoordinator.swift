@@ -60,6 +60,12 @@ final class ApplicationCoordinator {
             popoverContent: DashboardView(store: dashboard, viewport: viewport,
                 iconProvider: ApplicationIconCache()), viewport: viewport
         )
+        statusBarController.keyboardDismiss = { [weak dashboard] in
+            guard let dashboard, dashboard.selection != .none else { return false }
+            dashboard.dismissDetail(for: dashboard.selection,
+                generation: dashboard.selectionGeneration)
+            return true
+        }
         characterStateSource = CharacterStateSource()
 
         // 여섯 축 모두 같은 구성 함수를 지나며, 빠른 counter와 느린 metadata는 각각 별도 actor·scheduler입니다.

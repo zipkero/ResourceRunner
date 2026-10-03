@@ -75,6 +75,12 @@ nonisolated enum NetworkDisplayText {
             return unknown.isEmpty ? "활성 0개" : "활성 미확인 \(unknown.count)개"
         }
         let kinds = Set(active.map(\.kind)).sorted { $0.rawValue < $1.rawValue }
+        // 많은 종류를 한 카드에 모두 나열하면 보조 실패 상태가 잘리므로 요약에는 종류 수를 남깁니다.
+        // 전체 종류 이름은 상세와 카드 접근성 이름에서 그대로 읽을 수 있습니다.
+        if kinds.count > 4 {
+            return "\(kinds.count)종 · 활성 \(active.count)개" +
+                (unknown.isEmpty ? "" : " · 상태 미확인 \(unknown.count)개")
+        }
         let names = kinds.map { kind in
             switch kind {
             case .physicalWiFi: "Wi-Fi"
@@ -144,19 +150,19 @@ nonisolated enum NetworkDisplayText {
 
 /// 축소 요약의 세 고정 구역은 과도기 248pt 부모와 최종 264pt 부모에서 같은 높이를 갖습니다.
 nonisolated enum NetworkCardLayout {
-    static let title: CGFloat = 8
+    static let title: CGFloat = 12
     static let rates: CGFloat = 46
-    static let auxiliary: CGFloat = 27
-    static let spacing: CGFloat = 4
+    static let auxiliary: CGFloat = 38
+    static let spacing: CGFloat = 2
     static let padding: CGFloat = 6
     static let total: CGFloat = title + rates + auxiliary + spacing * 2 + padding * 2
 }
 
 private enum NetworkCompactTypography {
-    static let heading = Font.system(size: 10 * 2 / 3, weight: .semibold)
-    static let focus = Font.system(size: 26 * 2 / 3, weight: .semibold).monospacedDigit()
+    static let heading = Font.system(size: 10, weight: .semibold)
+    static let focus = Font.system(size: 17.33, weight: .semibold).monospacedDigit()
     static let direction = Font.system(size: 10)
-    static let auxiliary = Font.system(size: 9)
+    static let auxiliary = Font.system(size: 10)
 }
 
 struct NetworkCardView: View {
@@ -187,7 +193,7 @@ struct NetworkCardView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(NetworkDisplayText.compactActiveSummary(presentation.interfaces))
                     .lineLimit(2)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(1)
                     .accessibilityLabel(NetworkDisplayText.activeSummary(presentation.interfaces))
                 if let supplemental = NetworkDisplayText.compactSupplemental(
                     presentation.supplemental.phase, lastKnown: presentation.supplemental.isLastKnown) {
@@ -227,13 +233,13 @@ struct NetworkCardView: View {
                 Text(parts.number)
                     .font(NetworkCompactTypography.focus)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.35)
+                    .minimumScaleFactor(0.55)
                     .layoutPriority(1)
                 Text(parts.unit)
                     .font(NetworkCompactTypography.auxiliary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .frame(width: 24, alignment: .leading)
+                    .frame(width: 32, alignment: .leading)
             } else {
                 Text(NetworkDisplayText.activity(presentation.phase))
                     .font(NetworkCompactTypography.auxiliary)

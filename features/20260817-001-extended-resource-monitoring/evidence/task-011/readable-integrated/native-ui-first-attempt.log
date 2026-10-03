@@ -1,0 +1,5 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-03 10:24:59.100 Df ResourceRunner[67211:2eda112] [com.zipkero.ResourceRunner:IntegratedUIProbe] screen visibleFrame=Optional((0.0, 0.0, 1728.0, 1084.0)) frame=Optional((0.0, 0.0, 1728.0, 1117.0)) scale=<private>
+2026-10-03 10:24:59.464 Df ResourceRunner[67211:2eda112] [com.zipkero.ResourceRunner:IntegratedUIProbe] initial selection=none cpuState=collecting memoryState=collecting
+2026-10-03 10:24:59.535 Df ResourceRunner[67211:2eda112] [com.zipkero.ResourceRunner:IntegratedUIProbe] integrated AX traversal visited=95
+2026-10-03 10:25:03.537 E  ResourceRunner[67211:2eda112] [com.zipkero.ResourceRunner:IntegratedUIProbe] body window missing

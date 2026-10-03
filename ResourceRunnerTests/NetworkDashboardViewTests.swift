@@ -64,17 +64,17 @@ struct NetworkDashboardViewTests {
         }
         let bitmap = try #require(image)
         #expect(bitmap.pixelsWide == Int(width))
-        #expect(bitmap.pixelsHigh == 101)
+        #expect(bitmap.pixelsHigh == Int(NetworkCardLayout.total))
         Attachment.record(try #require(bitmap.representation(using: .png, properties: [:])),
             named: "network-card-\(Int(width))-\(label)-\(name == .darkAqua ? "dark" : "light").png")
         return bitmap
     }
 
     @Test func fixedSlotsCoverInitialNormalPartialFailureStoppedAndAuxiliaryFailure() throws {
-        #expect(NetworkCardLayout.total == 101)
-        #expect(NetworkCardLayout.title == 8)
+        #expect(NetworkCardLayout.total == 112)
+        #expect(NetworkCardLayout.title == 12)
         #expect(NetworkCardLayout.rates == 46)
-        #expect(NetworkCardLayout.auxiliary == 27)
+        #expect(NetworkCardLayout.auxiliary == 38)
         let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 1_024,
                                                sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
         let manyKinds: [NetworkInterfaceKind] = [.physicalWiFi, .physicalEthernet,
@@ -82,6 +82,9 @@ struct NetworkDashboardViewTests {
         let busyInterfaces = manyKinds.enumerated().map { index, kind in
             item(kind: kind, name: "target\(index)", index: UInt16(index + 1))
         }
+        #expect(NetworkDisplayText.compactActiveSummary(busyInterfaces) == "8종 · 활성 8개")
+        #expect(NetworkDisplayText.activeSummary(busyInterfaces).contains("Wi-Fi"))
+        #expect(NetworkDisplayText.activeSummary(busyInterfaces).contains("VPN"))
         let fixtures: [(String, NetworkCardPresentation)] = [
             ("initial", .collecting),
             ("normal", card()),

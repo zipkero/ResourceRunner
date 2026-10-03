@@ -75,6 +75,42 @@ nonisolated enum DiskDisplayText {
         return "\(state) · \(presentation.isLastKnown ? "과거 " : "")\(age)초 전"
     }
 
+    static func compactSupplemental(_ presentation: StorageSupplementalPresentation) -> String? {
+        let prefix = presentation.isLastKnown ? "과거 " : ""
+        switch presentation.phase {
+        case .available: return presentation.isLastKnown ? "과거 용량" : nil
+        case .collecting: return presentation.capacity == nil ? nil : "용량 갱신 중"
+        case .refreshing: return prefix + "용량 갱신 중"
+        case .partial: return prefix + "용량 일부 실패"
+        case .failure: return prefix + "용량 조회 실패"
+        case .unsupported: return prefix + "용량 미지원"
+        }
+    }
+
+    static func compactCardStatus(_ presentation: DiskCardPresentation,
+                                  now: ContinuousClock.Instant) -> String {
+        let activity = cardStatus(presentation, now: now)
+        guard let supplemental = compactSupplemental(presentation.supplemental) else { return activity }
+        return activity == "현재" ? supplemental : activity + " · " + supplemental
+    }
+
+    static func miniGraphAccessibility(_ graph: ResourceRateGraph,
+                                       phase: ResourceActivityPhase,
+                                       locale: Locale = .current) -> String {
+        let range = graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
+            ?? "속도 범위 대기 · B/s"
+        return "Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 \(range), " +
+            "\(activity(phase)), 수집 공백은 이어 그리지 않음"
+    }
+
+    static func miniGraphAccessibility(presentation: DiskCardPresentation,
+                                       now: ContinuousClock.Instant,
+                                       locale: Locale = .current) -> String {
+        miniGraphAccessibility(ResourceRateGraph.make(history: presentation.recentHistory,
+            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now),
+            phase: presentation.phase, locale: locale)
+    }
+
     static func volumeScope(_ scope: DiskVolumeScope) -> String {
         switch scope {
         case .physical: "물리 관계 확인"
@@ -113,14 +149,21 @@ nonisolated enum DiskDisplayText {
 }
 
 nonisolated enum DiskCardLayout {
-    // Disk 축소는 task-011에서 진행하므로 현재 승인된 그래프 슬롯을 독립적으로 보존합니다.
-    static let title: CGFloat = 12
-    static let rates: CGFloat = 68
-    static let auxiliary: CGFloat = 32
-    static let graph: CGFloat = 118
-    static let spacing: CGFloat = 16
-    static let padding: CGFloat = 8
-    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
+    static let title: CGFloat = 14
+    static let ratesAndGraph: CGFloat = 54
+    static let miniPlot: CGFloat = 42
+    static let auxiliary: CGFloat = 28
+    static let spacing: CGFloat = 2
+    static let padding: CGFloat = 6
+    static let total: CGFloat = title + ratesAndGraph + auxiliary + spacing * 2 + padding * 2
+}
+
+private enum DiskCompactTypography {
+    static let heading = Font.system(size: 10, weight: .semibold)
+    static let number = Font.system(size: 17.33, weight: .semibold).monospacedDigit()
+    static let name = Font.system(size: 10)
+    static let unit = Font.system(size: 10)
+    static let capacity = Font.system(size: 10)
 }
 
 struct DiskCardView: View {
@@ -133,43 +176,51 @@ struct DiskCardView: View {
         let graph = ResourceRateGraph.make(history: presentation.recentHistory,
             firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
         return VStack(alignment: .leading, spacing: DiskCardLayout.spacing) {
-            HStack {
+            HStack(spacing: 3) {
                 Text("Disk · 물리 합계")
                 Spacer(minLength: 0)
-                Text(DiskDisplayText.cardStatus(presentation, now: now)).lineLimit(1)
+                Text(DiskDisplayText.compactCardStatus(presentation, now: now)).lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text("⌘4")
             }
-            .dashboardTypography(DashboardStyle.TypographyRole.heading)
+            .font(DiskCompactTypography.heading)
+            .foregroundStyle(.secondary)
             .frame(height: DiskCardLayout.title)
 
-            VStack(spacing: 4) {
-                rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
-                rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
-            }
-            .frame(height: DiskCardLayout.rates)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(DiskDisplayText.compactCapacitySummary(presentation.supplemental.capacity, locale: locale))
-                    .lineLimit(1)
-                    .accessibilityLabel("시스템 / " + DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale) + ". " + DiskDisplayText.usedDefinition)
-                    .frame(height: 14)
-                HStack(spacing: 4) {
-                    Text(DiskDisplayText.compactCapacity(presentation.supplemental, now: now))
-                        .lineLimit(1)
-                        .accessibilityLabel("저장 공간 별도 느린 주기, " + DiskDisplayText.supplemental(presentation.supplemental) + ", " + DiskDisplayText.age(presentation.supplemental.readAt, now: now))
-                    Spacer(minLength: 0)
-                    Text(graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
-                         ?? "범위 대기 · B/s")
-                        .lineLimit(1)
+            GeometryReader { geometry in
+                let rateWidth = rateColumnWidth(total: geometry.size.width)
+                HStack(spacing: 8) {
+                    VStack(spacing: 1) {
+                        rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
+                        rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
+                    }
+                    .frame(width: rateWidth, height: DiskCardLayout.ratesAndGraph)
+                    ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
+                        firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow,
+                        plotHeight: DiskCardLayout.miniPlot, showsAxis: false)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DiskCardLayout.miniPlot)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(DiskDisplayText.miniGraphAccessibility(graph,
+                            phase: presentation.phase, locale: locale))
+                        .accessibilityIdentifier("DiskMiniGraph")
                 }
-                .frame(height: 14)
+                .frame(height: DiskCardLayout.ratesAndGraph)
             }
-            .dashboardTypography(DashboardStyle.TypographyRole.label)
-            .frame(height: DiskCardLayout.auxiliary)
+            .frame(height: DiskCardLayout.ratesAndGraph)
 
-            ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
-                firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow)
-                .frame(height: DiskCardLayout.graph)
+            Text(DiskDisplayText.compactCapacitySummary(presentation.supplemental.capacity,
+                locale: locale))
+                .font(DiskCompactTypography.capacity)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .minimumScaleFactor(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityLabel("시스템 / " + DiskDisplayText.capacitySummary(
+                    presentation.supplemental.capacity, locale: locale) + ". " +
+                    DiskDisplayText.supplemental(presentation.supplemental) + ". " +
+                    DiskDisplayText.usedDefinition)
+            .frame(height: DiskCardLayout.auxiliary)
         }
         .padding(DiskCardLayout.padding)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -182,25 +233,60 @@ struct DiskCardView: View {
     private var selectedRate: RatePair? { presentation.currentRate ?? presentation.lastKnownRate?.rate }
     private var isPast: Bool { presentation.currentRate == nil && presentation.lastKnownRate != nil }
 
+    private func rateColumnWidth(total: CGFloat) -> CGFloat {
+        let largest = max(selectedRate?.receivedBytesPerSecond ?? 0,
+            selectedRate?.sentBytesPerSecond ?? 0)
+        let length = NetworkDisplayText.byteRateParts(largest, locale: locale).number.count
+        return min(max(112, length > 8 ? 170 : 112), max(112, total - 8 - 48))
+    }
+
     private func rateRow(_ series: ResourceRateGraphSlotView.Series, rate: Double?) -> some View {
-        HStack(spacing: 3) {
-            ResourceRateLegendMarkerView(kind: .disk, series: series)
-            Text(series == .received ? "Read" : "Write")
-                .dashboardTypography(DashboardStyle.TypographyRole.label)
-            Spacer(minLength: 2)
-            if let rate {
-                let parts = ResourceQuantityFormatter.byteRate(rate, locale: locale)
-                    .split(separator: " ", maxSplits: 1)
-                Text(String(parts.first ?? ""))
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus).lineLimit(1)
-                Text(parts.count > 1 ? String(parts[1]) : "B/s")
-                    .dashboardTypography(DashboardStyle.TypographyRole.label).lineLimit(1)
+        Group {
+            if let rate, NetworkDisplayText.byteRateParts(rate, locale: locale).number.count > 8 {
+                let parts = NetworkDisplayText.byteRateParts(rate, locale: locale)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 2) {
+                        Text(series == .received ? "Read" : "Write")
+                            .font(DiskCompactTypography.name)
+                        Text(parts.unit).font(DiskCompactTypography.unit)
+                        Spacer(minLength: 0)
+                    }
+                    .foregroundStyle(.secondary)
+                    Text(parts.number)
+                        .font(DiskCompactTypography.number)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             } else {
-                Text(DiskDisplayText.activity(presentation.phase))
-                    .dashboardTypography(DashboardStyle.TypographyRole.label).lineLimit(1)
+                HStack(spacing: 3) {
+                    Text(series == .received ? "Read" : "Write")
+                        .font(DiskCompactTypography.name)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 27, alignment: .leading)
+                    Spacer(minLength: 0)
+                    if let rate {
+                        let parts = NetworkDisplayText.byteRateParts(rate, locale: locale)
+                        Text(parts.number)
+                            .font(DiskCompactTypography.number)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .layoutPriority(1)
+                        Text(parts.unit)
+                            .font(DiskCompactTypography.unit)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .frame(width: 26, alignment: .leading)
+                    } else {
+                        Text(DiskDisplayText.activity(presentation.phase))
+                            .font(DiskCompactTypography.unit)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                }
             }
         }
-        .frame(height: 32)
+        .frame(height: 26)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(rateAccessibility(series: series, rate: rate))
     }

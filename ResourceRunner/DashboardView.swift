@@ -9,8 +9,8 @@ import SwiftUI
 
 /// 대시보드 팝오버 셸. CPU·Memory·Network·Disk 카드와 카드 옆 상세 팝업을 담습니다.
 ///
-/// 본체는 한 열로 스크롤하며 상세를 위한 자리를 예약하지 않습니다.
-/// 팝오버 프레임 크기는 `selection`과 무관한 상수(`frame(width:height:)`)이므로 카드를 선택하거나 해제해도
+/// 본체는 네 카드를 한 열에 모두 표시하며 상세를 위한 자리를 예약하지 않습니다.
+/// 본체 폭과 각 카드의 최소 높이는 선택 상태와 무관하므로 카드를 선택하거나 해제해도
 /// 본체 창 크기가 흔들리지 않습니다 — 상세는 그 카드에 앵커한 별도 자식 팝업으로 열려 본체 레이아웃에 참여하지
 /// 않습니다(ANALYSIS §1 「표시 경계」, §5 DP14). 자식 팝오버를 카드에 붙여도 부모 팝오버가 닫히지 않고
 /// 두 팝오버가 공존한다는 것과, 자식 콘텐츠가 접근성 계층에서 부모의 하위 노드로 도달된다는 것은 실행 환경에서
@@ -24,8 +24,7 @@ struct DashboardView: View {
     let iconProvider: any ApplicationIconProviding
 
     var body: some View {
-        ScrollView {
-          VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
+        VStack(alignment: .leading, spacing: DashboardView.cardSpacing) {
             // `Button`은 macOS에서 표준 포커스 가능 컨트롤이라 키보드 탐색(Full Keyboard Access)을 켠 환경에서는
             // Tab 이동과 Space·Return 활성화가 그대로 동작합니다. 다만 이 설정은 기본값이 꺼짐이고,
             // 꺼진 상태에서는 Tab이 텍스트 필드·목록만 순회해 버튼에 닿지 않는 것을 실행 중인 앱에서 확인했습니다.
@@ -65,7 +64,8 @@ struct DashboardView: View {
             .buttonStyle(.plain)
             .keyboardShortcut("3", modifiers: .command)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.networkCard.accessibilityLabel + ", 단축키 ⌘3")
+            .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
+                NetworkDisplayText.activeSummary(store.networkCard.interfaces) + ", 단축키 ⌘3")
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("NetworkCard")
             .popover(isPresented: networkDetailIsPresented, arrowEdge: .trailing) {
@@ -78,28 +78,26 @@ struct DashboardView: View {
             .buttonStyle(.plain)
             .keyboardShortcut("4", modifiers: .command)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", 단축키 ⌘4")
+            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+                DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
+                    now: ContinuousClock().now, locale: locale) + ", 단축키 ⌘4")
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("DiskCard")
             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
                 DiskDetailPopoverContent(presentation: store.diskCard,
                     onClose: { store.dismissDetail(for: .disk) })
             }
-          }
-          .padding()
         }
-        .frame(width: 280, height: DashboardView.bodyHeight, alignment: .topLeading)
+        .padding(DashboardStyle.Summary.bodyPadding)
+        .frame(width: 280, alignment: .topLeading)
         .background(DashboardColorPalette.popoverBackground)
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("DashboardContainer")
     }
 
-    /// 기존 본체의 601pt viewport를 유지하고 넘치는 카드는 내부 스크롤로 보여줍니다.
-    fileprivate static let bodyHeight: CGFloat = 601
-
     /// 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
-    static let cardSpacing = DashboardStyle.Spacing.betweenSections
+    static let cardSpacing = DashboardStyle.Summary.cardSpacing
 
     /// CPU 카드 선택·복귀 단축키의 실제 키. `CPUCardPresentation.selectionShortcutKey`에서 유도되어
     /// 본체 등록 한 곳뿐인 단축키 정의와 카드 표시 문자열이 같은 값을 공유합니다(ANALYSIS §5 DP15).
@@ -178,8 +176,8 @@ struct CPUCardView: View {
     /// 순위 행이 아이콘을 묻는 자리. 이 뷰는 전달만 하고 캐시를 만들지 않습니다(ANALYSIS §5 DP11).
     let iconProvider: any ApplicationIconProviding
 
-    /// 카드 안 구역(제목 묶음·그래프 묶음·순위 묶음) 사이 간격. 상세 화면의 구역 사이와 같은 단계를 씁니다.
-    static let sectionSpacing = DashboardStyle.Section.betweenSections
+    /// 요약 카드의 제목·그래프·순위 구역을 읽을 수 있는 간격으로 묶습니다.
+    static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
 
     /// 이 카드가 보여줄 수 있는 값. `normal`은 이번 tick 값, `failure`·`stopped`는 마지막 성공 값을 담고,
     /// 성공 이력이 없는 `collecting`과 실패·중지는 `nil`입니다(`ResourceCardState.lastKnownValue`).
@@ -191,8 +189,12 @@ struct CPUCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Self.sectionSpacing) {
             VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
-                Text("CPU")
-                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                HStack {
+                    Text("CPU")
+                    Spacer()
+                    Text("⌘1")
+                }
+                .dashboardTypography(DashboardStyle.TypographyRole.heading)
 
                 focusLine
                 secondaryLine
@@ -202,8 +204,9 @@ struct CPUCardView: View {
 
             rankingSlot
         }
-        .padding(DashboardStyle.CardSurface.contentPadding)
+        .padding(DashboardStyle.Summary.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 241, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
                 .fill(DashboardStyle.CardSurface.fillColor)
@@ -218,7 +221,7 @@ struct CPUCardView: View {
         CardRankingSlotView(
             entries: cached?.topApplications ?? [],
             failed: cached?.topApplicationsFailed ?? false,
-            heading: CPUCardPresentation.topApplicationsHeading,
+            heading: "TOP 5",
             value: { DashboardValueColumn.percent($0.value, unit: CPUCardPresentation.overallUsageUnitLabel) },
             iconProvider: iconProvider
         )
@@ -229,7 +232,7 @@ struct CPUCardView: View {
     var focusLine: some View {
         ZStack(alignment: .leading) {
             Text("0")
-                .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                .dashboardTypography(DashboardStyle.Summary.focus)
                 .hidden()
             focusLineText
                 .lineLimit(1)
@@ -242,21 +245,21 @@ struct CPUCardView: View {
             return Text("수집 중").dashboardTypography(DashboardStyle.TypographyRole.label)
         case .normal(let presentation, _):
             return Text("\(Int(presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
-                .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                .dashboardTypography(DashboardStyle.Summary.focus)
         case .failure(let lastKnown):
             guard let lastKnown else {
                 return Text("수집 실패").dashboardTypography(DashboardStyle.TypographyRole.label)
             }
             return Text("수집 실패 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
                 + Text("\(Int(lastKnown.presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                    .dashboardTypography(DashboardStyle.Summary.focus)
         case .stopped(let lastKnown):
             guard let lastKnown else {
                 return Text("수집 중지").dashboardTypography(DashboardStyle.TypographyRole.label)
             }
             return Text("수집 중지 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
                 + Text("\(Int(lastKnown.presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                    .dashboardTypography(DashboardStyle.Summary.focus)
         }
     }
 
@@ -331,13 +334,13 @@ struct CPUSeriesRatioView: View {
 
     /// 두 자리 정수 + `%`가 들어가는 폭. 사용률은 0…100이라 세 자리는 100 하나뿐이고,
     /// 그 값은 자리를 넘겨 그려도 줄 전체가 밀리지 않습니다.
-    static let numberWidth: CGFloat = 26
+    static let numberWidth: CGFloat = 42
 
     var body: some View {
         HStack(spacing: 0) {
-            Text("\(label) ").dashboardTypography(DashboardStyle.TypographyRole.label)
-            Text("\(Int(ratio.rounded()))%")
-                .dashboardTypography(DashboardStyle.TypographyRole.value)
+            Text("\(label) ").font(.system(size: 10)).foregroundStyle(.secondary)
+            Text(String(format: "%.1f%%", ratio))
+                .font(.system(size: 10).monospacedDigit())
                 .frame(width: Self.numberWidth, alignment: .leading)
         }
         .lineLimit(1)
@@ -382,7 +385,7 @@ struct MemoryCardView: View {
     let iconProvider: any ApplicationIconProviding
 
     /// CPU 카드의 같은 상수와 같은 뜻입니다.
-    static let sectionSpacing = DashboardStyle.Section.betweenSections
+    static let sectionSpacing = DashboardStyle.Summary.sectionSpacing
 
     /// CPU 카드의 `cached`와 같은 뜻입니다 — 캐시된 값이 있는 슬롯에는 자리표시가 들어가지 않습니다.
     private var cached: MemoryCardPresentation? {
@@ -392,8 +395,12 @@ struct MemoryCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Self.sectionSpacing) {
             VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
-                Text("Memory")
-                    .dashboardTypography(DashboardStyle.TypographyRole.heading)
+                HStack {
+                    Text("Memory")
+                    Spacer()
+                    Text("⌘2")
+                }
+                .dashboardTypography(DashboardStyle.TypographyRole.heading)
 
                 titleLine
             }
@@ -405,8 +412,9 @@ struct MemoryCardView: View {
 
             rankingSlot
         }
-        .padding(DashboardStyle.CardSurface.contentPadding)
+        .padding(DashboardStyle.Summary.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 199, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
                 .fill(DashboardStyle.CardSurface.fillColor)
@@ -419,21 +427,22 @@ struct MemoryCardView: View {
         CardRankingSlotView(
             entries: cached?.topApplications ?? [],
             failed: cached?.topApplicationsFailed ?? false,
-            heading: MemoryCardPresentation.topApplicationsHeading,
+            heading: "TOP 5",
             value: { DashboardValueColumn.bytes(UInt64($0.value.rounded())) },
             iconProvider: iconProvider
         )
     }
 
-    /// 제목 줄. 「사용 중 / 전체」 수치가 왼쪽에 남고, 그 줄의 남는 폭을 구성 누적 바가 씁니다(SPEC §5.3).
+    /// 제목 줄. 「사용 중 / 전체」 수치 옆에 작은 구성 누적 바를 둡니다(SPEC §5.3).
     /// 바 높이는 제목 텍스트 높이 이하이고 제목은 한 줄로 묶여 있어, 이 바 때문에 카드가 커지지 않습니다(SPEC §5.8).
     var titleLine: some View {
         HStack(spacing: DashboardStyle.Spacing.labelToContent) {
             focusLine
-                .lineLimit(MemoryCompositionLegendFormatting.maximumLineCount)
+                .lineLimit(2)
                 .layoutPriority(1)
 
             MemoryCompositionBarView(segments: cached?.compositionLayout.segments ?? MemoryCompositionBarLayout.placeholderSegments)
+                .frame(width: 66)
         }
     }
 
@@ -443,10 +452,10 @@ struct MemoryCardView: View {
     var focusLine: some View {
         ZStack(alignment: .leading) {
             Text("0")
-                .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                .dashboardTypography(DashboardStyle.Summary.focus)
                 .hidden()
             focusLineText
-                .lineLimit(1)
+                .lineLimit(2)
         }
     }
 
@@ -456,7 +465,7 @@ struct MemoryCardView: View {
             return Text("수집 중").dashboardTypography(DashboardStyle.TypographyRole.label)
         case .normal(let presentation, _):
             return Text(DashboardValueColumn.byteText(presentation.usedBytes))
-                .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                .dashboardTypography(DashboardStyle.Summary.focus)
                 + Text(" / \(DashboardValueColumn.byteText(presentation.totalPhysicalBytes))")
                     .dashboardTypography(DashboardStyle.TypographyRole.value)
         case .failure(let lastKnown):
@@ -465,14 +474,14 @@ struct MemoryCardView: View {
             }
             return Text("수집 실패 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
                 + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                    .dashboardTypography(DashboardStyle.Summary.focus)
         case .stopped(let lastKnown):
             guard let lastKnown else {
                 return Text("수집 중지").dashboardTypography(DashboardStyle.TypographyRole.label)
             }
             return Text("수집 중지 · 마지막 ").dashboardTypography(DashboardStyle.TypographyRole.label)
                 + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
-                    .dashboardTypography(DashboardStyle.TypographyRole.focus)
+                    .dashboardTypography(DashboardStyle.Summary.focus)
         }
     }
 
@@ -510,7 +519,7 @@ struct MemoryCardView: View {
             }
         }
         .dashboardTypography(DashboardStyle.TypographyRole.label)
-        .lineLimit(MemoryPressureSwapLineFormatting.maximumLineCount)
+        .lineLimit(2)
     }
 
     /// 구성 범례 줄(고정 슬롯). task-006의 병합이 비워 둔 자리를 씁니다.
@@ -535,11 +544,11 @@ struct MemoryCardView: View {
             }
         }
         .dashboardTypography(DashboardStyle.TypographyRole.label)
-        .lineLimit(MemoryCompositionLegendFormatting.maximumLineCount)
+        .lineLimit(2)
     }
 }
 
-/// Memory 구성 누적 바. 제목 줄의 남는 폭을 채우고, 트랙 전체가 전체 물리 메모리이며
+/// Memory 구성 누적 바. 제목 줄의 66pt 폭을 쓰고, 트랙 전체가 전체 물리 메모리이며
 /// 각 구간 길이는 실제 바이트에 비례합니다(SPEC §5.3). 구간 순서·비율·누적 시작 위치는
 /// `MemoryCompositionLayout`이 정하고, 이 뷰는 그 결과를 좌표로 옮겨 칠하는 일만 합니다(ANALYSIS §5 DP15).
 ///
@@ -791,7 +800,7 @@ private struct HistoryGraphSlotView: View {
                     }
                 }
                 // 값 있음·자리표시와 속도 그래프가 같은 판 면·클리핑을 사용합니다.
-                .modifier(DashboardGraphPlotSurface())
+                .modifier(DashboardGraphPlotSurface(height: DashboardStyle.Summary.cpuPlotHeight))
 
                 ZStack {
                     HStack(spacing: 0) {
@@ -803,7 +812,8 @@ private struct HistoryGraphSlotView: View {
                 }
                 .frame(height: HistoryGraphLayout.axisLabelHeight)
             }
-            .frame(height: HistoryGraphLayout.slotHeight)
+            .frame(height: DashboardStyle.Summary.cpuPlotHeight +
+                HistoryGraphLayout.axisSpacing + HistoryGraphLayout.axisLabelHeight)
         }
     }
 
@@ -881,7 +891,7 @@ struct CardRankingSlotView: View {
 
     private static let capacity = ApplicationRankingSampling.cardDisplayCount
     /// 머리글과 순위 목록 사이 간격.
-    static let headingSpacing = DashboardStyle.Section.headingToContent
+    static let headingSpacing: CGFloat = 3
     /// 아이콘 자리와 이름 사이 간격.
     static let iconSpacing = DashboardStyle.Spacing.labelToContent
 
@@ -893,7 +903,7 @@ struct CardRankingSlotView: View {
             Text(heading)
                 .dashboardTypography(DashboardStyle.Section.headingRole)
 
-            VStack(alignment: .leading, spacing: DashboardStyle.Spacing.withinGroup) {
+            VStack(alignment: .leading, spacing: 1) {
                 ForEach(Array(iconKeys.enumerated()), id: \.offset) { index, iconKey in
                     row(at: index, iconKey: iconKey)
                 }
@@ -904,11 +914,11 @@ struct CardRankingSlotView: View {
     // `private`가 아닌 것은 task-011 테스트가 정원의 **줄마다** 아이콘 자리가 남아 있는지 한 줄씩 재기
     // 때문입니다 — 슬롯 전체의 이상적 폭은 가장 넓은 한 줄만 드러내 일부 줄의 자리 손실을 가립니다.
     func row(at index: Int, iconKey: ApplicationKey?) -> some View {
-        // 값 열이 없는 줄(자리표시·조사 실패 안내)은 라벨 역할 줄 높이만 차지해 값이 있는 줄보다 낮아집니다.
+        // 값 열이 없는 줄도 실제 앱 행과 같은 높이를 차지합니다.
         // 숨긴 본문 값 한 글자가 모든 줄의 높이를 맡아, 줄마다 높이가 갈려 카드 높이가 상태에 따라 달라지는 것을 막습니다.
         ZStack(alignment: .leading) {
             Text(" ")
-                .dashboardTypography(DashboardStyle.TypographyRole.value)
+                .dashboardTypography(DashboardStyle.Summary.rankingLabel)
                 .hidden()
 
             HStack(spacing: Self.iconSpacing) {
@@ -925,6 +935,7 @@ struct CardRankingSlotView: View {
                 }
             }
         }
+        .frame(height: 13)
     }
 
     @ViewBuilder
@@ -934,26 +945,25 @@ struct CardRankingSlotView: View {
                 // 카드 정원(`Self.capacity`)에 맞춘 문구입니다 — 정원 숫자를 문자열에 직접 박아 두면
                 // 카드 정원이 바뀌어도 이 문구가 따라오지 못합니다.
                 Text("TOP \(Self.capacity) 조사 실패")
-                    .dashboardTypography(DashboardStyle.TypographyRole.label)
+                    .dashboardTypography(DashboardStyle.Summary.rankingLabel)
             } else {
                 placeholderRow
             }
         } else if index < entries.count {
             let entry = entries[index]
             Text(entry.displayName)
-                .dashboardTypography(DashboardStyle.TypographyRole.label)
+                .dashboardTypography(DashboardStyle.Summary.rankingLabel)
             Spacer()
-            DashboardAlignedValueView(value: value(entry))
+            DashboardAlignedValueView(value: value(entry), compact: true)
         } else {
             placeholderRow
         }
     }
 
-    /// 값이 없는 줄의 자리표시. 다른 줄과 같은 높이만 차지하고 이름·수치를 만들어 넣지 않습니다.
+    /// 값이 없는 줄은 중립 기호만 보여 실제 앱을 지어내지 않고 다섯 자리를 읽을 수 있게 합니다.
     private var placeholderRow: some View {
-        Text(" ")
-            .dashboardTypography(DashboardStyle.TypographyRole.label)
-            .opacity(0)
+        Text("–")
+            .dashboardTypography(DashboardStyle.Summary.rankingLabel)
     }
 }
 
@@ -962,11 +972,13 @@ struct CardRankingSlotView: View {
 /// 두 `Text`는 화면에서는 별도 열이지만 접근성 계층에서는 한 문자열을 가진 노드 하나로 합쳐집니다.
 struct DashboardAlignedValueView: View {
     let value: DashboardValueColumn.Value
+    var compact = false
 
     var body: some View {
         HStack(spacing: 0) {
             Text(value.number)
-                .dashboardTypography(DashboardStyle.TypographyRole.value)
+                .dashboardTypography(compact ? DashboardStyle.Summary.rankingValue :
+                    DashboardStyle.TypographyRole.value)
                 .frame(width: value.kind.numberWidth, alignment: .trailing)
             Text(value.unit.isEmpty ? "" : " \(value.unit)")
                 .dashboardTypography(DashboardStyle.TypographyRole.label)

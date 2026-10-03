@@ -1,0 +1,500 @@
+Timestamp               Ty Process[PID:TID]
+2026-10-03 09:55:31.721 A  zsh[88940:2e910f4] (libsystem_info.dylib) Retrieve User by ID
+2026-10-03 09:55:31.735 A  zsh[88940:2e910f8] (libsystem_info.dylib) Retrieve User by ID
+2026-10-03 09:55:31.811 A  ResourceRunner[88940:2e910f9] (libsystem_secinit.dylib) AppSandbox
+2026-10-03 09:55:31.819 A  ResourceRunner[88940:2e910f9] (libsystem_info.dylib) Retrieve User by ID
+2026-10-03 09:55:31.820 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x105e8a650] activating connection: mach=true listener=false peer=false name=com.apple.cfprefsd.daemon
+2026-10-03 09:55:31.820 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x105e8d350] activating connection: mach=true listener=false peer=false name=com.apple.cfprefsd.agent
+2026-10-03 09:55:31.821 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x105e92210] activating connection: mach=true listener=false peer=false name=com.apple.coreservices.launchservicesd
+2026-10-03 09:55:31.822 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d070000] activating connection: mach=true listener=false peer=false name=com.apple.pasteboard.1
+2026-10-03 09:55:31.822 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d070140] activating connection: mach=true listener=false peer=false name=com.apple.distributed_notifications@Uv3
+2026-10-03 09:55:31.824 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:AutomaticTermination] void _NSDisableAutomaticTerminationAndLog(NSString *) No windows open yet
+2026-10-03 09:55:31.824 A  ResourceRunner[88940:2e910f9] (TCC) TCCAccessRequest() IPC
+2026-10-03 09:55:31.824 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d070280] activating connection: mach=true listener=false peer=false name=com.apple.tccd.system
+2026-10-03 09:55:31.836 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d070280] invalidated after the last release of the connection object
+2026-10-03 09:55:31.837 Df ResourceRunner[88940:2e910f9] [com.apple.SkyLight:default] server port 0x0000370b, session port 0x0000370b
+2026-10-03 09:55:31.850 Df ResourceRunner[88940:2e910f9] [com.apple.SkyLight:default] New connection 0x132bff main
+2026-10-03 09:55:31.852 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] CHECKIN: pid=88940
+2026-10-03 09:55:31.853 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] CHECKEDIN: pid=88940 asn=0x0-0x25d25d0 foreground=0
+2026-10-03 09:55:31.854 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d070280] activating connection: mach=true listener=false peer=false name=com.apple.lsd.modifydb
+2026-10-03 09:55:31.854 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d0703c0] activating connection: mach=false listener=true peer=false name=(anonymous)
+2026-10-03 09:55:31.854 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d0703c0] Connection returned listener port: 0x4303
+2026-10-03 09:55:31.854 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d104000] activating connection: mach=false listener=false peer=true name=com.apple.xpc.anonymous.0x81d0703c0.peer[565].0x81d104000
+2026-10-03 09:55:31.855 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] FRONTLOGGING: version 1
+2026-10-03 09:55:31.855 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] Registered, pid=88940 ASN=0x0,0x25d25d0
+2026-10-03 09:55:31.855 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d070500] activating connection: mach=true listener=false peer=false name=com.apple.analyticsd
+2026-10-03 09:55:31.855 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d070640] activating connection: mach=true listener=false peer=false name=com.apple.lsd.mapdb
+2026-10-03 09:55:31.855 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d0703c0] Connection returned listener port: 0x4303
+2026-10-03 09:55:31.855 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] BringForward: pid=88940 asn=0x0-0x25d25d0 bringForward=0 foreground=0 uiElement=1 launchedByLS=0 modifiersCount=0 allDisabled=0
+2026-10-03 09:55:31.856 Df ResourceRunner[88940:2e91112] [com.apple.CoreAnalytics:client] Received configuration update from daemon (initial)
+2026-10-03 09:55:31.856 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:Appearance] Current system appearance, (HLTB: 2), (SLS: 1)
+2026-10-03 09:55:31.857 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) No persisted cache on this platform.
+2026-10-03 09:55:31.859 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:Appearance] Current system appearance, (HLTB: 2), (SLS: 1)
+2026-10-03 09:55:31.860 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:Appearance] Post-registration system appearance: (HLTB: 2)
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] FBSWorkspace: endpoint monitoring is disabled.
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] FBSWorkspace: default shell endpoint is disabled.
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e910f9] [com.apple.runningboard:connection] Initializing connection
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e910f9] [com.apple.runningboard:process] Removing all cached process handles
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e91119] [com.apple.runningboard:connection] Sending handshake request attempt #1 to server
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e91119] [com.apple.runningboard:connection] Creating connection to com.apple.runningboard
+2026-10-03 09:55:31.874 Df ResourceRunner[88940:2e91119] [com.apple.xpc:connection] [0x81d070780] activating connection: mach=true listener=false peer=false name=com.apple.runningboard
+2026-10-03 09:55:31.875 A  ResourceRunner[88940:2e91113] (RunningBoardServices) didChangeInheritances
+2026-10-03 09:55:31.875 Df ResourceRunner[88940:2e91119] [com.apple.runningboard:connection] Handshake succeeded
+2026-10-03 09:55:31.875 Df ResourceRunner[88940:2e91119] [com.apple.runningboard:connection] Identity resolved as anon<ResourceRunner>(501)
+2026-10-03 09:55:31.876 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d0703c0] Connection returned listener port: 0x4303
+2026-10-03 09:55:31.879 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d0703c0] Connection returned listener port: 0x4303
+2026-10-03 09:55:31.881 A  ResourceRunner[88940:2e91113] (AppIntents) appintents:register process
+2026-10-03 09:55:31.882 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.882 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d0708c0] activating connection: mach=true listener=false peer=false name=com.apple.linkd.autoShortcut
+2026-10-03 09:55:31.882 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Activated connection to linkd (ApplicationService)
+2026-10-03 09:55:31.882 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d070b40] activating connection: mach=false listener=true peer=false name=(anonymous)
+2026-10-03 09:55:31.882 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d070b40] Connection returned listener port: 0x6e03
+2026-10-03 09:55:31.883 A  ResourceRunner[88940:2e91119] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e910f9] [com.apple.dt.xctest:Default] Registering for test daemon availability notify post.
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e910f9] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e910f9] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e910f9] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e91119] [com.apple.xpc:connection] [0x81d0708c0] Re-initialization successful; calling out to event handler with XPC_ERROR_CONNECTION_INTERRUPTED
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e91119] [com.apple.appintents:Connection] Process Instance Registry XPC connection has been interrupted
+2026-10-03 09:55:31.884 E  ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.884 E  ResourceRunner[88940:2e91113] [com.apple.AppKit:Application] Error registering app with intents framework: Error Domain=NSCocoaErrorDomain Code=4097 UserInfo={NSDebugDescription=<private>}
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.884 A  ResourceRunner[88940:2e91112] (AppIntents) appintents:register process
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.884 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d070dc0] activating connection: mach=true listener=false peer=false name=com.apple.linkd.autoShortcut
+2026-10-03 09:55:31.885 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Activated connection to linkd (ApplicationService)
+2026-10-03 09:55:31.885 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d070b40] Connection returned listener port: 0x6e03
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d070dc0] Re-initialization successful; calling out to event handler with XPC_ERROR_CONNECTION_INTERRUPTED
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Process Instance Registry XPC connection has been interrupted
+2026-10-03 09:55:31.886 E  ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.886 E  ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.886 A  ResourceRunner[88940:2e91113] (AppIntents) appintents:register process
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d071040] activating connection: mach=true listener=false peer=false name=com.apple.linkd.autoShortcut
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Activated connection to linkd (ApplicationService)
+2026-10-03 09:55:31.886 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d070b40] Connection returned listener port: 0x6e03
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d071040] Re-initialization successful; calling out to event handler with XPC_ERROR_CONNECTION_INTERRUPTED
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Process Instance Registry XPC connection has been interrupted
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.888 A  ResourceRunner[88940:2e91112] (AppIntents) appintents:register process
+2026-10-03 09:55:31.888 E  ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.888 E  ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Created a new Process Instance Registry XPC connection (inactive)
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d071400] activating connection: mach=true listener=false peer=false name=com.apple.linkd.autoShortcut
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Activated connection to linkd (ApplicationService)
+2026-10-03 09:55:31.888 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d070b40] Connection returned listener port: 0x6e03
+2026-10-03 09:55:31.889 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d071400] Re-initialization successful; calling out to event handler with XPC_ERROR_CONNECTION_INTERRUPTED
+2026-10-03 09:55:31.889 Df ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Process Instance Registry XPC connection has been interrupted
+2026-10-03 09:55:31.889 E  ResourceRunner[88940:2e91113] [com.apple.appintents:Connection] Will NOT re-try to establish the connection
+2026-10-03 09:55:31.889 E  ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.889 E  ResourceRunner[88940:2e91112] [com.apple.appintents:Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-03 09:55:31.901 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From System CFPrefsD
+2026-10-03 09:55:31.902 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) couldn't load support library
+2026-10-03 09:55:31.902 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) called dummy function!
+2026-10-03 09:55:31.902 Df ResourceRunner[88940:2e910f9] [com.apple.GenerativeModels:availability] registering darwin observer for name: com.apple.gms.availability.notification
+2026-10-03 09:55:31.902 Df ResourceRunner[88940:2e910f9] [com.apple.GenerativeModels:availability] registering darwin observer for name: com.apple.os-eligibility-domain.change.greymatter
+2026-10-03 09:55:31.902 Df ResourceRunner[88940:2e910f9] [com.apple.GenerativeModels:availability] registering darwin observer for name: com.apple.language.changed
+2026-10-03 09:55:31.902 Df ResourceRunner[88940:2e910f9] [com.apple.WritingTools:Default] isAvailable value changed: isMDMAllowed = true, gmAvailable (current) = false
+2026-10-03 09:55:31.903 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:31.904 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d071540] activating connection: mach=true listener=false peer=false name=com.apple.coreservices.appleevents
+2026-10-03 09:55:31.906 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d0703c0] Connection returned listener port: 0x4303
+2026-10-03 09:55:31.906 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] SignalReady: pid=88940 asn=0x0-0x25d25d0
+2026-10-03 09:55:31.906 Df ResourceRunner[88940:2e910f9] [com.apple.processmanager:front-35286506] SIGNAL: pid=88940 asn=0x0x-0x25d25d0
+2026-10-03 09:55:31.906 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From System CFPrefsD
+2026-10-03 09:55:31.907 A  ResourceRunner[88940:2e910f9] (libsystem_containermanager.dylib) container_create_or_lookup_for_current_user
+2026-10-03 09:55:31.907 A  ResourceRunner[88940:2e910f9] (libsystem_containermanager.dylib) container_create_or_lookup_for_platform
+2026-10-03 09:55:31.907 Df ResourceRunner[88940:2e910f9] [com.apple.containermanager:xpc] Requesting container lookup; personaid = 4294967295, type = NOPERSONA, name = <unknown>, origin [pid = 0, personaid = 0], proximate [pid = 0, personaid = 0], class = 2, identifier = <private>, group_identifier = <private>, create = 0, temp = 0, euid = 501, uid = 501
+2026-10-03 09:55:31.907 A  ResourceRunner[88940:2e910f9] (libsystem_containermanager.dylib) container_query_t
+2026-10-03 09:55:31.907 Df ResourceRunner[88940:2e910f9] [com.apple.containermanager:query] Query; personaid = 4294967295, type = NOPERSONA, name = <unknown>, origin [pid = 0, personaid = 0], proximate [pid = 0, personaid = 0], euid = 501, uid = 501, class = 2, identifier = [(null)](0), flags = 900000002
+2026-10-03 09:55:31.908 Df ResourceRunner[88940:2e910f9] [com.apple.containermanager:unspecified] _container_query_get_result_at_index: success
+2026-10-03 09:55:31.908 A  ResourceRunner[88940:2e910f9] (libsystem_containermanager.dylib) container_copy_object
+2026-10-03 09:55:31.908 Df ResourceRunner[88940:2e910f9] [com.apple.containermanager:unspecified] container_create_or_lookup_for_platform: success
+2026-10-03 09:55:31.908 A  ResourceRunner[88940:2e910f9] (libsystem_info.dylib) Membership API: translate identifier
+2026-10-03 09:55:31.910 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d071680] activating connection: mach=false listener=false peer=false name=com.apple.hiservices-xpcservice
+2026-10-03 09:55:31.918 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:AutomaticTermination] void _NSDisableAutomaticTerminationAndLog(NSString *) Restoring windows
+2026-10-03 09:55:31.918 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:StateRestoration] -[NSApplication _reopenWindowsAsNecessaryIncludingRestorableState:withFullFidelity:completionHandler:] shouldRestoreState=1 hasPersistentStateToRestore=0 shouldStillRestoreStateAfterPrompting=0
+2026-10-03 09:55:31.918 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d071a40] activating connection: mach=true listener=false peer=false name=com.apple.window_proxies
+2026-10-03 09:55:31.918 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d071a40] invalidated because the current process cancelled the connection by calling xpc_connection_cancel()
+2026-10-03 09:55:31.919 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:AutomaticTermination] void _NSEnableAutomaticTerminationAndLog(NSString *) Restoring windows
+2026-10-03 09:55:31.922 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:31.922 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:31.931 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:Appearance] NSApp cache appearance:
+-NSRequiresAquaSystemAppearance: 0
+-appearance: (null)
+-effectiveAppearance: <NSCompositeAppearance: 0x81d040a00
+ (
+    "<NSDarkAquaAppearance: 0x81d040640>",
+    "<NSSystemAppearance: 0x81d0408c0>"
+)>
+2026-10-03 09:55:31.933 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81d071e00] activating connection: mach=true listener=false peer=false name=com.apple.dock.fullscreen
+2026-10-03 09:55:31.934 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d071f40] activating connection: mach=true listener=false peer=false name=com.apple.fonts
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e91113] [com.apple.corespotlight:index] (<private>) deleteSearchableItemsWithDomainIdentifiers, protectionClass:(null), domainIdentifiers number:1
+2026-10-03 09:55:31.936 A  ResourceRunner[88940:2e91113] (CoreSpotlight) delete-domains
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e91112] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e91112] (CoreSpotlight) sConnectionName: com.apple.spotlight.IndexAgent
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e91112] (CoreSpotlight) Start service name com.apple.spotlight.IndexAgent
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d0721c0] activating connection: mach=true listener=false peer=false name=com.apple.spotlight.IndexAgent
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e910f9] [com.apple.BoardServices:XPCErrors] [C:1] Alloc com.apple.controlcenter.statusitems
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81d072300] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-03 09:55:31.936 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] FBSWorkspace registering source: <private>
+2026-10-03 09:55:31.937 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] FBSWorkspace connected to endpoint : <private>
+2026-10-03 09:55:31.937 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] <FBSWorkspaceScenesClient:0x81d043660 <private>> attempting immediate handshake from activate
+2026-10-03 09:55:31.937 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] <FBSWorkspaceScenesClient:0x81d043660 <private>> sent handshake
+2026-10-03 09:55:31.937 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension __NSStatusItemSceneHostSettings__ on FBSSceneSettings
+2026-10-03 09:55:31.937 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension __NSStatusItemSceneClientSettings__ on FBSSceneClientSettings
+2026-10-03 09:55:31.937 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension FBSSceneSettingsCore on FBSSceneSettings
+2026-10-03 09:55:31.938 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension FBSSceneClientSettingsCore on FBSSceneClientSettings
+2026-10-03 09:55:31.938 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] Requesting scene <FBSScene: 0x81d0437a0; com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF> from com.apple.controlcenter.statusitems
+2026-10-03 09:55:31.938 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension FBSSceneTransitionContextCore on FBSSceneTransitionContext
+2026-10-03 09:55:31.939 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension __NSHostedViewSceneSettings__ on FBSSceneSettings
+2026-10-03 09:55:31.939 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension __NSClientHostedViewSceneSettings__ on FBSSceneClientSettings
+2026-10-03 09:55:31.939 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension __NSStatusItemAuxiliaryViewSceneSettings__ on FBSSceneSettings
+2026-10-03 09:55:31.939 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneExtension] Realizing settings extension __NSClientStatusItemAuxiliaryViewSceneSettings__ on FBSSceneClientSettings
+2026-10-03 09:55:31.939 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:Common] Requesting scene <FBSScene: 0x81d0438e0; com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView> from com.apple.controlcenter.statusitems
+2026-10-03 09:55:31.940 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:31.940 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Dropping transition context because the scene is reconnecting
+2026-10-03 09:55:31.940 A  ResourceRunner[88940:2e91112] (RunningBoardServices) didChangeInheritances
+2026-10-03 09:55:31.942 Df ResourceRunner[88940:2e91113] [com.apple.FrontBoard:Common] Request for <FBSScene: 0x81d0437a0; com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF> complete!
+2026-10-03 09:55:31.943 Df ResourceRunner[88940:2e91113] [com.apple.FrontBoard:Common] Request for <FBSScene: 0x81d0438e0; com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView> complete!
+2026-10-03 09:55:31.943 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:31.943 Df ResourceRunner[88940:2e91113] [com.apple.FrontBoard:Common] <FBSWorkspaceScenesClient:0x81d043660 <private>> Reconnecting scene com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF
+2026-10-03 09:55:31.943 Df ResourceRunner[88940:2e91113] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Dropping transition context because the scene is reconnecting
+2026-10-03 09:55:31.943 Df ResourceRunner[88940:2e91113] [com.apple.FrontBoard:Common] <FBSWorkspaceScenesClient:0x81d043660 <private>> Reconnecting scene com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView
+2026-10-03 09:55:31.945 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:TopologyObserver] registered network=true workspaceTokens=3
+2026-10-03 09:55:31.946 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:SystemLifecycle] initial snapshot: SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)
+2026-10-03 09:55:31.948 Df ResourceRunner[88940:2e91112] [com.apple.BoardServices:XPCErrors] [C:2] Alloc <private>
+2026-10-03 09:55:31.948 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81d071a40] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-03 09:55:31.949 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:AuxiliaryScheduler] start axis=networkMetadata query=1
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:AuxiliaryScheduler] start axis=storageMetadata query=1
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] pid=88940 driverLookup=IOServiceGetMatchingServices=0 count=1 volumeLookup=getmntinfo=success diskVolumes=8; DASessionCreate=success physicalComplete=true relationshipsComplete=true
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] driverID=4294969732 bsd=disk0 kind=physical kindReason=provider=IOBlockStorageDriver/IOEmbeddedNVMeBlockDevice/AppleANS3CGv2Controller/RTBuddyService/RTBuddy/AppleA7IOPNub/AppleASCWrapV6/AppleARMIODevice/AppleH15IO/IOPlatformDevice/AppleARMPE/IOPlatformExpertDevice/IORegistryEntry readBytes=1107310153728 writtenBytes=6032682565632 readOperations=57002823 writeOperations=268019226 operationsReason=IOBlockStorageDriver Statistics operations external=internalDevice externalReason=DA DeviceInternal=true removable=false ejectable=false connection=Apple Fabric
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:014195D8-3AD2-4FCA-95B8-003D6B035744|bsd:disk3s4 mounts=/System/Volumes/Update bsd=disk3s4 fs=apfs total=994662584320 available=826740428800 used=167922155520 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:20B41E1C-D986-41FC-AD07-45310C5C5602|bsd:disk1s3 mounts=/System/Volumes/Hardware bsd=disk1s3 fs=apfs total=524288000 available=503836672 used=20451328 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:26B365C6-DB25-4724-8D17-97F0D3C66BDD|bsd:disk1s2 mounts=/System/Volumes/xarts bsd=disk1s2 fs=apfs total=524288000 available=503836672 used=20451328 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:35BF6621-4432-4BAB-8FB9-CFF64F541642|bsd:disk3s6 mounts=/System/Volumes/VM bsd=disk3s6 fs=apfs total=994662584320 available=826740428800 used=167922155520 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:AA691CE3-6E00-4A77-AF05-080A9B0938B8|bsd:disk1s1 mounts=/System/Volumes/iSCPreboot bsd=disk1s1 fs=apfs total=524288000 available=503836672 used=20451328 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:AD49F559-0654-4217-AEBC-1C9AA77F5E29|bsd:disk3s2 mounts=/System/Volumes/Preboot bsd=disk3s2 fs=apfs total=994662584320 available=826740428800 used=167922155520 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:F8964231-DC64-47CF-9322-32B3B00CDC3F|bsd:disk3s1s1 mounts=/ bsd=disk3s1s1 fs=apfs total=994662584320 available=826740432896 used=167922151424 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.950 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] volume=uuid:F8964231-DC64-47CF-9322-32B3B00CDC3F|bsd:disk3s5 mounts=/System/Volumes/Data bsd=disk3s5 fs=apfs total=994662584320 available=826740428800 used=167922155520 drivers=4294969732 scope=physical sharedCapacity=true relation=DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[]
+2026-10-03 09:55:31.951 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] fastDriverCount=1 fastIDs=4294969732
+2026-10-03 09:55:31.953 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:AuxiliaryScheduler] stored axis=storageMetadata query=1
+2026-10-03 09:55:31.954 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-03 09:55:31.955 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] storageRevision=1 systemTotal=994662584320 systemAvailable=826740428800 volumes=8 relationsComplete=true externalAbsent=true
+2026-10-03 09:55:31.956 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:DiskNativeProbe] diskActivityTick=0 status=baselineOnly(ResourceRunner.DiskBaselineReason.first) revision=1 knownPhysical=nil representative=nil knownIOPS=nil representativeIOPS=nil devices=1
+2026-10-03 09:55:31.958 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:AuxiliaryScheduler] stored axis=networkMetadata query=1
+2026-10-03 09:55:31.960 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:31.960 A  ResourceRunner[88940:2e91119] (RunningBoardServices) didChangeInheritances
+2026-10-03 09:55:31.960 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:31.961 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Received action(s) in scene-update: NSSceneFenceAction
+2026-10-03 09:55:31.962 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF-Aux[1]-NSStatusItemView] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:31.964 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=26 records=26
+2026-10-03 09:55:31.969 Df ResourceRunner[88940:2e910f9] [com.apple.FrontBoard:SceneClient] [com.apple.controlcenter:EC03AE1A-6B23-4F9A-B1D9-67F02986B2EF] Sending action(s) in update: NSSceneFenceAction
+2026-10-03 09:55:32.059 A  ResourceRunner[88940:2e91113] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:32.059 Df ResourceRunner[88940:2e91113] [com.apple.corespotlight:index] *warn* MailCS ======%%% _setMailMessageAttributes skip:1
+2026-10-03 09:55:32.060 A  ResourceRunner[88940:2e91113] (CoreSpotlight) index-items
+2026-10-03 09:55:32.060 Df ResourceRunner[88940:2e91113] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:32.971 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:DiskNativeProbe] diskActivityTick=1 status=rate revision=1 knownPhysical=Optional(ResourceRunner.RatePair(receivedBytesPerSecond: 92807.07717011707, sentBytesPerSecond: 18291064.38313655)) representative=Optional(ResourceRunner.RatePair(receivedBytesPerSecond: 92807.07717011707, sentBytesPerSecond: 18291064.38313655)) knownIOPS=Optional(ResourceRunner.DiskOperationRates(readsPerSecond: 10.836424177047467, writesPerSecond: 383.21536407922406)) representativeIOPS=Optional(ResourceRunner.DiskOperationRates(readsPerSecond: 10.836424177047467, writesPerSecond: 383.21536407922406)) devices=1
+2026-10-03 09:55:33.954 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=baselineOnly(ResourceRunner.DiskBaselineReason.first)
+2026-10-03 09:55:33.954 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:SystemMetricsSampleSource] baseline-only tick: no cpu usage produced collectionEpoch=0 epochReset=false elapsed=none maximumTickGap=10.0 seconds
+2026-10-03 09:55:33.954 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=0 capacity=601
+2026-10-03 09:55:33.954 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=1 collectionEpoch=0 appendedTotal=1
+2026-10-03 09:55:33.954 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=1 collectionEpoch=0 appendedTotal=1
+2026-10-03 09:55:33.956 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=1 collectionEpoch=0 appendedTotal=1
+2026-10-03 09:55:33.956 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=baselineOnly(ResourceRunner.NetworkBaselineReason.first)
+2026-10-03 09:55:35.955 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringSampleStore] first valid history point collectionEpoch=0 history=1
+2026-10-03 09:55:35.955 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=1 capacity=601
+2026-10-03 09:55:35.955 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=1 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:35.955 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=1 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:35.955 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=1 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:35.956 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:36.020 Df ResourceRunner[88940:2e91121] [com.apple.UIIntelligenceSupport:xpc] establishing connection to agent
+2026-10-03 09:55:36.020 Df ResourceRunner[88940:2e91121] [com.apple.xpc:session] [0x81caed860] Session created.
+2026-10-03 09:55:36.020 Df ResourceRunner[88940:2e91121] [com.apple.xpc:session] [0x81caed860] Session created from connection [0x81e44c140]
+2026-10-03 09:55:36.020 Df ResourceRunner[88940:2e91121] [com.apple.xpc:connection] [0x81e44c140] activating connection: mach=true listener=false peer=false name=com.apple.uiintelligencesupport.agent
+2026-10-03 09:55:36.020 Df ResourceRunner[88940:2e91121] [com.apple.xpc:session] [0x81caed860] Session activated
+2026-10-03 09:55:36.020 Df ResourceRunner[88940:2e91118] [com.apple.UIIntelligenceSupport:xpc] Connection established with agent PID: 1426
+2026-10-03 09:55:36.023 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44c500] activating connection: mach=false listener=false peer=false name=com.apple.ViewBridgeAuxiliary
+2026-10-03 09:55:36.023 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44c640] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-03 09:55:36.023 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44c780] activating connection: mach=false listener=true peer=false name=(anonymous)
+2026-10-03 09:55:36.023 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44c780] Connection returned listener port: 0xe103
+2026-10-03 09:55:36.027 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44c500] invalidated after the last release of the connection object
+2026-10-03 09:55:36.040 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=23.463888 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:36.040 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:36.040 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:36.132 A  ResourceRunner[88940:2e91122] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:36.132 A  ResourceRunner[88940:2e91122] (CoreSpotlight) index-items
+2026-10-03 09:55:36.132 Df ResourceRunner[88940:2e91119] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:36.281 Df ResourceRunner[88940:2e910f9] [com.apple.inputmethodkitClient:Client] +[IMKClient subclass]: chose IMKClient_Modern
+2026-10-03 09:55:36.281 Df ResourceRunner[88940:2e910f9] [com.apple.inputmethodkitClient:Client] +[IMKInputSession subclass]: chose IMKInputSession_Modern
+2026-10-03 09:55:36.285 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44d180] activating connection: mach=true listener=false peer=false name=com.apple.inputmethodkit.getxpcendpoint
+2026-10-03 09:55:36.285 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:36.287 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44d040] activating connection: mach=true listener=false peer=false name=com.apple.inputmethodkit.getxpcendpoint
+2026-10-03 09:55:36.288 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44cf00] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-03 09:55:36.290 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44d400] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-10-03 09:55:36.540 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(30.0 seconds) epoch=0
+2026-10-03 09:55:36.540 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(1.0 seconds) generation=2 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:36.540 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(2.0 seconds) generation=2 collectionEpoch=0 appendedTotal=0
+2026-10-03 09:55:36.540 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(30.0 seconds) epoch=0
+2026-10-03 09:55:36.540 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(1.0 seconds) generation=2 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:36.540 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(1.0 seconds) generation=2 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:36.541 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=26 records=26
+2026-10-03 09:55:36.545 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-03 09:55:36.928 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:AutomaticTermination] void _updateToReflectAutomaticTerminationState(void) Setting _kLSApplicationWouldBeTerminatedByTALKey=0
+2026-10-03 09:55:37.076 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] opened=true bodyFrame=Optional((965.0, 462.0, 306.0, 627.0)) diskAX=Disk 카드, 정상 측정, 현재 Read 978.4 KB/s, Write 39.2 MB/s, 보조 정보 확인됨, 저장 공간 전체 926.4 GB, 사용 가능 770.0 GB, 사용 중은 전체에서 사용 가능을 뺀 값, APFS 공유 공간이며 볼륨별 독점 사용량이 아님
+2026-10-03 09:55:37.076 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] scrollBefore contentBounds=(0.0, 0.0, 280.0, 601.0) documentFrame=Optional((0.0, 0.0, 280.0, 835.0))
+2026-10-03 09:55:37.386 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] scrollAfter contentBounds=(0.0, 234.0, 280.0, 601.0)
+2026-10-03 09:55:37.389 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:AutomaticTermination] void _NSDisableAutomaticTerminationAndLog(NSString *) NSAccessibility Request Received
+2026-10-03 09:55:37.417 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44d2c0] activating connection: mach=true listener=false peer=false name=com.apple.pbs.fetch_services
+2026-10-03 09:55:37.418 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:37.418 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44d2c0] invalidated after the last release of the connection object
+2026-10-03 09:55:37.422 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:37.423 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:37.423 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From System CFPrefsD
+2026-10-03 09:55:37.438 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskCard positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81c1b8f30> {value = x:994.000000 y:525.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81c1b8f60> {value = w:248.000000 h:101.000000 type = kAXValueCGSizeType}) label=Optional(Disk 카드, 정상 측정, 현재 Read 978.4 KB/s, Write 39.2 MB/s, 보조 정보 확인됨, 저장 공간 전체 926.4 GB, 사용 가능 770.0 GB, 사용 중은 전체에서 사용 가능을 뺀 값, APFS 공유 공간이며 볼륨별 독점 사용량이 아님, Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 0–47.7 MB/s, 현재 측정, 수집 공백은 이어 그리지 않음, 단축키 ⌘4)
+2026-10-03 09:55:37.438 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] Disk AX traversal visited=108
+2026-10-03 09:55:37.438 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] common selectCard called selection=disk
+2026-10-03 09:55:37.593 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=2 capacity=601
+2026-10-03 09:55:37.593 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=2 collectionEpoch=0 appendedTotal=3
+2026-10-03 09:55:37.593 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=18.914186 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:37.593 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=2 collectionEpoch=0 appendedTotal=3
+2026-10-03 09:55:37.594 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=2 collectionEpoch=0 appendedTotal=3
+2026-10-03 09:55:37.596 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:37.596 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:37.914 A  ResourceRunner[88940:2e91124] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:37.914 A  ResourceRunner[88940:2e91124] (CoreSpotlight) index-items
+2026-10-03 09:55:37.915 Df ResourceRunner[88940:2e91124] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:37.959 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] selected=disk diskAX=Disk 카드, 정상 측정, 현재 Read 39.0 KB/s, Write 1.7 MB/s, 보조 정보 확인됨, 저장 공간 전체 926.4 GB, 사용 가능 770.0 GB, 사용 중은 전체에서 사용 가능을 뺀 값, APFS 공유 공간이며 볼륨별 독점 사용량이 아님 windows=(1119.0, 1084.0, 38.0, 33.0);(965.0, 462.0, 306.0, 627.0);(1242.0, 288.0, 426.0, 506.0)
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) IOServiceOpen failed for class 'AppleNVMeEAN'
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) Could not open EAN service and connect
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) Failed to copy 'aptk' from EAN
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) Failed to copy APTicket properties. Falling back to default policy.
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) Creating default MGSysConfigPolicy
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) syscfg is not initialized!
+2026-10-03 09:55:37.961 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) CFDictionaryRef copySyscfgDictionary(void) enumeration of <private> failed.
+2026-10-03 09:55:37.962 Df ResourceRunner[88940:2e910f9] (libMobileGestalt.dylib) Failed to find key <private>
+2026-10-03 09:55:37.964 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCreate
+2026-10-03 09:55:37.964 Df ResourceRunner[88940:2e91113] [com.apple.xpc:connection] [0x81e44c500] activating connection: mach=true listener=false peer=false name=com.apple.coreservices.sharedfilelistd.xpc
+2026-10-03 09:55:37.965 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From System CFPrefsD
+2026-10-03 09:55:37.966 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCreate
+2026-10-03 09:55:37.966 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCreate
+2026-10-03 09:55:37.966 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCreate
+2026-10-03 09:55:37.966 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCopySnapshot
+2026-10-03 09:55:37.966 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44de00] activating connection: mach=true listener=false peer=false name=com.apple.iconservices
+2026-10-03 09:55:37.967 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44e1c0] activating connection: mach=true listener=false peer=false name=com.apple.iconservices.store
+2026-10-03 09:55:37.970 Df ResourceRunner[88940:2e910f9] [com.apple.launchservices:needs-reg] bundle 0x24d4 does not appear to exist anymore
+2026-10-03 09:55:37.970 Df ResourceRunner[88940:2e910f9] [com.apple.launchservices:needs-reg] bundle 0x24d4 node has changed
+2026-10-03 09:55:37.971 Df ResourceRunner[88940:2e910f9] [com.apple.iconservices:default] Could not get resource properties for URL: <private> with error: Error Domain=NSCocoaErrorDomain Code=260 UserInfo={NSURL=<private>, NSFilePath=<private>, NSUnderlyingError=0x81c14c000 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}
+2026-10-03 09:55:37.971 Df ResourceRunner[88940:2e910f9] [com.apple.iconservices:default] Could not get resource properties for URL: <private> with error: Error Domain=NSCocoaErrorDomain Code=260 UserInfo={NSURL=<private>, NSFilePath=<private>, NSUnderlyingError=0x81c14c090 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}
+2026-10-03 09:55:37.972 Df ResourceRunner[88940:2e910f9] [com.apple.launchservices:needs-reg] bundle 0x1f1c does not appear to exist anymore
+2026-10-03 09:55:37.972 Df ResourceRunner[88940:2e910f9] [com.apple.launchservices:needs-reg] bundle 0x1f1c node has changed
+2026-10-03 09:55:37.972 Df ResourceRunner[88940:2e910f9] [com.apple.iconservices:default] Could not get resource properties for URL: <private> with error: Error Domain=NSCocoaErrorDomain Code=260 UserInfo={NSURL=<private>, NSFilePath=<private>, NSUnderlyingError=0x81c14c2a0 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}
+2026-10-03 09:55:37.972 Df ResourceRunner[88940:2e910f9] [com.apple.iconservices:default] Could not get resource properties for URL: <private> with error: Error Domain=NSCocoaErrorDomain Code=260 UserInfo={NSURL=<private>, NSFilePath=<private>, NSUnderlyingError=0x81c14c330 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}
+2026-10-03 09:55:37.972 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCopySnapshot
+2026-10-03 09:55:37.972 A  ResourceRunner[88940:2e910f9] (SharedFileList) #SFLAPI LSSharedFileListCopySnapshot
+2026-10-03 09:55:37.972 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.972 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item BB89BB09-AAFB-42BE-B603-99EF983FB9FE, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item E588EBC3-9D85-46A7-B384-AD5CBBBF166A, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 3C7CB0A3-50ED-41A8-83BB-AAB8B2EB0EC2, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item CBD3986E-863F-496E-9BEC-33D7984E0CE9, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item EA4ED2CD-597A-43D5-9E81-4F7D642DFD88, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 93B95DD4-D1CE-46F7-8096-E653E3671261, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 6F71CBBD-61F4-426D-B6BC-EED1183D8DC9, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 8A6488F7-1B7F-494D-89C7-49B4BC756994, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:default] Failed to resolve item 8A6488F7-1B7F-494D-89C7-49B4BC756994 for list com.apple.LSSharedFileList.RecentApplications: Error Domain=NSCocoaErrorDomain Code=4 "The file doesn’t exist."
+2026-10-03 09:55:37.974 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item E75B55B0-3CDB-4085-961A-A67680CAEADC, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:default] Failed to resolve item E75B55B0-3CDB-4085-961A-A67680CAEADC for list com.apple.LSSharedFileList.RecentApplications: Error Domain=NSCocoaErrorDomain Code=4 "The file doesn’t exist."
+2026-10-03 09:55:37.974 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:37.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item BE3AD134-5FEB-47D1-8D69-EEA1D75CAF22, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:37.978 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskCard positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81cb8e040> {value = x:994.000000 y:525.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81cb8de90> {value = w:248.000000 h:101.000000 type = kAXValueCGSizeType}) label=Optional(Disk 카드, 정상 측정, 현재 Read 39.0 KB/s, Write 1.7 MB/s, 보조 정보 확인됨, 저장 공간 전체 926.4 GB, 사용 가능 770.0 GB, 사용 중은 전체에서 사용 가능을 뺀 값, APFS 공유 공간이며 볼륨별 독점 사용량이 아님, Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 0–47.7 MB/s, 현재 측정, 수집 공백은 이어 그리지 않음, 단축키 ⌘4)
+2026-10-03 09:55:37.981 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskDetail positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81cc0e130> {value = x:1255.000000 y:336.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81cc0efd0> {value = w:400.000000 h:480.000000 type = kAXValueCGSizeType}) label=nil
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskDetailClose positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1592.500000 y:352.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:46.500000 h:24.000000 type = kAXValueCGSizeType}) label=Optional(닫기)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskSummary positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:392.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:366.000000 h:136.000000 type = kAXValueCGSizeType}) label=Optional(활동 현재 측정, 원본 조회 0초 전, 저장 공간 별도 느린 주기, 용량 확인, 원본 조회 5초 전, 시스템 / 전체 926.4 GB · 사용 가능 770.0 GB, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다., 외장 장치 없음)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:014195D8-3AD2-4FCA-95B8-003D6B035744|bsd:disk3s4 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:573.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/Update · apfs · 물리 관계 확인, 전체 926.4 GB · 사용 중 156.4 GB · 사용 가능 770.0 GB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:20B41E1C-D986-41FC-AD07-45310C5C5602|bsd:disk1s3 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:719.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/Hardware · apfs · 물리 관계 확인, 전체 500.0 MB · 사용 중 19.5 MB · 사용 가능 480.5 MB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:26B365C6-DB25-4724-8D17-97F0D3C66BDD|bsd:disk1s2 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:865.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/xarts · apfs · 물리 관계 확인, 전체 500.0 MB · 사용 중 19.5 MB · 사용 가능 480.5 MB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:35BF6621-4432-4BAB-8FB9-CFF64F541642|bsd:disk3s6 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:1011.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/VM · apfs · 물리 관계 확인, 전체 926.4 GB · 사용 중 156.4 GB · 사용 가능 770.0 GB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:AA691CE3-6E00-4A77-AF05-080A9B0938B8|bsd:disk1s1 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:1157.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/iSCPreboot · apfs · 물리 관계 확인, 전체 500.0 MB · 사용 중 19.5 MB · 사용 가능 480.5 MB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:AD49F559-0654-4217-AEBC-1C9AA77F5E29|bsd:disk3s2 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:1303.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/Preboot · apfs · 물리 관계 확인, 전체 926.4 GB · 사용 중 156.4 GB · 사용 가능 770.0 GB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.982 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:F8964231-DC64-47CF-9322-32B3B00CDC3F|bsd:disk3s1s1 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:1449.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/ · apfs · 물리 관계 확인, 전체 926.4 GB · 사용 중 156.4 GB · 사용 가능 770.0 GB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.983 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskVolume-uuid:F8964231-DC64-47CF-9322-32B3B00CDC3F|bsd:disk3s5 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:1595.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:130.000000 type = kAXValueCGSizeType}) label=Optional(/System/Volumes/Data · apfs · 물리 관계 확인, 전체 926.4 GB · 사용 중 156.4 GB · 사용 가능 770.0 GB, 장치 관계: DADiskCopyIOMedia nonzero; ancestor IOBlockStorageDriver IDs=[4294969732]; virtual IDs=[], APFS 공유 공간 · 볼륨별 독점 사용량 아님, 사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다.)
+2026-10-03 09:55:37.983 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskDevice-4294969732 positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81bc00120> {value = x:1271.000000 y:1770.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81bc00150> {value = w:368.000000 h:116.000000 type = kAXValueCGSizeType}) label=Optional(disk0 · 물리 드라이버 ID 4294969732, 내장 장치 · 마운트됨, 현재 Read 39.0 KB/s · Write 1.7 MB/s · 원본 조회 0초 전, 드라이버 원시 누적 Read 1,107,312,316,416 B · Write 6,032,803,528,704 B, 드라이버 IOPS Read 5.5 회/s · Write 156.7 회/s · 앱 요청 수 아님)
+2026-10-03 09:55:37.983 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] Disk AX traversal visited=203
+2026-10-03 09:55:37.994 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] snapshot path=/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner/Data/Library/Caches/Task011Probe/actual-disk-dashboard.png pixels=560x1202
+2026-10-03 09:55:38.015 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] snapshot path=/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner/Data/Library/Caches/Task011Probe/actual-disk-detail-top.png pixels=852x1012
+2026-10-03 09:55:38.015 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] detailScroll documentFrame=Optional((0.0, 0.0, 413.0, 1566.0))
+2026-10-03 09:55:38.303 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] snapshot path=/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner/Data/Library/Caches/Task011Probe/actual-disk-detail-devices.png pixels=852x1012
+2026-10-03 09:55:38.309 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] close AXPress result=0
+2026-10-03 09:55:38.374 A  ResourceRunner[88940:2e91123] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:38.374 A  ResourceRunner[88940:2e91123] (CoreSpotlight) index-items
+2026-10-03 09:55:38.374 Df ResourceRunner[88940:2e91123] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:38.543 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=22.885196 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:38.548 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=3 capacity=601
+2026-10-03 09:55:38.548 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=2 collectionEpoch=0 appendedTotal=4
+2026-10-03 09:55:38.548 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=2 collectionEpoch=0 appendedTotal=4
+2026-10-03 09:55:38.548 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=2 collectionEpoch=0 appendedTotal=4
+2026-10-03 09:55:38.559 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:38.559 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:38.566 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=ProcessSurveySampleSource generation=2 collectionEpoch=0 appendedTotal=1
+2026-10-03 09:55:38.586 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=processSurvey epoch=0 failed=false
+2026-10-03 09:55:39.372 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] closedSelection=none bodyFrame=Optional((965.0, 462.0, 306.0, 627.0))
+2026-10-03 09:55:39.545 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=4 capacity=601
+2026-10-03 09:55:39.545 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=2 collectionEpoch=0 appendedTotal=5
+2026-10-03 09:55:39.551 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=17.385057 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:39.551 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=2 collectionEpoch=0 appendedTotal=5
+2026-10-03 09:55:39.552 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=2 collectionEpoch=0 appendedTotal=5
+2026-10-03 09:55:39.554 Df ResourceRunner[88940:2e910f9] [com.apple.xpc:connection] [0x81e44dcc0] activating connection: mach=true listener=false peer=false name=com.apple.coreservices.quarantine-resolver
+2026-10-03 09:55:39.566 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:39.566 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:39.634 A  ResourceRunner[88940:2e91118] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:39.634 A  ResourceRunner[88940:2e91118] (CoreSpotlight) index-items
+2026-10-03 09:55:39.634 Df ResourceRunner[88940:2e91118] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:39.906 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] reselected=disk windows=3
+2026-10-03 09:55:39.989 A  ResourceRunner[88940:2e91118] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:39.989 A  ResourceRunner[88940:2e91118] (CoreSpotlight) index-items
+2026-10-03 09:55:39.989 Df ResourceRunner[88940:2e91118] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:40.577 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=5 capacity=601
+2026-10-03 09:55:40.577 Df ResourceRunner[88940:2e91123] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=2 collectionEpoch=0 appendedTotal=6
+2026-10-03 09:55:40.581 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=17.512161 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:40.581 Df ResourceRunner[88940:2e91123] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=2 collectionEpoch=0 appendedTotal=6
+2026-10-03 09:55:40.582 Df ResourceRunner[88940:2e91112] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=2 collectionEpoch=0 appendedTotal=6
+2026-10-03 09:55:40.586 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=ProcessSurveySampleSource generation=2 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:40.586 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:40.586 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:40.606 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=processSurvey epoch=0 failed=false
+2026-10-03 09:55:40.966 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] sameCardClosed=none windows=3
+2026-10-03 09:55:40.971 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.971 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item BB89BB09-AAFB-42BE-B603-99EF983FB9FE, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.972 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.972 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.972 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item E588EBC3-9D85-46A7-B384-AD5CBBBF166A, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.972 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.972 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.972 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 3C7CB0A3-50ED-41A8-83BB-AAB8B2EB0EC2, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item CBD3986E-863F-496E-9BEC-33D7984E0CE9, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item EA4ED2CD-597A-43D5-9E81-4F7D642DFD88, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.973 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.973 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 93B95DD4-D1CE-46F7-8096-E653E3671261, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.974 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 6F71CBBD-61F4-426D-B6BC-EED1183D8DC9, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.974 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.974 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item 8A6488F7-1B7F-494D-89C7-49B4BC756994, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.975 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:default] Failed to resolve item 8A6488F7-1B7F-494D-89C7-49B4BC756994 for list com.apple.LSSharedFileList.RecentApplications: Error Domain=NSCocoaErrorDomain Code=4 "The file doesn’t exist."
+2026-10-03 09:55:40.975 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.975 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item E75B55B0-3CDB-4085-961A-A67680CAEADC, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.976 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:default] Failed to resolve item E75B55B0-3CDB-4085-961A-A67680CAEADC for list com.apple.LSSharedFileList.RecentApplications: Error Domain=NSCocoaErrorDomain Code=4 "The file doesn’t exist."
+2026-10-03 09:55:40.976 A  ResourceRunner[88940:2e910f9] (SharedFileList) GenericList.resolveItemWithIdentifier
+2026-10-03 09:55:40.976 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] Resolve item BE3AD134-5FEB-47D1-8D69-EEA1D75CAF22, options: 768, list: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.976 Df ResourceRunner[88940:2e910f9] [com.apple.sharedfilelist:XPC] received: com.apple.LSSharedFileList.RecentApplications
+2026-10-03 09:55:40.996 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] AX id=DiskCard positionResult=0 sizeResult=0 position=Optional(<AXValue 0x81c3bd7d0> {value = x:994.000000 y:525.000000 type = kAXValueCGPointType}) size=Optional(<AXValue 0x81c3bcd20> {value = w:248.000000 h:101.000000 type = kAXValueCGSizeType}) label=Optional(Disk 카드, 정상 측정, 현재 Read 0.0 B/s, Write 15.7 MB/s, 보조 정보 확인됨, 저장 공간 전체 926.4 GB, 사용 가능 770.0 GB, 사용 중은 전체에서 사용 가능을 뺀 값, APFS 공유 공간이며 볼륨별 독점 사용량이 아님, Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 0–47.7 MB/s, 현재 측정, 수집 공백은 이어 그리지 않음, 단축키 ⌘4)
+2026-10-03 09:55:40.997 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:DiskUIProbe] Disk AX traversal visited=180
+2026-10-03 09:55:41.000 Df ResourceRunner[88940:2e91112] [com.apple.xpc:connection] [0x81e44c140] invalidated because the current process cancelled the connection by calling xpc_connection_cancel()
+2026-10-03 09:55:41.000 Df ResourceRunner[88940:2e91112] [com.apple.xpc:session] [0x81caed860] Session canceled.
+2026-10-03 09:55:41.000 Df ResourceRunner[88940:2e91123] [com.apple.UIIntelligenceSupport:xpc] agent connection cancelled (details: Session manually canceled)
+2026-10-03 09:55:41.000 Df ResourceRunner[88940:2e91123] [com.apple.xpc:session] [0x81caed860] Disposing of session
+2026-10-03 09:55:41.024 A  ResourceRunner[88940:2e910f9] (CoreFoundation) Loading Preferences From User CFPrefsD
+2026-10-03 09:55:41.078 A  ResourceRunner[88940:2e91123] (CoreSpotlight) end-index-batch
+2026-10-03 09:55:41.079 A  ResourceRunner[88940:2e91123] (CoreSpotlight) index-items
+2026-10-03 09:55:41.079 Df ResourceRunner[88940:2e91123] [com.apple.corespotlight:index] CSInlineDonation:<private>: Skipping donation (feature flag disabled)
+2026-10-03 09:55:41.540 Df ResourceRunner[88940:2e91123] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=networkMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-03 09:55:41.540 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=3 collectionEpoch=0 appendedTotal=6
+2026-10-03 09:55:41.540 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=3 collectionEpoch=0 appendedTotal=6
+2026-10-03 09:55:41.540 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=3 collectionEpoch=0 appendedTotal=6
+2026-10-03 09:55:41.540 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=3 collectionEpoch=0 appendedTotal=2
+2026-10-03 09:55:41.540 Df ResourceRunner[88940:2e91123] [com.zipkero.ResourceRunner:AuxiliaryScheduler] apply axis=storageMetadata schedule=running(60.0 seconds) epoch=0
+2026-10-03 09:55:41.541 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkMetadata epoch=0 result=available revision=26 records=26
+2026-10-03 09:55:41.546 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=storageMetadata epoch=0 result=available revision=1 devices=1
+2026-10-03 09:55:42.078 Df ResourceRunner[88940:2e910f9] [com.apple.AppKit:AutomaticTermination] void _updateToReflectAutomaticTerminationState(void) Setting _kLSApplicationWouldBeTerminatedByTALKey=1
+2026-10-03 09:55:42.126 Df ResourceRunner[88940:2e91118] [com.apple.launchservices:default] LSExceptions shared instance invalidated for timeout.
+2026-10-03 09:55:43.585 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=6 capacity=601
+2026-10-03 09:55:43.585 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=7
+2026-10-03 09:55:43.591 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=16.809933 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:43.592 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=7
+2026-10-03 09:55:43.592 Df ResourceRunner[88940:2e91123] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=7
+2026-10-03 09:55:43.611 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:43.611 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:45.563 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=7 capacity=601
+2026-10-03 09:55:45.563 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=8
+2026-10-03 09:55:45.568 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=15.674891 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:45.568 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=8
+2026-10-03 09:55:45.568 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=8
+2026-10-03 09:55:45.572 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:45.572 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:46.569 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=ProcessSurveySampleSource generation=3 collectionEpoch=0 appendedTotal=3
+2026-10-03 09:55:46.599 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=processSurvey epoch=0 failed=false
+2026-10-03 09:55:47.611 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=8 capacity=601
+2026-10-03 09:55:47.612 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=9
+2026-10-03 09:55:47.623 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=16.836198 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:47.624 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=9
+2026-10-03 09:55:47.624 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=9
+2026-10-03 09:55:47.650 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:47.650 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:49.551 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=9 capacity=601
+2026-10-03 09:55:49.551 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=10
+2026-10-03 09:55:49.559 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=17.055124 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:49.559 Df ResourceRunner[88940:2e91121] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=10
+2026-10-03 09:55:49.560 Df ResourceRunner[88940:2e91118] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=10
+2026-10-03 09:55:49.569 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:49.569 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:51.675 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=10 capacity=601
+2026-10-03 09:55:51.675 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=11
+2026-10-03 09:55:51.682 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=16.875635 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:51.682 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=11
+2026-10-03 09:55:51.682 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=11
+2026-10-03 09:55:51.691 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=ProcessSurveySampleSource generation=3 collectionEpoch=0 appendedTotal=4
+2026-10-03 09:55:51.694 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:51.694 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:51.723 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=processSurvey epoch=0 failed=false
+2026-10-03 09:55:53.664 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=11 capacity=601
+2026-10-03 09:55:53.664 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=12
+2026-10-03 09:55:53.670 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=18.695965 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:53.670 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=12
+2026-10-03 09:55:53.670 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=12
+2026-10-03 09:55:53.688 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:53.688 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:55.603 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=12 capacity=601
+2026-10-03 09:55:55.603 Df ResourceRunner[88940:2e91119] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=13
+2026-10-03 09:55:55.606 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=17.320503 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:55.607 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=13
+2026-10-03 09:55:55.607 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=13
+2026-10-03 09:55:55.615 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:55.615 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")
+2026-10-03 09:55:56.617 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=ProcessSurveySampleSource generation=3 collectionEpoch=0 appendedTotal=5
+2026-10-03 09:55:56.642 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=processSurvey epoch=0 failed=false
+2026-10-03 09:55:57.570 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringSampleStore] history=13 capacity=601
+2026-10-03 09:55:57.570 Df ResourceRunner[88940:2e91122] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=SystemMetricsSampleSource generation=3 collectionEpoch=0 appendedTotal=14
+2026-10-03 09:55:57.578 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CPUActivityState] usage=17.427841 collectionEpoch=0 displayedState=low
+2026-10-03 09:55:57.579 Df ResourceRunner[88940:2e91113] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=DiskActivitySource generation=3 collectionEpoch=0 appendedTotal=14
+2026-10-03 09:55:57.579 Df ResourceRunner[88940:2e91124] [com.zipkero.ResourceRunner:MonitoringScheduler] appended sample axis=NetworkActivitySource generation=3 collectionEpoch=0 appendedTotal=14
+2026-10-03 09:55:57.598 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=diskActivity epoch=0 status=rate
+2026-10-03 09:55:57.598 Df ResourceRunner[88940:2e910f9] [com.zipkero.ResourceRunner:CollectionPipeline] delivered axis=networkActivity epoch=0 status=partial("물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다")

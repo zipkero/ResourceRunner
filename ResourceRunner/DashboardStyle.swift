@@ -62,6 +62,30 @@ enum DashboardStyle {
         )
     }
 
+    /// 요약 카드만 축소하며 상세의 기존 타이포 역할은 그대로 둡니다.
+    enum Summary {
+        static let focus = Typography(
+            font: .system(size: 17.33, weight: .semibold).monospacedDigit(),
+            foregroundColor: .primary,
+            pointSize: 17.33,
+            weight: .semibold,
+            foregroundRole: .primary
+        )
+        static let rankingValue = Typography(
+            font: .system(size: 10).monospacedDigit(), foregroundColor: .primary,
+            pointSize: 10, weight: .regular, foregroundRole: .primary
+        )
+        static let rankingLabel = Typography(
+            font: .system(size: 10), foregroundColor: .secondary,
+            pointSize: 10, weight: .regular, foregroundRole: .secondary
+        )
+        nonisolated static let sectionSpacing: CGFloat = 4
+        nonisolated static let cardSpacing: CGFloat = 6
+        nonisolated static let bodyPadding: CGFloat = 8
+        nonisolated static let cardPadding: CGFloat = 5
+        nonisolated static let cpuPlotHeight: CGFloat = 66.67
+    }
+
     /// 2 / 4 / 8 / 16pt 배수 단계. 이름은 각 단계가 맡는 위계를 나타냅니다.
     enum Spacing {
         nonisolated static let withinGroup: CGFloat = 2

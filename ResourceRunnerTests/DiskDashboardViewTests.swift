@@ -36,13 +36,14 @@ struct DiskDashboardViewTests {
                       capacity: DiskCapacityPresentation? = nil,
                       externalAbsent: Bool? = true,
                       capacityIsLastKnown: Bool = false,
-                      devices: [DiskDevicePresentation]? = nil) -> DiskCardPresentation {
+                      devices: [DiskDevicePresentation]? = nil,
+                      history: [RateHistoryPoint] = []) -> DiskCardPresentation {
         let storage = capacity ?? DiskCapacityPresentation(identity: "/", totalBytes: 1 << 40,
             availableBytes: 1 << 39, usedBytes: 1 << 39, sharedCapacity: true,
             relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))
         return DiskCardPresentation(phase: phase, currentRate: current,
             currentRateIsPartial: partial, latestReadAt: now.advanced(by: .seconds(-2)),
-            lastKnownRate: lastKnown, topologyRevision: 1, recentHistory: [],
+            lastKnownRate: lastKnown, topologyRevision: 1, recentHistory: history,
             firstHistoryPointAt: nil, devices: devices ?? [device()],
             supplemental: StorageSupplementalPresentation(phase: auxiliary,
                 readAt: now.advanced(by: .seconds(-30)), capacity: storage,
@@ -56,11 +57,23 @@ struct DiskDashboardViewTests {
             relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))
     }
 
+    private func measuredHistory() -> [RateHistoryPoint] {
+        (0...60).map { index in
+            let read: Double = index == 20 ? 4_000 : Double(500 + index * 10)
+            let write: Double = index == 45 ? 3_000 : Double(900 - index * 5)
+            let rate = RatePair(receivedBytesPerSecond: read, sentBytesPerSecond: write)!
+            return RateHistoryPoint(timestamp: now.advanced(by: .seconds(-300 + index * 5)),
+                rate: rate,
+                collectionEpoch: 1, rateSegment: 1)
+        }
+    }
+
     private func render(_ presentation: DiskCardPresentation, appearance name: NSAppearance.Name,
-                        label: String, locale: Locale = .current) throws {
+                        label: String, locale: Locale = .current,
+                        width: CGFloat = 248) throws {
         let appearance = try #require(NSAppearance(named: name))
         let view = DiskCardView(presentation: presentation, fixedNow: now)
-            .frame(width: 248)
+            .frame(width: width)
             .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
             .environment(\.locale, locale)
         var bitmap: NSBitmapImageRep?
@@ -70,23 +83,25 @@ struct DiskDashboardViewTests {
             bitmap = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
         }
         let image = try #require(bitmap)
-        #expect(image.pixelsWide == 248)
-        #expect(image.pixelsHigh == 294)
+        #expect(image.pixelsWide == Int(width))
+        #expect(image.pixelsHigh == Int(DiskCardLayout.total))
         Attachment.record(try #require(image.representation(using: .png, properties: [:])),
-            named: "disk-card-\(label)-\(name == .darkAqua ? "dark" : "light").png")
+            named: "disk-card-\(Int(width))-\(label)-\(name == .darkAqua ? "dark" : "light").png")
     }
 
     @Test func fixedSlotsAndStatesKeepRateAndCapacityIndependent() throws {
-        #expect(DiskCardLayout.total == 294)
-        #expect(DiskCardLayout.title == 12)
-        #expect(DiskCardLayout.rates == 68)
-        #expect(DiskCardLayout.auxiliary == 32)
-        #expect(DiskCardLayout.graph == 118)
+        #expect(DiskCardLayout.total == 112)
+        #expect(DiskCardLayout.title == 14)
+        #expect(DiskCardLayout.ratesAndGraph == 54)
+        #expect(DiskCardLayout.miniPlot == 42)
+        #expect(DiskCardLayout.auxiliary == 28)
         let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 4_096,
             sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
         let fixtures: [(String, DiskCardPresentation)] = [
             ("initial", .collecting),
-            ("normal", card()),
+            ("normal", card(history: measuredHistory())),
+            ("native-units", card(current: RatePair(receivedBytesPerSecond: 1.8 * 1_048_576,
+                sentBytesPerSecond: 9.0 * 1_048_576), history: measuredHistory())),
             ("partial", card(.partial("driver bytes missing"), partial: true)),
             ("activity-failure", card(.failure("driver unavailable"), current: nil, lastKnown: past)),
             ("stopped", card(.stopped, current: nil, lastKnown: past)),
@@ -97,14 +112,25 @@ struct DiskDashboardViewTests {
                 sentBytesPerSecond: 1_073_741_824),
                 capacity: DiskCapacityPresentation(identity: "/", totalBytes: UInt64.max,
                     availableBytes: UInt64.max - 1, usedBytes: 1, sharedCapacity: true,
-                    relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))))
+                    relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30))))),
+            ("max-rate", card(current: RatePair(receivedBytesPerSecond: Double(UInt64.max),
+                sentBytesPerSecond: Double(UInt64.max))))
         ]
         for (label, fixture) in fixtures {
             for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
-                try render(fixture, appearance: appearance, label: label)
+                for width: CGFloat in [248, 264] {
+                    try render(fixture, appearance: appearance, label: label, width: width)
+                }
             }
         }
         try render(card(), appearance: .aqua, label: "german-locale", locale: Locale(identifier: "de_DE"))
+        let graphAX = DiskDisplayText.miniGraphAccessibility(presentation: card(history: measuredHistory()),
+            now: now, locale: Locale(identifier: "de_DE"))
+        #expect(graphAX.contains("최근 10분"))
+        #expect(graphAX.contains("Read 점선, Write 실선"))
+        #expect(graphAX.contains("0–4,9 KB/s"))
+        #expect(DiskDisplayText.miniGraphAccessibility(presentation: card(), now: now)
+            .contains("속도 범위 대기"))
         #expect(DiskDisplayText.compactCapacity(card().supplemental, now: now) == "용량 확인 · 30초 전")
         let failedCapacity = card(auxiliary: .failure("volume unavailable"), capacityIsLastKnown: true)
         #expect(failedCapacity.currentRate != nil)
@@ -171,8 +197,15 @@ struct DiskDashboardViewTests {
                 #expect(!compact.contains("…"))
                 let width = (compact as NSString).size(withAttributes: [.font: font]).width
                 #expect(width < 232, "\(localeID) \(name): \(compact) width=\(width)")
-                try render(card(capacity: value), appearance: .aqua,
-                    label: "capacity-\(localeID)-\(name)", locale: locale)
+                for width: CGFloat in [248, 264] {
+                    try render(card(capacity: value), appearance: .aqua,
+                        label: "capacity-\(localeID)-\(name)", locale: locale, width: width)
+                }
+            }
+            for width: CGFloat in [248, 264] {
+                try render(card(current: RatePair(receivedBytesPerSecond: Double(UInt64.max),
+                    sentBytesPerSecond: Double(UInt64.max)), history: measuredHistory()),
+                    appearance: .aqua, label: "max-rate-\(localeID)", locale: locale, width: width)
             }
         }
         let english = Locale(identifier: "en_US")

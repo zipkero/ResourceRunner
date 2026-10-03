@@ -20,6 +20,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         coordinator = ApplicationCoordinator()
 #if DEBUG
+        if ProcessInfo.processInfo.environment["RR_INTEGRATED_UI_PROBE"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self, let coordinator = self.coordinator else { return }
+                let logger = Logger(subsystem: "com.zipkero.ResourceRunner", category: "IntegratedUIProbe")
+                let status = coordinator.statusBarController
+                let store = coordinator.dashboardPresentationStore
+                let screen = status.statusItem.button?.window?.screen ?? NSScreen.main
+                logger.notice("screen visibleFrame=\(String(describing: screen?.visibleFrame), privacy: .public) frame=\(String(describing: screen?.frame), privacy: .public) scale=\(screen?.backingScaleFactor ?? 0)")
+                logger.notice("launch cpuState=\(String(describing: store.cpuCard), privacy: .public) memoryState=\(String(describing: store.memoryCard), privacy: .public)")
+                try? await Task.sleep(for: .seconds(4))
+                status.togglePopover()
+                try? await Task.sleep(for: .seconds(1))
+                logger.notice("opened selection=\(String(describing: store.selection), privacy: .public) cpuState=\(String(describing: store.cpuCard), privacy: .public) memoryState=\(String(describing: store.memoryCard), privacy: .public)")
+                Self.logIntegratedAccessibility(logger: logger)
+                guard let body = status.popover.contentViewController?.view,
+                      let parent = body.window else { logger.error("body window missing"); return }
+                let hasBodyScroll = Self.firstScrollView(in: body) != nil
+                logger.notice("body frame=\(String(describing: parent.frame), privacy: .public) contentFrame=\(String(describing: body.frame), privacy: .public) bodyScroll=\(hasBodyScroll)")
+                Self.logIntegratedAccessibility(logger: logger)
+                guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+                let output = caches.appending(path: "Task011ReadableIntegrated")
+                try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+                Self.writeProbeImage(window: parent, path: output.appending(path: "actual-all-cards.png").path, logger: logger)
+
+                for selection in [DashboardSelection.memory, .disk] {
+                    store.selectCard(selection)
+                    try? await Task.sleep(for: .milliseconds(450))
+                    let detail = NSApp.windows.first { $0 !== parent && $0.isVisible && $0.frame.width >= 350 }
+                    logger.notice("detail selection=\(String(describing: selection), privacy: .public) frame=\(String(describing: detail?.frame), privacy: .public) bodyFrame=\(String(describing: parent.frame), privacy: .public)")
+                    Self.logIntegratedAccessibility(logger: logger)
+                    if let detail {
+                        Self.writeProbeImage(window: detail, path: output.appending(path: "actual-\(selection)-detail.png").path, logger: logger)
+                    }
+                    if selection == .disk, let close = Self.findNetworkAX("DiskDetailClose") {
+                        let result = AXUIElementPerformAction(close, kAXPressAction as CFString)
+                        logger.notice("Disk AXPress close result=\(result.rawValue)")
+                    } else {
+                        store.selectCard(selection)
+                    }
+                    try? await Task.sleep(for: .milliseconds(300))
+                    logger.notice("closed selection=\(String(describing: store.selection), privacy: .public) bodyFrame=\(String(describing: parent.frame), privacy: .public)")
+                }
+                status.togglePopover()
+            }
+        }
         if ProcessInfo.processInfo.environment["RR_NETWORK_UI_PROBE"] == "1" {
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -110,7 +155,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if let hosting = status.popover.contentViewController?.view,
                    let scroll = Self.firstScrollView(in: hosting) {
                     logger.notice("scrollBefore contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public) documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
-                    scroll.contentView.scroll(to: NSPoint(x: 0, y: 900))
+                    let lastOrigin = max(0, (scroll.documentView?.frame.height ?? 0) -
+                        scroll.contentView.bounds.height)
+                    scroll.contentView.scroll(to: NSPoint(x: 0, y: lastOrigin))
                     scroll.reflectScrolledClipView(scroll.contentView)
                     try? await Task.sleep(for: .milliseconds(300))
                     logger.notice("scrollAfter contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public)")
@@ -270,6 +317,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
 #if DEBUG
+    /// 실제 팝오버의 네 카드 위치와 접근성 이름을 함께 남겨 본체 무스크롤 배치를 확인합니다.
+    @MainActor private static func logIntegratedAccessibility(logger: Logger) {
+        let root = AXUIElementCreateApplication(getpid())
+        let wanted: Set<String> = ["DashboardContainer", "CPUCard", "MemoryCard", "NetworkCard", "DiskCard", "DashboardDetail", "DiskDetailClose"]
+        var visited = 0
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 16, visited < 1500 else { return }
+            visited += 1
+            var identifier: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXIdentifierAttribute as CFString, &identifier) == .success,
+               let name = identifier as? String, wanted.contains(name) {
+                var position: CFTypeRef?
+                var size: CFTypeRef?
+                var label: CFTypeRef?
+                let positionResult = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position)
+                let sizeResult = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
+                _ = AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &label)
+                logger.notice("AX id=\(name, privacy: .public) positionResult=\(positionResult.rawValue) sizeResult=\(sizeResult.rawValue) position=\(String(describing: position), privacy: .public) size=\(String(describing: size), privacy: .public) label=\(String(describing: label), privacy: .public)")
+            }
+            var value: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+                  let children = value as? [AXUIElement] else { return }
+            for child in children { walk(child, depth: depth + 1) }
+        }
+        walk(root, depth: 0)
+        logger.notice("integrated AX traversal visited=\(visited)")
+    }
+
     @MainActor private static func writeProbeImage(window: NSWindow, path: String, logger: Logger) {
         guard let view = window.contentView,
               let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else {

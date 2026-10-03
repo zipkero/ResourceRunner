@@ -1,0 +1,127 @@
+{
+  "disk-card-248-capacity-gez_ER-max-same-unit-light": {
+    "file": "disk-card-248-capacity-gez_ER-max-same-unit-light.png",
+    "source": "75BF7F30-CBB1-4657-B9D6-79A35164A70D.png",
+    "test": "DiskDashboardViewTests/fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales()"
+  },
+  "disk-card-248-max-rate-gez_ER-light": {
+    "file": "disk-card-248-max-rate-gez_ER-light.png",
+    "source": "50C6F86A-0E09-4701-BEBA-9C343DBC77FB.png",
+    "test": "DiskDashboardViewTests/fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales()"
+  },
+  "disk-card-248-native-units-light": {
+    "file": "disk-card-248-native-units-light.png",
+    "source": "F5ED9370-4A86-4FF6-A317-0B8949C92313.png",
+    "test": "DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()"
+  },
+  "disk-card-248-normal-light": {
+    "file": "disk-card-248-normal-light.png",
+    "source": "D8C3AC02-9B80-47D2-AF0D-D9302F14F176.png",
+    "test": "DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()"
+  },
+  "disk-card-248-stopped-light": {
+    "file": "disk-card-248-stopped-light.png",
+    "source": "D87A44BB-B5CB-462B-B8A5-1BE65D37BFB4.png",
+    "test": "DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()"
+  },
+  "disk-card-264-capacity-failure-dark": {
+    "file": "disk-card-264-capacity-failure-dark.png",
+    "source": "891095FF-BBB3-4B6F-A4ED-68AAE1F9A76A.png",
+    "test": "DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()"
+  },
+  "disk-card-264-capacity-my_MM-max-same-unit-light": {
+    "file": "disk-card-264-capacity-my_MM-max-same-unit-light.png",
+    "source": "1DA84932-1E21-4F91-AA7B-C98E777A3A42.png",
+    "test": "DiskDashboardViewTests/fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales()"
+  },
+  "disk-card-264-max-rate-en_US-light": {
+    "file": "disk-card-264-max-rate-en_US-light.png",
+    "source": "0141D5E7-51ED-40B1-8469-8756C8884E3E.png",
+    "test": "DiskDashboardViewTests/fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales()"
+  },
+  "disk-card-264-normal-dark": {
+    "file": "disk-card-264-normal-dark.png",
+    "source": "A495D514-941F-40AD-8DFB-4173B86BF660.png",
+    "test": "DiskDashboardViewTests/fixedSlotsAndStatesKeepRateAndCapacityIndependent()"
+  },
+  "disk-mini-actual-zero-100-dark": {
+    "file": "disk-mini-actual-zero-100-dark.png",
+    "source": "7EC2BA2E-74FC-444A-923D-DB1D5247E9CC.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-actual-zero-100-light": {
+    "file": "disk-mini-actual-zero-100-light.png",
+    "source": "0CD97F73-E791-4A11-9E46-7EB10578CB29.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-connected-gap-100-dark": {
+    "file": "disk-mini-connected-gap-100-dark.png",
+    "source": "0539E1B0-61E8-4379-B2C9-8B9AED243179.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-connected-gap-100-light": {
+    "file": "disk-mini-connected-gap-100-light.png",
+    "source": "FD8C39E4-497D-4565-AF5C-1D18082BCC9C.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-connected-gap-58-dark": {
+    "file": "disk-mini-connected-gap-58-dark.png",
+    "source": "7024F490-962A-4242-8EE0-C055EE4244F6.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-connected-gap-58-light": {
+    "file": "disk-mini-connected-gap-58-light.png",
+    "source": "D7ED3E24-9589-4B4C-97D1-2D690E65FC16.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-empty-100-dark": {
+    "file": "disk-mini-empty-100-dark.png",
+    "source": "F8A508A3-E5F7-4F08-9C99-E635B70961AF.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-empty-100-light": {
+    "file": "disk-mini-empty-100-light.png",
+    "source": "E0CF6AF2-D080-4302-BD1F-75B2F0CFF328.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-empty-58-dark": {
+    "file": "disk-mini-empty-58-dark.png",
+    "source": "8CCCC591-71D1-456C-B911-64833B841909.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-empty-58-light": {
+    "file": "disk-mini-empty-58-light.png",
+    "source": "5EA5B75F-4DC4-4C15-8E9C-4A9AAD07B465.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap()"
+  },
+  "disk-mini-no-history-100-dark": {
+    "file": "disk-mini-no-history-100-dark.png",
+    "source": "2897A3EC-FEE1-487B-93C3-6BF7B7E01DB8.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-no-history-100-light": {
+    "file": "disk-mini-no-history-100-light.png",
+    "source": "868AAF83-C27D-454E-96BA-6BC079399E16.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-overlap-100-dark": {
+    "file": "disk-mini-overlap-100-dark.png",
+    "source": "CD668DF0-3ACA-476C-90C0-6258DF022649.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-overlap-100-light": {
+    "file": "disk-mini-overlap-100-light.png",
+    "source": "CAC28629-1B6B-468D-828A-6EB5D4BA307A.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-single-point-100-dark": {
+    "file": "disk-mini-single-point-100-dark.png",
+    "source": "9D282FA1-8778-49D2-A13B-6B91967C0FCE.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  },
+  "disk-mini-single-point-100-light": {
+    "file": "disk-mini-single-point-100-light.png",
+    "source": "53A9953B-BF9E-4C4F-A621-7C6088DE5B11.png",
+    "test": "ResourceRateGraphRenderingTests/smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory()"
+  }
+}

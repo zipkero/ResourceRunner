@@ -1,0 +1,594 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 20630bf..7a08f36 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -110,7 +110,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+                 if let hosting = status.popover.contentViewController?.view,
+                    let scroll = Self.firstScrollView(in: hosting) {
+                     logger.notice("scrollBefore contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public) documentFrame=\(String(describing: scroll.documentView?.frame), privacy: .public)")
+-                    scroll.contentView.scroll(to: NSPoint(x: 0, y: 900))
++                    let lastOrigin = max(0, (scroll.documentView?.frame.height ?? 0) -
++                        scroll.contentView.bounds.height)
++                    scroll.contentView.scroll(to: NSPoint(x: 0, y: lastOrigin))
+                     scroll.reflectScrolledClipView(scroll.contentView)
+                     try? await Task.sleep(for: .milliseconds(300))
+                     logger.notice("scrollAfter contentBounds=\(String(describing: scroll.contentView.bounds), privacy: .public)")
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index 474a629..ba0d598 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -78,7 +78,9 @@ struct DashboardView: View {
+             .buttonStyle(.plain)
+             .keyboardShortcut("4", modifiers: .command)
+             .accessibilityElement(children: .ignore)
+-            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", 단축키 ⌘4")
++            .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
++                DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,
++                    now: ContinuousClock().now, locale: locale) + ", 단축키 ⌘4")
+             .accessibilityAddTraits(.isButton)
+             .accessibilityIdentifier("DiskCard")
+             .popover(isPresented: diskDetailIsPresented, arrowEdge: .trailing) {
+diff --git a/ResourceRunner/DiskDashboardView.swift b/ResourceRunner/DiskDashboardView.swift
+index 0e6f348..5e9e4b0 100644
+--- a/ResourceRunner/DiskDashboardView.swift
++++ b/ResourceRunner/DiskDashboardView.swift
+@@ -75,6 +75,42 @@ nonisolated enum DiskDisplayText {
+         return "\(state) · \(presentation.isLastKnown ? "과거 " : "")\(age)초 전"
+     }
+ 
++    static func compactSupplemental(_ presentation: StorageSupplementalPresentation) -> String? {
++        let prefix = presentation.isLastKnown ? "과거 " : ""
++        switch presentation.phase {
++        case .available: return presentation.isLastKnown ? "과거 용량" : nil
++        case .collecting: return presentation.capacity == nil ? nil : "용량 갱신 중"
++        case .refreshing: return prefix + "용량 갱신 중"
++        case .partial: return prefix + "용량 일부 실패"
++        case .failure: return prefix + "용량 조회 실패"
++        case .unsupported: return prefix + "용량 미지원"
++        }
++    }
++
++    static func compactCardStatus(_ presentation: DiskCardPresentation,
++                                  now: ContinuousClock.Instant) -> String {
++        let activity = cardStatus(presentation, now: now)
++        guard let supplemental = compactSupplemental(presentation.supplemental) else { return activity }
++        return activity == "현재" ? supplemental : activity + " · " + supplemental
++    }
++
++    static func miniGraphAccessibility(_ graph: ResourceRateGraph,
++                                       phase: ResourceActivityPhase,
++                                       locale: Locale = .current) -> String {
++        let range = graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
++            ?? "속도 범위 대기 · B/s"
++        return "Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 \(range), " +
++            "\(activity(phase)), 수집 공백은 이어 그리지 않음"
++    }
++
++    static func miniGraphAccessibility(presentation: DiskCardPresentation,
++                                       now: ContinuousClock.Instant,
++                                       locale: Locale = .current) -> String {
++        miniGraphAccessibility(ResourceRateGraph.make(history: presentation.recentHistory,
++            firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now),
++            phase: presentation.phase, locale: locale)
++    }
++
+     static func volumeScope(_ scope: DiskVolumeScope) -> String {
+         switch scope {
+         case .physical: "물리 관계 확인"
+@@ -113,14 +149,21 @@ nonisolated enum DiskDisplayText {
+ }
+ 
+ nonisolated enum DiskCardLayout {
+-    // Disk 축소는 task-011에서 진행하므로 현재 승인된 그래프 슬롯을 독립적으로 보존합니다.
+-    static let title: CGFloat = 12
+-    static let rates: CGFloat = 68
+-    static let auxiliary: CGFloat = 32
+-    static let graph: CGFloat = 118
+-    static let spacing: CGFloat = 16
+-    static let padding: CGFloat = 8
+-    static let total: CGFloat = title + rates + auxiliary + graph + spacing * 3 + padding * 2
++    static let title: CGFloat = 8
++    static let ratesAndGraph: CGFloat = 45
++    static let miniPlot: CGFloat = 42
++    static let auxiliary: CGFloat = 28
++    static let spacing: CGFloat = 4
++    static let padding: CGFloat = 6
++    static let total: CGFloat = title + ratesAndGraph + auxiliary + spacing * 2 + padding * 2
++}
++
++private enum DiskCompactTypography {
++    static let heading = Font.system(size: 10 * 2 / 3, weight: .semibold)
++    static let number = Font.system(size: 12, weight: .semibold).monospacedDigit()
++    static let name = Font.system(size: 9)
++    static let unit = Font.system(size: 7)
++    static let capacity = Font.system(size: 9)
+ }
+ 
+ struct DiskCardView: View {
+@@ -133,43 +176,51 @@ struct DiskCardView: View {
+         let graph = ResourceRateGraph.make(history: presentation.recentHistory,
+             firstHistoryPointAt: presentation.firstHistoryPointAt, currentTimestamp: now)
+         return VStack(alignment: .leading, spacing: DiskCardLayout.spacing) {
+-            HStack {
++            HStack(spacing: 3) {
+                 Text("Disk · 물리 합계")
+                 Spacer(minLength: 0)
+-                Text(DiskDisplayText.cardStatus(presentation, now: now)).lineLimit(1)
++                Text(DiskDisplayText.compactCardStatus(presentation, now: now)).lineLimit(1)
++                    .minimumScaleFactor(0.7)
+                 Text("⌘4")
+             }
+-            .dashboardTypography(DashboardStyle.TypographyRole.heading)
++            .font(DiskCompactTypography.heading)
++            .foregroundStyle(.secondary)
+             .frame(height: DiskCardLayout.title)
+ 
+-            VStack(spacing: 4) {
+-                rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
+-                rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
+-            }
+-            .frame(height: DiskCardLayout.rates)
+-
+-            VStack(alignment: .leading, spacing: 4) {
+-                Text(DiskDisplayText.compactCapacitySummary(presentation.supplemental.capacity, locale: locale))
+-                    .lineLimit(1)
+-                    .accessibilityLabel("시스템 / " + DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale) + ". " + DiskDisplayText.usedDefinition)
+-                    .frame(height: 14)
+-                HStack(spacing: 4) {
+-                    Text(DiskDisplayText.compactCapacity(presentation.supplemental, now: now))
+-                        .lineLimit(1)
+-                        .accessibilityLabel("저장 공간 별도 느린 주기, " + DiskDisplayText.supplemental(presentation.supplemental) + ", " + DiskDisplayText.age(presentation.supplemental.readAt, now: now))
+-                    Spacer(minLength: 0)
+-                    Text(graph.upperBound.map { "0–\(ResourceQuantityFormatter.byteRate($0, locale: locale))" }
+-                         ?? "범위 대기 · B/s")
+-                        .lineLimit(1)
++            GeometryReader { geometry in
++                let rateWidth = rateColumnWidth(total: geometry.size.width)
++                HStack(spacing: 8) {
++                    VStack(spacing: 1) {
++                        rateRow(.received, rate: selectedRate?.receivedBytesPerSecond)
++                        rateRow(.sent, rate: selectedRate?.sentBytesPerSecond)
++                    }
++                    .frame(width: rateWidth, height: DiskCardLayout.ratesAndGraph)
++                    ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
++                        firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow,
++                        plotHeight: DiskCardLayout.miniPlot, showsAxis: false)
++                        .frame(maxWidth: .infinity)
++                        .frame(height: DiskCardLayout.miniPlot)
++                        .accessibilityElement(children: .ignore)
++                        .accessibilityLabel(DiskDisplayText.miniGraphAccessibility(graph,
++                            phase: presentation.phase, locale: locale))
++                        .accessibilityIdentifier("DiskMiniGraph")
+                 }
+-                .frame(height: 14)
++                .frame(height: DiskCardLayout.ratesAndGraph)
+             }
+-            .dashboardTypography(DashboardStyle.TypographyRole.label)
+-            .frame(height: DiskCardLayout.auxiliary)
++            .frame(height: DiskCardLayout.ratesAndGraph)
+ 
+-            ResourceRateGraphSlotView(kind: .disk, history: presentation.recentHistory,
+-                firstHistoryPointAt: presentation.firstHistoryPointAt, fixedNow: fixedNow)
+-                .frame(height: DiskCardLayout.graph)
++            Text(DiskDisplayText.compactCapacitySummary(presentation.supplemental.capacity,
++                locale: locale))
++                .font(DiskCompactTypography.capacity)
++                .foregroundStyle(.secondary)
++                .lineLimit(2)
++                .minimumScaleFactor(0.75)
++                .frame(maxWidth: .infinity, alignment: .leading)
++                .accessibilityLabel("시스템 / " + DiskDisplayText.capacitySummary(
++                    presentation.supplemental.capacity, locale: locale) + ". " +
++                    DiskDisplayText.supplemental(presentation.supplemental) + ". " +
++                    DiskDisplayText.usedDefinition)
++            .frame(height: DiskCardLayout.auxiliary)
+         }
+         .padding(DiskCardLayout.padding)
+         .frame(maxWidth: .infinity, alignment: .leading)
+@@ -182,25 +233,60 @@ struct DiskCardView: View {
+     private var selectedRate: RatePair? { presentation.currentRate ?? presentation.lastKnownRate?.rate }
+     private var isPast: Bool { presentation.currentRate == nil && presentation.lastKnownRate != nil }
+ 
++    private func rateColumnWidth(total: CGFloat) -> CGFloat {
++        let largest = max(selectedRate?.receivedBytesPerSecond ?? 0,
++            selectedRate?.sentBytesPerSecond ?? 0)
++        let length = NetworkDisplayText.byteRateParts(largest, locale: locale).number.count
++        return min(max(112, length > 8 ? 170 : 112), max(112, total - 8 - 48))
++    }
++
+     private func rateRow(_ series: ResourceRateGraphSlotView.Series, rate: Double?) -> some View {
+-        HStack(spacing: 3) {
+-            ResourceRateLegendMarkerView(kind: .disk, series: series)
+-            Text(series == .received ? "Read" : "Write")
+-                .dashboardTypography(DashboardStyle.TypographyRole.label)
+-            Spacer(minLength: 2)
+-            if let rate {
+-                let parts = ResourceQuantityFormatter.byteRate(rate, locale: locale)
+-                    .split(separator: " ", maxSplits: 1)
+-                Text(String(parts.first ?? ""))
+-                    .dashboardTypography(DashboardStyle.TypographyRole.focus).lineLimit(1)
+-                Text(parts.count > 1 ? String(parts[1]) : "B/s")
+-                    .dashboardTypography(DashboardStyle.TypographyRole.label).lineLimit(1)
++        Group {
++            if let rate, NetworkDisplayText.byteRateParts(rate, locale: locale).number.count > 8 {
++                let parts = NetworkDisplayText.byteRateParts(rate, locale: locale)
++                VStack(alignment: .leading, spacing: 0) {
++                    HStack(spacing: 2) {
++                        Text(series == .received ? "Read" : "Write")
++                            .font(DiskCompactTypography.name)
++                        Text(parts.unit).font(DiskCompactTypography.unit)
++                        Spacer(minLength: 0)
++                    }
++                    .foregroundStyle(.secondary)
++                    Text(parts.number)
++                        .font(DiskCompactTypography.number)
++                        .lineLimit(1)
++                        .minimumScaleFactor(0.7)
++                        .frame(maxWidth: .infinity, alignment: .leading)
++                }
+             } else {
+-                Text(DiskDisplayText.activity(presentation.phase))
+-                    .dashboardTypography(DashboardStyle.TypographyRole.label).lineLimit(1)
++                HStack(spacing: 3) {
++                    Text(series == .received ? "Read" : "Write")
++                        .font(DiskCompactTypography.name)
++                        .foregroundStyle(.secondary)
++                        .frame(width: 27, alignment: .leading)
++                    Spacer(minLength: 0)
++                    if let rate {
++                        let parts = NetworkDisplayText.byteRateParts(rate, locale: locale)
++                        Text(parts.number)
++                            .font(DiskCompactTypography.number)
++                            .lineLimit(1)
++                            .minimumScaleFactor(0.7)
++                            .layoutPriority(1)
++                        Text(parts.unit)
++                            .font(DiskCompactTypography.unit)
++                            .foregroundStyle(.secondary)
++                            .lineLimit(1)
++                            .frame(width: 26, alignment: .leading)
++                    } else {
++                        Text(DiskDisplayText.activity(presentation.phase))
++                            .font(DiskCompactTypography.unit)
++                            .lineLimit(1)
++                            .minimumScaleFactor(0.7)
++                    }
++                }
+             }
+         }
+-        .frame(height: 32)
++        .frame(height: 22)
+         .accessibilityElement(children: .ignore)
+         .accessibilityLabel(rateAccessibility(series: series, rate: rate))
+     }
+diff --git a/ResourceRunner/ResourceRateGraphView.swift b/ResourceRunner/ResourceRateGraphView.swift
+index 237f927..20d8dd7 100644
+--- a/ResourceRunner/ResourceRateGraphView.swift
++++ b/ResourceRunner/ResourceRateGraphView.swift
+@@ -1,11 +1,13 @@
+ import SwiftUI
+ 
+-/// CPU와 속도 그래프가 동일한 100pt 판 면·클리핑을 사용합니다.
++/// CPU는 기존 100pt 판을 유지하고, Disk 미니 판은 호출자가 높이만 명시합니다.
+ /// 지금 시각의 선 두께와 창 밖으로 막 밀려난 표본이 카드 면으로 번지지 않게 판에서 자릅니다.
+ struct DashboardGraphPlotSurface: ViewModifier {
++    var height: CGFloat = HistoryGraphLayout.plotHeight
++
+     func body(content: Content) -> some View {
+         content
+-            .frame(height: HistoryGraphLayout.plotHeight)
++            .frame(height: height)
+             .background(DashboardColorPalette.graphPlotSurface)
+             .clipped()
+     }
+@@ -55,6 +57,8 @@ struct ResourceRateGraphSlotView: View {
+     let firstHistoryPointAt: ContinuousClock.Instant?
+     /// 결정적 렌더 테스트에서는 시간을 고정하고 실제 앱에서는 매초 새 창을 그립니다.
+     var fixedNow: ContinuousClock.Instant? = nil
++    var plotHeight: CGFloat = HistoryGraphLayout.plotHeight
++    var showsAxis = true
+ 
+     var body: some View {
+         Group {
+@@ -66,13 +70,13 @@ struct ResourceRateGraphSlotView: View {
+                 }
+             }
+         }
+-        .frame(height: HistoryGraphLayout.slotHeight)
++        .frame(height: showsAxis ? HistoryGraphLayout.slotHeight : plotHeight)
+     }
+ 
+     private func slot(at now: ContinuousClock.Instant) -> some View {
+         let graph = ResourceRateGraph.make(history: history,
+             firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now)
+-        return VStack(spacing: HistoryGraphLayout.axisSpacing) {
++        return VStack(spacing: showsAxis ? HistoryGraphLayout.axisSpacing : 0) {
+             ZStack(alignment: .top) {
+                 Canvas { context, size in
+                     drawGridline(in: &context, size: size)
+@@ -80,7 +84,7 @@ struct ResourceRateGraphSlotView: View {
+                         bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
+                     // 실제 0과 상한의 선 두께 절반이 판 밖으로 잘려 사라지지 않게 중심만 안쪽에 둡니다.
+                     func yPosition(_ value: Double, series: Series) -> CGFloat {
+-                        let inset = series.style.lineWidth / 2
++                        let inset = strokeStyle(for: series).lineWidth / 2
+                         return min(size.height - inset,
+                             max(inset, size.height * graph.normalizedY(value)))
+                     }
+@@ -102,26 +106,34 @@ struct ResourceRateGraphSlotView: View {
+                                 context.fill(Path(ellipseIn: CGRect(x: center.x - 1, y: center.y - 1,
+                                     width: 2, height: 2)), with: .color(color))
+                             } else {
+-                                context.stroke(path, with: .color(color), style: series.style)
++                                context.stroke(path, with: .color(color), style: strokeStyle(for: series))
+                             }
+                         }
+                     }
+                 }
+             }
+-            .modifier(DashboardGraphPlotSurface())
+-            ZStack {
+-                HStack(spacing: 0) {
+-                    Text("10분 전")
+-                    Spacer(minLength: 0)
+-                    Text("지금")
++            .modifier(DashboardGraphPlotSurface(height: plotHeight))
++            if showsAxis {
++                ZStack {
++                    HStack(spacing: 0) {
++                        Text("10분 전")
++                        Spacer(minLength: 0)
++                        Text("지금")
++                    }
++                    Text(graph.progressLabel)
++                        .lineLimit(1)
+                 }
+-                Text(graph.progressLabel)
+-                    .lineLimit(1)
++                .dashboardTypography(DashboardStyle.TypographyRole.label)
++                .frame(height: HistoryGraphLayout.axisLabelHeight)
+             }
+-            .dashboardTypography(DashboardStyle.TypographyRole.label)
+-            .frame(height: HistoryGraphLayout.axisLabelHeight)
+         }
+-        .frame(height: HistoryGraphLayout.slotHeight)
++        .frame(height: showsAxis ? HistoryGraphLayout.slotHeight : plotHeight)
++    }
++
++    private func strokeStyle(for series: Series) -> StrokeStyle {
++        guard !showsAxis else { return series.style }
++        return series == .received ? StrokeStyle(lineWidth: 1, dash: [3, 2]) :
++            StrokeStyle(lineWidth: 1)
+     }
+ 
+     private func drawGridline(in context: inout GraphicsContext, size: CGSize) {
+diff --git a/ResourceRunnerTests/DiskDashboardViewTests.swift b/ResourceRunnerTests/DiskDashboardViewTests.swift
+index f4cdaee..6d755f3 100644
+--- a/ResourceRunnerTests/DiskDashboardViewTests.swift
++++ b/ResourceRunnerTests/DiskDashboardViewTests.swift
+@@ -36,13 +36,14 @@ struct DiskDashboardViewTests {
+                       capacity: DiskCapacityPresentation? = nil,
+                       externalAbsent: Bool? = true,
+                       capacityIsLastKnown: Bool = false,
+-                      devices: [DiskDevicePresentation]? = nil) -> DiskCardPresentation {
++                      devices: [DiskDevicePresentation]? = nil,
++                      history: [RateHistoryPoint] = []) -> DiskCardPresentation {
+         let storage = capacity ?? DiskCapacityPresentation(identity: "/", totalBytes: 1 << 40,
+             availableBytes: 1 << 39, usedBytes: 1 << 39, sharedCapacity: true,
+             relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))
+         return DiskCardPresentation(phase: phase, currentRate: current,
+             currentRateIsPartial: partial, latestReadAt: now.advanced(by: .seconds(-2)),
+-            lastKnownRate: lastKnown, topologyRevision: 1, recentHistory: [],
++            lastKnownRate: lastKnown, topologyRevision: 1, recentHistory: history,
+             firstHistoryPointAt: nil, devices: devices ?? [device()],
+             supplemental: StorageSupplementalPresentation(phase: auxiliary,
+                 readAt: now.advanced(by: .seconds(-30)), capacity: storage,
+@@ -56,11 +57,23 @@ struct DiskDashboardViewTests {
+             relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))
+     }
+ 
++    private func measuredHistory() -> [RateHistoryPoint] {
++        (0...60).map { index in
++            let read: Double = index == 20 ? 4_000 : Double(500 + index * 10)
++            let write: Double = index == 45 ? 3_000 : Double(900 - index * 5)
++            let rate = RatePair(receivedBytesPerSecond: read, sentBytesPerSecond: write)!
++            return RateHistoryPoint(timestamp: now.advanced(by: .seconds(-300 + index * 5)),
++                rate: rate,
++                collectionEpoch: 1, rateSegment: 1)
++        }
++    }
++
+     private func render(_ presentation: DiskCardPresentation, appearance name: NSAppearance.Name,
+-                        label: String, locale: Locale = .current) throws {
++                        label: String, locale: Locale = .current,
++                        width: CGFloat = 248) throws {
+         let appearance = try #require(NSAppearance(named: name))
+         let view = DiskCardView(presentation: presentation, fixedNow: now)
+-            .frame(width: 248)
++            .frame(width: width)
+             .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
+             .environment(\.locale, locale)
+         var bitmap: NSBitmapImageRep?
+@@ -70,23 +83,25 @@ struct DiskDashboardViewTests {
+             bitmap = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
+         }
+         let image = try #require(bitmap)
+-        #expect(image.pixelsWide == 248)
+-        #expect(image.pixelsHigh == 294)
++        #expect(image.pixelsWide == Int(width))
++        #expect(image.pixelsHigh == 101)
+         Attachment.record(try #require(image.representation(using: .png, properties: [:])),
+-            named: "disk-card-\(label)-\(name == .darkAqua ? "dark" : "light").png")
++            named: "disk-card-\(Int(width))-\(label)-\(name == .darkAqua ? "dark" : "light").png")
+     }
+ 
+     @Test func fixedSlotsAndStatesKeepRateAndCapacityIndependent() throws {
+-        #expect(DiskCardLayout.total == 294)
+-        #expect(DiskCardLayout.title == 12)
+-        #expect(DiskCardLayout.rates == 68)
+-        #expect(DiskCardLayout.auxiliary == 32)
+-        #expect(DiskCardLayout.graph == 118)
++        #expect(DiskCardLayout.total == 101)
++        #expect(DiskCardLayout.title == 8)
++        #expect(DiskCardLayout.ratesAndGraph == 45)
++        #expect(DiskCardLayout.miniPlot == 42)
++        #expect(DiskCardLayout.auxiliary == 28)
+         let past = LastKnownRate(rate: RatePair(receivedBytesPerSecond: 4_096,
+             sentBytesPerSecond: 2_048)!, readAt: now.advanced(by: .seconds(-20)))
+         let fixtures: [(String, DiskCardPresentation)] = [
+             ("initial", .collecting),
+-            ("normal", card()),
++            ("normal", card(history: measuredHistory())),
++            ("native-units", card(current: RatePair(receivedBytesPerSecond: 1.8 * 1_048_576,
++                sentBytesPerSecond: 9.0 * 1_048_576), history: measuredHistory())),
+             ("partial", card(.partial("driver bytes missing"), partial: true)),
+             ("activity-failure", card(.failure("driver unavailable"), current: nil, lastKnown: past)),
+             ("stopped", card(.stopped, current: nil, lastKnown: past)),
+@@ -97,14 +112,25 @@ struct DiskDashboardViewTests {
+                 sentBytesPerSecond: 1_073_741_824),
+                 capacity: DiskCapacityPresentation(identity: "/", totalBytes: UInt64.max,
+                     availableBytes: UInt64.max - 1, usedBytes: 1, sharedCapacity: true,
+-                    relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30)))))
++                    relationReason: "APFS shared", readAt: now.advanced(by: .seconds(-30))))),
++            ("max-rate", card(current: RatePair(receivedBytesPerSecond: Double(UInt64.max),
++                sentBytesPerSecond: Double(UInt64.max))))
+         ]
+         for (label, fixture) in fixtures {
+             for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
+-                try render(fixture, appearance: appearance, label: label)
++                for width: CGFloat in [248, 264] {
++                    try render(fixture, appearance: appearance, label: label, width: width)
++                }
+             }
+         }
+         try render(card(), appearance: .aqua, label: "german-locale", locale: Locale(identifier: "de_DE"))
++        let graphAX = DiskDisplayText.miniGraphAccessibility(presentation: card(history: measuredHistory()),
++            now: now, locale: Locale(identifier: "de_DE"))
++        #expect(graphAX.contains("최근 10분"))
++        #expect(graphAX.contains("Read 점선, Write 실선"))
++        #expect(graphAX.contains("0–4,9 KB/s"))
++        #expect(DiskDisplayText.miniGraphAccessibility(presentation: card(), now: now)
++            .contains("속도 범위 대기"))
+         #expect(DiskDisplayText.compactCapacity(card().supplemental, now: now) == "용량 확인 · 30초 전")
+         let failedCapacity = card(auxiliary: .failure("volume unavailable"), capacityIsLastKnown: true)
+         #expect(failedCapacity.currentRate != nil)
+@@ -171,8 +197,15 @@ struct DiskDashboardViewTests {
+                 #expect(!compact.contains("…"))
+                 let width = (compact as NSString).size(withAttributes: [.font: font]).width
+                 #expect(width < 232, "\(localeID) \(name): \(compact) width=\(width)")
+-                try render(card(capacity: value), appearance: .aqua,
+-                    label: "capacity-\(localeID)-\(name)", locale: locale)
++                for width: CGFloat in [248, 264] {
++                    try render(card(capacity: value), appearance: .aqua,
++                        label: "capacity-\(localeID)-\(name)", locale: locale, width: width)
++                }
++            }
++            for width: CGFloat in [248, 264] {
++                try render(card(current: RatePair(receivedBytesPerSecond: Double(UInt64.max),
++                    sentBytesPerSecond: Double(UInt64.max)), history: measuredHistory()),
++                    appearance: .aqua, label: "max-rate-\(localeID)", locale: locale, width: width)
+             }
+         }
+         let english = Locale(identifier: "en_US")
+diff --git a/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift b/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
+index 52ea99f..295bfc9 100644
+--- a/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
++++ b/ResourceRunnerTests/ResourceRateGraphRenderingTests.swift
+@@ -113,6 +113,27 @@ struct ResourceRateGraphRenderingTests {
+         return try #require(NSBitmapImageRep(data: png))
+     }
+ 
++    private func renderMini(_ points: [RateHistoryPoint], label: String,
++                            appearance name: NSAppearance.Name, width: CGFloat = 100) throws -> NSBitmapImageRep {
++        let appearance = try #require(NSAppearance(named: name))
++        let view = ResourceRateGraphSlotView(kind: .disk, history: points,
++            firstHistoryPointAt: points.first?.timestamp, fixedNow: now,
++            plotHeight: 42, showsAxis: false)
++            .frame(width: width, height: 42)
++            .background(DashboardColorPalette.cardSurface)
++            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
++        var rendered: NSBitmapImageRep?
++        appearance.performAsCurrentDrawingAppearance {
++            let renderer = ImageRenderer(content: view)
++            renderer.scale = 1
++            rendered = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
++        }
++        let bitmap = try #require(rendered)
++        let png = try #require(bitmap.representation(using: .png, properties: [:]))
++        Attachment.record(png, named: "disk-mini-\(label)-\(Int(width))-\(name == .darkAqua ? "dark" : "light").png")
++        return try #require(NSBitmapImageRep(data: png))
++    }
++
+     private func color(_ bitmap: NSBitmapImageRep, x: Int, y: Int) throws -> NSColor {
+         try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
+     }
+@@ -202,4 +223,69 @@ struct ResourceRateGraphRenderingTests {
+             }
+         }
+     }
++
++    @Test func smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap() throws {
++        let points = extendedHistory()
++        let graph = ResourceRateGraph.make(history: points,
++            firstHistoryPointAt: points.first?.timestamp, currentTimestamp: now)
++        #expect(graph.upperBound == 5_000)
++        #expect(graph.visibleSegments.map(\.count) == [41, 41])
++        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++            for width: CGFloat in [58, 100] {
++                let normal = try renderMini(points, label: "connected-gap", appearance: appearance, width: width)
++                let empty = try renderMini([], label: "empty", appearance: appearance, width: width)
++                #expect(normal.pixelsWide == Int(width))
++                #expect(normal.pixelsHigh == 42)
++                #expect(empty.pixelsWide == normal.pixelsWide)
++                #expect(empty.pixelsHigh == normal.pixelsHigh)
++                let gapX = Int(width * 0.5)
++                let gap = try color(normal, x: gapX, y: 32)
++                #expect(distance(gap, try color(empty, x: gapX, y: 32)) < 0.03)
++                #expect(distance(try color(empty, x: gapX, y: 21),
++                    try color(empty, x: gapX, y: 32)) > 0.005)
++                let leftInk = try (0..<Int(width * 0.4)).contains { x in
++                    try (0..<42).contains { y in
++                        distance(try color(normal, x: x, y: y),
++                            try color(empty, x: x, y: y)) > 0.03
++                    }
++                }
++                #expect(leftInk)
++                let rightInk = try (Int(width * 0.65)..<Int(width)).contains { x in
++                    try (0..<42).contains { y in
++                        distance(try color(normal, x: x, y: y),
++                            try color(empty, x: x, y: y)) > 0.03
++                    }
++                }
++                #expect(rightInk)
++            }
++        }
++    }
++
++    @Test func smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory() throws {
++        let zero = RateHistoryPoint(timestamp: now.advanced(by: .seconds(-50)),
++            rate: RatePair(receivedBytesPerSecond: 0, sentBytesPerSecond: 0)!,
++            collectionEpoch: 0, rateSegment: 1)
++        let one = RateHistoryPoint(timestamp: now.advanced(by: .seconds(-45)),
++            rate: RatePair(receivedBytesPerSecond: 2_048, sentBytesPerSecond: 2_048)!,
++            collectionEpoch: 0, rateSegment: 1)
++        let zeroGraph = ResourceRateGraph.make(history: [zero],
++            firstHistoryPointAt: zero.timestamp, currentTimestamp: now)
++        #expect(zeroGraph.upperBound == 1_024)
++        #expect(zeroGraph.visibleSegments.map(\.count) == [1])
++        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
++            let empty = try renderMini([], label: "no-history", appearance: appearance)
++            let zeroOnly = try renderMini([zero], label: "actual-zero", appearance: appearance)
++            let oneOnly = try renderMini([one], label: "single-point", appearance: appearance)
++            let overlap = try renderMini([zero, one], label: "overlap", appearance: appearance)
++            for bitmap in [zeroOnly, oneOnly, overlap] {
++                let hasInk = try (0..<100).contains { x in
++                    try (0..<42).contains { y in
++                        distance(try color(bitmap, x: x, y: y),
++                            try color(empty, x: x, y: y)) > 0.03
++                    }
++                }
++                #expect(hasInk)
++            }
++        }
++    }
+ }

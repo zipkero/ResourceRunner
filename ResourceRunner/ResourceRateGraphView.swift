@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// CPU와 속도 그래프가 동일한 100pt 판 면·클리핑을 사용합니다.
+/// 기본 판은 100pt이고 CPU 요약·Disk 미니 판은 호출자가 각자의 높이를 명시합니다.
 /// 지금 시각의 선 두께와 창 밖으로 막 밀려난 표본이 카드 면으로 번지지 않게 판에서 자릅니다.
 struct DashboardGraphPlotSurface: ViewModifier {
+    var height: CGFloat = HistoryGraphLayout.plotHeight
+
     func body(content: Content) -> some View {
         content
-            .frame(height: HistoryGraphLayout.plotHeight)
+            .frame(height: height)
             .background(DashboardColorPalette.graphPlotSurface)
             .clipped()
     }
@@ -55,6 +57,8 @@ struct ResourceRateGraphSlotView: View {
     let firstHistoryPointAt: ContinuousClock.Instant?
     /// 결정적 렌더 테스트에서는 시간을 고정하고 실제 앱에서는 매초 새 창을 그립니다.
     var fixedNow: ContinuousClock.Instant? = nil
+    var plotHeight: CGFloat = HistoryGraphLayout.plotHeight
+    var showsAxis = true
 
     var body: some View {
         Group {
@@ -66,13 +70,13 @@ struct ResourceRateGraphSlotView: View {
                 }
             }
         }
-        .frame(height: HistoryGraphLayout.slotHeight)
+        .frame(height: showsAxis ? HistoryGraphLayout.slotHeight : plotHeight)
     }
 
     private func slot(at now: ContinuousClock.Instant) -> some View {
         let graph = ResourceRateGraph.make(history: history,
             firstHistoryPointAt: firstHistoryPointAt, currentTimestamp: now)
-        return VStack(spacing: HistoryGraphLayout.axisSpacing) {
+        return VStack(spacing: showsAxis ? HistoryGraphLayout.axisSpacing : 0) {
             ZStack(alignment: .top) {
                 Canvas { context, size in
                     drawGridline(in: &context, size: size)
@@ -80,7 +84,7 @@ struct ResourceRateGraphSlotView: View {
                         bucketCount: HistoryPoint.downsampledBucketCount(forRenderWidth: size.width))
                     // 실제 0과 상한의 선 두께 절반이 판 밖으로 잘려 사라지지 않게 중심만 안쪽에 둡니다.
                     func yPosition(_ value: Double, series: Series) -> CGFloat {
-                        let inset = series.style.lineWidth / 2
+                        let inset = strokeStyle(for: series).lineWidth / 2
                         return min(size.height - inset,
                             max(inset, size.height * graph.normalizedY(value)))
                     }
@@ -102,26 +106,34 @@ struct ResourceRateGraphSlotView: View {
                                 context.fill(Path(ellipseIn: CGRect(x: center.x - 1, y: center.y - 1,
                                     width: 2, height: 2)), with: .color(color))
                             } else {
-                                context.stroke(path, with: .color(color), style: series.style)
+                                context.stroke(path, with: .color(color), style: strokeStyle(for: series))
                             }
                         }
                     }
                 }
             }
-            .modifier(DashboardGraphPlotSurface())
-            ZStack {
-                HStack(spacing: 0) {
-                    Text("10분 전")
-                    Spacer(minLength: 0)
-                    Text("지금")
+            .modifier(DashboardGraphPlotSurface(height: plotHeight))
+            if showsAxis {
+                ZStack {
+                    HStack(spacing: 0) {
+                        Text("10분 전")
+                        Spacer(minLength: 0)
+                        Text("지금")
+                    }
+                    Text(graph.progressLabel)
+                        .lineLimit(1)
                 }
-                Text(graph.progressLabel)
-                    .lineLimit(1)
+                .dashboardTypography(DashboardStyle.TypographyRole.label)
+                .frame(height: HistoryGraphLayout.axisLabelHeight)
             }
-            .dashboardTypography(DashboardStyle.TypographyRole.label)
-            .frame(height: HistoryGraphLayout.axisLabelHeight)
         }
-        .frame(height: HistoryGraphLayout.slotHeight)
+        .frame(height: showsAxis ? HistoryGraphLayout.slotHeight : plotHeight)
+    }
+
+    private func strokeStyle(for series: Series) -> StrokeStyle {
+        guard !showsAxis else { return series.style }
+        return series == .received ? StrokeStyle(lineWidth: 1, dash: [3, 2]) :
+            StrokeStyle(lineWidth: 1)
     }
 
     private func drawGridline(in context: inout GraphicsContext, size: CGSize) {

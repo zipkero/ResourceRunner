@@ -113,6 +113,27 @@ struct ResourceRateGraphRenderingTests {
         return try #require(NSBitmapImageRep(data: png))
     }
 
+    private func renderMini(_ points: [RateHistoryPoint], label: String,
+                            appearance name: NSAppearance.Name, width: CGFloat = 100) throws -> NSBitmapImageRep {
+        let appearance = try #require(NSAppearance(named: name))
+        let view = ResourceRateGraphSlotView(kind: .disk, history: points,
+            firstHistoryPointAt: points.first?.timestamp, fixedNow: now,
+            plotHeight: 42, showsAxis: false)
+            .frame(width: width, height: 42)
+            .background(DashboardColorPalette.cardSurface)
+            .environment(\.colorScheme, name == .darkAqua ? .dark : .light)
+        var rendered: NSBitmapImageRep?
+        appearance.performAsCurrentDrawingAppearance {
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 1
+            rendered = renderer.nsImage?.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:))
+        }
+        let bitmap = try #require(rendered)
+        let png = try #require(bitmap.representation(using: .png, properties: [:]))
+        Attachment.record(png, named: "disk-mini-\(label)-\(Int(width))-\(name == .darkAqua ? "dark" : "light").png")
+        return try #require(NSBitmapImageRep(data: png))
+    }
+
     private func color(_ bitmap: NSBitmapImageRep, x: Int, y: Int) throws -> NSColor {
         try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
     }
@@ -199,6 +220,71 @@ struct ResourceRateGraphRenderingTests {
                     distance(try color(bitmap, x: $0, y: 99), bare) > 0.02
                 }.count
                 #expect(zeroInk > 0)
+            }
+        }
+    }
+
+    @Test func smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap() throws {
+        let points = extendedHistory()
+        let graph = ResourceRateGraph.make(history: points,
+            firstHistoryPointAt: points.first?.timestamp, currentTimestamp: now)
+        #expect(graph.upperBound == 5_000)
+        #expect(graph.visibleSegments.map(\.count) == [41, 41])
+        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
+            for width: CGFloat in [58, 100] {
+                let normal = try renderMini(points, label: "connected-gap", appearance: appearance, width: width)
+                let empty = try renderMini([], label: "empty", appearance: appearance, width: width)
+                #expect(normal.pixelsWide == Int(width))
+                #expect(normal.pixelsHigh == 42)
+                #expect(empty.pixelsWide == normal.pixelsWide)
+                #expect(empty.pixelsHigh == normal.pixelsHigh)
+                let gapX = Int(width * 0.5)
+                let gap = try color(normal, x: gapX, y: 32)
+                #expect(distance(gap, try color(empty, x: gapX, y: 32)) < 0.03)
+                #expect(distance(try color(empty, x: gapX, y: 21),
+                    try color(empty, x: gapX, y: 32)) > 0.005)
+                let leftInk = try (0..<Int(width * 0.4)).contains { x in
+                    try (0..<42).contains { y in
+                        distance(try color(normal, x: x, y: y),
+                            try color(empty, x: x, y: y)) > 0.03
+                    }
+                }
+                #expect(leftInk)
+                let rightInk = try (Int(width * 0.65)..<Int(width)).contains { x in
+                    try (0..<42).contains { y in
+                        distance(try color(normal, x: x, y: y),
+                            try color(empty, x: x, y: y)) > 0.03
+                    }
+                }
+                #expect(rightInk)
+            }
+        }
+    }
+
+    @Test func smallDiskPlotRendersZeroSinglePointAndOverlappingSeriesWithoutFakeHistory() throws {
+        let zero = RateHistoryPoint(timestamp: now.advanced(by: .seconds(-50)),
+            rate: RatePair(receivedBytesPerSecond: 0, sentBytesPerSecond: 0)!,
+            collectionEpoch: 0, rateSegment: 1)
+        let one = RateHistoryPoint(timestamp: now.advanced(by: .seconds(-45)),
+            rate: RatePair(receivedBytesPerSecond: 2_048, sentBytesPerSecond: 2_048)!,
+            collectionEpoch: 0, rateSegment: 1)
+        let zeroGraph = ResourceRateGraph.make(history: [zero],
+            firstHistoryPointAt: zero.timestamp, currentTimestamp: now)
+        #expect(zeroGraph.upperBound == 1_024)
+        #expect(zeroGraph.visibleSegments.map(\.count) == [1])
+        for appearance: NSAppearance.Name in [.aqua, .darkAqua] {
+            let empty = try renderMini([], label: "no-history", appearance: appearance)
+            let zeroOnly = try renderMini([zero], label: "actual-zero", appearance: appearance)
+            let oneOnly = try renderMini([one], label: "single-point", appearance: appearance)
+            let overlap = try renderMini([zero, one], label: "overlap", appearance: appearance)
+            for bitmap in [zeroOnly, oneOnly, overlap] {
+                let hasInk = try (0..<100).contains { x in
+                    try (0..<42).contains { y in
+                        distance(try color(bitmap, x: x, y: y),
+                            try color(empty, x: x, y: y)) > 0.03
+                    }
+                }
+                #expect(hasInk)
             }
         }
     }

@@ -1,19 +1,17 @@
 # Context
 
-저장: 2026-10-03 (M4 구현 계획 완료)
+저장: 2026-10-03 (M4 task-001 승인)
 
 ## 현재 목표
 
-사용자 `$implement-init M4` 요청에 따라 승인된 M4 설계를 구현 Task와 검증 조건으로 나눴다. 이번 요청은 계획까지만이며 제품 구현에는 자동 진입하지 않는다. main 스테이징·커밋·푸시 승인은 유지된다.
+사용자 `$implement-loop M4`에 따라 미완료 Task를 순서대로 구현·verify한다. main 스테이징·커밋·푸시 승인은 유지된다.
 
 ## 현재 상태
 
-- 프로젝트 /Users/zipkero/XcodeProjects/ResourceRunner, branch main. 이번 조사 기준 HEAD는3f8f075이며 SPEC/DESIGN은 승인 상태다.
-- analyzer의 읽기 전용 후보를 main이 현재 원본·선행 문서·기존 검증 파일에 대조해 implement.md에 적용했다. task-001~011은 모두 미착수 [ ]이며 SPEC/DESIGN [x], IMPLEMENT [ ]다.
-- 이번 변경은 M4 implement.md·README.md와 ROADMAP·CONTEXT뿐이다. 제품 코드·빌드 설정·실행 앱·로그인 등록·OS 세션은 변경하지 않았다. 11개 Task 필드·선행 순서·DESIGN 참조·13개 조건 매핑·8개 결정 연결·로컬 링크·언어·diff 검사를 통과했다. SPEC·DESIGN 해시는 조사 기준과 동일하다.
-- 설계 커밋3f8f075와 SPEC 커밋e78af7f는 origin/main에 푸시했다. 상위 계약·기존 M3 승인 의미는 변경하지 않았고 신규 계획이므로 취소할 Task 승인은 없다.
-- M3 Tasks001~008/010~013/016~018 승인,009철회,014/015 미완료다. 실제 VPN·외장 디스크·잠금/절전 복귀는 사용자 보류이며 Ethernet 전환 장비도 미확보다. M4 착수 예외가 M3 전체 완료를 뜻하지 않는다.
-- 이전 M3 검증은 unit614/614, UI전체29/30 뒤 실패1건 단언 수정·해당1/1 재실행, Debug/Release 빌드·서명 Sandbox 실측이다. 이를 M4 구현 검증으로 사용하지 않는다.
+- branch main, loop 시작 HEAD cf9bc683. task-001을 worker가 구현하고 독립 verifier approved를 main이 확정했다. task-001 [x], task-002~011 [ ], SPEC/DESIGN [x], IMPLEMENT [ ].
+- 새 AppPreferences.swift·PreferencesStore.swift·PreferencesStoreTests.swift, 근거와 상태 문서를 인수했다. 전용 signed 테스트5/5·실패0/skip0, 소스 해시·패치·xcresult 대응을 확인했다. 실제 초기 앱 배선·로그인은 아직 후속 범위다.
+- loop 재시도: task-001 구현0·근거 재검증0. worker 내부 test helper 컴파일 수정 후 최종 테스트 통과는 verify reject가 아니다.
+- M3 task014/015 보류와 기존 승인은 유지한다. M4 실제 로그인 관문은 별도다. 기존 M3 검증을 M4 통과로 사용하지 않는다.
 
 ## 현재 작업 문서
 
@@ -33,11 +31,11 @@
 
 ## 미확정 판단
 
-계획 작성에 필요한 상위 결정은 부족하지 않다. 실제 구현·실행·UI·로그인 결과는 아직 없다. 향후 실제 세션 전환 권한·환경은 task-011 착수 시 main이 확인한다.
+task-001은 승인됐다. 상위 결정의 부족은 없다. 후속 실제 UI·로그인 결과는 아직 없으며 task-011의 실제 세션 전환 권한·환경은 해당 착수 시 main이 확인한다.
 
 ## 다음 작업
 
-- 작업: 사용자가 구현을 요청하면 implement-loop로 남은 M4 Task를 조정하고 task-001부터 구현·verify를 진행한다.
+- 작업: implement-loop의 다음 첫 미완료 task-002를 worker에게 맡겨 네 프로필·단일 조회 실행권을 구현하고 verify한다.
 - 완료 기준: Task별 현재 원본·diff·검증 근거로 승인하고 상태·이력을 갱신한다. SPEC §5.1~§5.13의 모든 매핑 Task가 승인되기 전에는 IMPLEMENT를 완료로 표시하지 않는다. 필수 실제 관문 미확인은 남긴다.
 
 ## 먼저 읽을 파일

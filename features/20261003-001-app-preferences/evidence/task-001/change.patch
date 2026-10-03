@@ -1,0 +1,300 @@
+diff --git a/ResourceRunner/AppPreferences.swift b/ResourceRunner/AppPreferences.swift
+new file mode 100644
+index 0000000..0a26cf0
+--- /dev/null
++++ b/ResourceRunner/AppPreferences.swift
+@@ -0,0 +1,35 @@
++import Foundation
++
++nonisolated enum GraphTimeRange: String, CaseIterable, Sendable {
++    case oneMinute
++    case fiveMinutes
++    case tenMinutes
++
++    var duration: TimeInterval {
++        switch self {
++        case .oneMinute: 60
++        case .fiveMinutes: 300
++        case .tenMinutes: 600
++        }
++    }
++}
++
++nonisolated enum RefreshProfile: String, CaseIterable, Sendable {
++    case fast
++    case standard
++    case energySaving
++    case maximumEnergySaving
++}
++
++nonisolated struct AppPreferences: Equatable, Sendable {
++    var showsCPUCard = true
++    var showsMemoryCard = true
++    var showsNetworkCard = true
++    var showsDiskCard = true
++    var showsCPUTopApplications = true
++    var showsMemoryTopApplications = true
++    var graphTimeRange: GraphTimeRange = .tenMinutes
++    var refreshProfile: RefreshProfile = .standard
++
++    static let defaults = AppPreferences()
++}
+diff --git a/ResourceRunner/PreferencesStore.swift b/ResourceRunner/PreferencesStore.swift
+new file mode 100644
+index 0000000..81682d3
+--- /dev/null
++++ b/ResourceRunner/PreferencesStore.swift
+@@ -0,0 +1,115 @@
++import CoreFoundation
++import Foundation
++import Observation
++
++@MainActor
++protocol PreferencesStorage {
++    func read() -> Any?
++    func write(_ dictionary: [String: Any])
++}
++
++@MainActor
++struct UserDefaultsPreferencesStorage: PreferencesStorage {
++    static let key = "preferences.v1"
++    let defaults: UserDefaults
++
++    init(defaults: UserDefaults = .standard) {
++        self.defaults = defaults
++    }
++
++    func read() -> Any? {
++        defaults.object(forKey: Self.key)
++    }
++
++    func write(_ dictionary: [String: Any]) {
++        defaults.set(dictionary, forKey: Self.key)
++    }
++}
++
++nonisolated struct PreferencesSnapshot: Equatable, Sendable {
++    let preferences: AppPreferences
++    let revision: UInt64
++}
++
++@Observable
++@MainActor
++final class PreferencesStore {
++    private let storage: any PreferencesStorage
++    private(set) var current: PreferencesSnapshot
++
++    convenience init() {
++        self.init(storage: UserDefaultsPreferencesStorage())
++    }
++
++    init(storage: any PreferencesStorage) {
++        self.storage = storage
++        current = PreferencesSnapshot(
++            preferences: Self.decode(storage.read()), revision: 0
++        )
++    }
++
++    func update(_ change: (inout AppPreferences) -> Void) {
++        var preferences = current.preferences
++        change(&preferences)
++        publish(preferences)
++    }
++
++    func restoreDefaults() {
++        publish(.defaults)
++    }
++
++    private func publish(_ preferences: AppPreferences) {
++        // 한 값으로 게시해 관찰자가 새 설정과 이전 revision을 섞어 읽지 않게 합니다.
++        let next = PreferencesSnapshot(
++            preferences: preferences, revision: current.revision + 1
++        )
++        storage.write(Self.encode(preferences))
++        current = next
++    }
++
++    private static func decode(_ raw: Any?) -> AppPreferences {
++        guard let dictionary = raw as? [String: Any],
++              let schema = dictionary["schemaVersion"] as? NSNumber,
++              CFGetTypeID(schema) == CFNumberGetTypeID(),
++              schema.intValue == 1, schema.doubleValue == 1 else {
++            return .defaults
++        }
++
++        var preferences = AppPreferences.defaults
++        preferences.showsCPUCard = boolean(dictionary["showsCPUCard"]) ?? preferences.showsCPUCard
++        preferences.showsMemoryCard = boolean(dictionary["showsMemoryCard"]) ?? preferences.showsMemoryCard
++        preferences.showsNetworkCard = boolean(dictionary["showsNetworkCard"]) ?? preferences.showsNetworkCard
++        preferences.showsDiskCard = boolean(dictionary["showsDiskCard"]) ?? preferences.showsDiskCard
++        preferences.showsCPUTopApplications = boolean(dictionary["showsCPUTopApplications"]) ?? preferences.showsCPUTopApplications
++        preferences.showsMemoryTopApplications = boolean(dictionary["showsMemoryTopApplications"]) ?? preferences.showsMemoryTopApplications
++        if let rawRange = dictionary["graphTimeRange"] as? String,
++           let range = GraphTimeRange(rawValue: rawRange) {
++            preferences.graphTimeRange = range
++        }
++        if let rawProfile = dictionary["refreshProfile"] as? String,
++           let profile = RefreshProfile(rawValue: rawProfile) {
++            preferences.refreshProfile = profile
++        }
++        return preferences
++    }
++
++    private static func boolean(_ raw: Any?) -> Bool? {
++        guard let number = raw as? NSNumber,
++              CFGetTypeID(number) == CFBooleanGetTypeID() else { return nil }
++        return number.boolValue
++    }
++
++    private static func encode(_ preferences: AppPreferences) -> [String: Any] {
++        [
++            "schemaVersion": 1,
++            "showsCPUCard": preferences.showsCPUCard,
++            "showsMemoryCard": preferences.showsMemoryCard,
++            "showsNetworkCard": preferences.showsNetworkCard,
++            "showsDiskCard": preferences.showsDiskCard,
++            "showsCPUTopApplications": preferences.showsCPUTopApplications,
++            "showsMemoryTopApplications": preferences.showsMemoryTopApplications,
++            "graphTimeRange": preferences.graphTimeRange.rawValue,
++            "refreshProfile": preferences.refreshProfile.rawValue
++        ]
++    }
++}
+diff --git a/ResourceRunnerTests/PreferencesStoreTests.swift b/ResourceRunnerTests/PreferencesStoreTests.swift
+new file mode 100644
+index 0000000..9f6c870
+--- /dev/null
++++ b/ResourceRunnerTests/PreferencesStoreTests.swift
+@@ -0,0 +1,132 @@
++import CoreFoundation
++import Foundation
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++private final class RecordingPreferencesStorage: PreferencesStorage {
++    var value: Any?
++    private(set) var writes: [[String: Any]] = []
++
++    init(_ value: Any? = nil) {
++        self.value = value
++    }
++
++    func read() -> Any? { value }
++
++    func write(_ dictionary: [String: Any]) {
++        writes.append(dictionary)
++        value = dictionary
++    }
++}
++
++@MainActor
++struct PreferencesStoreTests {
++    @Test func defaultsAndInitialReadDoNotWrite() {
++        let storage = RecordingPreferencesStorage()
++        let store = PreferencesStore(storage: storage)
++
++        #expect(store.current == PreferencesSnapshot(preferences: .defaults, revision: 0))
++        #expect(storage.writes.isEmpty)
++        #expect(store.current.preferences.graphTimeRange.duration == 600)
++    }
++
++    @Test func invalidContainerOrSchemaUsesAllDefaults() {
++        let malformed: [Any?] = ["broken", ["showsCPUCard": false],
++            ["schemaVersion": 2, "showsCPUCard": false],
++            ["schemaVersion": true, "showsCPUCard": false]]
++        for value in malformed {
++            let storage = RecordingPreferencesStorage(value)
++            let store = PreferencesStore(storage: storage)
++            #expect(store.current.preferences == .defaults)
++            #expect(storage.writes.isEmpty)
++        }
++    }
++
++    @Test func supportedDictionaryRecoversOnlyInvalidFields() {
++        let storage = RecordingPreferencesStorage([
++            "schemaVersion": 1,
++            "showsCPUCard": false,
++            "showsMemoryCard": NSNumber(value: 0),
++            "showsNetworkCard": "false",
++            "showsDiskCard": true,
++            "showsCPUTopApplications": false,
++            "showsMemoryTopApplications": NSNumber(value: 1),
++            "graphTimeRange": "fiveMinutes",
++            "refreshProfile": "futureProfile"
++        ])
++        let store = PreferencesStore(storage: storage)
++
++        #expect(store.current.preferences.showsCPUCard == false)
++        #expect(store.current.preferences.showsMemoryCard == true)
++        #expect(store.current.preferences.showsNetworkCard == true)
++        #expect(store.current.preferences.showsDiskCard == true)
++        #expect(store.current.preferences.showsCPUTopApplications == false)
++        #expect(store.current.preferences.showsMemoryTopApplications == true)
++        #expect(store.current.preferences.graphTimeRange == .fiveMinutes)
++        #expect(store.current.preferences.refreshProfile == .standard)
++        #expect(storage.writes.isEmpty)
++    }
++
++    @Test func explicitChangesAndRestoreEachPublishAndSaveOnce() {
++        let storage = RecordingPreferencesStorage()
++        let store = PreferencesStore(storage: storage)
++
++        store.update {
++            $0.showsCPUCard = false
++            $0.refreshProfile = .fast
++        }
++        #expect(store.current.revision == 1)
++        #expect(store.current.preferences.showsCPUCard == false)
++        #expect(store.current.preferences.refreshProfile == .fast)
++        #expect(storage.writes.count == 1)
++
++        store.update { $0.graphTimeRange = .oneMinute }
++        #expect(store.current.revision == 2)
++        #expect(store.current.preferences.showsCPUCard == false)
++        #expect(store.current.preferences.graphTimeRange == .oneMinute)
++        #expect(storage.writes.count == 2)
++
++        store.restoreDefaults()
++        #expect(store.current == PreferencesSnapshot(preferences: .defaults, revision: 3))
++        #expect(storage.writes.count == 3)
++        #expect(Set(storage.writes[2].keys) == Set([
++            "schemaVersion", "showsCPUCard", "showsMemoryCard", "showsNetworkCard",
++            "showsDiskCard", "showsCPUTopApplications", "showsMemoryTopApplications",
++            "graphTimeRange", "refreshProfile"
++        ]))
++    }
++
++    @Test func isolatedUserDefaultsRoundTripWritesSupportedFieldsOnly() {
++        let suiteName = "PreferencesStoreTests.\(UUID().uuidString)"
++        let defaults = UserDefaults(suiteName: suiteName)!
++        defer { defaults.removePersistentDomain(forName: suiteName) }
++        let storage = UserDefaultsPreferencesStorage(defaults: defaults)
++        let initial = PreferencesStore(storage: storage)
++        #expect(defaults.object(forKey: UserDefaultsPreferencesStorage.key) == nil)
++
++        initial.update {
++            $0.showsCPUCard = false
++            $0.showsMemoryCard = false
++            $0.showsNetworkCard = false
++            $0.showsDiskCard = false
++            $0.showsCPUTopApplications = false
++            $0.showsMemoryTopApplications = false
++            $0.graphTimeRange = .fiveMinutes
++            $0.refreshProfile = .maximumEnergySaving
++        }
++        let restored = PreferencesStore(storage: storage)
++        #expect(restored.current.preferences == initial.current.preferences)
++        #expect(restored.current.revision == 0)
++        let payload = defaults.dictionary(forKey: UserDefaultsPreferencesStorage.key)!
++        #expect(payload.count == 9)
++        #expect(payload["schemaVersion"] as? Int == 1)
++        #expect(payload["refreshProfile"] as? String == "maximumEnergySaving")
++        #expect(payload["graphTimeRange"] as? String == "fiveMinutes")
++        for key in ["showsCPUCard", "showsMemoryCard", "showsNetworkCard", "showsDiskCard",
++                    "showsCPUTopApplications", "showsMemoryTopApplications"] {
++            let number = payload[key] as? NSNumber
++            #expect(number != nil && CFGetTypeID(number!) == CFBooleanGetTypeID())
++        }
++    }
++}

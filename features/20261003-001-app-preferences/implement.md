@@ -13,20 +13,22 @@ Task는 문서 순서로 진행하며 각 항목의 선행 Task가 승인된 뒤
 현재 승인 근거나 최근 reject는 없습니다. 해당 필드는 구현·검증 단계에서 관리합니다.
 검증은 각 Task의 결과를 판정하는 단위·렌더·UI 근거로 구성합니다.
 
-이번 요청은 구현 계획 작성까지입니다. 제품 구현·로그인 등록/해제·로그아웃·재부팅은 수행하지 않습니다.
+구현 계획 작성 단계에서는 제품 구현·로그인 등록/해제·로그아웃·재부팅을 수행하지 않았습니다.
+2026-10-03 사용자 `$implement-loop M4` 요청으로 아래 Task의 순차 구현·검증을 시작합니다.
 마지막 실제 로그인 관문은 향후 main이 환경·운영 접근 권한·사용자 승인 범위를 확인해 조정합니다.
 필수 관문을 실행할 권한·환경이 없으면 관련 Task를 승인하지 않습니다.
 M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개하거나 완료 처리하지 않습니다.
 
 ## 체크리스트
 
-- [ ] task-001: 검증된 일반 설정 snapshot과 저장·복원
+- [x] task-001: 검증된 일반 설정 snapshot과 저장·복원
   - 목적: 지원 설정만 저장·게시하고 잘못된 값은 기본값으로 복구하는 단일 일반 설정 원본을 완성합니다.
   - 접근: 선행 없음. 새 `AppPreferences`·enum·`PreferencesStore`·저장 adapter를 구성합니다. 출발점은 `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`입니다. `UserDefaults.standard`의 `preferences.v1` dictionary에 schemaVersion 1·여섯 Bool·두 enum raw value만 저장합니다. dictionary/schema 오류는 전체 기본값, 지원 dictionary의 필드 오류는 해당 기본값으로 복구합니다. snapshot·revision을 함께 게시하고 복원은 한 snapshot으로 처리합니다. 초기 배선은 task-005, 로그인은 task-004가 소유합니다.
   - 검증 조건:
     - 결과: 네 카드·두 TOP 5 켜기, 최근10분, 기본 프로필이 기본값입니다. 검증된 전체 snapshot만 저장하며 로그인 의도·수집값은 저장하지 않습니다.
     - 확인: 독립 저장소에서 누락·손상 dictionary·미지원 schema/enum·숫자/문자열 Bool·필드 오류·정상 round-trip을 검증합니다. 실제 Boolean 외 강제 변환 없음, 명시적 변경 전 쓰기 없음, 개별 변경과 복원 각각 한 번의 저장·게시·revision 전진, payload에 설정 외 데이터 없음을 확인합니다.
   - 참조: SPEC §5.7, §5.8, §5.9, §5.13; DESIGN §1.1, §1.2, §2.1, §4.1, §4.2, §5 DP1.
+  - 승인 근거: 2026-10-03 main이 독립 verifier의 approved를 확정했습니다. HEAD cf9bc683 기준 세 파일 패치·해시와 signed PreferencesStoreTests 5/5·실패/skip0의 현재 대응을 확인했습니다. [task-001 근거](./evidence/task-001/README.md). loop 구현 재시도0·근거 재검증0이며 이번 Task로 마지막 매핑이 완료되는 SPEC 조건은 없습니다.
 
 - [ ] task-002: 네 프로필 일정과 실제 단일 조회 실행권
   - 목적: 프로필·생명주기 변경을 다음 유효 일정에 반영하고 취소를 무시하는 조회까지 축별 실행 하나로 제한합니다.

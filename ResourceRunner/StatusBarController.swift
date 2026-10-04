@@ -56,7 +56,13 @@ final class StatusBarController: NSObject {
         popover.delegate = self
         viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
         viewport?.requestBodyFocus = { [weak self] in
-            self?.popover.contentViewController?.view.window?.makeKey()
+            guard let self, self.popover.isShown,
+                  let body = self.popover.contentViewController?.view.window else { return false }
+            // 설정창 등 다른 소유 창이 key이면 늦은 복귀가 포커스를 빼앗지 않습니다.
+            guard Self.canRestoreBodyFocus(keyWindow: NSApp.keyWindow,
+                body: body, detail: viewport?.detailWindow) else { return false }
+            body.makeKey()
+            return true
         }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
@@ -87,12 +93,36 @@ final class StatusBarController: NSObject {
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
     }
 
+    static func canRestoreBodyFocus(keyWindow: NSWindow?, body: NSWindow,
+                                    detail: NSWindow?) -> Bool {
+        guard let keyWindow else { return true }
+        return keyWindow === body || keyWindow === detail
+            || (body.childWindows?.contains(keyWindow) ?? false)
+    }
+
     /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
     private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
         guard let window = event.window,
               window === popover.contentViewController?.view.window
                 || window === viewport?.detailWindow else { return event }
         let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+#if DEBUG
+        // UI fixture만 팝오버를 닫지 않은 채 카드 제거·포커스 복귀를 시험합니다.
+        if debugCardVisibilityInjector != nil,
+           modifiers == [.command, .shift] {
+            let card: DashboardSelection? = switch event.keyCode {
+            case 18: .cpu
+            case 19: .memory
+            case 20: .network
+            case 21: .disk
+            default: nil
+            }
+            if let card {
+                debugCardVisibilityInjector?(card)
+                return nil
+            }
+        }
+#endif
         guard modifiers.isEmpty else { return event }
         if event.keyCode == 53, keyboardDismiss?() == true { return nil }
         if event.keyCode == 116 || event.keyCode == 121,

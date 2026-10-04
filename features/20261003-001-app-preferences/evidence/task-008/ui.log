@@ -1,0 +1,2154 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -parallel-testing-enabled NO "-only-testing:ResourceRunnerUITests/DashboardViewportUITests" "-only-testing:ResourceRunnerUITests/DashboardPreferencesVisibilityUITests" "-only-testing:ResourceRunnerUITests/DashboardDetailPopoverUITests" "-only-testing:ResourceRunnerUITests/DashboardDetailExpansionUITests" "-only-testing:ResourceRunnerUITests/DashboardCardSelectionUITests" -derivedDataPath /tmp/rr-m4-task008-derived -resultBundlePath /tmp/rr-m4-task008-ui.xcresult CODE_SIGNING_ALLOWED=YES
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-04 14:44:20.504 xcodebuild[55201:52131155] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Writing result bundle at path:
+	/tmp/rr-m4-task008-ui.xcresult
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (3 targets)
+    Target 'ResourceRunnerUITests' in project 'ResourceRunner'
+        ➜ Explicit dependency on target 'ResourceRunner' in project 'ResourceRunner'
+    Target 'ResourceRunnerTests' in project 'ResourceRunner'
+        ➜ Explicit dependency on target 'ResourceRunner' in project 'ResourceRunner'
+    Target 'ResourceRunner' in project 'ResourceRunner' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 5857007b3e5b362ebd7a7cfdb7307efc
+Build description path: /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/XCBuildData/5857007b3e5b362ebd7a7cfdb7307efc.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk /tmp/rr-m4-task008-derived/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+    cd /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -o /tmp/rr-m4-task008-derived/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+
+ProcessInfoPlistFile /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-infoPlistUtility /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist -producttype com.apple.product-type.application -genpkginfo /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist -o /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist
+
+SwiftDriver ResourceRunnerUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunnerUITests -Onone @/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /tmp/rr-m4-task008-derived/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/rr-m4-task008-derived/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /tmp/rr-m4-task008-derived/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/rr-m4-task008-derived/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -sdk-module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/rr-m4-task008-derived/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-generated-files.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-own-target-headers.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-project-headers.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Products/Debug/include -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources-normal/arm64 -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources/arm64 -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-Swift.h -working-directory /Users/zipkero/XcodeProjects/ResourceRunner -experimental-emit-module-separately -disable-cmo
+
+ProcessInfoPlistFile /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/Info.plist /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerTests.build/empty-ResourceRunnerTests.plist (in target 'ResourceRunnerTests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-infoPlistUtility /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerTests.build/empty-ResourceRunnerTests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -platform macosx -o /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/Info.plist
+
+CopySwiftLibs /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest (in target 'ResourceRunnerTests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/MacOS/ResourceRunnerTests --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/Frameworks --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/PlugIns --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/Library/SystemExtensions --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest/Contents/Frameworks --strip-bitcode --scan-executable /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerTests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ProcessInfoPlistFile /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Info.plist /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/empty-ResourceRunnerUITests.plist (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-infoPlistUtility /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/empty-ResourceRunnerUITests.plist -producttype com.apple.product-type.bundle.ui-testing -expandbuildsettings -platform macosx -additionalcontentfile /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ProductTypeInfoPlistAdditions.plist -o /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Info.plist
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ ResourceRunnerUITests (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+
+EmitSwiftModule normal arm64 (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftCompile normal arm64 Compiling\ DashboardViewportUITests.swift /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunnerUITests/DashboardViewportUITests.swift (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+SwiftCompile normal arm64 /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunnerUITests/DashboardViewportUITests.swift (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for ResourceRunnerUITests (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+
+SwiftDriver\ Compilation\ Requirements ResourceRunnerUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunnerUITests -Onone @/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /tmp/rr-m4-task008-derived/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/rr-m4-task008-derived/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /tmp/rr-m4-task008-derived/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/rr-m4-task008-derived/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -sdk-module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/rr-m4-task008-derived/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-generated-files.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-own-target-headers.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-project-headers.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Products/Debug/include -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources-normal/arm64 -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources/arm64 -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-Swift.h -working-directory /Users/zipkero/XcodeProjects/ResourceRunner -experimental-emit-module-separately -disable-cmo
+
+Copy /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.swiftsourceinfo (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.swiftsourceinfo /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+Copy /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests.swiftmodule/arm64-apple-macos.abi.json /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.abi.json (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.abi.json /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests.swiftmodule/arm64-apple-macos.abi.json
+
+SwiftDriverJobDiscovery normal arm64 Compiling DashboardViewportUITests.swift (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+
+SwiftDriver\ Compilation ResourceRunnerUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunnerUITests -Onone @/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /tmp/rr-m4-task008-derived/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/rr-m4-task008-derived/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /tmp/rr-m4-task008-derived/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/rr-m4-task008-derived/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -sdk-module-cache-path /tmp/rr-m4-task008-derived/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/rr-m4-task008-derived/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-generated-files.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-own-target-headers.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-project-headers.hmap -Xcc -I/tmp/rr-m4-task008-derived/Build/Products/Debug/include -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources-normal/arm64 -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources/arm64 -Xcc -I/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-Swift.h -working-directory /Users/zipkero/XcodeProjects/ResourceRunner -experimental-emit-module-separately -disable-cmo
+
+Ld /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/MacOS/ResourceRunnerUITests normal (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.5 -bundle -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -O0 -L/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -L/tmp/rr-m4-task008-derived/Build/Products/Debug -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/tmp/rr-m4-task008-derived/Build/Products/Debug -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -filelist /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.LinkFileList -Xlinker -rpath -Xlinker @loader_path/../Frameworks -Xlinker -object_path_lto -Xlinker /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.swiftmodule @/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests-linker-args.resp -Xlinker -needed_framework -Xlinker XCTest -framework XCTest -Xlinker -needed-lXCTestSwiftSupport -lXCTestSwiftSupport -Xlinker -no_adhoc_codesign -o /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/MacOS/ResourceRunnerUITests
+
+PhaseScriptExecution Prepare\ expansion\ fixture /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Script-E20000000000000000000001.sh (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    export ACTION\=build
+    export AD_HOC_CODE_SIGNING_ALLOWED\=YES
+    export ALLOW_BUILD_REQUEST_OVERRIDES\=NO
+    export ALLOW_TARGET_PLATFORM_SPECIALIZATION\=NO
+    export ALTERNATE_GROUP\=staff
+    export ALTERNATE_MODE\=u+w,go-w,a+rX
+    export ALTERNATE_OWNER\=zipkero
+    export ALTERNATIVE_DISTRIBUTION_WEB\=NO
+    export ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES\=NO
+    export ALWAYS_SEARCH_USER_PATHS\=NO
+    export ALWAYS_USE_SEPARATE_HEADERMAPS\=NO
+    export APPLICATION_EXTENSION_API_ONLY\=NO
+    export APPLY_RULES_IN_COPY_FILES\=NO
+    export APPLY_RULES_IN_COPY_HEADERS\=NO
+    export APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING\=YES
+    export ARCHS\=arm64
+    export ARCHS_BASE\=arm64
+    export ARCHS_STANDARD\=arm64\ x86_64
+    export ARCHS_STANDARD_32_64_BIT\=arm64\ x86_64\ i386
+    export ARCHS_STANDARD_32_BIT\=i386
+    export ARCHS_STANDARD_64_BIT\=arm64\ x86_64
+    export ARCHS_STANDARD_INCLUDING_64_BIT\=arm64\ x86_64
+    export ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS\=YES
+    export AUTOMATICALLY_MERGE_DEPENDENCIES\=NO
+    export AUTOMATION_APPLE_EVENTS\=NO
+    export AVAILABLE_PLATFORMS\=android\ appletvos\ appletvsimulator\ driverkit\ freebsd\ iphoneos\ iphonesimulator\ linux\ macosx\ none\ openbsd\ qnx\ watchos\ watchsimulator\ webassembly\ xros\ xrsimulator
+    export BUILD_ACTIVE_RESOURCES_ONLY\=NO
+    export BUILD_COMPONENTS\=headers\ build
+    export BUILD_DIR\=/tmp/rr-m4-task008-derived/Build/Products
+    export BUILD_LIBRARY_FOR_DISTRIBUTION\=NO
+    export BUILD_ONLY_KNOWN_LOCALIZATIONS\=NO
+    export BUILD_ROOT\=/tmp/rr-m4-task008-derived/Build/Products
+    export BUILD_STYLE\=
+    export BUILD_VARIANTS\=normal
+    export BUILT_PRODUCTS_DIR\=/tmp/rr-m4-task008-derived/Build/Products/Debug
+    export BUNDLE_CONTENTS_FOLDER_PATH\=Contents/
+    export BUNDLE_CONTENTS_FOLDER_PATH_deep\=Contents/
+    export BUNDLE_EXECUTABLE_FOLDER_NAME_deep\=MacOS
+    export BUNDLE_EXECUTABLE_FOLDER_PATH\=Contents/MacOS
+    export BUNDLE_EXTENSIONS_FOLDER_PATH\=Contents/Extensions
+    export BUNDLE_FORMAT\=deep
+    export BUNDLE_FRAMEWORKS_FOLDER_PATH\=Contents/Frameworks
+    export BUNDLE_PLUGINS_FOLDER_PATH\=Contents/PlugIns
+    export BUNDLE_PRIVATE_HEADERS_FOLDER_PATH\=Contents/PrivateHeaders
+    export BUNDLE_PUBLIC_HEADERS_FOLDER_PATH\=Contents/Headers
+    export CACHE_ROOT\=/var/folders/dk/wdd8br81397gt8_3sby166cc0000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode
+    export CCHROOT\=/var/folders/dk/wdd8br81397gt8_3sby166cc0000gn/C/com.apple.DeveloperTools/26.6-17F113/Xcode
+    export CHMOD\=/bin/chmod
+    export CHOWN\=chown
+    export CLANG_ANALYZER_NONNULL\=YES
+    export CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION\=YES_AGGRESSIVE
+    export CLANG_CACHE_FINE_GRAINED_OUTPUTS\=YES
+    export CLANG_COVERAGE_MAPPING\=YES
+    export CLANG_CXX_LANGUAGE_STANDARD\=gnu++20
+    export CLANG_ENABLE_EXPLICIT_MODULES\=YES
+    export CLANG_ENABLE_MODULES\=YES
+    export CLANG_ENABLE_OBJC_ARC\=YES
+    export CLANG_ENABLE_OBJC_WEAK\=YES
+    export CLANG_MODULES_BUILD_SESSION_FILE\=/tmp/rr-m4-task008-derived/ModuleCache.noindex/Session.modulevalidation
+    export CLANG_PROFILE_DATA_DIRECTORY\=/tmp/rr-m4-task008-derived/Build/ProfileData
+    export CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING\=YES
+    export CLANG_WARN_BOOL_CONVERSION\=YES
+    export CLANG_WARN_COMMA\=YES
+    export CLANG_WARN_CONSTANT_CONVERSION\=YES
+    export CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS\=YES
+    export CLANG_WARN_DIRECT_OBJC_ISA_USAGE\=YES_ERROR
+    export CLANG_WARN_DOCUMENTATION_COMMENTS\=YES
+    export CLANG_WARN_EMPTY_BODY\=YES
+    export CLANG_WARN_ENUM_CONVERSION\=YES
+    export CLANG_WARN_INFINITE_RECURSION\=YES
+    export CLANG_WARN_INT_CONVERSION\=YES
+    export CLANG_WARN_NON_LITERAL_NULL_CONVERSION\=YES
+    export CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF\=YES
+    export CLANG_WARN_OBJC_LITERAL_CONVERSION\=YES
+    export CLANG_WARN_OBJC_ROOT_CLASS\=YES_ERROR
+    export CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER\=YES
+    export CLANG_WARN_RANGE_LOOP_ANALYSIS\=YES
+    export CLANG_WARN_STRICT_PROTOTYPES\=YES
+    export CLANG_WARN_SUSPICIOUS_MOVE\=YES
+    export CLANG_WARN_UNGUARDED_AVAILABILITY\=YES_AGGRESSIVE
+    export CLANG_WARN_UNREACHABLE_CODE\=YES
+    export CLANG_WARN__DUPLICATE_METHOD_MATCH\=YES
+    export CLASS_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/JavaClasses
+    export CLEAN_PRECOMPS\=YES
+    export CLONE_HEADERS\=NO
+    export CODESIGNING_FOLDER_PATH\=/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest
+    export CODE_SIGNING_ALLOWED\=YES
+    export CODE_SIGNING_REQUIRED\=YES
+    export CODE_SIGN_IDENTITY\=-
+    export CODE_SIGN_IDENTITY_NO\=Apple\ Development
+    export CODE_SIGN_IDENTITY_YES\=-
+    export CODE_SIGN_INJECT_BASE_ENTITLEMENTS\=YES
+    export CODE_SIGN_STYLE\=Automatic
+    export COLOR_DIAGNOSTICS\=NO
+    export COMBINE_HIDPI_IMAGES\=NO
+    export COMPILATION_CACHE_CAS_PATH\=/tmp/rr-m4-task008-derived/CompilationCache.noindex
+    export COMPILATION_CACHE_KEEP_CAS_DIRECTORY\=YES
+    export COMPILER_INDEX_STORE_ENABLE\=Default
+    export COMPOSITE_SDK_DIRS\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/CompositeSDKs
+    export COMPRESS_PNG_FILES\=NO
+    export CONFIGURATION\=Debug
+    export CONFIGURATION_BUILD_DIR\=/tmp/rr-m4-task008-derived/Build/Products/Debug
+    export CONFIGURATION_TEMP_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug
+    export CONTENTS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents
+    export CONTENTS_FOLDER_PATH_SHALLOW_BUNDLE_NO\=ResourceRunnerUITests.xctest/Contents
+    export CONTENTS_FOLDER_PATH_SHALLOW_BUNDLE_YES\=ResourceRunnerUITests.xctest
+    export COPYING_PRESERVES_HFS_DATA\=NO
+    export COPY_HEADERS_RUN_UNIFDEF\=NO
+    export COPY_PHASE_STRIP\=NO
+    export CP\=/bin/cp
+    export CREATE_INFOPLIST_SECTION_IN_BINARY\=NO
+    export CURRENT_ARCH\=undefined_arch
+    export CURRENT_PROJECT_VERSION\=1
+    export CURRENT_VARIANT\=normal
+    export DEAD_CODE_STRIPPING\=NO
+    export DEBUGGING_SYMBOLS\=YES
+    export DEBUG_INFORMATION_FORMAT\=dwarf
+    export DEBUG_INFORMATION_VERSION\=compiler-default
+    export DEFAULT_COMPILER\=com.apple.compilers.llvm.clang.1_0
+    export DEFAULT_DEXT_INSTALL_PATH\=/System/Library/DriverExtensions
+    export DEFAULT_KEXT_INSTALL_PATH\=/System/Library/Extensions
+    export DEFINES_MODULE\=NO
+    export DEPLOYMENT_LOCATION\=NO
+    export DEPLOYMENT_POSTPROCESSING\=NO
+    export DEPLOYMENT_TARGET_SETTING_NAME\=MACOSX_DEPLOYMENT_TARGET
+    export DEPLOYMENT_TARGET_SUGGESTED_VALUES\=10.13\ 10.14\ 10.15\ 11.0\ 11.1\ 11.2\ 11.3\ 11.4\ 11.5\ 12.0\ 12.2\ 12.3\ 12.4\ 13.0\ 13.1\ 13.2\ 13.3\ 13.4\ 13.5\ 14.0\ 14.1\ 14.2\ 14.3\ 14.4\ 14.5\ 14.6\ 15.0\ 15.1\ 15.2\ 15.3\ 15.4\ 15.5\ 15.6\ 26.0\ 26.1\ 26.2\ 26.3\ 26.4\ 26.5
+    export DERIVED_FILES_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources
+    export DERIVED_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources
+    export DERIVED_SOURCES_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources
+    export DEVELOPER_APPLICATIONS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications
+    export DEVELOPER_BIN_DIR\=/Applications/Xcode.app/Contents/Developer/usr/bin
+    export DEVELOPER_DIR\=/Applications/Xcode.app/Contents/Developer
+    export DEVELOPER_FRAMEWORKS_DIR\=/Applications/Xcode.app/Contents/Developer/Library/Frameworks
+    export DEVELOPER_FRAMEWORKS_DIR_QUOTED\=/Applications/Xcode.app/Contents/Developer/Library/Frameworks
+    export DEVELOPER_LIBRARY_DIR\=/Applications/Xcode.app/Contents/Developer/Library
+    export DEVELOPER_SDK_DIR\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+    export DEVELOPER_TOOLS_DIR\=/Applications/Xcode.app/Contents/Developer/Tools
+    export DEVELOPER_USR_DIR\=/Applications/Xcode.app/Contents/Developer/usr
+    export DEVELOPMENT_LANGUAGE\=en
+    export DIAGNOSE_MISSING_TARGET_DEPENDENCIES\=YES
+    export DIFF\=/usr/bin/diff
+    export DOCUMENTATION_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Resources/en.lproj/Documentation
+    export DONT_GENERATE_INFOPLIST_FILE\=NO
+    export DSTROOT\=/tmp/ResourceRunner.dst
+    export DT_TOOLCHAIN_DIR\=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
+    export DUMP_DEPENDENCIES\=NO
+    export DUMP_DEPENDENCIES_OUTPUT_PATH\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-BuildDependencyInfo.json
+    export DWARF_DSYM_FILE_NAME\=ResourceRunnerUITests.xctest.dSYM
+    export DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT\=NO
+    export DWARF_DSYM_FOLDER_PATH\=/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns
+    export DYNAMIC_LIBRARY_EXTENSION\=dylib
+    export EAGER_COMPILATION_ALLOW_SCRIPTS\=NO
+    export EAGER_LINKING\=NO
+    export EFFECTIVE_SWIFT_VERSION\=5
+    export EMBEDDED_CONTENT_CONTAINS_SWIFT\=NO
+    export EMBEDDED_PROFILE_NAME\=embedded.provisionprofile
+    export EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE\=NO
+    export ENABLE_APP_SANDBOX\=NO
+    export ENABLE_CODE_COVERAGE\=YES
+    export ENABLE_COHORT_ARCHS\=NO
+    export ENABLE_CPLUSPLUS_BOUNDS_SAFE_BUFFERS\=NO
+    export ENABLE_C_BOUNDS_SAFETY\=NO
+    export ENABLE_DEFAULT_HEADER_SEARCH_PATHS\=YES
+    export ENABLE_DEFAULT_SEARCH_PATHS\=YES
+    export ENABLE_ENHANCED_SECURITY\=NO
+    export ENABLE_HARDENED_RUNTIME\=NO
+    export ENABLE_HEADER_DEPENDENCIES\=YES
+    export ENABLE_INCOMING_NETWORK_CONNECTIONS\=NO
+    export ENABLE_ON_DEMAND_RESOURCES\=NO
+    export ENABLE_OUTGOING_NETWORK_CONNECTIONS\=NO
+    export ENABLE_POINTER_AUTHENTICATION\=NO
+    export ENABLE_PREVIEWS\=NO
+    export ENABLE_RESOURCE_ACCESS_AUDIO_INPUT\=NO
+    export ENABLE_RESOURCE_ACCESS_BLUETOOTH\=NO
+    export ENABLE_RESOURCE_ACCESS_CALENDARS\=NO
+    export ENABLE_RESOURCE_ACCESS_CAMERA\=NO
+    export ENABLE_RESOURCE_ACCESS_CONTACTS\=NO
+    export ENABLE_RESOURCE_ACCESS_LOCATION\=NO
+    export ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY\=NO
+    export ENABLE_RESOURCE_ACCESS_PRINTING\=NO
+    export ENABLE_RESOURCE_ACCESS_USB\=NO
+    export ENABLE_SDK_IMPORTS\=NO
+    export ENABLE_SECURITY_COMPILER_WARNINGS\=NO
+    export ENABLE_STRICT_OBJC_MSGSEND\=YES
+    export ENABLE_TESTABILITY\=YES
+    export ENABLE_TESTING_SEARCH_PATHS\=YES
+    export ENABLE_USER_SCRIPT_SANDBOXING\=NO
+    export ENABLE_XOJIT_PREVIEWS\=YES
+    export ENFORCE_VALID_ARCHS\=YES
+    export ENTITLEMENTS_DESTINATION\=Signature
+    export ENTITLEMENTS_REQUIRED\=YES
+    export EXCLUDED_INSTALLSRC_SUBDIRECTORY_PATTERNS\=.DS_Store\ .svn\ .git\ .hg\ CVS
+    export EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES\=\*.nib\ \*.lproj\ \*.framework\ \*.gch\ \*.xcode\*\ \*.xcassets\ \*.icon\ \(\*\)\ .DS_Store\ CVS\ .svn\ .git\ .hg\ \*.pbproj\ \*.pbxproj
+    export EXECUTABLES_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Executables
+    export EXECUTABLE_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/MacOS
+    export EXECUTABLE_FOLDER_PATH_SHALLOW_BUNDLE_NO\=ResourceRunnerUITests.xctest/Contents/MacOS
+    export EXECUTABLE_FOLDER_PATH_SHALLOW_BUNDLE_YES\=ResourceRunnerUITests.xctest/Contents
+    export EXECUTABLE_NAME\=ResourceRunnerUITests
+    export EXECUTABLE_PATH\=ResourceRunnerUITests.xctest/Contents/MacOS/ResourceRunnerUITests
+    export EXPANDED_CODE_SIGN_IDENTITY\=-
+    export EXPANDED_CODE_SIGN_IDENTITY_NAME\=Sign\ to\ Run\ Locally
+    export EXTENSIONS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Extensions
+    export FILE_LIST\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects/LinkFileList
+    export FIXED_FILES_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/FixedFiles
+    export FRAMEWORKS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Frameworks
+    export FRAMEWORK_FLAG_PREFIX\=-framework
+    export FRAMEWORK_SEARCH_PATHS\=/tmp/rr-m4-task008-derived/Build/Products/Debug\ 
+    export FRAMEWORK_VERSION\=A
+    export FULL_PRODUCT_NAME\=ResourceRunnerUITests.xctest
+    export FUSE_BUILD_PHASES\=YES
+    export FUSE_BUILD_SCRIPT_PHASES\=NO
+    export GCC3_VERSION\=3.3
+    export GCC_C_LANGUAGE_STANDARD\=gnu17
+    export GCC_DYNAMIC_NO_PIC\=NO
+    export GCC_INLINES_ARE_PRIVATE_EXTERN\=YES
+    export GCC_NO_COMMON_BLOCKS\=YES
+    export GCC_OPTIMIZATION_LEVEL\=0
+    export GCC_PFE_FILE_C_DIALECTS\=c\ objective-c\ c++\ objective-c++
+    export GCC_PREPROCESSOR_DEFINITIONS\=DEBUG\=1\ 
+    export GCC_TREAT_WARNINGS_AS_ERRORS\=NO
+    export GCC_VERSION\=com.apple.compilers.llvm.clang.1_0
+    export GCC_VERSION_IDENTIFIER\=com_apple_compilers_llvm_clang_1_0
+    export GCC_WARN_64_TO_32_BIT_CONVERSION\=YES
+    export GCC_WARN_ABOUT_RETURN_TYPE\=YES_ERROR
+    export GCC_WARN_UNDECLARED_SELECTOR\=YES
+    export GCC_WARN_UNINITIALIZED_AUTOS\=YES_AGGRESSIVE
+    export GCC_WARN_UNUSED_FUNCTION\=YES
+    export GCC_WARN_UNUSED_VARIABLE\=YES
+    export GENERATED_MODULEMAP_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/GeneratedModuleMaps
+    export GENERATED_TEST_ENTRY_POINT_PATH\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/DerivedSources/test_entry_point.swift
+    export GENERATE_INFOPLIST_FILE\=YES
+    export GENERATE_INTERMEDIATE_TEXT_BASED_STUBS\=YES
+    export GENERATE_PKGINFO_FILE\=NO
+    export GENERATE_PRELINK_OBJECT_FILE\=NO
+    export GENERATE_PROFILING_CODE\=NO
+    export GENERATE_TEXT_BASED_STUBS\=NO
+    export GID\=20
+    export GROUP\=staff
+    export HEADERMAP_INCLUDES_FLAT_ENTRIES_FOR_TARGET_BEING_BUILT\=YES
+    export HEADERMAP_INCLUDES_FRAMEWORK_ENTRIES_FOR_ALL_PRODUCT_TYPES\=YES
+    export HEADERMAP_INCLUDES_FRAMEWORK_ENTRIES_FOR_TARGETS_NOT_BEING_BUILT\=YES
+    export HEADERMAP_INCLUDES_NONPUBLIC_NONPRIVATE_HEADERS\=YES
+    export HEADERMAP_INCLUDES_PROJECT_HEADERS\=YES
+    export HEADERMAP_USES_FRAMEWORK_PREFIX_ENTRIES\=YES
+    export HEADERMAP_USES_VFS\=NO
+    export HEADER_SEARCH_PATHS\=/tmp/rr-m4-task008-derived/Build/Products/Debug/include\ 
+    export HOME\=/Users/zipkero
+    export HOST_ARCH\=arm64
+    export HOST_PLATFORM\=macosx
+    export ICONV\=/usr/bin/iconv
+    export IMPLICIT_DEPENDENCY_DOMAIN\=default
+    export INDEX_STORE_COMPRESS\=NO
+    export INDEX_STORE_ONLY_PROJECT_FILES\=NO
+    export INFOPLIST_ENABLE_CFBUNDLEICONS_MERGE\=YES
+    export INFOPLIST_EXPAND_BUILD_SETTINGS\=YES
+    export INFOPLIST_OUTPUT_FORMAT\=same-as-input
+    export INFOPLIST_PATH\=ResourceRunnerUITests.xctest/Contents/Info.plist
+    export INFOPLIST_PREPROCESS\=NO
+    export INFOSTRINGS_PATH\=ResourceRunnerUITests.xctest/Contents/Resources/en.lproj/InfoPlist.strings
+    export INLINE_PRIVATE_FRAMEWORKS\=NO
+    export INSTALLAPI_IGNORE_SKIP_INSTALL\=YES
+    export INSTALLHDRS_COPY_PHASE\=NO
+    export INSTALLHDRS_SCRIPT_PHASE\=NO
+    export INSTALL_DIR\=/tmp/ResourceRunner.dst
+    export INSTALL_GROUP\=staff
+    export INSTALL_MODE_FLAG\=u+w,go-w,a+rX
+    export INSTALL_OWNER\=zipkero
+    export INSTALL_ROOT\=/tmp/ResourceRunner.dst
+    export IOS_UNZIPPERED_TWIN_PREFIX_PATH\=/System/iOSSupport
+    export IS_MACCATALYST\=NO
+    export IS_UNOPTIMIZED_BUILD\=YES
+    export JAVAC_DEFAULT_FLAGS\=-J-Xms64m\ -J-XX:NewSize\=4M\ -J-Dfile.encoding\=UTF8
+    export JAVA_APP_STUB\=/System/Library/Frameworks/JavaVM.framework/Resources/MacOS/JavaApplicationStub
+    export JAVA_ARCHIVE_CLASSES\=YES
+    export JAVA_ARCHIVE_TYPE\=JAR
+    export JAVA_COMPILER\=/usr/bin/javac
+    export JAVA_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Resources/Java
+    export JAVA_FRAMEWORK_RESOURCES_DIRS\=Resources
+    export JAVA_JAR_FLAGS\=cv
+    export JAVA_SOURCE_SUBDIR\=.
+    export JAVA_USE_DEPENDENCIES\=YES
+    export JAVA_ZIP_FLAGS\=-urg
+    export JIKES_DEFAULT_FLAGS\=+E\ +OLDCSO
+    export KASAN_CFLAGS_CLASSIC\=-DKASAN\=1\ -DKASAN_CLASSIC\=1\ -fsanitize\=address\ -mllvm\ -asan-globals-live-support\ -mllvm\ -asan-force-dynamic-shadow
+    export KASAN_CFLAGS_TBI\=-DKASAN\=1\ -DKASAN_TBI\=1\ -fsanitize\=kernel-hwaddress\ -mllvm\ -hwasan-recover\=0\ -mllvm\ -hwasan-instrument-atomics\=0\ -mllvm\ -hwasan-instrument-stack\=1\ -mllvm\ -hwasan-generate-tags-with-calls\=1\ -mllvm\ -hwasan-instrument-with-calls\=1\ -mllvm\ -hwasan-use-short-granules\=0\ -mllvm\ -hwasan-memory-access-callback-prefix\=__asan_
+    export KASAN_DEFAULT_CFLAGS\=-DKASAN\=1\ -DKASAN_CLASSIC\=1\ -fsanitize\=address\ -mllvm\ -asan-globals-live-support\ -mllvm\ -asan-force-dynamic-shadow
+    export KEEP_PRIVATE_EXTERNS\=NO
+    export LD_DEPENDENCY_INFO_FILE\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/undefined_arch/ResourceRunnerUITests_dependency_info.dat
+    export LD_EXPORT_SYMBOLS\=YES
+    export LD_GENERATE_MAP_FILE\=NO
+    export LD_MAP_FILE_PATH\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests-LinkMap-normal-undefined_arch.txt
+    export LD_NO_PIE\=NO
+    export LD_QUOTE_LINKER_ARGUMENTS_FOR_COMPILER_DRIVER\=YES
+    export LD_RUNPATH_SEARCH_PATHS\=\ @loader_path/../Frameworks
+    export LD_RUNPATH_SEARCH_PATHS_SHALLOW_BUNDLE_NO\=@loader_path/../Frameworks
+    export LD_RUNPATH_SEARCH_PATHS_SHALLOW_BUNDLE_YES\=@loader_path/Frameworks
+    export LD_SHARED_CACHE_ELIGIBLE\=Automatic
+    export LD_WARN_DUPLICATE_LIBRARIES\=NO
+    export LD_WARN_UNUSED_DYLIBS\=NO
+    export LEGACY_DEVELOPER_DIR\=/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer
+    export LEX\=lex
+    export LIBRARY_DEXT_INSTALL_PATH\=/Library/DriverExtensions
+    export LIBRARY_FLAG_NOSPACE\=YES
+    export LIBRARY_FLAG_PREFIX\=-l
+    export LIBRARY_KEXT_INSTALL_PATH\=/Library/Extensions
+    export LIBRARY_SEARCH_PATHS\=/tmp/rr-m4-task008-derived/Build/Products/Debug\ \ \ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib
+    export LINKER_DISPLAYS_MANGLED_NAMES\=NO
+    export LINK_FILE_LIST_normal_arm64\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.LinkFileList
+    export LINK_OBJC_RUNTIME\=YES
+    export LINK_WITH_STANDARD_LIBRARIES\=YES
+    export LLVM_TARGET_TRIPLE_OS_VERSION\=macos26.5
+    export LLVM_TARGET_TRIPLE_OS_VERSION_NO\=macos26.5
+    export LLVM_TARGET_TRIPLE_OS_VERSION_YES\=macos26.5
+    export LLVM_TARGET_TRIPLE_VENDOR\=apple
+    export LM_AUX_CONST_METADATA_LIST_PATH_normal_arm64\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftConstValuesFileList
+    export LOCALIZATION_EXPORT_SUPPORTED\=YES
+    export LOCALIZATION_PREFERS_STRING_CATALOGS\=YES
+    export LOCALIZED_RESOURCES_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Resources/en.lproj
+    export LOCALIZED_STRING_CODE_COMMENTS\=NO
+    export LOCALIZED_STRING_MACRO_NAMES\=NSLocalizedString\ CFCopyLocalizedString
+    export LOCALIZED_STRING_SWIFTUI_SUPPORT\=YES
+    export LOCAL_ADMIN_APPS_DIR\=/Applications/Utilities
+    export LOCAL_APPS_DIR\=/Applications
+    export LOCAL_DEVELOPER_DIR\=/Library/Developer
+    export LOCAL_LIBRARY_DIR\=/Library
+    export LOCROOT\=/Users/zipkero/XcodeProjects/ResourceRunner
+    export LOCSYMROOT\=/Users/zipkero/XcodeProjects/ResourceRunner
+    export MACH_O_TYPE\=mh_bundle
+    export MACOSX_DEPLOYMENT_TARGET\=26.5
+    export MAC_OS_X_PRODUCT_BUILD_VERSION\=25G83
+    export MAC_OS_X_VERSION_ACTUAL\=260602
+    export MAC_OS_X_VERSION_MAJOR\=260000
+    export MAC_OS_X_VERSION_MINOR\=260600
+    export MAKE_MERGEABLE\=NO
+    export MARKETING_VERSION\=1.0
+    export MERGEABLE_LIBRARY\=NO
+    export MERGED_BINARY_TYPE\=none
+    export MERGE_LINKED_LIBRARIES\=NO
+    export METAL_LIBRARY_FILE_BASE\=default
+    export METAL_LIBRARY_OUTPUT_DIR\=/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Resources
+    export MODULES_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Modules
+    export MODULE_CACHE_DIR\=/tmp/rr-m4-task008-derived/ModuleCache.noindex
+    export MTL_ENABLE_DEBUG_INFO\=INCLUDE_SOURCE
+    export MTL_FAST_MATH\=YES
+    export NATIVE_ARCH\=arm64
+    export NATIVE_ARCH_32_BIT\=arm
+    export NATIVE_ARCH_64_BIT\=arm64
+    export NATIVE_ARCH_ACTUAL\=arm64
+    export NO_COMMON\=YES
+    export OBJECT_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects
+    export OBJECT_FILE_DIR_normal\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal
+    export OBJROOT\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex
+    export ONLY_ACTIVE_ARCH\=YES
+    export OS\=MACOS
+    export OSAC\=/usr/bin/osacompile
+    export OTHER_SWIFT_FLAGS\=\ -module-alias\ Testing\=_Testing_Unavailable\ -plugin-path\ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing
+    export PACKAGE_TYPE\=com.apple.package-type.bundle.unit-test
+    export PASCAL_STRINGS\=YES
+    export PATH\=/Applications/Xcode.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/local/bin:/Users/zipkero/.codex/packages/standalone/releases/0.160.0-aarch64-apple-darwin/codex-path:/Users/zipkero/.nvm/versions/node/v24.15.0/bin:/Users/zipkero/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:/opt/homebrew/bin:/Users/zipkero/.codex/tmp/arg0/codex-arg0CjU73n:/Applications/Orca.app/Contents/Resources/bin:/Users/zipkero/Library/Application\ Support/JetBrains/Toolbox/scripts:/Users/zipkero/.orbstack/bin:/Users/zipkero/go/bin:/Users/zipkero/.volta/bin:/Users/zipkero/.asdf/shims:/Users/zipkero/.fnm/aliases/default/bin:/Users/zipkero/.local/share/mise/shims:/Users/zipkero/Library/pnpm:/Users/zipkero/.yarn/bin:/Users/zipkero/.bun/bin:/opt/homebrew/sbin:/usr/local/sbin:/nix/var/nix/profiles/default/bin:/Users/zipkero/bin:/Users/zipkero/.nix-profile/bin:/Users/zipkero/.opencode/bin:/Users/zipkero/.vite-plus/bin
+    export PATH_PREFIXES_EXCLUDED_FROM_HEADER_DEPENDENCIES\=/usr/include\ /usr/local/include\ /System/Library/Frameworks\ /System/Library/PrivateFrameworks\ /Applications/Xcode.app/Contents/Developer/Headers\ /Applications/Xcode.app/Contents/Developer/SDKs\ /Applications/Xcode.app/Contents/Developer/Platforms
+    export PBDEVELOPMENTPLIST_PATH\=ResourceRunnerUITests.xctest/Contents/pbdevelopment.plist
+    export PER_ARCH_MODULE_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/undefined_arch
+    export PER_ARCH_OBJECT_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/undefined_arch
+    export PER_VARIANT_OBJECT_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal
+    export PKGINFO_FILE_PATH\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/PkgInfo
+    export PKGINFO_PATH\=ResourceRunnerUITests.xctest/Contents/PkgInfo
+    export PLATFORM_DEVELOPER_APPLICATIONS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications
+    export PLATFORM_DEVELOPER_BIN_DIR\=/Applications/Xcode.app/Contents/Developer/usr/bin
+    export PLATFORM_DEVELOPER_LIBRARY_DIR\=/Applications/Xcode.app/Contents/Developer/Library
+    export PLATFORM_DEVELOPER_SDK_DIR\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+    export PLATFORM_DEVELOPER_TOOLS_DIR\=/Applications/Xcode.app/Contents/Developer/Tools
+    export PLATFORM_DEVELOPER_USR_DIR\=/Applications/Xcode.app/Contents/Developer/usr
+    export PLATFORM_DIR\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform
+    export PLATFORM_DISPLAY_NAME\=macOS
+    export PLATFORM_FAMILY_NAME\=macOS
+    export PLATFORM_NAME\=macosx
+    export PLATFORM_PREFERRED_ARCH\=x86_64
+    export PLATFORM_PRODUCT_BUILD_VERSION\=25F70
+    export PLATFORM_REQUIRES_SWIFT_AUTOLINK_EXTRACT\=NO
+    export PLATFORM_REQUIRES_SWIFT_MODULEWRAP\=NO
+    export PLATFORM_USES_DSYMS\=YES
+    export PLIST_FILE_OUTPUT_FORMAT\=same-as-input
+    export PLUGINS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/PlugIns
+    export PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR\=YES
+    export PRECOMP_DESTINATION_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/PrefixHeaders
+    export PRIVATE_HEADERS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/PrivateHeaders
+    export PROCESSED_INFOPLIST_PATH\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/undefined_arch/Processed-Info.plist
+    export PRODUCT_BUNDLE_IDENTIFIER\=com.zipkero.ResourceRunnerUITests
+    export PRODUCT_BUNDLE_PACKAGE_TYPE\=BNDL
+    export PRODUCT_MODULE_NAME\=ResourceRunnerUITests
+    export PRODUCT_NAME\=ResourceRunnerUITests
+    export PRODUCT_SETTINGS_PATH\=
+    export PRODUCT_SPECIFIC_LDFLAGS\=-Xlinker\ -needed_framework\ -Xlinker\ XCTest\ -framework\ XCTest\ -Xlinker\ -needed-lXCTestSwiftSupport\ -lXCTestSwiftSupport
+    export PRODUCT_TYPE\=com.apple.product-type.bundle.ui-testing
+    export PRODUCT_TYPE_SWIFT_STDLIB_TOOL_FLAGS\=--scan-executable\ \"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib\"
+    export PROFILING_CODE\=NO
+    export PROJECT\=ResourceRunner
+    export PROJECT_DERIVED_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/DerivedSources
+    export PROJECT_DIR\=/Users/zipkero/XcodeProjects/ResourceRunner
+    export PROJECT_FILE_PATH\=/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    export PROJECT_GUID\=8c3503f0990367d409751a2585fa2393
+    export PROJECT_NAME\=ResourceRunner
+    export PROJECT_TEMP_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build
+    export PROJECT_TEMP_ROOT\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex
+    export PROVISIONING_PROFILE_DESTINATION_PATH\=/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/..
+    export PROVISIONING_PROFILE_REQUIRED\=NO
+    export PROVISIONING_PROFILE_SUPPORTED\=YES
+    export PUBLIC_HEADERS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Headers
+    export RECOMMENDED_MACOSX_DEPLOYMENT_TARGET\=11.0
+    export RECURSIVE_SEARCH_PATHS_FOLLOW_SYMLINKS\=YES
+    export REMOVE_CVS_FROM_RESOURCES\=YES
+    export REMOVE_GIT_FROM_RESOURCES\=YES
+    export REMOVE_HEADERS_FROM_EMBEDDED_BUNDLES\=YES
+    export REMOVE_HG_FROM_RESOURCES\=YES
+    export REMOVE_STATIC_EXECUTABLES_FROM_EMBEDDED_BUNDLES\=YES
+    export REMOVE_SVN_FROM_RESOURCES\=YES
+    export RESCHEDULE_INDEPENDENT_HEADERS_PHASES\=YES
+    export REZ_COLLECTOR_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceManagerResources
+    export REZ_OBJECTS_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceManagerResources/Objects
+    export REZ_SEARCH_PATHS\=/tmp/rr-m4-task008-derived/Build/Products/Debug\ 
+    export RPATH_ORIGIN\=@loader_path
+    export RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES\=NO
+    export RUNTIME_EXCEPTION_ALLOW_JIT\=NO
+    export RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY\=NO
+    export RUNTIME_EXCEPTION_DEBUGGING_TOOL\=NO
+    export RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION\=NO
+    export RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION\=NO
+    export SCANNING_PCM_KEEP_CACHE_DIRECTORY\=YES
+    export SCAN_ALL_SOURCE_FILES_FOR_INCLUDES\=NO
+    export SCRIPTS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Resources/Scripts
+    export SCRIPT_INPUT_FILE_0\=/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunnerUITests/ExpansionProcessFixture.cfixture
+    export SCRIPT_INPUT_FILE_COUNT\=1
+    export SCRIPT_INPUT_FILE_LIST_COUNT\=0
+    export SCRIPT_OUTPUT_FILE_0\=/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture
+    export SCRIPT_OUTPUT_FILE_COUNT\=1
+    export SCRIPT_OUTPUT_FILE_LIST_COUNT\=0
+    export SDKROOT\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk
+    export SDK_DIR\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk
+    export SDK_DIR_macosx\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk
+    export SDK_DIR_macosx26_5\=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk
+    export SDK_NAME\=macosx26.5
+    export SDK_NAMES\=macosx26.5
+    export SDK_PRODUCT_BUILD_VERSION\=25F70
+    export SDK_STAT_CACHE_DIR\=/tmp/rr-m4-task008-derived
+    export SDK_STAT_CACHE_ENABLE\=YES
+    export SDK_STAT_CACHE_PATH\=/tmp/rr-m4-task008-derived/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+    export SDK_VERSION\=26.5
+    export SDK_VERSION_ACTUAL\=260500
+    export SDK_VERSION_MAJOR\=260000
+    export SDK_VERSION_MINOR\=260500
+    export SED\=/usr/bin/sed
+    export SEPARATE_STRIP\=NO
+    export SEPARATE_SYMBOL_EDIT\=NO
+    export SET_DIR_MODE_OWNER_GROUP\=YES
+    export SET_FILE_MODE_OWNER_GROUP\=NO
+    export SHALLOW_BUNDLE\=NO
+    export SHALLOW_BUNDLE_PLATFORM\=NO
+    export SHALLOW_BUNDLE_TRIPLE\=macos
+    export SHALLOW_BUNDLE_ios_macabi\=NO
+    export SHALLOW_BUNDLE_macos\=NO
+    export SHARED_DERIVED_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Products/Debug/DerivedSources
+    export SHARED_FRAMEWORKS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/SharedFrameworks
+    export SHARED_PRECOMPS_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/PrecompiledHeaders
+    export SHARED_SUPPORT_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/SharedSupport
+    export SKIP_INSTALL\=YES
+    export SKIP_MERGEABLE_LIBRARY_BUNDLE_HOOK\=NO
+    export SOURCE_ROOT\=/Users/zipkero/XcodeProjects/ResourceRunner
+    export SRCROOT\=/Users/zipkero/XcodeProjects/ResourceRunner
+    export STRINGSDATA_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/undefined_arch
+    export STRINGSDATA_ROOT\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build
+    export STRINGS_FILE_INFOPLIST_RENAME\=YES
+    export STRINGS_FILE_OUTPUT_ENCODING\=UTF-16
+    export STRING_CATALOG_GENERATE_SYMBOLS\=NO
+    export STRIP_BITCODE_FROM_COPIED_FILES\=NO
+    export STRIP_INSTALLED_PRODUCT\=NO
+    export STRIP_PNG_TEXT\=NO
+    export STRIP_STYLE\=non-global
+    export STRIP_SWIFT_SYMBOLS\=YES
+    export SUPPORTED_PLATFORMS\=macosx
+    export SUPPORTS_TEXT_BASED_API\=NO
+    export SUPPRESS_WARNINGS\=NO
+    export SWIFT_ACTIVE_COMPILATION_CONDITIONS\=DEBUG\ 
+    export SWIFT_APPROACHABLE_CONCURRENCY\=YES
+    export SWIFT_EMIT_CONST_VALUE_PROTOCOLS\=AnyResolverProviding\ AppEntity\ AppEnum\ AppExtension\ AppIntent\ AppIntentsPackage\ AppShortcutProviding\ AppShortcutsProvider\ AppUnionValue\ AppUnionValueCasesProviding\ DynamicOptionsProvider\ EntityQuery\ ExtensionPointDefining\ IntentValueQuery\ Resolver\ TransientEntity\ _AssistantIntentsProvider\ _GenerativeFunctionExtractable\ _IntentValueRepresentable
+    export SWIFT_EMIT_LOC_STRINGS\=NO
+    export SWIFT_ENABLE_EXPLICIT_MODULES\=YES
+    export SWIFT_OPTIMIZATION_LEVEL\=-Onone
+    export SWIFT_PLATFORM_TARGET_PREFIX\=macos
+    export SWIFT_RESPONSE_FILE_PATH_normal_arm64\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftFileList
+    export SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY\=YES
+    export SWIFT_VERSION\=5.0
+    export SYMROOT\=/tmp/rr-m4-task008-derived/Build/Products
+    export SYSTEM_ADMIN_APPS_DIR\=/Applications/Utilities
+    export SYSTEM_APPS_DIR\=/Applications
+    export SYSTEM_CORE_SERVICES_DIR\=/System/Library/CoreServices
+    export SYSTEM_DEMOS_DIR\=/Applications/Extras
+    export SYSTEM_DEVELOPER_APPS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications
+    export SYSTEM_DEVELOPER_BIN_DIR\=/Applications/Xcode.app/Contents/Developer/usr/bin
+    export SYSTEM_DEVELOPER_DEMOS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications/Utilities/Built\ Examples
+    export SYSTEM_DEVELOPER_DIR\=/Applications/Xcode.app/Contents/Developer
+    export SYSTEM_DEVELOPER_DOC_DIR\=/Applications/Xcode.app/Contents/Developer/ADC\ Reference\ Library
+    export SYSTEM_DEVELOPER_GRAPHICS_TOOLS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications/Graphics\ Tools
+    export SYSTEM_DEVELOPER_JAVA_TOOLS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications/Java\ Tools
+    export SYSTEM_DEVELOPER_PERFORMANCE_TOOLS_DIR\=/Applications/Xcode.app/Contents/Developer/Applications/Performance\ Tools
+    export SYSTEM_DEVELOPER_RELEASENOTES_DIR\=/Applications/Xcode.app/Contents/Developer/ADC\ Reference\ Library/releasenotes
+    export SYSTEM_DEVELOPER_TOOLS\=/Applications/Xcode.app/Contents/Developer/Tools
+    export SYSTEM_DEVELOPER_TOOLS_DOC_DIR\=/Applications/Xcode.app/Contents/Developer/ADC\ Reference\ Library/documentation/DeveloperTools
+    export SYSTEM_DEVELOPER_TOOLS_RELEASENOTES_DIR\=/Applications/Xcode.app/Contents/Developer/ADC\ Reference\ Library/releasenotes/DeveloperTools
+    export SYSTEM_DEVELOPER_USR_DIR\=/Applications/Xcode.app/Contents/Developer/usr
+    export SYSTEM_DEVELOPER_UTILITIES_DIR\=/Applications/Xcode.app/Contents/Developer/Applications/Utilities
+    export SYSTEM_DEXT_INSTALL_PATH\=/System/Library/DriverExtensions
+    export SYSTEM_DOCUMENTATION_DIR\=/Library/Documentation
+    export SYSTEM_EXTENSIONS_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Library/SystemExtensions
+    export SYSTEM_EXTENSIONS_FOLDER_PATH_SHALLOW_BUNDLE_NO\=ResourceRunnerUITests.xctest/Contents/Library/SystemExtensions
+    export SYSTEM_EXTENSIONS_FOLDER_PATH_SHALLOW_BUNDLE_YES\=ResourceRunnerUITests.xctest/Contents/SystemExtensions
+    export SYSTEM_FRAMEWORK_SEARCH_PATHS\=\ \ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks
+    export SYSTEM_KEXT_INSTALL_PATH\=/System/Library/Extensions
+    export SYSTEM_LIBRARY_DIR\=/System/Library
+    export TAPI_DEMANGLE\=YES
+    export TAPI_ENABLE_PROJECT_HEADERS\=NO
+    export TAPI_LANGUAGE\=objective-c
+    export TAPI_LANGUAGE_STANDARD\=compiler-default
+    export TAPI_USE_SRCROOT\=YES
+    export TAPI_VERIFY_MODE\=Pedantic
+    export TARGETNAME\=ResourceRunnerUITests
+    export TARGET_BUILD_DIR\=/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns
+    export TARGET_BUILD_SUBPATH\=/ResourceRunnerUITests-Runner.app/Contents/PlugIns
+    export TARGET_NAME\=ResourceRunnerUITests
+    export TARGET_TEMP_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build
+    export TEMP_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build
+    export TEMP_FILES_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build
+    export TEMP_FILE_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build
+    export TEMP_ROOT\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex
+    export TEMP_SANDBOX_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/TemporaryTaskSandboxes
+    export TESTING_FRAMEWORK_MODULE_ALIAS_FLAGS\=-module-alias\ Testing\=_Testing_Unavailable
+    export TEST_FRAMEWORK_SEARCH_PATHS\=\ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks
+    export TEST_LIBRARY_SEARCH_PATHS\=\ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib
+    export TEST_TARGET_NAME\=ResourceRunner
+    export TOOLCHAINS\=com.apple.dt.toolchain.XcodeDefault
+    export TOOLCHAIN_DIR\=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
+    export TREAT_MISSING_BASELINES_AS_TEST_FAILURES\=NO
+    export TREAT_MISSING_SCRIPT_PHASE_OUTPUTS_AS_ERRORS\=NO
+    export UID\=501
+    export UNINSTALLED_PRODUCTS_DIR\=/tmp/rr-m4-task008-derived/Build/Intermediates.noindex/UninstalledProducts
+    export UNLOCALIZED_RESOURCES_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/Resources
+    export UNLOCALIZED_RESOURCES_FOLDER_PATH_SHALLOW_BUNDLE_NO\=ResourceRunnerUITests.xctest/Contents/Resources
+    export UNLOCALIZED_RESOURCES_FOLDER_PATH_SHALLOW_BUNDLE_YES\=ResourceRunnerUITests.xctest/Contents
+    export UNSTRIPPED_PRODUCT\=NO
+    export USER\=zipkero
+    export USER_APPS_DIR\=/Users/zipkero/Applications
+    export USER_LIBRARY_DIR\=/Users/zipkero/Library
+    export USES_XCTRUNNER\=YES
+    export USE_DYNAMIC_NO_PIC\=YES
+    export USE_HEADERMAP\=YES
+    export USE_HEADER_SYMLINKS\=NO
+    export VALIDATE_DEVELOPMENT_ASSET_PATHS\=YES_ERROR
+    export VALIDATE_PRODUCT\=NO
+    export VALID_ARCHS\=arm64\ arm64e\ i386\ x86_64
+    export VERBOSE_PBXCP\=NO
+    export VERSIONPLIST_PATH\=ResourceRunnerUITests.xctest/Contents/version.plist
+    export VERSION_INFO_BUILDER\=zipkero
+    export VERSION_INFO_FILE\=ResourceRunnerUITests_vers.c
+    export VERSION_INFO_STRING\=\"@\(\#\)PROGRAM:ResourceRunnerUITests\ \ PROJECT:ResourceRunner-1\"
+    export WORKSPACE_DIR\=/Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj
+    export WRAPPER_EXTENSION\=xctest
+    export WRAPPER_NAME\=ResourceRunnerUITests.xctest
+    export WRAPPER_SUFFIX\=.xctest
+    export WRAP_ASSET_PACKS_IN_SEPARATE_DIRECTORIES\=NO
+    export XCODE_APP_SUPPORT_DIR\=/Applications/Xcode.app/Contents/Developer/Library/Xcode
+    export XCODE_PRODUCT_BUILD_VERSION\=17F113
+    export XCODE_VERSION_ACTUAL\=2660
+    export XCODE_VERSION_MAJOR\=2600
+    export XCODE_VERSION_MINOR\=2660
+    export XCTRUNNER_PRODUCT_NAME\=ResourceRunnerUITests-Runner.app
+    export XPCSERVICES_FOLDER_PATH\=ResourceRunnerUITests.xctest/Contents/XPCServices
+    export YACC\=yacc
+    export _BOOL_\=NO
+    export _BOOL_NO\=NO
+    export _BOOL_YES\=YES
+    export _DEVELOPMENT_TEAM_IS_EMPTY\=YES
+    export _DISCOVER_COMMAND_LINE_LINKER_INPUTS\=YES
+    export _DISCOVER_COMMAND_LINE_LINKER_INPUTS_INCLUDE_WL\=YES
+    export _IS_EMPTY_\=YES
+    export _LD_MULTIARCH\=YES
+    export _MACOSX_DEPLOYMENT_TARGET_IS_EMPTY\=NO
+    export _WRAPPER_CONTENTS_DIR\=/Contents
+    export _WRAPPER_CONTENTS_DIR_SHALLOW_BUNDLE_NO\=/Contents
+    export _WRAPPER_PARENT_PATH\=/..
+    export _WRAPPER_PARENT_PATH_SHALLOW_BUNDLE_NO\=/..
+    export _WRAPPER_RESOURCES_DIR\=/Resources
+    export _WRAPPER_RESOURCES_DIR_SHALLOW_BUNDLE_NO\=/Resources
+    export __DIAGNOSE_DEPRECATED_ARCHS\=YES
+    export __IS_NOT_MACOS\=NO
+    export __IS_NOT_MACOS_macosx\=NO
+    export __ORIGINAL_SDK_DEFINED_LLVM_TARGET_TRIPLE_SYS\=macos
+    export arch\=undefined_arch
+    export variant\=normal
+    /bin/sh -c /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Script-E20000000000000000000001.sh
+/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6: replacing existing signature
+
+CopySwiftLibs /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/MacOS/ResourceRunnerUITests --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Frameworks --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/PlugIns --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Library/SystemExtensions --scan-folder /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Frameworks --strip-bitcode --scan-executable /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ResourceRunnerUITests --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk --xcode-version 17F113 --platform-family macOS --deployment-target 26.5 --bundle-identifier com.zipkero.ResourceRunnerUITests --output /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/Resources --target-triple arm64-apple-macos26.5 --binary-file /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest/Contents/MacOS/ResourceRunnerUITests --dependency-file /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests_dependency_info.dat --stringsdata-file /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftFileList --metadata-file-list /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests.DependencyMetadataFileList --static-metadata-file-list /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests.DependencyStaticMetadataFileList --swift-const-vals-list /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/Objects-normal/arm64/ResourceRunnerUITests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-04 14:44:22.709 appintentsmetadataprocessor[55284:52131551] Starting appintentsmetadataprocessor export
+2026-10-04 14:44:22.710 appintentsmetadataprocessor[55284:52131551] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CodeSign /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests.xctest.xcent --timestamp\=none --generate-entitlement-der /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app/Contents/PlugIns/ResourceRunnerUITests.xctest
+
+CodeSign /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+    cd /Users/zipkero/XcodeProjects/ResourceRunner
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /tmp/rr-m4-task008-derived/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunnerUITests.build/ResourceRunnerUITests.xctest.xcent --timestamp\=none --generate-entitlement-der /tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app
+/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app: replacing existing signature
+
+note: Run script build phase 'Prepare expansion fixture' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ResourceRunnerUITests' from project 'ResourceRunner')
+2026-10-04 14:44:23.163693+0900 ResourceRunnerUITests-Runner[55287:52131616] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-04 14:44:23.221.
+Test Suite 'ResourceRunnerUITests.xctest' started at 2026-10-04 14:44:23.222.
+Test Suite 'DashboardCardSelectionUITests' started at 2026-10-04 14:44:23.222.
+Test Case '-[ResourceRunnerUITests.DashboardCardSelectionUITests testCardSelectionLifecycleKeepsFramesFixedAndSurvivesSelfDismissal]' started.
+    t =     0.00s Start Test at 2026-10-04 14:44:23.222
+    t =     0.09s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+2026-10-04 14:44:23.372 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:44:23.372 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.44s         Setting up automation session
+    t =     0.45s         Wait for com.zipkero.ResourceRunner to idle
+    t =     0.45s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     1.47s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     1.47s         Checking existence of `StatusItem (First Match)`
+    t =     1.49s Click StatusItem (First Match)
+    t =     1.49s     Wait for com.zipkero.ResourceRunner to idle
+    t =     1.50s     Find the StatusItem (First Match)
+    t =     1.52s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     1.52s     Open com.zipkero.ResourceRunner
+    t =     1.52s         Activate com.zipkero.ResourceRunner
+    t =     1.53s             Wait for com.zipkero.ResourceRunner to idle
+    t =     1.54s     Synthesize event
+    t =     1.97s     Wait for com.zipkero.ResourceRunner to idle
+    t =     1.97s Waiting 5.0s for "CPUCard" Any to exist
+    t =     3.01s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     3.01s         Checking existence of `"CPUCard" Any`
+    t =     3.08s Find the "CPUCard" Any
+    t =     3.22s Find the "CPUCard" Button
+    t =     3.37s Find the "CPUCard" Button
+    t =     3.51s Find the "CPUCard" Button
+    t =     3.66s Find the "CPUCard" Button
+    t =     3.70s Waiting 5.0s for "MemoryCard" Any to exist
+    t =     4.72s     Checking `Expect predicate `existsNoRetry == 1` for object "MemoryCard" Any`
+    t =     4.72s         Checking existence of `"MemoryCard" Any`
+    t =     4.78s Waiting 2.0s for Popover (First Match) to exist
+    t =     5.80s     Checking `Expect predicate `existsNoRetry == 1` for object Popover (First Match)`
+    t =     5.80s         Checking existence of `Popover (First Match)`
+    t =     5.81s Waiting 2.0s for "DashboardContainer" Any to exist
+    t =     6.85s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     6.85s         Checking existence of `"DashboardContainer" Any`
+    t =     6.89s Get number of matches for: Descendants matching type Popover
+    t =     6.91s Find the "CPUCard" Button
+    t =     7.15s Find the "CPUCard" Button
+    t =     7.40s Find the "CPUCard" Button
+    t =     7.66s Find the "CPUCard" Button
+    t =     7.91s Find the "CPUCard" Button
+    t =     8.17s Find the "CPUCard" Button
+    t =     8.42s Find the "CPUCard" Button
+    t =     8.67s Find the "CPUCard" Button
+    t =     8.93s Find the "CPUCard" Button
+    t =     9.20s Find the "CPUCard" Button
+    t =     9.46s Find the "CPUCard" Button
+    t =     9.72s Find the "CPUCard" Button
+    t =     9.97s Find the "CPUCard" Button
+    t =    10.02s Find the "MemoryCard" Any
+    t =    10.26s Find the "MemoryCard" Button
+    t =    10.51s Find the "MemoryCard" Button
+    t =    10.77s Find the "MemoryCard" Button
+    t =    11.03s Find the "MemoryCard" Button
+    t =    11.29s Find the "MemoryCard" Button
+    t =    11.55s Find the "MemoryCard" Button
+    t =    11.80s Find the "MemoryCard" Button
+    t =    12.05s Find the "MemoryCard" Button
+    t =    12.31s Find the "MemoryCard" Button
+    t =    12.57s Find the "MemoryCard" Button
+    t =    12.81s Find the "MemoryCard" Button
+    t =    13.07s Find the "MemoryCard" Button
+    t =    13.12s Find the Popover (First Match)
+    t =    13.13s Type '1' key with modifiers '⌘' (0x10)
+    t =    13.14s     Wait for com.zipkero.ResourceRunner to idle
+    t =    13.14s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    13.16s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    13.16s     Synthesize event
+    t =    13.35s     Wait for com.zipkero.ResourceRunner to idle
+    t =    13.36s Waiting 2.0s for StaticText (First Match) to exist
+    t =    14.38s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    14.38s         Checking existence of `StaticText (First Match)`
+    t =    14.43s Get number of matches for: Descendants matching type Popover
+    t =    14.47s Find the Popover at {{965.0, 41.0}, {306.0, 694.0}}
+    t =    14.48s Find the "CPUCard" Button
+    t =    14.52s Find the "MemoryCard" Button
+    t =    14.57s Type '1' key with modifiers '⌘' (0x10)
+    t =    14.57s     Wait for com.zipkero.ResourceRunner to idle
+    t =    14.57s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    14.62s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    14.62s     Synthesize event
+    t =    14.72s     Wait for com.zipkero.ResourceRunner to idle
+    t =    14.72s Checking existence of `StaticText (First Match)`
+    t =    14.74s Get number of matches for: Descendants matching type Popover
+    t =    14.76s Find the Popover at {{965.0, 41.0}, {306.0, 694.0}}
+    t =    14.77s Find the "CPUCard" Button
+    t =    14.81s Find the "MemoryCard" Button
+    t =    14.84s Type '1' key with modifiers '⌘' (0x10)
+    t =    14.84s     Wait for com.zipkero.ResourceRunner to idle
+    t =    14.84s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    14.86s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    14.86s     Synthesize event
+    t =    15.01s     Wait for com.zipkero.ResourceRunner to idle
+    t =    15.01s Waiting 2.0s for StaticText (First Match) to exist
+    t =    16.04s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    16.04s         Checking existence of `StaticText (First Match)`
+    t =    16.09s Get number of matches for: Descendants matching type Popover
+    t =    16.13s Find the "CPUCard" Button
+    t =    16.17s Find the "MemoryCard" Button
+    t =    16.20s Find the "DashboardContainer" Any
+    t =    16.22s Find the "DashboardContainer" Group
+    t =    16.35s Click "DashboardContainer" Group[0.00, 0.00] -> (140.0, 252.0)
+    t =    16.35s     Wait for com.zipkero.ResourceRunner to idle
+    t =    16.35s     Find the "DashboardContainer" Group
+    t =    16.37s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    16.40s     Synthesize event
+    t =    16.40s         Find the "DashboardContainer" Group
+    t =    16.42s         Find the "DashboardContainer" Group
+    t =    16.81s     Wait for com.zipkero.ResourceRunner to idle
+    t =    16.81s Get number of matches for: Descendants matching type Popover
+    t =    16.83s Get number of matches for: Descendants matching type Popover
+    t =    16.96s Get number of matches for: Descendants matching type Popover
+    t =    17.08s Get number of matches for: Descendants matching type Popover
+    t =    17.20s Get number of matches for: Descendants matching type Popover
+    t =    17.32s Get number of matches for: Descendants matching type Popover
+    t =    17.45s Get number of matches for: Descendants matching type Popover
+    t =    17.58s Get number of matches for: Descendants matching type Popover
+    t =    17.70s Get number of matches for: Descendants matching type Popover
+    t =    17.83s Get number of matches for: Descendants matching type Popover
+    t =    17.96s Get number of matches for: Descendants matching type Popover
+    t =    17.98s Get number of matches for: Descendants matching type Popover
+    t =    18.00s Type '1' key with modifiers '⌘' (0x10)
+    t =    18.00s     Wait for com.zipkero.ResourceRunner to idle
+    t =    18.00s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    18.02s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    18.03s     Synthesize event
+    t =    18.17s     Wait for com.zipkero.ResourceRunner to idle
+    t =    18.17s Get number of matches for: Descendants matching type Popover
+    t =    18.22s Type '2' key with modifiers '⌘' (0x10)
+    t =    18.22s     Wait for com.zipkero.ResourceRunner to idle
+    t =    18.22s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    18.26s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    18.26s     Synthesize event
+    t =    18.42s     Wait for com.zipkero.ResourceRunner to idle
+    t =    18.42s Waiting 2.0s for StaticText (First Match) to exist
+    t =    19.45s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    19.45s         Checking existence of `StaticText (First Match)`
+    t =    19.51s Checking existence of `StaticText (First Match)`
+    t =    19.55s Get number of matches for: Descendants matching type Popover
+    t =    19.64s Click "DashboardContainer" Group[0.00, 0.00] -> (140.0, 252.0)
+    t =    19.64s     Wait for com.zipkero.ResourceRunner to idle
+    t =    19.64s     Find the "DashboardContainer" Group
+    t =    19.66s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    19.68s     Synthesize event
+    t =    19.68s         Find the "DashboardContainer" Group
+    t =    19.70s         Find the "DashboardContainer" Group
+    t =    20.08s     Wait for com.zipkero.ResourceRunner to idle
+    t =    20.08s Get number of matches for: Descendants matching type Popover
+    t =    20.10s Get number of matches for: Descendants matching type Popover
+    t =    20.23s Get number of matches for: Descendants matching type Popover
+    t =    20.34s Get number of matches for: Descendants matching type Popover
+    t =    20.47s Get number of matches for: Descendants matching type Popover
+    t =    20.60s Get number of matches for: Descendants matching type Popover
+    t =    20.72s Get number of matches for: Descendants matching type Popover
+    t =    20.84s Get number of matches for: Descendants matching type Popover
+    t =    20.97s Get number of matches for: Descendants matching type Popover
+    t =    21.09s Get number of matches for: Descendants matching type Popover
+    t =    21.23s Get number of matches for: Descendants matching type Popover
+    t =    21.26s Get number of matches for: Descendants matching type Popover
+    t =    21.27s Type '2' key with modifiers '⌘' (0x10)
+    t =    21.27s     Wait for com.zipkero.ResourceRunner to idle
+    t =    21.28s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    21.30s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    21.30s     Synthesize event
+    t =    21.45s     Wait for com.zipkero.ResourceRunner to idle
+    t =    21.46s Get number of matches for: Descendants matching type Popover
+    t =    21.52s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardCardSelectionUITests testCardSelectionLifecycleKeepsFramesFixedAndSurvivesSelfDismissal]' passed (21.886 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardCardSelectionUITests testClickingBlankAreaInsideCardOpensDetailPopover]' started.
+    t =     0.00s Start Test at 2026-10-04 14:44:45.110
+    t =     0.10s Set Up
+    t =     0.11s Open com.zipkero.ResourceRunner
+    t =     0.11s     Launch com.zipkero.ResourceRunner
+    t =     0.11s         Terminate com.zipkero.ResourceRunner:55294
+2026-10-04 14:44:46.302 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:44:46.302 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.48s         Wait for accessibility to load
+    t =     1.52s         Setting up automation session
+    t =     1.53s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.53s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.57s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.57s         Checking existence of `StatusItem (First Match)`
+    t =     2.58s Click StatusItem (First Match)
+    t =     2.58s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.58s     Find the StatusItem (First Match)
+    t =     2.60s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.61s     Open com.zipkero.ResourceRunner
+    t =     2.61s         Activate com.zipkero.ResourceRunner
+    t =     2.62s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.62s     Synthesize event
+    t =     3.10s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.10s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.13s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.14s         Checking existence of `"CPUCard" Any`
+    t =     4.22s Find the "CPUCard" Any
+    t =     4.36s Find the "CPUCard" Button
+    t =     4.50s Find the "CPUCard" Button
+    t =     4.65s Find the "CPUCard" Button
+    t =     4.70s Click "CPUCard" Button[0.98, 0.50]
+    t =     4.70s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.71s     Find the "CPUCard" Button
+    t =     4.75s     Check for interrupting elements affecting "CPUCard" Button
+    t =     4.88s     Synthesize event
+    t =     4.89s         Find the "CPUCard" Button
+    t =     4.93s         Find the "CPUCard" Button
+    t =     5.36s     Wait for com.zipkero.ResourceRunner to idle
+    t =     5.37s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     6.39s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     6.39s         Checking existence of `"DashboardDetail" Any`
+    t =     6.46s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardCardSelectionUITests testClickingBlankAreaInsideCardOpensDetailPopover]' passed (6.756 seconds).
+Test Suite 'DashboardCardSelectionUITests' passed at 2026-10-04 14:44:51.865.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 28.641 (28.644) seconds
+Test Suite 'DashboardDetailExpansionUITests' started at 2026-10-04 14:44:51.866.
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testExpansionPersistsWhenRowDisappearsAndReturnsOnListRefresh]' started.
+    t =     0.00s Start Test at 2026-10-04 14:44:51.867
+    t =     0.10s Set Up
+    t =     0.11s Open com.zipkero.ResourceRunner
+    t =     0.11s     Launch com.zipkero.ResourceRunner
+    t =     0.11s         Terminate com.zipkero.ResourceRunner:55735
+2026-10-04 14:44:53.064 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:44:53.064 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.49s         Wait for accessibility to load
+    t =     1.55s         Setting up automation session
+    t =     1.56s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.57s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.59s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.59s         Checking existence of `StatusItem (First Match)`
+    t =     2.62s Click StatusItem (First Match)
+    t =     2.62s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.62s     Find the StatusItem (First Match)
+    t =     2.64s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.65s     Open com.zipkero.ResourceRunner
+    t =     2.65s         Activate com.zipkero.ResourceRunner
+    t =     2.66s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.68s     Synthesize event
+    t =     3.14s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.14s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.17s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.17s         Checking existence of `"CPUCard" Any`
+    t =     4.27s Find the "CPUCard" Any
+    t =     4.41s Find the "CPUCard" Button
+    t =     4.56s Find the "CPUCard" Button
+    t =     4.71s Find the "CPUCard" Button
+    t =     4.76s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.76s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.76s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.78s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.79s     Synthesize event
+    t =     4.91s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.91s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.94s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.94s         Checking existence of `StaticText (First Match)`
+    t =     5.96s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.09s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.23s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.36s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.50s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.64s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.78s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.92s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.06s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.20s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.35s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.49s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.63s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.78s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.92s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.06s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.21s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.36s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.50s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.65s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.79s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.81s Find the DisclosureTriangle (First Match)
+    t =     8.87s Click "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     8.87s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.87s     Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =     8.88s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =     8.89s     Synthesize event
+    t =     8.90s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =     8.91s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =     9.25s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.26s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =     9.27s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =     9.36s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =     9.48s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =     9.60s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =     9.71s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =     9.85s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =     9.96s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.08s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.20s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.33s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.45s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.57s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.68s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.81s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.85s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    10.99s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    11.13s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    11.27s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    11.41s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    11.56s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    11.70s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    11.86s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.01s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.15s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.29s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.44s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.59s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.72s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle`
+    t =    12.75s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =    12.84s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =    12.85s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-6bfa9e93-d306-4e3a-a8df-76a3183d96b6" DisclosureTriangle
+    t =    12.93s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testExpansionPersistsWhenRowDisappearsAndReturnsOnListRefresh]' passed (13.243 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testLeftEdgeClickDoesNotDismissPopover]' started.
+    t =     0.00s Start Test at 2026-10-04 14:45:05.110
+    t =     0.09s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:55876
+2026-10-04 14:45:06.264 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:45:06.264 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.43s         Wait for accessibility to load
+    t =     1.47s         Setting up automation session
+    t =     1.48s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.48s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.49s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.50s         Checking existence of `StatusItem (First Match)`
+    t =     2.52s Click StatusItem (First Match)
+    t =     2.52s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.52s     Find the StatusItem (First Match)
+    t =     2.54s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.54s     Open com.zipkero.ResourceRunner
+    t =     2.54s         Activate com.zipkero.ResourceRunner
+    t =     2.55s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Synthesize event
+    t =     3.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.04s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.06s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.06s         Checking existence of `"CPUCard" Any`
+    t =     4.14s Find the "CPUCard" Any
+    t =     4.28s Find the "CPUCard" Button
+    t =     4.42s Find the "CPUCard" Button
+    t =     4.57s Find the "CPUCard" Button
+    t =     4.72s Find the "CPUCard" Button
+    t =     4.76s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.76s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.76s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.78s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.78s     Synthesize event
+    t =     4.90s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.90s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.91s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.91s         Checking existence of `StaticText (First Match)`
+    t =     5.93s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.07s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.20s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.34s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.48s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.62s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.80s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.94s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.08s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.22s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.37s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.52s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.67s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.81s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.94s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.09s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.24s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.39s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.52s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.67s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.69s Find the DisclosureTriangle (First Match)
+    t =     8.76s Get number of matches for: Descendants matching type Popover
+    t =     8.79s Click "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.00, 0.50] -> (2.0, 0.0)
+    t =     8.79s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.79s     Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.81s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.82s     Synthesize event
+    t =     8.83s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.94s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.30s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.30s Get number of matches for: Descendants matching type Popover
+    t =     9.36s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testLeftEdgeClickDoesNotDismissPopover]' passed (9.702 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickExpandsAndPersistsAcrossRerenders]' started.
+    t =     0.00s Start Test at 2026-10-04 14:45:14.813
+    t =     0.09s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner
+    t =     0.09s     Launch com.zipkero.ResourceRunner
+    t =     0.09s         Terminate com.zipkero.ResourceRunner:56171
+2026-10-04 14:45:15.976 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:45:15.976 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.43s         Wait for accessibility to load
+    t =     1.48s         Setting up automation session
+    t =     1.49s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.49s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.53s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.53s         Checking existence of `StatusItem (First Match)`
+    t =     2.55s Click StatusItem (First Match)
+    t =     2.55s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Find the StatusItem (First Match)
+    t =     2.57s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.57s     Open com.zipkero.ResourceRunner
+    t =     2.57s         Activate com.zipkero.ResourceRunner
+    t =     2.58s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.58s     Synthesize event
+    t =     3.08s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.08s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.11s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.11s         Checking existence of `"CPUCard" Any`
+    t =     4.19s Find the "CPUCard" Any
+    t =     4.33s Find the "CPUCard" Button
+    t =     4.47s Find the "CPUCard" Button
+    t =     4.62s Find the "CPUCard" Button
+    t =     4.77s Find the "CPUCard" Button
+    t =     4.81s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.81s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.82s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.84s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.84s     Synthesize event
+    t =     4.96s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.96s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.98s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.98s         Checking existence of `StaticText (First Match)`
+    t =     6.00s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.14s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.27s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.41s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.55s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.68s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.84s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.98s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.12s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.26s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.41s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.56s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.71s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.84s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.98s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.13s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.29s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.43s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.58s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.73s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.75s Find the DisclosureTriangle (First Match)
+    t =     8.80s Click "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     8.80s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.80s     Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.82s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.83s     Synthesize event
+    t =     8.83s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.84s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.20s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.21s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     9.22s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.23s Waiting 2.0s for StaticText (First Match) to exist
+    t =    10.26s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    10.26s         Checking existence of `StaticText (First Match)`
+    t =    12.79s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =    12.81s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =    12.82s Checking existence of `StaticText (First Match)`
+    t =    12.83s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickExpandsAndPersistsAcrossRerenders]' passed (13.173 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickTogglesClosedOnSecondClick]' started.
+    t =     0.00s Start Test at 2026-10-04 14:45:27.987
+    t =     0.09s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner
+    t =     0.09s     Launch com.zipkero.ResourceRunner
+    t =     0.09s         Terminate com.zipkero.ResourceRunner:56351
+2026-10-04 14:45:29.144 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:45:29.144 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.42s         Wait for accessibility to load
+    t =     1.46s         Setting up automation session
+    t =     1.47s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.47s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.49s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.49s         Checking existence of `StatusItem (First Match)`
+    t =     2.51s Click StatusItem (First Match)
+    t =     2.51s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.51s     Find the StatusItem (First Match)
+    t =     2.53s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.54s     Open com.zipkero.ResourceRunner
+    t =     2.54s         Activate com.zipkero.ResourceRunner
+    t =     2.54s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Synthesize event
+    t =     3.01s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.01s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.03s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.03s         Checking existence of `"CPUCard" Any`
+    t =     4.11s Find the "CPUCard" Any
+    t =     4.24s Find the "CPUCard" Button
+    t =     4.38s Find the "CPUCard" Button
+    t =     4.53s Find the "CPUCard" Button
+    t =     4.67s Find the "CPUCard" Button
+    t =     4.71s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.71s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.72s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.74s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.74s     Synthesize event
+    t =     4.85s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.86s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.87s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.87s         Checking existence of `StaticText (First Match)`
+    t =     5.89s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.03s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.16s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.30s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.44s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.58s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.77s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.90s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.05s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.19s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.33s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.47s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.61s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.75s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.89s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.05s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.19s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.34s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.49s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.64s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.65s Find the DisclosureTriangle (First Match)
+    t =     8.82s Click "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     8.82s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.83s     Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.84s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.85s     Synthesize event
+    t =     8.85s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.86s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.22s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.23s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     9.24s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.26s Click "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     9.26s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.26s     Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.28s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.30s     Synthesize event
+    t =     9.30s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.31s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.67s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.67s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     9.69s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.70s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickTogglesClosedOnSecondClick]' passed (10.032 seconds).
+Test Suite 'DashboardDetailExpansionUITests' passed at 2026-10-04 14:45:38.019.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 46.150 (46.153) seconds
+Test Suite 'DashboardDetailPopoverUITests' started at 2026-10-04 14:45:38.020.
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testCPUAndMemoryDetailPopoverFramesAreTheSameFixedSize]' started.
+    t =     0.00s Start Test at 2026-10-04 14:45:38.021
+    t =     0.08s Set Up
+    t =     0.08s Open com.zipkero.ResourceRunner
+    t =     0.08s     Launch com.zipkero.ResourceRunner
+    t =     0.09s         Terminate com.zipkero.ResourceRunner:56587
+2026-10-04 14:45:39.186 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:45:39.186 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.43s         Wait for accessibility to load
+    t =     1.47s         Setting up automation session
+    t =     1.48s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.48s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.49s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.49s         Checking existence of `StatusItem (First Match)`
+    t =     2.51s Click StatusItem (First Match)
+    t =     2.51s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.51s     Find the StatusItem (First Match)
+    t =     2.53s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.53s     Open com.zipkero.ResourceRunner
+    t =     2.53s         Activate com.zipkero.ResourceRunner
+    t =     2.54s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Synthesize event
+    t =     3.04s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.04s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.05s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.05s         Checking existence of `"CPUCard" Any`
+    t =     4.14s Find the "CPUCard" Any
+    t =     4.27s Find the "CPUCard" Button
+    t =     4.42s Find the "CPUCard" Button
+    t =     4.57s Find the "CPUCard" Button
+    t =     4.71s Find the "CPUCard" Button
+    t =     4.75s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.75s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.76s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.78s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.78s     Synthesize event
+    t =     4.90s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.90s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.92s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.92s         Checking existence of `StaticText (First Match)`
+    t =     5.97s Get number of matches for: Descendants matching type Popover
+    t =     5.99s Find the "DashboardDetail" Any
+    t =     6.03s Type '2' key with modifiers '⌘' (0x10)
+    t =     6.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.04s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     6.06s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     6.06s     Synthesize event
+    t =     6.17s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.17s Waiting 2.0s for StaticText (First Match) to exist
+    t =     7.18s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     7.18s         Checking existence of `StaticText (First Match)`
+    t =     7.25s Checking existence of `StaticText (First Match)`
+    t =     7.30s Find the "DashboardDetail" Any
+    t =     7.34s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testCPUAndMemoryDetailPopoverFramesAreTheSameFixedSize]' passed (7.669 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testCPUDetailFrameRemainsExactlyFixedWhenAppRowExpands]' started.
+    t =     0.00s Start Test at 2026-10-04 14:45:45.691
+    t =     0.10s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:56734
+2026-10-04 14:45:46.868 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:45:46.868 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.45s         Wait for accessibility to load
+    t =     1.49s         Setting up automation session
+    t =     1.50s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.50s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.52s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.52s         Checking existence of `StatusItem (First Match)`
+    t =     2.55s Click StatusItem (First Match)
+    t =     2.55s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Find the StatusItem (First Match)
+    t =     2.57s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.58s     Open com.zipkero.ResourceRunner
+    t =     2.58s         Activate com.zipkero.ResourceRunner
+    t =     2.58s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.59s     Synthesize event
+    t =     3.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.03s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.05s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.05s         Checking existence of `"CPUCard" Any`
+    t =     4.13s Find the "CPUCard" Any
+    t =     4.27s Find the "CPUCard" Button
+    t =     4.41s Find the "CPUCard" Button
+    t =     4.56s Find the "CPUCard" Button
+    t =     4.71s Find the "CPUCard" Button
+    t =     4.75s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.75s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.75s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.78s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.78s     Synthesize event
+    t =     4.89s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.89s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.90s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.90s         Checking existence of `StaticText (First Match)`
+    t =     5.94s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     6.96s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     6.96s         Checking existence of `"DashboardDetail" Any`
+    t =     7.02s Find the "DashboardDetail" Any
+    t =     7.06s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.19s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.33s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.47s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.62s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.78s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.92s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.06s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.21s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.35s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.48s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.62s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.76s Checking existence of `DisclosureTriangle (First Match)`
+    t =     8.78s Find the DisclosureTriangle (First Match)
+    t =     8.95s Click "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     8.95s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.96s     Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.97s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.98s     Synthesize event
+    t =     8.98s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.99s         Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.35s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.37s Checking existence of `"AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     9.38s Find the "AppRow-/private/tmp/rr-m4-task008-derived/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.39s Find the "DashboardDetail" ScrollView
+    t =     9.44s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testCPUDetailFrameRemainsExactlyFixedWhenAppRowExpands]' passed (9.747 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testDetailContentIsReachableUnderPopoversNotAsSeparateWindow]' started.
+    t =     0.00s Start Test at 2026-10-04 14:45:55.439
+    t =     0.09s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:56862
+2026-10-04 14:45:56.623 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:45:56.623 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.45s         Wait for accessibility to load
+    t =     1.46s         Setting up automation session
+    t =     1.47s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.47s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.50s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.50s         Checking existence of `StatusItem (First Match)`
+    t =     2.52s Click StatusItem (First Match)
+    t =     2.52s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.53s     Find the StatusItem (First Match)
+    t =     2.55s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.55s     Open com.zipkero.ResourceRunner
+    t =     2.55s         Activate com.zipkero.ResourceRunner
+    t =     2.56s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.56s     Synthesize event
+    t =     3.02s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.03s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.06s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.06s         Checking existence of `"CPUCard" Any`
+    t =     4.14s Find the "CPUCard" Any
+    t =     4.28s Find the "CPUCard" Button
+    t =     4.42s Find the "CPUCard" Button
+    t =     4.56s Find the "CPUCard" Button
+    t =     4.61s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.61s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.62s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.64s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.64s     Synthesize event
+    t =     4.79s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.79s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.81s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.81s         Checking existence of `StaticText (First Match)`
+    t =     5.84s Checking existence of `StaticText (First Match)`
+    t =     5.87s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testDetailContentIsReachableUnderPopoversNotAsSeparateWindow]' passed (6.151 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testDetailContentScrollsWithinFixedPopoverFrame]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:01.590
+    t =     0.10s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:57035
+2026-10-04 14:46:02.776 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:02.776 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.45s         Wait for accessibility to load
+    t =     1.49s         Setting up automation session
+    t =     1.50s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.50s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.51s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.52s         Checking existence of `StatusItem (First Match)`
+    t =     2.54s Click StatusItem (First Match)
+    t =     2.54s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.54s     Find the StatusItem (First Match)
+    t =     2.56s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.57s     Open com.zipkero.ResourceRunner
+    t =     2.57s         Activate com.zipkero.ResourceRunner
+    t =     2.58s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.58s     Synthesize event
+    t =     3.01s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.02s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.03s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.03s         Checking existence of `"CPUCard" Any`
+    t =     4.11s Find the "CPUCard" Any
+    t =     4.25s Find the "CPUCard" Button
+    t =     4.39s Find the "CPUCard" Button
+    t =     4.54s Find the "CPUCard" Button
+    t =     4.70s Find the "CPUCard" Button
+    t =     4.74s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.74s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.75s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.77s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.77s     Synthesize event
+    t =     4.90s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.90s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.91s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.91s         Checking existence of `StaticText (First Match)`
+    t =     5.96s Find the "DashboardDetail" Any
+    t =     6.00s Find the StaticText (First Match)
+    t =     6.03s Swipe up "DashboardDetail" ScrollView with velocity 5000.00
+    t =     6.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.03s     Find the "DashboardDetail" ScrollView
+    t =     6.07s     Check for interrupting elements affecting "DashboardDetail" ScrollView
+    t =     6.10s     Synthesize event
+    t =     8.56s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.57s Find the "Load Average 6.10 / 3.65 / 3.18" StaticText
+    t =     8.63s Find the "DashboardDetail" ScrollView
+    t =     8.72s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testDetailContentScrollsWithinFixedPopoverFrame]' passed (9.046 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testMemoryShortcutClosesDetailWhileChildPopoverIsOpen]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:10.638
+    t =     0.10s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:57162
+2026-10-04 14:46:11.810 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:11.810 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.43s         Wait for accessibility to load
+    t =     1.47s         Setting up automation session
+    t =     1.48s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.48s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.50s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.50s         Checking existence of `StatusItem (First Match)`
+    t =     2.52s Click StatusItem (First Match)
+    t =     2.52s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.52s     Find the StatusItem (First Match)
+    t =     2.54s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.55s     Open com.zipkero.ResourceRunner
+    t =     2.55s         Activate com.zipkero.ResourceRunner
+    t =     2.56s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.56s     Synthesize event
+    t =     3.02s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.03s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.05s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.05s         Checking existence of `"CPUCard" Any`
+    t =     4.13s Find the "CPUCard" Any
+    t =     4.26s Find the "CPUCard" Button
+    t =     4.41s Find the "CPUCard" Button
+    t =     4.55s Find the "CPUCard" Button
+    t =     4.70s Find the "CPUCard" Button
+    t =     4.74s Type '2' key with modifiers '⌘' (0x10)
+    t =     4.74s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.74s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.87s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.87s     Synthesize event
+    t =     4.98s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.98s Waiting 2.0s for StaticText (First Match) to exist
+    t =     6.00s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     6.00s         Checking existence of `StaticText (First Match)`
+    t =     6.05s Get number of matches for: Descendants matching type Popover
+    t =     6.08s Click StaticText (First Match)
+    t =     6.08s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.08s     Find the StaticText (First Match)
+    t =     6.11s     Check for interrupting elements affecting "현재 사용량 순위, Memory 사용량 합계 내림차순 (상위 20개)" StaticText
+    t =     6.14s     Synthesize event
+    t =     6.48s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.49s Type '2' key with modifiers '⌘' (0x10)
+    t =     6.49s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.50s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     6.54s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     6.55s     Synthesize event
+    t =     6.74s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.75s Get number of matches for: Descendants matching type Popover
+    t =     6.77s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testMemoryShortcutClosesDetailWhileChildPopoverIsOpen]' passed (7.123 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testOtherCardShortcutMovesSelectionWhileDetailIsOpen]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:17.761
+    t =     0.09s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:57366
+2026-10-04 14:46:18.934 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:18.934 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.45s         Wait for accessibility to load
+    t =     1.49s         Setting up automation session
+    t =     1.50s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.50s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.51s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.51s         Checking existence of `StatusItem (First Match)`
+    t =     2.53s Click StatusItem (First Match)
+    t =     2.53s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.53s     Find the StatusItem (First Match)
+    t =     2.55s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.55s     Open com.zipkero.ResourceRunner
+    t =     2.55s         Activate com.zipkero.ResourceRunner
+    t =     2.57s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.58s     Synthesize event
+    t =     3.01s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.02s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.04s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.04s         Checking existence of `"CPUCard" Any`
+    t =     4.14s Find the "CPUCard" Any
+    t =     4.28s Find the "CPUCard" Button
+    t =     4.42s Find the "CPUCard" Button
+    t =     4.56s Find the "CPUCard" Button
+    t =     4.71s Find the "CPUCard" Button
+    t =     4.86s Find the "CPUCard" Button
+    t =     5.01s Find the "CPUCard" Button
+    t =     5.15s Find the "CPUCard" Button
+    t =     5.31s Find the "CPUCard" Button
+    t =     5.45s Find the "CPUCard" Button
+    t =     5.60s Find the "CPUCard" Button
+    t =     5.64s Type '1' key with modifiers '⌘' (0x10)
+    t =     5.64s     Wait for com.zipkero.ResourceRunner to idle
+    t =     5.65s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     5.78s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     5.78s     Synthesize event
+    t =     5.94s     Wait for com.zipkero.ResourceRunner to idle
+    t =     5.94s Waiting 2.0s for StaticText (First Match) to exist
+    t =     6.96s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     6.96s         Checking existence of `StaticText (First Match)`
+    t =     7.01s Click StaticText (First Match)
+    t =     7.02s     Wait for com.zipkero.ResourceRunner to idle
+    t =     7.02s     Find the StaticText (First Match)
+    t =     7.05s     Check for interrupting elements affecting "Load Average 9.39 / 4.50 / 3.49" StaticText
+    t =     7.08s     Synthesize event
+    t =     7.41s     Wait for com.zipkero.ResourceRunner to idle
+    t =     7.42s Type '2' key with modifiers '⌘' (0x10)
+    t =     7.42s     Wait for com.zipkero.ResourceRunner to idle
+    t =     7.42s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     7.48s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     7.48s     Synthesize event
+    t =     7.65s     Wait for com.zipkero.ResourceRunner to idle
+    t =     7.65s Waiting 2.0s for StaticText (First Match) to exist
+    t =     8.68s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     8.68s         Checking existence of `StaticText (First Match)`
+    t =     8.73s Checking existence of `"Load Average 9.39 / 4.50 / 3.49" StaticText`
+    t =     8.78s Get number of matches for: Descendants matching type Popover
+    t =     8.82s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testOtherCardShortcutMovesSelectionWhileDetailIsOpen]' passed (9.143 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testShortcutClosesDetailWhileChildPopoverIsOpen]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:26.905
+    t =     0.09s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner
+    t =     0.09s     Launch com.zipkero.ResourceRunner
+    t =     0.09s         Terminate com.zipkero.ResourceRunner:57502
+2026-10-04 14:46:28.082 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:28.082 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.42s         Wait for accessibility to load
+    t =     1.47s         Setting up automation session
+    t =     1.48s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.48s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.50s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.50s         Checking existence of `StatusItem (First Match)`
+    t =     2.53s Click StatusItem (First Match)
+    t =     2.53s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.53s     Find the StatusItem (First Match)
+    t =     2.56s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.56s     Open com.zipkero.ResourceRunner
+    t =     2.56s         Activate com.zipkero.ResourceRunner
+    t =     2.58s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.59s     Synthesize event
+    t =     3.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.03s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.05s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.05s         Checking existence of `"CPUCard" Any`
+    t =     4.13s Find the "CPUCard" Any
+    t =     4.27s Find the "CPUCard" Button
+    t =     4.41s Find the "CPUCard" Button
+    t =     4.55s Find the "CPUCard" Button
+    t =     4.70s Find the "CPUCard" Button
+    t =     4.74s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.74s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.75s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.77s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.77s     Synthesize event
+    t =     4.92s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.93s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.96s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.96s         Checking existence of `StaticText (First Match)`
+    t =     6.00s Get number of matches for: Descendants matching type Popover
+    t =     6.03s Click StaticText (First Match)
+    t =     6.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.03s     Find the StaticText (First Match)
+    t =     6.07s     Check for interrupting elements affecting "Load Average 8.10 / 4.38 / 3.46" StaticText
+    t =     6.09s     Synthesize event
+    t =     6.42s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.43s Type '1' key with modifiers '⌘' (0x10)
+    t =     6.43s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.44s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     6.48s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     6.48s     Synthesize event
+    t =     6.59s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.60s Get number of matches for: Descendants matching type Popover
+    t =     6.62s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailPopoverUITests testShortcutClosesDetailWhileChildPopoverIsOpen]' passed (6.909 seconds).
+Test Suite 'DashboardDetailPopoverUITests' passed at 2026-10-04 14:46:33.815.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 55.788 (55.795) seconds
+Test Suite 'DashboardPreferencesVisibilityUITests' started at 2026-10-04 14:46:33.816.
+Test Case '-[ResourceRunnerUITests.DashboardPreferencesVisibilityUITests testAllOffShowsSettingsActionAndNoCardAccessibilityElements]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:33.818
+    t =     0.10s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:57716
+2026-10-04 14:46:34.989 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:34.990 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.44s         Wait for accessibility to load
+    t =     1.48s         Setting up automation session
+    t =     1.49s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.49s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.51s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.51s         Checking existence of `StatusItem (First Match)`
+    t =     2.54s Click StatusItem (First Match)
+    t =     2.54s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.54s     Find the StatusItem (First Match)
+    t =     2.56s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.56s     Open com.zipkero.ResourceRunner
+    t =     2.56s         Activate com.zipkero.ResourceRunner
+    t =     2.57s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.57s     Synthesize event
+    t =     2.99s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.00s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =     4.02s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     4.03s         Checking existence of `"DashboardContainer" Any`
+    t =     4.09s Checking existence of `"DashboardContainer" Any`
+    t =     4.12s Checking existence of `"DashboardOpenSettings" Button`
+    t =     4.16s Find the "DashboardOpenSettings" Button
+    t =     4.18s Find the "DashboardOpenSettings" Button
+    t =     4.21s Find the "DashboardContainer" Any
+    t =     4.23s Find the "DashboardContainer" Group
+    t =     4.26s Find the "DashboardOpenSettings" Button
+    t =     4.28s Checking existence of `"CPUCard" Any`
+    t =     4.31s Checking existence of `"MemoryCard" Any`
+    t =     4.35s Checking existence of `"NetworkCard" Any`
+    t =     4.39s Checking existence of `"DiskCard" Any`
+    t =     4.42s Click "DashboardOpenSettings" Button
+    t =     4.42s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.43s     Find the "DashboardOpenSettings" Button
+    t =     4.45s     Check for interrupting elements affecting "DashboardOpenSettings" Button
+    t =     4.47s     Synthesize event
+    t =     4.81s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.81s Checking existence of `"DashboardContainer" Group`
+    t =     4.86s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardPreferencesVisibilityUITests testAllOffShowsSettingsActionAndNoCardAccessibilityElements]' passed (5.187 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardPreferencesVisibilityUITests testLiveHideAndReshowRemovesCardAndRankingButKeepsDetail]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:39.006
+    t =     0.10s Set Up
+    t =     0.10s Open com.zipkero.ResourceRunner
+    t =     0.10s     Launch com.zipkero.ResourceRunner
+    t =     0.10s         Terminate com.zipkero.ResourceRunner:57848
+2026-10-04 14:46:40.183 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:40.183 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.43s         Wait for accessibility to load
+    t =     1.44s         Setting up automation session
+    t =     1.45s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.45s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.49s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.49s         Checking existence of `StatusItem (First Match)`
+    t =     2.51s Click StatusItem (First Match)
+    t =     2.51s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.51s     Find the StatusItem (First Match)
+    t =     2.54s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.54s     Open com.zipkero.ResourceRunner
+    t =     2.54s         Activate com.zipkero.ResourceRunner
+    t =     2.55s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Synthesize event
+    t =     3.02s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.03s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =     4.05s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     4.05s         Checking existence of `"DashboardContainer" Any`
+    t =     4.10s Checking existence of `"CPUCard" Any`
+    t =     4.15s Checking existence of `"MemoryCard" Any`
+    t =     4.19s Find the "CPUCard" Any
+    t =     4.22s Find the "MemoryCard" Any
+    t =     4.25s Find the "DashboardContainer" Any
+    t =     4.27s Click "CPUCard" Button
+    t =     4.27s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.27s     Find the "CPUCard" Button
+    t =     4.30s     Check for interrupting elements affecting "CPUCard" Button
+    t =     4.32s     Synthesize event
+    t =     4.71s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.71s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     5.73s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     5.73s         Checking existence of `"DashboardDetail" Any`
+    t =     5.80s Right click StatusItem (First Match)
+    t =     5.80s     Wait for com.zipkero.ResourceRunner to idle
+    t =     5.81s     Find the StatusItem (First Match)
+    t =     5.82s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     5.82s     Synthesize event
+    t =     6.21s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.21s Waiting 2.0s for "Toggle cpu Card" MenuItem to exist
+    t =     7.22s     Checking `Expect predicate `existsNoRetry == 1` for object "Toggle cpu Card" MenuItem`
+    t =     7.22s         Checking existence of `"Toggle cpu Card" MenuItem`
+    t =     7.27s Click "Toggle cpu Card" MenuItem
+    t =     7.27s     Wait for com.zipkero.ResourceRunner to idle
+    t =     7.27s     Find the "Toggle cpu Card" MenuItem
+    t =     7.30s     Check for interrupting elements affecting "toggleDebugCard:" MenuItem
+    t =     7.30s     Synthesize event
+    t =     7.30s         Checking existence of `"toggleDebugCard:" MenuItem`
+    t =     7.32s         Hover menu item 'Toggle cpu Card'
+    t =     7.32s             Wait for com.zipkero.ResourceRunner to idle
+    t =     7.33s             Find the "toggleDebugCard:" MenuItem
+    t =     7.35s             Check for interrupting elements affecting "toggleDebugCard:" MenuItem
+    t =     7.35s             Synthesize event
+    t =     7.57s             Wait for com.zipkero.ResourceRunner to idle
+    t =     7.57s         Find the "toggleDebugCard:" MenuItem
+    t =     8.32s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.33s Click "ResourceRunner, 낮음" StatusItem
+    t =     8.33s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.34s     Find the "ResourceRunner, 낮음" StatusItem
+    t =     8.35s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     8.35s     Synthesize event
+    t =     8.73s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.74s Checking existence of `"CPUCard" Button`
+    t =     8.80s Waiting 2.0s for "MemoryCard" Button to exist
+    t =     9.82s     Checking `Expect predicate `existsNoRetry == 1` for object "MemoryCard" Button`
+    t =     9.82s         Checking existence of `"MemoryCard" Button`
+    t =     9.87s Find the "DashboardContainer" Group
+    t =     9.89s Type '1' key with modifiers '⌘' (0x10)
+    t =     9.90s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.90s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     9.92s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.92s     Synthesize event
+    t =     9.99s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.99s Checking existence of `"DashboardDetail" Any`
+    t =    10.03s Right click "ResourceRunner, 낮음" StatusItem
+    t =    10.03s     Wait for com.zipkero.ResourceRunner to idle
+    t =    10.04s     Find the "ResourceRunner, 낮음" StatusItem
+    t =    10.05s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =    10.05s     Synthesize event
+    t =    10.40s     Wait for com.zipkero.ResourceRunner to idle
+    t =    10.41s Waiting 2.0s for "Toggle cpu Card" MenuItem to exist
+    t =    11.44s     Checking `Expect predicate `existsNoRetry == 1` for object "Toggle cpu Card" MenuItem`
+    t =    11.44s         Checking existence of `"Toggle cpu Card" MenuItem`
+    t =    11.47s Click "Toggle cpu Card" MenuItem
+    t =    11.48s     Wait for com.zipkero.ResourceRunner to idle
+    t =    11.48s     Find the "Toggle cpu Card" MenuItem
+    t =    11.51s     Check for interrupting elements affecting "toggleDebugCard:" MenuItem
+    t =    11.51s     Synthesize event
+    t =    11.51s         Checking existence of `"toggleDebugCard:" MenuItem`
+    t =    11.53s         Hover menu item 'Toggle cpu Card'
+    t =    11.53s             Wait for com.zipkero.ResourceRunner to idle
+    t =    11.54s             Find the "toggleDebugCard:" MenuItem
+    t =    11.56s             Check for interrupting elements affecting "toggleDebugCard:" MenuItem
+    t =    11.56s             Synthesize event
+    t =    11.78s             Wait for com.zipkero.ResourceRunner to idle
+    t =    11.78s         Find the "toggleDebugCard:" MenuItem
+    t =    12.53s     Wait for com.zipkero.ResourceRunner to idle
+    t =    12.55s Click "ResourceRunner, 낮음" StatusItem
+    t =    12.56s     Wait for com.zipkero.ResourceRunner to idle
+    t =    12.56s     Find the "ResourceRunner, 낮음" StatusItem
+    t =    12.57s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =    12.57s     Synthesize event
+    t =    12.94s     Wait for com.zipkero.ResourceRunner to idle
+    t =    12.95s Waiting 2.0s for "CPUCard" Button to exist
+    t =    13.96s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Button`
+    t =    13.97s         Checking existence of `"CPUCard" Button`
+    t =    14.02s Find the "CPUCard" Button
+    t =    14.06s Checking existence of `"MemoryCard" Button`
+    t =    14.09s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardPreferencesVisibilityUITests testLiveHideAndReshowRemovesCardAndRankingButKeepsDetail]' passed (14.383 seconds).
+Test Suite 'DashboardPreferencesVisibilityUITests' passed at 2026-10-04 14:46:53.390.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 19.571 (19.574) seconds
+Test Suite 'DashboardViewportUITests' started at 2026-10-04 14:46:53.391.
+Test Case '-[ResourceRunnerUITests.DashboardViewportUITests testActualLastCardAndMemoryRankingChangesKeepDetailWithinVisibleScreen]' started.
+    t =     0.00s Start Test at 2026-10-04 14:46:53.392
+    t =     0.11s Set Up
+    t =     0.13s Open com.zipkero.ResourceRunner
+    t =     0.13s     Launch com.zipkero.ResourceRunner
+    t =     0.13s         Terminate com.zipkero.ResourceRunner:57987
+2026-10-04 14:46:54.601 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:46:54.601 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.47s         Wait for accessibility to load
+    t =     1.51s         Setting up automation session
+    t =     1.52s         Wait for com.zipkero.ResourceRunner to idle
+    t =     1.52s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.53s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.53s         Checking existence of `StatusItem (First Match)`
+    t =     2.55s Click StatusItem (First Match)
+    t =     2.55s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.55s     Find the StatusItem (First Match)
+    t =     2.57s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.58s     Open com.zipkero.ResourceRunner
+    t =     2.58s         Activate com.zipkero.ResourceRunner
+    t =     2.59s             Wait for com.zipkero.ResourceRunner to idle
+    t =     2.59s     Synthesize event
+    t =     2.98s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.98s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =     4.00s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     4.00s         Checking existence of `"DashboardContainer" Any`
+    t =     4.05s Checking existence of `"MemoryCard" Any`
+    t =     4.10s Find the "DashboardContainer" Any
+    t =     4.12s Type '2' key with modifiers '⌘' (0x10)
+    t =     4.12s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.13s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.15s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.15s     Synthesize event
+    t =     4.27s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.27s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     5.31s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     5.31s         Checking existence of `"DashboardDetail" Any`
+    t =     5.37s Find the "DashboardDetail" Any
+VIEWPORT_FRAME cards=2 top=0 visible=(0.0, 0.0, 1728.0, 1084.0) body=(978.0, 54.0, 280.0, 96.0) detail=(1263.0, 54.0, 400.0, 480.0)
+    t =     5.41s Find the "DashboardDetail" ScrollView
+    t =     5.45s Find the "DashboardDetail" ScrollView
+    t =     5.49s Find the "DashboardDetail" ScrollView
+    t =     5.52s Find the "DashboardDetail" ScrollView
+    t =     5.57s Find the "DashboardDetail" ScrollView
+    t =     5.61s Find the "DashboardDetail" ScrollView
+    t =     5.65s Find the "DashboardContainer" Group
+    t =     5.67s Terminate com.zipkero.ResourceRunner:58216
+    t =     6.76s Open com.zipkero.ResourceRunner
+    t =     6.76s     Launch com.zipkero.ResourceRunner
+2026-10-04 14:47:00.158 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:47:00.159 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     7.04s         Wait for accessibility to load
+    t =     7.08s         Setting up automation session
+    t =     7.09s         Wait for com.zipkero.ResourceRunner to idle
+    t =     7.09s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     8.12s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     8.12s         Checking existence of `StatusItem (First Match)`
+    t =     8.14s Click StatusItem (First Match)
+    t =     8.14s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.14s     Find the StatusItem (First Match)
+    t =     8.16s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     8.16s     Open com.zipkero.ResourceRunner
+    t =     8.16s         Activate com.zipkero.ResourceRunner
+    t =     8.17s             Wait for com.zipkero.ResourceRunner to idle
+    t =     8.19s     Synthesize event
+    t =     8.58s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.58s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =     9.61s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     9.61s         Checking existence of `"DashboardContainer" Any`
+    t =     9.66s Checking existence of `"MemoryCard" Any`
+    t =     9.71s Find the "DashboardContainer" Any
+    t =     9.73s Type '2' key with modifiers '⌘' (0x10)
+    t =     9.73s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.74s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     9.76s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.76s     Synthesize event
+    t =     9.88s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.89s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =    10.90s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    10.90s         Checking existence of `"DashboardDetail" Any`
+    t =    10.97s Find the "DashboardDetail" Any
+VIEWPORT_FRAME cards=2 top=2 visible=(0.0, 0.0, 1728.0, 1084.0) body=(978.0, 54.0, 280.0, 185.0) detail=(1263.0, 54.0, 400.0, 480.0)
+    t =    11.01s Find the "DashboardDetail" ScrollView
+    t =    11.05s Find the "DashboardDetail" ScrollView
+    t =    11.09s Find the "DashboardDetail" ScrollView
+    t =    11.13s Find the "DashboardDetail" ScrollView
+    t =    11.17s Find the "DashboardDetail" ScrollView
+    t =    11.22s Find the "DashboardDetail" ScrollView
+    t =    11.36s Find the "DashboardContainer" Group
+    t =    11.39s Terminate com.zipkero.ResourceRunner:58309
+    t =    12.48s Open com.zipkero.ResourceRunner
+    t =    12.48s     Launch com.zipkero.ResourceRunner
+2026-10-04 14:47:05.874 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:47:05.874 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    12.75s         Wait for accessibility to load
+    t =    12.79s         Setting up automation session
+    t =    12.79s         Wait for com.zipkero.ResourceRunner to idle
+    t =    12.80s Waiting 5.0s for StatusItem (First Match) to exist
+    t =    13.80s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =    13.80s         Checking existence of `StatusItem (First Match)`
+    t =    13.82s Click StatusItem (First Match)
+    t =    13.82s     Wait for com.zipkero.ResourceRunner to idle
+    t =    13.83s     Find the StatusItem (First Match)
+    t =    13.84s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =    13.85s     Open com.zipkero.ResourceRunner
+    t =    13.85s         Activate com.zipkero.ResourceRunner
+    t =    13.86s             Wait for com.zipkero.ResourceRunner to idle
+    t =    13.86s     Synthesize event
+    t =    14.27s     Wait for com.zipkero.ResourceRunner to idle
+    t =    14.28s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =    15.28s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =    15.28s         Checking existence of `"DashboardContainer" Any`
+    t =    15.33s Checking existence of `"NetworkCard" Any`
+    t =    15.38s Find the "DashboardContainer" Any
+    t =    15.40s Type '3' key with modifiers '⌘' (0x10)
+    t =    15.40s     Wait for com.zipkero.ResourceRunner to idle
+    t =    15.41s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    15.43s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    15.43s     Synthesize event
+    t =    15.54s     Wait for com.zipkero.ResourceRunner to idle
+    t =    15.55s Waiting 2.0s for "NetworkDetail" Any to exist
+    t =    16.55s     Checking `Expect predicate `existsNoRetry == 1` for object "NetworkDetail" Any`
+    t =    16.55s         Checking existence of `"NetworkDetail" Any`
+    t =    16.61s Find the "NetworkDetail" Any
+VIEWPORT_FRAME cards=6 top=3 visible=(0.0, 0.0, 1728.0, 1084.0) body=(978.0, 54.0, 280.0, 303.0) detail=(1263.0, 54.0, 400.0, 480.0)
+    t =    16.66s Find the "NetworkDetail" ScrollView
+    t =    16.70s Find the "NetworkDetail" ScrollView
+    t =    16.74s Find the "NetworkDetail" ScrollView
+    t =    16.78s Find the "NetworkDetail" ScrollView
+    t =    16.82s Find the "NetworkDetail" ScrollView
+    t =    16.88s Find the "NetworkDetail" ScrollView
+    t =    16.93s Find the "DashboardContainer" Group
+    t =    16.95s Terminate com.zipkero.ResourceRunner:58398
+    t =    18.02s Open com.zipkero.ResourceRunner
+    t =    18.02s     Launch com.zipkero.ResourceRunner
+2026-10-04 14:47:11.419 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:47:11.419 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    18.30s         Wait for accessibility to load
+    t =    18.34s         Setting up automation session
+    t =    18.35s         Wait for com.zipkero.ResourceRunner to idle
+    t =    18.35s Waiting 5.0s for StatusItem (First Match) to exist
+    t =    19.36s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =    19.36s         Checking existence of `StatusItem (First Match)`
+    t =    19.39s Click StatusItem (First Match)
+    t =    19.39s     Wait for com.zipkero.ResourceRunner to idle
+    t =    19.39s     Find the StatusItem (First Match)
+    t =    19.41s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =    19.42s     Open com.zipkero.ResourceRunner
+    t =    19.42s         Activate com.zipkero.ResourceRunner
+    t =    19.43s             Wait for com.zipkero.ResourceRunner to idle
+    t =    19.43s     Synthesize event
+    t =    19.88s     Wait for com.zipkero.ResourceRunner to idle
+    t =    19.88s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =    20.90s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =    20.90s         Checking existence of `"DashboardContainer" Any`
+    t =    20.95s Checking existence of `"DiskCard" Any`
+    t =    21.00s Find the "DashboardContainer" Any
+    t =    21.02s Type '4' key with modifiers '⌘' (0x10)
+    t =    21.02s     Wait for com.zipkero.ResourceRunner to idle
+    t =    21.02s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =    21.04s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    21.04s     Synthesize event
+    t =    21.16s     Wait for com.zipkero.ResourceRunner to idle
+    t =    21.16s Waiting 2.0s for "DiskDetail" Any to exist
+    t =    22.18s     Checking `Expect predicate `existsNoRetry == 1` for object "DiskDetail" Any`
+    t =    22.18s         Checking existence of `"DiskDetail" Any`
+    t =    22.25s Find the "DiskDetail" Any
+VIEWPORT_FRAME cards=15 top=3 visible=(0.0, 0.0, 1728.0, 1084.0) body=(978.0, 54.0, 280.0, 668.0) detail=(1263.0, 418.0, 400.0, 480.0)
+    t =    22.29s Find the "DiskDetail" ScrollView
+    t =    22.33s Find the "DiskDetail" ScrollView
+    t =    22.37s Find the "DiskDetail" ScrollView
+    t =    22.42s Find the "DiskDetail" ScrollView
+    t =    22.47s Find the "DiskDetail" ScrollView
+    t =    22.51s Find the "DiskDetail" ScrollView
+    t =    22.55s Find the "DashboardContainer" Group
+    t =    22.57s Terminate com.zipkero.ResourceRunner:58495
+    t =    23.64s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardViewportUITests testActualLastCardAndMemoryRankingChangesKeepDetailWithinVisibleScreen]' passed (23.847 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardViewportUITests testHiddenShortcutAndLiveSelectionRemovalRestoreFocusToFirstVisibleCard]' started.
+    t =     0.00s Start Test at 2026-10-04 14:47:17.240
+    t =     0.13s Set Up
+    t =     0.13s Open com.zipkero.ResourceRunner
+    t =     0.13s     Launch com.zipkero.ResourceRunner
+2026-10-04 14:47:17.372 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-04 14:47:17.372 xcodebuild[55201:52131155] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.38s         Wait for accessibility to load
+    t =     0.42s         Setting up automation session
+    t =     0.43s         Wait for com.zipkero.ResourceRunner to idle
+    t =     0.43s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     1.43s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     1.43s         Checking existence of `StatusItem (First Match)`
+    t =     1.45s Click StatusItem (First Match)
+    t =     1.45s     Wait for com.zipkero.ResourceRunner to idle
+    t =     1.46s     Find the StatusItem (First Match)
+    t =     1.47s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     1.48s     Open com.zipkero.ResourceRunner
+    t =     1.48s         Activate com.zipkero.ResourceRunner
+    t =     1.49s             Wait for com.zipkero.ResourceRunner to idle
+    t =     1.49s     Synthesize event
+    t =     1.89s     Wait for com.zipkero.ResourceRunner to idle
+    t =     1.90s Waiting 5.0s for "DashboardContainer" Any to exist
+    t =     2.91s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     2.92s         Checking existence of `"DashboardContainer" Any`
+    t =     2.97s Type '4' key with modifiers '⌘' (0x10)
+    t =     2.97s     Wait for com.zipkero.ResourceRunner to idle
+    t =     2.98s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     3.01s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     3.01s     Synthesize event
+    t =     3.09s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.09s Checking existence of `"DashboardDetail" Any`
+    t =     3.14s Type '2' key with modifiers '⌘' (0x10)
+    t =     3.14s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.15s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     3.17s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     3.17s     Synthesize event
+    t =     3.27s     Wait for com.zipkero.ResourceRunner to idle
+    t =     3.27s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     4.28s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     4.28s         Checking existence of `"DashboardDetail" Any`
+    t =     4.34s Type '2' key with modifiers '⌘⇧' (0x12)
+    t =     4.35s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.35s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.38s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.38s     Synthesize event
+    t =     4.49s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.49s Checking existence of `"MemoryCard" Any`
+    t =     4.53s Checking existence of `"CPUCard" Any`
+    t =     4.57s Checking existence of `"DashboardDetail" Any`
+    t =     4.61s Type '2' key with modifiers '⌘' (0x10)
+    t =     4.61s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.61s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     4.63s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.64s     Synthesize event
+    t =     4.70s     Wait for com.zipkero.ResourceRunner to idle
+    t =     4.70s Checking existence of `"DashboardDetail" Any`
+    t =     5.00s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     5.00s     Wait for com.zipkero.ResourceRunner to idle
+    t =     5.01s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     5.04s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     5.04s     Synthesize event
+    t =     5.13s     Wait for com.zipkero.ResourceRunner to idle
+    t =     5.13s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     6.16s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     6.16s         Checking existence of `"DashboardDetail" Any`
+    t =     6.24s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     6.24s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.24s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     6.39s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     6.39s     Synthesize event
+    t =     6.50s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.50s Checking existence of `"DashboardDetail" Any`
+    t =     6.80s Type ' ' key (XCUIKeyboardKeySpace) with no modifiers
+    t =     6.80s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.80s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     6.82s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     6.82s     Synthesize event
+    t =     6.94s     Wait for com.zipkero.ResourceRunner to idle
+    t =     6.94s Waiting 2.0s for "DashboardDetail" Any to exist
+    t =     7.97s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     7.97s         Checking existence of `"DashboardDetail" Any`
+    t =     8.05s Type '1' key with modifiers '⌘⇧' (0x12)
+    t =     8.05s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.05s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     8.09s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     8.10s     Synthesize event
+    t =     8.21s     Wait for com.zipkero.ResourceRunner to idle
+    t =     8.21s Checking existence of `"CPUCard" Any`
+    t =     8.25s Checking existence of `"DashboardDetail" Any`
+    t =     8.29s Waiting 2.0s for "DashboardOpenSettings" Button to exist
+    t =     9.31s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardOpenSettings" Button`
+    t =     9.31s         Checking existence of `"DashboardOpenSettings" Button`
+    t =     9.34s Type '1' key with modifiers '⌘' (0x10)
+    t =     9.34s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.35s     Find the Target Application 'com.zipkero.ResourceRunner'
+    t =     9.37s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.37s     Synthesize event
+    t =     9.44s     Wait for com.zipkero.ResourceRunner to idle
+    t =     9.44s Checking existence of `"DashboardDetail" Any`
+    t =     9.49s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardViewportUITests testHiddenShortcutAndLiveSelectionRemovalRestoreFocusToFirstVisibleCard]' passed (9.837 seconds).
+Test Suite 'DashboardViewportUITests' passed at 2026-10-04 14:47:27.077.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 33.683 (33.685) seconds
+Test Suite 'ResourceRunnerUITests.xctest' passed at 2026-10-04 14:47:27.078.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 183.833 (183.856) seconds
+Test Suite 'Selected tests' passed at 2026-10-04 14:47:27.080.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 183.833 (183.858) seconds
+2026-10-04 14:47:31.592 xcodebuild[55201:52131155] [MT] IDETestOperationsObserverDebug: 188.843 elapsed -- Testing started completed.
+2026-10-04 14:47:31.592 xcodebuild[55201:52131155] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-04 14:47:31.592 xcodebuild[55201:52131155] [MT] IDETestOperationsObserverDebug: 188.843 sec, +188.843 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/rr-m4-task008-ui.xcresult
+
+** TEST SUCCEEDED **
+
+Testing started

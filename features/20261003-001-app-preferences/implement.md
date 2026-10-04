@@ -84,13 +84,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.1, §5.2, §5.3, §5.12, §5.13; DESIGN §1.2, §1.4, §2.1, §3.2, §4.2, §5 DP7.
   - 승인 근거: 2026-10-04 독립 verifier approved를 main이 확정했습니다. HEADcac4ca9 기준10파일 해시/patch 대응, 최종 signed UI2/2·단위40/40/6suite·64렌더 조합·실패/skip0. 전체 숨김 부모 AX 식별자 전파를 수정하고 실제 버튼/높이/카드 AX 부재·상세 숨김/재표시를 확인했습니다. [재개/승인 근거](./evidence/task-007/resume-20261004/README.md). UI correctness 보완1회·근거 재검증0; 이전 환경 차단/실패 이력은 보존합니다. task-008~011 미착수, 이번에 완료되는 SPEC 전체 조건은 없습니다.
 
-- [ ] task-008: 표시 조합의 포커스·단축키·현재 앵커
+- [x] task-008: 표시 조합의 포커스·단축키·현재 앵커
   - 목적: 제거 뒤 키보드 복귀와 마지막 표시 카드의 상세 공간을 안정적으로 유지합니다.
   - 접근: 선행 task-007. 출발점은 `ResourceRunner/DashboardView.swift`, `ResourceRunner/DashboardViewport.swift`, `ResourceRunner/StatusBarController.swift`, `ResourceRunner/DashboardPresentationStore.swift`입니다. ⌘1~⌘4 대응을 고정하고 숨긴 카드는 무동작으로 둡니다. 원래 카드→남은 첫 카드→전체 숨김 설정 버튼 순서로 유효 포커스에 복귀합니다. 지연 동작은 generation·표시 revision·현재 대상·key 설정창을 확인합니다. 앵커는 마지막 카드 identity/revision과 Memory 실제 위치·TOP 5 변경 높이를 반영합니다.
   - 검증 조건:
     - 결과: stale 포커스·측정·제거가 새 화면을 덮지 않고 숨긴 Memory·이전 Disk weak view를 쓰지 않습니다. 기본 Disk 앵커·Memory 보정을 보존합니다. 조합 변경 후 본체·앵커·chrome를 재측정하고8pt 여유·최대400×480pt·frame 보정을 유지합니다. 앵커 없음은 상세를 닫고 기존 화면 기본 크기를 유지합니다. 본체 축소로 상세 공간을 만들지 않으며 상세 스크롤·Escape·Page Up/Down을 유지합니다.
     - 확인: `ResourceRunnerTests/DashboardViewportTests.swift`와 `ResourceRunnerUITests/DashboardDetailPopoverUITests.swift`, `DashboardDetailExpansionUITests.swift`, `DashboardCardSelectionUITests.swift`로 마지막 카드·Memory의 마지막/위쪽/숨김·TOP 5 변경·stale 등록/제거를 확인합니다. 실제 화면 하단 상세·긴 Memory·chrome·단축키·포커스 복귀를 관찰합니다. key 설정창 보호의 최종 실행 근거는 task-009의 창과 함께 확인합니다.
   - 참조: SPEC §5.2, §5.12, §5.13; DESIGN §1.3, §3.2, §3.3, §4.2, §5 DP2, DP7.
+  - 승인 근거: 2026-10-04 독립 verifier approved를 main이 확정했습니다. HEADb8a8397 기준7파일 SHA/patch 대응, signed 단위46/46·6suite·UI17/17·실패/skip0과4조합 실제frame를 확인했습니다. 현재 마지막 앵커·Memory 보정·stale 복귀 거부·Return/Space와 기본 본체/상세 회귀를 통과했습니다. [task-008 근거](./evidence/task-008/README.md). 구현 재시도0·근거 재검증0; key 설정창 최종UI는009이며 신규 SPEC 전체 완료 없음.
 
 - [ ] task-009: 단일 설정창과 접근·키보드·AX
   - 목적: Release 메뉴바에서 모든 설정·실제 로그인 상태·복원 결과를 조작하는 제품 화면을 완성합니다.

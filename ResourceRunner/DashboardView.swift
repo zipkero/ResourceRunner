@@ -19,6 +19,8 @@ struct DashboardView: View {
     @ObservedObject var store: DashboardPresentationStore
     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
     @FocusState private var focusedCard: DashboardSelection?
+    @FocusState private var focusedSettingsButton: Bool
+    @State private var pendingFocusOriginal: DashboardSelection?
     @Environment(\.locale) private var locale
     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
@@ -43,6 +45,14 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .cpu)
+                .onKeyPress(keys: [.space, .return]) { press in
+                    guard press.modifiers.isEmpty else { return .ignored }
+                    store.selectCard(.cpu)
+                    return .handled
+                }
+                .background(DashboardLowestAnchorCapture(viewport: viewport,
+                    card: .cpu, revision: store.preferencesSnapshot.revision,
+                    isLast: preferences.visibleCards.last == .cpu))
                 .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
@@ -69,7 +79,14 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .memory)
-                .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
+                .onKeyPress(keys: [.space, .return]) { press in
+                    guard press.modifiers.isEmpty else { return .ignored }
+                    store.selectCard(.memory)
+                    return .handled
+                }
+                .background(DashboardLowestAnchorCapture(viewport: viewport,
+                    card: .memory, revision: store.preferencesSnapshot.revision,
+                    isLast: preferences.visibleCards.last == .memory))
                 .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel(
@@ -91,6 +108,14 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .network)
+                .onKeyPress(keys: [.space, .return]) { press in
+                    guard press.modifiers.isEmpty else { return .ignored }
+                    store.selectCard(.network)
+                    return .handled
+                }
+                .background(DashboardLowestAnchorCapture(viewport: viewport,
+                    card: .network, revision: store.preferencesSnapshot.revision,
+                    isLast: preferences.visibleCards.last == .network))
                 .keyboardShortcut("3", modifiers: .command)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
@@ -112,7 +137,14 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .disk)
-                .background(DashboardLowestAnchorCapture(viewport: viewport))
+                .onKeyPress(keys: [.space, .return]) { press in
+                    guard press.modifiers.isEmpty else { return .ignored }
+                    store.selectCard(.disk)
+                    return .handled
+                }
+                .background(DashboardLowestAnchorCapture(viewport: viewport,
+                    card: .disk, revision: store.preferencesSnapshot.revision,
+                    isLast: preferences.visibleCards.last == .disk))
                 .keyboardShortcut("4", modifiers: .command)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
@@ -137,6 +169,13 @@ struct DashboardView: View {
                     Text("설정에서 카드를 다시 켤 수 있습니다")
                         .dashboardTypography(DashboardStyle.TypographyRole.label)
                     Button("설정 열기", action: onOpenSettings)
+                        .focusable()
+                        .focused($focusedSettingsButton)
+                        .onKeyPress(keys: [.space, .return]) { press in
+                            guard press.modifiers.isEmpty else { return .ignored }
+                            onOpenSettings()
+                            return .handled
+                        }
                         .accessibilityIdentifier("DashboardOpenSettings")
                 }
             }
@@ -146,17 +185,17 @@ struct DashboardView: View {
         .onChange(of: store.selection) { old, new in
             viewport.requestCorrection?()
             if new == .none, old != .none {
-                let generation = store.selectionGeneration
-                // 자식 팝오버가 key를 반환한 뒤 해당 카드에 초점을 둡니다. 빠른 재선택이 시작되면 폐기합니다.
-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
-                    guard store.selection == .none,
-                          store.selectionGeneration == generation,
-                          store.isCardVisible(old) else { return }
-                    viewport.requestBodyFocus?()
-                    focusedCard = old
-                }
+                pendingFocusOriginal = old
+                scheduleFocusReturn(to: old)
+            } else if new != .none {
+                pendingFocusOriginal = nil
             }
         }
+        .onChange(of: store.preferencesSnapshot.revision) { _, _ in
+            configureViewport()
+            if let pendingFocusOriginal { scheduleFocusReturn(to: pendingFocusOriginal) }
+        }
+        .onAppear { configureViewport() }
         .background(DashboardColorPalette.popoverBackground)
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
         .accessibilityElement(children: .contain)
@@ -177,6 +216,27 @@ struct DashboardView: View {
     /// 네 상세에 공유할 크기를 줄이며, 넘치는 항목은 각 상세의 내부 `ScrollView`가 맡습니다.
     static let detailPopupWidth: CGFloat = 400
     static let detailPopupHeight: CGFloat = 480
+
+    private func configureViewport() {
+        let snapshot = store.preferencesSnapshot
+        viewport.configure(visibleCards: snapshot.preferences.visibleCards,
+            revision: snapshot.revision,
+            normalizesMemoryHeight: snapshot.preferences.showsMemoryTopApplications)
+    }
+
+    private func scheduleFocusReturn(to original: DashboardSelection) {
+        guard let request = store.focusReturnRequest(after: original) else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
+            guard pendingFocusOriginal == original,
+                  store.acceptsFocusReturn(request),
+                  viewport.requestBodyFocus?() == true else { return }
+            switch request.target {
+            case .card(let card): focusedCard = card
+            case .settings: focusedSettingsButton = true
+            }
+            pendingFocusOriginal = nil
+        }
+    }
 
     /// CPU 상세 팝업의 표시 여부. `get`은 `store.selection`을 그대로 반영하고,
     /// `set`은 팝업이 스스로 닫힐 때만 호출됩니다. 바인딩 생성 때의 세대를 캡처해

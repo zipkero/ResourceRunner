@@ -1,0 +1,766 @@
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index f8fe0d4..55afd2c 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -8,6 +8,18 @@
+ import Combine
+ import Foundation
+ 
++nonisolated enum DashboardFocusReturnTarget: Equatable, Sendable {
++    case card(DashboardSelection)
++    case settings
++}
++
++nonisolated struct DashboardFocusReturnRequest: Equatable, Sendable {
++    let original: DashboardSelection
++    let target: DashboardFocusReturnTarget
++    let selectionGeneration: UInt64
++    let displayRevision: UInt64
++}
++
+ /// 팝오버가 닫혀 있어도 갱신을 계속 받아 최신 카드 표시 상태를 보유하는 표시 계층 저장소.
+ /// 팝오버 콘텐츠 뷰는 앱 시작 때 한 번 만들어져 계속 살아 있으므로, 이 저장소가 항상 최신 값을
+ /// 들고 있으면 팝오버를 여는 순간 빈 화면이나 로딩 상태를 거칠 경로가 없습니다(ANALYSIS §5 DP10, SPEC §5.9).
+@@ -40,6 +52,24 @@ final class DashboardPresentationStore: ObservableObject {
+         preferencesSnapshot.preferences.showsCard(card)
+     }
+ 
++    func focusReturnRequest(after original: DashboardSelection) -> DashboardFocusReturnRequest? {
++        guard selection == .none, original != .none else { return nil }
++        let visible = preferencesSnapshot.preferences.visibleCards
++        let target: DashboardFocusReturnTarget = visible.contains(original)
++            ? .card(original)
++            : visible.first.map(DashboardFocusReturnTarget.card) ?? .settings
++        return DashboardFocusReturnRequest(original: original, target: target,
++            selectionGeneration: selectionGeneration,
++            displayRevision: preferencesSnapshot.revision)
++    }
++
++    func acceptsFocusReturn(_ request: DashboardFocusReturnRequest) -> Bool {
++        guard selection == .none,
++              selectionGeneration == request.selectionGeneration,
++              preferencesSnapshot.revision == request.displayRevision else { return false }
++        return focusReturnRequest(after: request.original)?.target == request.target
++    }
++
+     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {
+         admission.withCurrentBoundary(boundary) {
+             guard boundary.sequence >= lastCollectionBoundarySequence else { return }
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index c687b6e..bd67867 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -19,6 +19,8 @@ struct DashboardView: View {
+     @ObservedObject var store: DashboardPresentationStore
+     @ObservedObject var viewport: DashboardViewport = DashboardViewport()
+     @FocusState private var focusedCard: DashboardSelection?
++    @FocusState private var focusedSettingsButton: Bool
++    @State private var pendingFocusOriginal: DashboardSelection?
+     @Environment(\.locale) private var locale
+     /// 순위·목록 행이 앱 아이콘을 묻는 자리. 소유자는 `ApplicationCoordinator` 한 곳이고
+     /// 뷰 계층은 생성자로 전달받기만 합니다 — 캐시 수명이 뷰 수명에 묶이면 팝오버를 열 때마다
+@@ -43,6 +45,14 @@ struct DashboardView: View {
+                 .buttonStyle(.plain)
+                 .focusable()
+                 .focused($focusedCard, equals: .cpu)
++                .onKeyPress(keys: [.space, .return]) { press in
++                    guard press.modifiers.isEmpty else { return .ignored }
++                    store.selectCard(.cpu)
++                    return .handled
++                }
++                .background(DashboardLowestAnchorCapture(viewport: viewport,
++                    card: .cpu, revision: store.preferencesSnapshot.revision,
++                    isLast: preferences.visibleCards.last == .cpu))
+                 .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
+@@ -69,7 +79,14 @@ struct DashboardView: View {
+                 .buttonStyle(.plain)
+                 .focusable()
+                 .focused($focusedCard, equals: .memory)
+-                .background(DashboardLowestAnchorCapture(viewport: viewport, isMemoryCard: true))
++                .onKeyPress(keys: [.space, .return]) { press in
++                    guard press.modifiers.isEmpty else { return .ignored }
++                    store.selectCard(.memory)
++                    return .handled
++                }
++                .background(DashboardLowestAnchorCapture(viewport: viewport,
++                    card: .memory, revision: store.preferencesSnapshot.revision,
++                    isLast: preferences.visibleCards.last == .memory))
+                 .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel(
+@@ -91,6 +108,14 @@ struct DashboardView: View {
+                 .buttonStyle(.plain)
+                 .focusable()
+                 .focused($focusedCard, equals: .network)
++                .onKeyPress(keys: [.space, .return]) { press in
++                    guard press.modifiers.isEmpty else { return .ignored }
++                    store.selectCard(.network)
++                    return .handled
++                }
++                .background(DashboardLowestAnchorCapture(viewport: viewport,
++                    card: .network, revision: store.preferencesSnapshot.revision,
++                    isLast: preferences.visibleCards.last == .network))
+                 .keyboardShortcut("3", modifiers: .command)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
+@@ -112,7 +137,14 @@ struct DashboardView: View {
+                 .buttonStyle(.plain)
+                 .focusable()
+                 .focused($focusedCard, equals: .disk)
+-                .background(DashboardLowestAnchorCapture(viewport: viewport))
++                .onKeyPress(keys: [.space, .return]) { press in
++                    guard press.modifiers.isEmpty else { return .ignored }
++                    store.selectCard(.disk)
++                    return .handled
++                }
++                .background(DashboardLowestAnchorCapture(viewport: viewport,
++                    card: .disk, revision: store.preferencesSnapshot.revision,
++                    isLast: preferences.visibleCards.last == .disk))
+                 .keyboardShortcut("4", modifiers: .command)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+@@ -137,6 +169,13 @@ struct DashboardView: View {
+                     Text("설정에서 카드를 다시 켤 수 있습니다")
+                         .dashboardTypography(DashboardStyle.TypographyRole.label)
+                     Button("설정 열기", action: onOpenSettings)
++                        .focusable()
++                        .focused($focusedSettingsButton)
++                        .onKeyPress(keys: [.space, .return]) { press in
++                            guard press.modifiers.isEmpty else { return .ignored }
++                            onOpenSettings()
++                            return .handled
++                        }
+                         .accessibilityIdentifier("DashboardOpenSettings")
+                 }
+             }
+@@ -146,17 +185,17 @@ struct DashboardView: View {
+         .onChange(of: store.selection) { old, new in
+             viewport.requestCorrection?()
+             if new == .none, old != .none {
+-                let generation = store.selectionGeneration
+-                // 자식 팝오버가 key를 반환한 뒤 해당 카드에 초점을 둡니다. 빠른 재선택이 시작되면 폐기합니다.
+-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
+-                    guard store.selection == .none,
+-                          store.selectionGeneration == generation,
+-                          store.isCardVisible(old) else { return }
+-                    viewport.requestBodyFocus?()
+-                    focusedCard = old
+-                }
++                pendingFocusOriginal = old
++                scheduleFocusReturn(to: old)
++            } else if new != .none {
++                pendingFocusOriginal = nil
+             }
+         }
++        .onChange(of: store.preferencesSnapshot.revision) { _, _ in
++            configureViewport()
++            if let pendingFocusOriginal { scheduleFocusReturn(to: pendingFocusOriginal) }
++        }
++        .onAppear { configureViewport() }
+         .background(DashboardColorPalette.popoverBackground)
+         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
+         .accessibilityElement(children: .contain)
+@@ -178,6 +217,27 @@ struct DashboardView: View {
+     static let detailPopupWidth: CGFloat = 400
+     static let detailPopupHeight: CGFloat = 480
+ 
++    private func configureViewport() {
++        let snapshot = store.preferencesSnapshot
++        viewport.configure(visibleCards: snapshot.preferences.visibleCards,
++            revision: snapshot.revision,
++            normalizesMemoryHeight: snapshot.preferences.showsMemoryTopApplications)
++    }
++
++    private func scheduleFocusReturn(to original: DashboardSelection) {
++        guard let request = store.focusReturnRequest(after: original) else { return }
++        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(120)) {
++            guard pendingFocusOriginal == original,
++                  store.acceptsFocusReturn(request),
++                  viewport.requestBodyFocus?() == true else { return }
++            switch request.target {
++            case .card(let card): focusedCard = card
++            case .settings: focusedSettingsButton = true
++            }
++            pendingFocusOriginal = nil
++        }
++    }
++
+     /// CPU 상세 팝업의 표시 여부. `get`은 `store.selection`을 그대로 반영하고,
+     /// `set`은 팝업이 스스로 닫힐 때만 호출됩니다. 바인딩 생성 때의 세대를 캡처해
+     /// 같은 종류의 새 선택까지 이전 팝업의 닫힘이 지우지 못하게 합니다.
+diff --git a/ResourceRunner/DashboardViewport.swift b/ResourceRunner/DashboardViewport.swift
+index 990493a..2869e0b 100644
+--- a/ResourceRunner/DashboardViewport.swift
++++ b/ResourceRunner/DashboardViewport.swift
+@@ -14,6 +14,14 @@ nonisolated enum DashboardViewportPolicy {
+         diskCenterY + memoryHeight - longestMemoryHeight
+     }
+ 
++    static func normalizedAnchorCenterY(cardCenterY: CGFloat, card: DashboardSelection,
++                                        memoryHeight: CGFloat?, memoryIsAboveAnchor: Bool) -> CGFloat {
++        guard let memoryHeight else { return cardCenterY }
++        let difference = memoryHeight - longestMemoryHeight
++        if card == .memory { return cardCenterY + difference / 2 }
++        return cardCenterY + (memoryIsAboveAnchor ? difference : 0)
++    }
++
+     static func detailSize(visibleFrame: CGRect, chrome: CGSize,
+                            lowestAnchorCenterY: CGFloat? = nil) -> CGSize {
+         let anchorHeight = lowestAnchorCenterY.map {
+@@ -45,38 +53,123 @@ nonisolated enum DashboardViewportPolicy {
+ final class DashboardViewport: ObservableObject {
+     @Published private(set) var detailSize = DashboardViewportPolicy.maximumDetail
+     private(set) var visibleFrame: CGRect?
++    private weak var currentScreen: NSScreen?
+     private(set) var detailChrome = DashboardViewportPolicy.initialChrome
+     weak var detailWindow: NSWindow?
+     private(set) var detailSelection: DashboardSelection?
+     var requestCorrection: (() -> Void)?
+-    var requestBodyFocus: (() -> Void)?
+-    weak var lowestAnchorView: NSView?
+-    weak var memoryCardView: NSView?
++    var requestBodyFocus: (() -> Bool)?
++    private(set) var expectedAnchor: DashboardSelection?
++    private(set) var displayRevision: UInt64 = 0
++    private var configured = false
++    private var visibleCards = DashboardSelection.cardOrder
++    private var normalizesMemoryHeight = true
++    private(set) weak var lowestAnchorView: NSView?
++    private(set) weak var memoryCardView: NSView?
++    private var anchorOrder: UInt64 = 0
++    private var memoryOrder: UInt64 = 0
++    private var anchorFrame: CGRect?
++    private var memoryFrame: CGRect?
++
++    func configure(visibleCards: [DashboardSelection], revision: UInt64,
++                   normalizesMemoryHeight: Bool) {
++        guard revision >= displayRevision else { return }
++        if configured, revision == displayRevision, self.visibleCards == visibleCards,
++           self.normalizesMemoryHeight == normalizesMemoryHeight { return }
++        configured = true
++        displayRevision = revision
++        self.visibleCards = visibleCards
++        self.normalizesMemoryHeight = normalizesMemoryHeight
++        expectedAnchor = visibleCards.last
++        lowestAnchorView = nil
++        memoryCardView = nil
++        anchorOrder = 0
++        memoryOrder = 0
++        anchorFrame = nil
++        memoryFrame = nil
++        requestCorrection?()
++        closeDetailWithoutAnchor(after: revision)
++    }
++
++    private func closeDetailWithoutAnchor(after revision: UInt64) {
++        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(60)) { [weak self] in
++            guard let self, self.displayRevision == revision else { return }
++            if let anchor = self.lowestAnchorView,
++               let window = anchor.window, anchor.bounds.height > 0,
++               window.screen == self.currentScreen {
++                return
++            }
++            self.detailWindow?.close()
++        }
++    }
+ 
+     func apply(screen: NSScreen, measuredDetailChrome: CGSize? = nil) {
++        currentScreen = screen
+         visibleFrame = screen.visibleFrame
+         if let measuredDetailChrome { detailChrome = measuredDetailChrome }
+         let anchorCenterY: CGFloat? = {
+             guard let view = lowestAnchorView, let window = view.window,
+                   window.screen == screen, view.bounds.height > 0 else { return nil }
+-            return DashboardViewportPolicy.normalizedAnchorCenterY(
+-                diskCenterY: window.convertToScreen(view.convert(view.bounds, to: nil)).midY,
+-                memoryHeight: memoryCardView?.bounds.height
+-                    ?? DashboardViewportPolicy.longestMemoryHeight)
++            guard let card = expectedAnchor else { return nil }
++            let memoryHeight: CGFloat? = {
++                guard normalizesMemoryHeight, visibleCards.contains(.memory),
++                      let memory = memoryCardView,
++                      memory.window === window,
++                      memory.bounds.height > 0 else { return nil }
++                return memory.bounds.height
++            }()
++            let center = window.convertToScreen(view.convert(view.bounds, to: nil)).midY
++            let memoryIsAbove = visibleCards.firstIndex(of: .memory).map { memoryIndex in
++                memoryIndex < visibleCards.count - 1
++            } ?? false
++            return DashboardViewportPolicy.normalizedAnchorCenterY(cardCenterY: center,
++                card: card, memoryHeight: memoryHeight,
++                memoryIsAboveAnchor: memoryIsAbove)
+         }()
+         let next = DashboardViewportPolicy.detailSize(visibleFrame: screen.visibleFrame,
+             chrome: detailChrome, lowestAnchorCenterY: anchorCenterY)
+         if detailSize != next { detailSize = next }
++        if anchorCenterY == nil, detailWindow != nil {
++            closeDetailWithoutAnchor(after: displayRevision)
++        }
+     }
+ 
+-    func registerLowestAnchor(view: NSView) {
+-        lowestAnchorView = view
+-        if let screen = view.window?.screen { apply(screen: screen) }
++    func registerCard(view: NSView, card: DashboardSelection, revision: UInt64,
++                      order: UInt64, isLast: Bool) {
++        guard configured, revision == displayRevision, visibleCards.contains(card),
++              let window = view.window, card == .memory || isLast else { return }
++        let frame = window.convertToScreen(view.convert(view.bounds, to: nil))
++        var changed = false
++        if card == .memory, order >= memoryOrder {
++            changed = changed || memoryCardView !== view || memoryFrame != frame
++            memoryCardView = view
++            memoryOrder = order
++            memoryFrame = frame
++        }
++        if isLast, card == expectedAnchor, order >= anchorOrder {
++            changed = changed || lowestAnchorView !== view || anchorFrame != frame
++            lowestAnchorView = view
++            anchorOrder = order
++            anchorFrame = frame
++        }
++        guard changed else { return }
++        if let screen = window.screen { apply(screen: screen) }
++        requestCorrection?()
+     }
+ 
+-    func registerMemoryCard(view: NSView) {
+-        memoryCardView = view
+-        if let screen = view.window?.screen { apply(screen: screen) }
++    func unregisterCard(view: NSView, card: DashboardSelection, revision: UInt64) {
++        guard revision == displayRevision else { return }
++        if card == .memory, memoryCardView === view {
++            memoryCardView = nil
++            memoryFrame = nil
++        }
++        if card == expectedAnchor, lowestAnchorView === view {
++            lowestAnchorView = nil
++            anchorFrame = nil
++        }
++        if let screen = view.window?.screen ?? detailWindow?.screen { apply(screen: screen) }
++        requestCorrection?()
++        if lowestAnchorView == nil { closeDetailWithoutAnchor(after: revision) }
+     }
+ 
+     func registerDetail(window: NSWindow?, removingWindow: NSWindow? = nil,
+@@ -104,34 +197,60 @@ final class DashboardViewport: ObservableObject {
+ /// 마지막 카드의 실제 NSView 위치를 공유 높이 계산에만 사용합니다.
+ struct DashboardLowestAnchorCapture: NSViewRepresentable {
+     @ObservedObject var viewport: DashboardViewport
+-    var isMemoryCard = false
++    let card: DashboardSelection
++    let revision: UInt64
++    let isLast: Bool
+ 
+     func makeNSView(context: Context) -> AnchorView {
+         let view = AnchorView()
+         view.viewport = viewport
+-        view.isMemoryCard = isMemoryCard
++        view.card = card
++        view.revision = revision
++        view.isLast = isLast
+         return view
+     }
+ 
+     func updateNSView(_ view: AnchorView, context: Context) {
+         view.viewport = viewport
+-        view.isMemoryCard = isMemoryCard
++        view.card = card
++        view.revision = revision
++        view.isLast = isLast
+         view.report()
+     }
+ 
++    static func dismantleNSView(_ view: AnchorView, coordinator: ()) {
++        view.viewport?.unregisterCard(view: view, card: view.card, revision: view.revision)
++    }
++
+     final class AnchorView: NSView {
+         weak var viewport: DashboardViewport?
+-        var isMemoryCard = false
+-        override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); report() }
++        var card: DashboardSelection = .none
++        var revision: UInt64 = 0
++        var isLast = false
++        private static var nextOrder: UInt64 = 0
++        let order: UInt64 = {
++            nextOrder &+= 1
++            return nextOrder
++        }()
++        override func viewDidMoveToWindow() {
++            super.viewDidMoveToWindow()
++            if window == nil {
++                viewport?.unregisterCard(view: self, card: card, revision: revision)
++            } else {
++                report()
++            }
++        }
+         override func layout() { super.layout(); report() }
+         func report() {
++            let card = card
++            let revision = revision
++            let isLast = isLast
+             DispatchQueue.main.async { [weak self] in
+-                guard let self, self.window != nil else { return }
+-                if self.isMemoryCard {
+-                    self.viewport?.registerMemoryCard(view: self)
+-                } else {
+-                    self.viewport?.registerLowestAnchor(view: self)
+-                }
++                guard let self, self.window != nil,
++                      self.card == card, self.revision == revision,
++                      self.isLast == isLast else { return }
++                self.viewport?.registerCard(view: self, card: card,
++                    revision: revision, order: self.order, isLast: isLast)
+             }
+         }
+     }
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index e7a09f7..ec9097f 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -56,7 +56,13 @@ final class StatusBarController: NSObject {
+         popover.delegate = self
+         viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
+         viewport?.requestBodyFocus = { [weak self] in
+-            self?.popover.contentViewController?.view.window?.makeKey()
++            guard let self, self.popover.isShown,
++                  let body = self.popover.contentViewController?.view.window else { return false }
++            // 설정창 등 다른 소유 창이 key이면 늦은 복귀가 포커스를 빼앗지 않습니다.
++            guard Self.canRestoreBodyFocus(keyWindow: NSApp.keyWindow,
++                body: body, detail: viewport?.detailWindow) else { return false }
++            body.makeKey()
++            return true
+         }
+         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+             MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
+@@ -87,12 +93,36 @@ final class StatusBarController: NSObject {
+         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+     }
+ 
++    static func canRestoreBodyFocus(keyWindow: NSWindow?, body: NSWindow,
++                                    detail: NSWindow?) -> Bool {
++        guard let keyWindow else { return true }
++        return keyWindow === body || keyWindow === detail
++            || (body.childWindows?.contains(keyWindow) ?? false)
++    }
++
+     /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
+     private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
+         guard let window = event.window,
+               window === popover.contentViewController?.view.window
+                 || window === viewport?.detailWindow else { return event }
+         let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
++#if DEBUG
++        // UI fixture만 팝오버를 닫지 않은 채 카드 제거·포커스 복귀를 시험합니다.
++        if debugCardVisibilityInjector != nil,
++           modifiers == [.command, .shift] {
++            let card: DashboardSelection? = switch event.keyCode {
++            case 18: .cpu
++            case 19: .memory
++            case 20: .network
++            case 21: .disk
++            default: nil
++            }
++            if let card {
++                debugCardVisibilityInjector?(card)
++                return nil
++            }
++        }
++#endif
+         guard modifiers.isEmpty else { return event }
+         if event.keyCode == 53, keyboardDismiss?() == true { return nil }
+         if event.keyCode == 116 || event.keyCode == 121,
+diff --git a/ResourceRunnerTests/DashboardViewportTests.swift b/ResourceRunnerTests/DashboardViewportTests.swift
+index 9cf228b..c982928 100644
+--- a/ResourceRunnerTests/DashboardViewportTests.swift
++++ b/ResourceRunnerTests/DashboardViewportTests.swift
+@@ -69,4 +69,149 @@ struct DashboardViewportTests {
+             selection: .network, contentSize: .zero)
+         #expect(viewport.detailWindow == nil)
+     }
++
++    @Test func memoryNormalizationFollowsItsActualPositionOnlyWhenRankingIsVisible() {
++        // Memory가 마지막 카드면 높이 차이만큼 아래쪽 끝이 움직이고 중심은 그 절반만 움직입니다.
++        #expect(DashboardViewportPolicy.normalizedAnchorCenterY(
++            cardCenterY: 104, card: .memory, memoryHeight: 169,
++            memoryIsAboveAnchor: false) ==
++            DashboardViewportPolicy.normalizedAnchorCenterY(
++                cardCenterY: 96.5, card: .memory, memoryHeight: 184,
++                memoryIsAboveAnchor: false))
++        #expect(DashboardViewportPolicy.normalizedAnchorCenterY(
++            cardCenterY: 104, card: .disk, memoryHeight: 169,
++            memoryIsAboveAnchor: true) == 89)
++        #expect(DashboardViewportPolicy.normalizedAnchorCenterY(
++            cardCenterY: 104, card: .cpu, memoryHeight: nil,
++            memoryIsAboveAnchor: false) == 104)
++        #expect(DashboardViewportPolicy.normalizedAnchorCenterY(
++            cardCenterY: 104, card: .memory, memoryHeight: nil,
++            memoryIsAboveAnchor: false) == 104)
++    }
++
++    @Test func currentLastCardRejectsOldRevisionOlderViewAndStaleRemoval() {
++        let viewport = DashboardViewport()
++        let window = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 280, height: 400),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        let memory = NSView(frame: CGRect(x: 0, y: 120, width: 260, height: 169))
++        let disk = NSView(frame: CGRect(x: 0, y: 0, width: 260, height: 112))
++        let newMemory = NSView(frame: CGRect(x: 0, y: 0, width: 260, height: 90))
++        window.contentView?.addSubview(memory)
++        window.contentView?.addSubview(disk)
++        window.contentView?.addSubview(newMemory)
++
++        viewport.configure(visibleCards: [.cpu, .memory, .disk], revision: 1,
++            normalizesMemoryHeight: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 1, order: 1, isLast: false)
++        viewport.registerCard(view: disk, card: .disk, revision: 1, order: 2, isLast: true)
++        #expect(viewport.expectedAnchor == .disk)
++        #expect(viewport.lowestAnchorView === disk)
++        #expect(viewport.memoryCardView === memory)
++
++        viewport.configure(visibleCards: [.cpu, .memory], revision: 2,
++            normalizesMemoryHeight: false)
++        #expect(viewport.expectedAnchor == .memory)
++        #expect(viewport.lowestAnchorView == nil)
++        #expect(viewport.memoryCardView == nil)
++        viewport.registerCard(view: disk, card: .disk, revision: 1, order: 3, isLast: true)
++        viewport.unregisterCard(view: memory, card: .memory, revision: 1)
++        #expect(viewport.lowestAnchorView == nil)
++        viewport.registerCard(view: newMemory, card: .memory, revision: 2, order: 5, isLast: true)
++        #expect(viewport.lowestAnchorView === newMemory)
++        viewport.registerCard(view: memory, card: .memory, revision: 2, order: 1, isLast: true)
++        viewport.unregisterCard(view: memory, card: .memory, revision: 2)
++        #expect(viewport.lowestAnchorView === newMemory)
++        viewport.unregisterCard(view: newMemory, card: .memory, revision: 2)
++        #expect(viewport.lowestAnchorView == nil)
++        #expect(viewport.memoryCardView == nil)
++    }
++
++    @Test func focusReturnTargetUsesCurrentVisibilityAndRejectsReorderedIntent() throws {
++        let store = DashboardPresentationStore()
++        store.selectCard(.disk)
++        store.selectCard(.disk)
++        let original = try #require(store.focusReturnRequest(after: .disk))
++        #expect(original.target == .card(.disk))
++        #expect(store.acceptsFocusReturn(original))
++
++        var preferences = AppPreferences.defaults
++        preferences.showsDiskCard = false
++        store.applyPreferences(PreferencesSnapshot(preferences: preferences, revision: 1))
++        #expect(!store.acceptsFocusReturn(original))
++        let fallback = try #require(store.focusReturnRequest(after: .disk))
++        #expect(fallback.target == .card(.cpu))
++        preferences.showsCPUCard = false
++        preferences.showsMemoryCard = false
++        preferences.showsNetworkCard = false
++        store.applyPreferences(PreferencesSnapshot(preferences: preferences, revision: 2))
++        #expect(!store.acceptsFocusReturn(fallback))
++        let allOff = try #require(store.focusReturnRequest(after: .disk))
++        #expect(allOff.target == .settings)
++        store.selectCard(.disk)
++        #expect(store.acceptsFocusReturn(allOff))
++        preferences.showsCPUCard = true
++        store.applyPreferences(PreferencesSnapshot(preferences: preferences, revision: 3))
++        store.selectCard(.cpu)
++        #expect(!store.acceptsFocusReturn(allOff))
++    }
++
++    @Test func noCurrentAnchorClosesOwnedDetailAndKeepsScreenBasedDefaultSize() async throws {
++        let screen = try #require(NSScreen.main)
++        let viewport = DashboardViewport()
++        viewport.apply(screen: screen)
++        let detail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 426, height: 506),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        detail.isReleasedWhenClosed = false
++        detail.orderFront(nil)
++        viewport.registerDetail(window: detail, selection: .memory,
++            contentSize: CGSize(width: 400, height: 480))
++        viewport.configure(visibleCards: [], revision: 1, normalizesMemoryHeight: false)
++        try await Task.sleep(for: .milliseconds(150))
++        #expect(!detail.isVisible)
++        #expect(viewport.expectedAnchor == nil)
++        #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
++            visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome))
++    }
++
++    @Test func actualMemoryLastAndDiskLastFramesUseDifferentHeightCorrections() throws {
++        let screen = try #require(NSScreen.main)
++        let window = NSWindow(contentRect: CGRect(x: screen.visibleFrame.minX + 20,
++            y: screen.visibleFrame.minY + 8, width: 280, height: 400),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        window.isReleasedWhenClosed = false
++        defer { window.close() }
++        let memory = NSView(frame: CGRect(x: 0, y: 112, width: 260, height: 169))
++        let disk = NSView(frame: CGRect(x: 0, y: 0, width: 260, height: 112))
++        window.contentView?.addSubview(memory)
++        window.contentView?.addSubview(disk)
++        window.orderFront(nil)
++
++        let viewport = DashboardViewport()
++        viewport.apply(screen: screen)
++        viewport.configure(visibleCards: [.memory], revision: 1,
++            normalizesMemoryHeight: false)
++        viewport.registerCard(view: memory, card: .memory, revision: 1, order: 1, isLast: true)
++        let memoryCenter = window.convertToScreen(memory.convert(memory.bounds, to: nil)).midY
++        let noRankingSize = viewport.detailSize
++        #expect(noRankingSize == DashboardViewportPolicy.detailSize(
++            visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,
++            lowestAnchorCenterY: memoryCenter))
++
++        viewport.configure(visibleCards: [.memory], revision: 2,
++            normalizesMemoryHeight: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 2, order: 1, isLast: true)
++        #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
++            visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,
++            lowestAnchorCenterY: memoryCenter + CGFloat(169 - 184) / 2))
++        #expect(viewport.detailSize.height < noRankingSize.height)
++
++        viewport.configure(visibleCards: [.memory, .disk], revision: 3,
++            normalizesMemoryHeight: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 3, order: 1, isLast: false)
++        viewport.registerCard(view: disk, card: .disk, revision: 3, order: 2, isLast: true)
++        let diskCenter = window.convertToScreen(disk.convert(disk.bounds, to: nil)).midY
++        #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
++            visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,
++            lowestAnchorCenterY: diskCenter + 169 - 184))
++    }
+ }
+diff --git a/ResourceRunnerTests/StatusBarControllerTests.swift b/ResourceRunnerTests/StatusBarControllerTests.swift
+index a8df6d4..5d4ee23 100644
+--- a/ResourceRunnerTests/StatusBarControllerTests.swift
++++ b/ResourceRunnerTests/StatusBarControllerTests.swift
+@@ -15,6 +15,20 @@ import SwiftUI
+ @MainActor
+ struct StatusBarControllerTests {
+ 
++    @Test func focusReturnAllowsOwnedWindowsButRejectsKeySettingsWindow() {
++        let body = NSWindow(contentRect: .zero, styleMask: .borderless,
++            backing: .buffered, defer: false)
++        let detail = NSWindow(contentRect: .zero, styleMask: .borderless,
++            backing: .buffered, defer: false)
++        let settings = NSWindow(contentRect: .zero, styleMask: .borderless,
++            backing: .buffered, defer: false)
++        body.addChildWindow(detail, ordered: .above)
++        #expect(StatusBarController.canRestoreBodyFocus(keyWindow: nil, body: body, detail: detail))
++        #expect(StatusBarController.canRestoreBodyFocus(keyWindow: body, body: body, detail: detail))
++        #expect(StatusBarController.canRestoreBodyFocus(keyWindow: detail, body: body, detail: detail))
++        #expect(!StatusBarController.canRestoreBodyFocus(keyWindow: settings, body: body, detail: detail))
++    }
++
+     /// 표시 상태를 기록하는 테스트 전용 출력.
+     final class RecordingOutput: StatusBarControllerOutput {
+         private(set) var reportedValues: [Bool] = []
+diff --git a/ResourceRunnerUITests/DashboardViewportUITests.swift b/ResourceRunnerUITests/DashboardViewportUITests.swift
+new file mode 100644
+index 0000000..cc89fd1
+--- /dev/null
++++ b/ResourceRunnerUITests/DashboardViewportUITests.swift
+@@ -0,0 +1,105 @@
++import AppKit
++import XCTest
++
++final class DashboardViewportUITests: XCTestCase {
++    override func setUpWithError() throws { continueAfterFailure = false }
++
++    private func launch(cards: Int, top: Int) -> XCUIApplication {
++        let app = XCUIApplication()
++        app.launchArguments.append("--dashboard-preferences-ui-test")
++        app.launchEnvironment["RR_DASHBOARD_CARD_MASK"] = String(cards)
++        app.launchEnvironment["RR_DASHBOARD_TOP_MASK"] = String(top)
++        app.launch()
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "DashboardContainer")
++            .firstMatch.waitForExistence(timeout: 5))
++        return app
++    }
++
++    private func card(_ name: String, in app: XCUIApplication) -> XCUIElement {
++        app.descendants(matching: .any).matching(identifier: name).firstMatch
++    }
++
++    private func detail(in app: XCUIApplication) -> XCUIElement {
++        app.descendants(matching: .any).matching(identifier: "DashboardDetail").firstMatch
++    }
++
++    private func waitUntilGone(_ element: XCUIElement, timeout: TimeInterval = 2) -> Bool {
++        let deadline = Date().addingTimeInterval(timeout)
++        while Date() < deadline {
++            if !element.exists { return true }
++            Thread.sleep(forTimeInterval: 0.05)
++        }
++        return !element.exists
++    }
++
++    @MainActor
++    func testHiddenShortcutAndLiveSelectionRemovalRestoreFocusToFirstVisibleCard() {
++        let app = launch(cards: 3, top: 0)
++        app.typeKey("4", modifierFlags: .command)
++        XCTAssertFalse(detail(in: app).exists, "숨긴 Disk 단축키가 상세를 열면 안 됩니다.")
++
++        app.typeKey("2", modifierFlags: .command)
++        XCTAssertTrue(detail(in: app).waitForExistence(timeout: 2))
++        app.typeKey("2", modifierFlags: [.command, .shift])
++        XCTAssertTrue(waitUntilGone(card("MemoryCard", in: app)))
++        XCTAssertTrue(card("CPUCard", in: app).exists)
++        XCTAssertTrue(waitUntilGone(detail(in: app)))
++        app.typeKey("2", modifierFlags: .command)
++        XCTAssertFalse(detail(in: app).exists, "제거한 Memory의 ⌘2는 무동작이어야 합니다.")
++
++        // 선택한 Memory를 제거한 뒤 첫 표시 카드로 키보드 초점이 돌아왔는지 두 활성화 키로 확인합니다.
++        Thread.sleep(forTimeInterval: 0.25)
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(detail(in: app).waitForExistence(timeout: 2),
++            "남은 첫 카드 CPU가 Return으로 활성화되지 않았습니다.")
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(waitUntilGone(detail(in: app)))
++        Thread.sleep(forTimeInterval: 0.25)
++        app.typeKey(" ", modifierFlags: [])
++        XCTAssertTrue(detail(in: app).waitForExistence(timeout: 2),
++            "남은 첫 카드 CPU가 Space로 활성화되지 않았습니다.")
++        app.typeKey("1", modifierFlags: [.command, .shift])
++        XCTAssertTrue(waitUntilGone(card("CPUCard", in: app)))
++        XCTAssertTrue(waitUntilGone(detail(in: app)))
++        XCTAssertTrue(app.buttons["DashboardOpenSettings"].waitForExistence(timeout: 2))
++        app.typeKey("1", modifierFlags: .command)
++        XCTAssertFalse(detail(in: app).exists, "모든 카드를 숨긴 뒤 ⌘1은 무동작이어야 합니다.")
++    }
++
++    @MainActor
++    func testActualLastCardAndMemoryRankingChangesKeepDetailWithinVisibleScreen() throws {
++        let screen = try XCTUnwrap(NSScreen.main)
++        let screenHeight = screen.frame.height
++        let visible = screen.visibleFrame
++        for scenario in [(cards: 2, top: 0, key: "2", last: "MemoryCard", detail: "DashboardDetail"),
++                         (cards: 2, top: 2, key: "2", last: "MemoryCard", detail: "DashboardDetail"),
++                         (cards: 6, top: 3, key: "3", last: "NetworkCard", detail: "NetworkDetail"),
++                         (cards: 15, top: 3, key: "4", last: "DiskCard", detail: "DiskDetail")] {
++            let app = launch(cards: scenario.cards, top: scenario.top)
++            let last = card(scenario.last, in: app)
++            XCTAssertTrue(last.exists)
++            let body = app.descendants(matching: .any)
++                .matching(identifier: "DashboardContainer").firstMatch
++            let bodyFrame = body.frame
++            app.typeKey(scenario.key, modifierFlags: .command)
++            let content = app.descendants(matching: .any)
++                .matching(identifier: scenario.detail).firstMatch
++            XCTAssertTrue(content.waitForExistence(timeout: 2))
++            print("VIEWPORT_FRAME cards=\(scenario.cards) top=\(scenario.top) "
++                + "visible=\(visible) body=\(bodyFrame) detail=\(content.frame)")
++            XCTAssertLessThanOrEqual(content.frame.width, 400)
++            XCTAssertLessThanOrEqual(content.frame.height, 480)
++            XCTAssertGreaterThanOrEqual(content.frame.minX, visible.minX + 8)
++            XCTAssertLessThanOrEqual(content.frame.maxX, visible.maxX - 8)
++            XCTAssertGreaterThanOrEqual(content.frame.minY,
++                screenHeight - visible.maxY + 8)
++            XCTAssertLessThanOrEqual(content.frame.maxY,
++                screenHeight - visible.minY - 8)
++            XCTAssertEqual(body.frame, bodyFrame, "상세 공간을 위해 본체를 줄이면 안 됩니다.")
++            app.terminate()
++        }
++    }
++}

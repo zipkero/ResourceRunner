@@ -15,6 +15,20 @@ import SwiftUI
 @MainActor
 struct StatusBarControllerTests {
 
+    @Test func focusReturnAllowsOwnedWindowsButRejectsKeySettingsWindow() {
+        let body = NSWindow(contentRect: .zero, styleMask: .borderless,
+            backing: .buffered, defer: false)
+        let detail = NSWindow(contentRect: .zero, styleMask: .borderless,
+            backing: .buffered, defer: false)
+        let settings = NSWindow(contentRect: .zero, styleMask: .borderless,
+            backing: .buffered, defer: false)
+        body.addChildWindow(detail, ordered: .above)
+        #expect(StatusBarController.canRestoreBodyFocus(keyWindow: nil, body: body, detail: detail))
+        #expect(StatusBarController.canRestoreBodyFocus(keyWindow: body, body: body, detail: detail))
+        #expect(StatusBarController.canRestoreBodyFocus(keyWindow: detail, body: body, detail: detail))
+        #expect(!StatusBarController.canRestoreBodyFocus(keyWindow: settings, body: body, detail: detail))
+    }
+
     /// 표시 상태를 기록하는 테스트 전용 출력.
     final class RecordingOutput: StatusBarControllerOutput {
         private(set) var reportedValues: [Bool] = []

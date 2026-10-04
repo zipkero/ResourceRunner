@@ -8,6 +8,18 @@
 import Combine
 import Foundation
 
+nonisolated enum DashboardFocusReturnTarget: Equatable, Sendable {
+    case card(DashboardSelection)
+    case settings
+}
+
+nonisolated struct DashboardFocusReturnRequest: Equatable, Sendable {
+    let original: DashboardSelection
+    let target: DashboardFocusReturnTarget
+    let selectionGeneration: UInt64
+    let displayRevision: UInt64
+}
+
 /// 팝오버가 닫혀 있어도 갱신을 계속 받아 최신 카드 표시 상태를 보유하는 표시 계층 저장소.
 /// 팝오버 콘텐츠 뷰는 앱 시작 때 한 번 만들어져 계속 살아 있으므로, 이 저장소가 항상 최신 값을
 /// 들고 있으면 팝오버를 여는 순간 빈 화면이나 로딩 상태를 거칠 경로가 없습니다(ANALYSIS §5 DP10, SPEC §5.9).
@@ -38,6 +50,24 @@ final class DashboardPresentationStore: ObservableObject {
 
     func isCardVisible(_ card: DashboardSelection) -> Bool {
         preferencesSnapshot.preferences.showsCard(card)
+    }
+
+    func focusReturnRequest(after original: DashboardSelection) -> DashboardFocusReturnRequest? {
+        guard selection == .none, original != .none else { return nil }
+        let visible = preferencesSnapshot.preferences.visibleCards
+        let target: DashboardFocusReturnTarget = visible.contains(original)
+            ? .card(original)
+            : visible.first.map(DashboardFocusReturnTarget.card) ?? .settings
+        return DashboardFocusReturnRequest(original: original, target: target,
+            selectionGeneration: selectionGeneration,
+            displayRevision: preferencesSnapshot.revision)
+    }
+
+    func acceptsFocusReturn(_ request: DashboardFocusReturnRequest) -> Bool {
+        guard selection == .none,
+              selectionGeneration == request.selectionGeneration,
+              preferencesSnapshot.revision == request.displayRevision else { return false }
+        return focusReturnRequest(after: request.original)?.target == request.target
     }
 
     func observe(_ boundary: CollectionBoundary, admission: CollectionAdmission) {

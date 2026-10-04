@@ -1,0 +1,319 @@
+diff --git a/ResourceRunner/DiskDashboardView.swift b/ResourceRunner/DiskDashboardView.swift
+index c11ec5f..25e8c30 100644
+--- a/ResourceRunner/DiskDashboardView.swift
++++ b/ResourceRunner/DiskDashboardView.swift
+@@ -128,14 +128,14 @@ nonisolated enum DiskDisplayText {
+ 
+     static func capacitySummary(_ capacity: DiskCapacityPresentation?, locale: Locale) -> String {
+         guard let capacity else { return "시스템 / 용량 확인 중" }
+-        return "전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale))"
++        return "전체 \(ResourceQuantityFormatter.storageBytes(capacity.totalBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.storageBytes(capacity.availableBytes, locale: locale))"
+     }
+ 
+     /// 두 값의 단위가 같을 때만 단위를 공유해 고정 보조행에 두 숫자를 온전히 둡니다.
+     static func compactCapacitySummary(_ capacity: DiskCapacityPresentation?, locale: Locale) -> String {
+         guard let capacity else { return "시스템 / 용량 확인 중" }
+-        let total = ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)
+-        let available = ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale)
++        let total = ResourceQuantityFormatter.storageBytes(capacity.totalBytes, locale: locale)
++        let available = ResourceQuantityFormatter.storageBytes(capacity.availableBytes, locale: locale)
+         guard let totalSeparator = total.lastIndex(of: " "),
+               let availableSeparator = available.lastIndex(of: " ") else {
+             return "전체 \(total)·가용 \(available)"
+@@ -148,7 +148,7 @@ nonisolated enum DiskDisplayText {
+         return "전체 \(total)·가용 \(available)"
+     }
+ 
+-    static let usedDefinition = "사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다."
++    static let usedDefinition = "사용 가능에는 macOS가 회수할 수 있는 공간이 포함됩니다. 사용 중 = 전체 − 사용 가능이며 실제 파일 점유량이 아닙니다. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다."
+ }
+ 
+ nonisolated enum DiskCardLayout {
+@@ -337,7 +337,7 @@ struct DiskDetailPopoverContent: View {
+                     if case .failure(let reason) = presentation.supplemental.phase { Text("용량 조회 실패: \(reason)") }
+                     Text("시스템 / · \(DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale))")
+                     if let capacity = presentation.supplemental.capacity {
+-                        Text("사용 중 \(ResourceQuantityFormatter.bytes(capacity.usedBytes, locale: locale))")
++                        Text("사용 중 \(ResourceQuantityFormatter.storageBytes(capacity.usedBytes, locale: locale))")
+                         Text("용량 관계: \(capacity.relationReason)")
+                     }
+                     Text(DiskDisplayText.usedDefinition)
+@@ -403,7 +403,7 @@ struct DiskDetailPopoverContent: View {
+         let paths = item.mountPaths.sorted().joined(separator: ", ")
+         let lines = [
+             "\(paths.isEmpty ? item.identity : paths) · \(item.fileSystem ?? "파일 시스템 미확인") · \(DiskDisplayText.volumeScope(item.scope))",
+-            "전체 \(ResourceQuantityFormatter.bytes(item.totalBytes, locale: locale)) · 사용 중 \(ResourceQuantityFormatter.bytes(item.usedBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.bytes(item.availableBytes, locale: locale))",
++            "전체 \(ResourceQuantityFormatter.storageBytes(item.totalBytes, locale: locale)) · 사용 중 \(ResourceQuantityFormatter.storageBytes(item.usedBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.storageBytes(item.availableBytes, locale: locale))",
+             "장치 관계: \(item.relationReason)",
+             item.sharedCapacity ? "APFS 공유 공간 · 볼륨별 독점 사용량 아님" : "공유 공간 여부 미확인 또는 비공유",
+             DiskDisplayText.usedDefinition
+diff --git a/ResourceRunner/DiskNativeAdapter.swift b/ResourceRunner/DiskNativeAdapter.swift
+index 8118833..8ddde8c 100644
+--- a/ResourceRunner/DiskNativeAdapter.swift
++++ b/ResourceRunner/DiskNativeAdapter.swift
+@@ -85,7 +85,7 @@ nonisolated enum DiskNativeRules {
+ 
+     static func capacity(total: Any?, available: Any?) throws -> (UInt64, UInt64) {
+         let total = try unsigned(total, key: "volumeTotalCapacityKey")
+-        let available = try unsigned(available, key: "volumeAvailableCapacityKey")
++        let available = try unsigned(available, key: "volumeAvailableCapacityForImportantUsageKey")
+         guard total > 0, available <= total else {
+             throw DiskNativeError.invalid("capacity relation total=\(total) available=\(available)")
+         }
+@@ -270,13 +270,14 @@ nonisolated struct DiskNativeAdapter {
+ 
+     private func readVolumes(session: DASession, physicalIDs: Set<UInt64>, virtualIDs: Set<UInt64>) throws -> [DiskVolumeReading] {
+         let keys: Set<URLResourceKey> = [.volumeIsLocalKey, .volumeUUIDStringKey,
+-            .volumeTotalCapacityKey, .volumeAvailableCapacityKey]
++            .volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey]
+         let urls = try mountedDiskURLs()
+         var readings: [DiskVolumeReading] = []
+         for url in urls {
+             let values = try url.resourceValues(forKeys: keys)
+             guard url.path == "/" || values.volumeIsLocal == true else { continue }
+-            let (total, available) = try DiskNativeRules.capacity(total: values.volumeTotalCapacity, available: values.volumeAvailableCapacity)
++            // macOS의 회수 가능한 공간 포함 값을 사용하며 미확보를 순수 여유 공간으로 대체하지 않습니다.
++            let (total, available) = try DiskNativeRules.capacity(total: values.volumeTotalCapacity, available: values.volumeAvailableCapacityForImportantUsage)
+             let disk = DADiskCreateFromVolumePath(kCFAllocatorDefault, session, url as CFURL)
+             let desc = disk.flatMap { DADiskCopyDescription($0) as? [String: Any] } ?? [:]
+             let bsdName = disk.flatMap { DADiskGetBSDName($0) }.map { String(cString: $0) }
+diff --git a/ResourceRunner/ResourceActivityPresentation.swift b/ResourceRunner/ResourceActivityPresentation.swift
+index ba29f2a..d73a5eb 100644
+--- a/ResourceRunner/ResourceActivityPresentation.swift
++++ b/ResourceRunner/ResourceActivityPresentation.swift
+@@ -365,7 +365,7 @@ nonisolated struct DiskCardPresentation: Sendable {
+         if supplemental.isLastKnown { parts.append("보조 정보는 마지막 성공 시각의 과거 값") }
+         if let capacity = supplemental.capacity {
+             let qualifier = supplemental.isLastKnown ? "마지막 저장 공간(과거)" : "저장 공간"
+-            parts.append("\(qualifier) 전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)), 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale)), 사용 중은 전체에서 사용 가능을 뺀 값")
++            parts.append("\(qualifier) 전체 \(ResourceQuantityFormatter.storageBytes(capacity.totalBytes, locale: locale)), 사용 가능 \(ResourceQuantityFormatter.storageBytes(capacity.availableBytes, locale: locale)), 사용 가능은 macOS 회수 가능한 공간 포함, 사용 중은 전체에서 사용 가능을 뺀 값이며 실제 파일 점유량이 아님")
+             if capacity.sharedCapacity { parts.append("APFS 공유 공간이며 볼륨별 독점 사용량이 아님") }
+         }
+         return parts.joined(separator: ", ")
+diff --git a/ResourceRunner/ResourceQuantityFormatter.swift b/ResourceRunner/ResourceQuantityFormatter.swift
+index f5c9a13..3811874 100644
+--- a/ResourceRunner/ResourceQuantityFormatter.swift
++++ b/ResourceRunner/ResourceQuantityFormatter.swift
+@@ -21,6 +21,16 @@ nonisolated enum ResourceQuantityFormatter {
+         return formatted(Double(value) / selected.0, unit: selected.1, locale: locale)
+     }
+ 
++    /// 저장 공간은 macOS와 같은 십진 단위로 표시하며 속도·누적량의 이진 단위와 분리합니다.
++    static func storageBytes(_ value: UInt64, locale: Locale = .current) -> String {
++        let units: [(Double, String)] = [
++            (1_000_000_000_000, "TB"), (1_000_000_000, "GB"),
++            (1_000_000, "MB"), (1_000, "KB"), (1, "B")
++        ]
++        let selected = units.first { Double(value) >= $0.0 } ?? units[units.count - 1]
++        return formatted(Double(value) / selected.0, unit: selected.1, locale: locale)
++    }
++
+     static func linkBitsPerSecond(_ value: Double, locale: Locale = .current) -> String {
+         guard value.isFinite, value > 0 else { return "-" }
+         let units: [(Double, String)] = [
+diff --git a/ResourceRunnerTests/DiskDashboardViewTests.swift b/ResourceRunnerTests/DiskDashboardViewTests.swift
+index 9916619..f795c54 100644
+--- a/ResourceRunnerTests/DiskDashboardViewTests.swift
++++ b/ResourceRunnerTests/DiskDashboardViewTests.swift
+@@ -195,10 +195,10 @@ struct DiskDashboardViewTests {
+     @Test func fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales() throws {
+         let cases: [(String, DiskCapacityPresentation)] = [
+             ("max-same-unit", capacity(total: UInt64.max, available: UInt64.max - 1)),
+-            ("different-tb-gb", capacity(total: 1 << 40, available: 1 << 39)),
+-            ("unit-boundary", capacity(total: 1 << 30, available: (1 << 30) - 1)),
++            ("different-tb-gb", capacity(total: 1_000_000_000_000, available: 500_000_000_000)),
++            ("unit-boundary", capacity(total: 1_000_000_000, available: 999_999_999)),
+             ("zero", capacity(total: 0, available: 0)),
+-            ("small-positive", capacity(total: 1_024, available: 1))
++            ("small-positive", capacity(total: 1_000, available: 1))
+         ]
+         let locales = ["en_US", "de_DE", "ko_KR", "gez_ER", "my_MM"]
+         let font = NSFont.preferredFont(forTextStyle: .subheadline)
+@@ -207,8 +207,8 @@ struct DiskDashboardViewTests {
+             let locale = Locale(identifier: localeID)
+             for (name, value) in cases {
+                 let compact = DiskDisplayText.compactCapacitySummary(value, locale: locale)
+-                let total = ResourceQuantityFormatter.bytes(value.totalBytes, locale: locale)
+-                let available = ResourceQuantityFormatter.bytes(value.availableBytes, locale: locale)
++                let total = ResourceQuantityFormatter.storageBytes(value.totalBytes, locale: locale)
++                let available = ResourceQuantityFormatter.storageBytes(value.availableBytes, locale: locale)
+                 let totalParts = total.split(separator: " ", omittingEmptySubsequences: false)
+                 let availableParts = available.split(separator: " ", omittingEmptySubsequences: false)
+                 #expect(compact.contains(String(totalParts.dropLast().joined(separator: " "))))
+@@ -229,17 +229,17 @@ struct DiskDashboardViewTests {
+         }
+         let english = Locale(identifier: "en_US")
+         #expect(DiskDisplayText.compactCapacitySummary(cases[0].1, locale: english)
+-            == "전체 16,777,216.0·가용 16,777,216.0 TB")
++            == "전체 18,446,744.1·가용 18,446,744.1 TB")
+         #expect(DiskDisplayText.compactCapacitySummary(cases[1].1, locale: english)
+-            == "전체 1.0 TB·가용 512.0 GB")
++            == "전체 1.0 TB·가용 500.0 GB")
+         #expect(DiskDisplayText.capacitySummary(cases[1].1, locale: english)
+-            == "전체 1.0 TB · 사용 가능 512.0 GB")
++            == "전체 1.0 TB · 사용 가능 500.0 GB")
+         let german = Locale(identifier: "de_DE")
+         let germanCard = card(capacity: cases[1].1)
+         #expect(germanCard.accessibilityLabel(locale: german).contains("전체 1,0 TB"))
+-        #expect(germanCard.accessibilityLabel(locale: german).contains("사용 가능 512,0 GB"))
++        #expect(germanCard.accessibilityLabel(locale: german).contains("사용 가능 500,0 GB"))
+         #expect(DiskDisplayText.capacitySummary(cases[1].1, locale: german)
+-            .contains("사용 가능 512,0 GB"))
++            .contains("사용 가능 500,0 GB"))
+     }
+ 
+     @Test func conditionalOperationsAndExternalMountStatesStayDistinct() throws {
+diff --git a/ResourceRunnerTests/DiskNativeAdapterTests.swift b/ResourceRunnerTests/DiskNativeAdapterTests.swift
+index 86605b3..1fed184 100644
+--- a/ResourceRunnerTests/DiskNativeAdapterTests.swift
++++ b/ResourceRunnerTests/DiskNativeAdapterTests.swift
+@@ -70,6 +70,20 @@ struct DiskNativeAdapterTests {
+         #expect(throws: DiskNativeError.self) { try DiskNativeRules.unsigned(NSNumber(value: true), key: "Bytes (Read)") }
+     }
+ 
++    @Test func importantCapacityRejectsMissingOrInvalidAvailabilityWithoutFallback() throws {
++        let total = NSNumber(value: 994_662_584_320 as UInt64)
++        let available = NSNumber(value: 821_368_794_995 as Int64)
++        let result = try DiskNativeRules.capacity(total: total, available: available)
++        #expect(result.0 == 994_662_584_320)
++        #expect(result.1 == 821_368_794_995)
++        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: nil) }
++        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: NSNumber(value: -1)) }
++        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: "821368794995") }
++        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: NSNumber(value: true)) }
++        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: NSNumber(value: 1.5)) }
++        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: 100, available: 101) }
++    }
++
+     @Test func requiredBytesAndOptionalOperationsAreDistinct() throws {
+         #expect(try DiskNativeRules.unsigned(NSNumber(value: 5_000_000_000), key: "Bytes (Read)") == 5_000_000_000)
+         #expect(try DiskNativeRules.unsigned(NSNumber(value: UInt64.max), key: "Bytes (Read)") == UInt64.max)
+diff --git a/ResourceRunnerTests/ResourceActivityPresentationTests.swift b/ResourceRunnerTests/ResourceActivityPresentationTests.swift
+index 93a7901..ebc5951 100644
+--- a/ResourceRunnerTests/ResourceActivityPresentationTests.swift
++++ b/ResourceRunnerTests/ResourceActivityPresentationTests.swift
+@@ -75,6 +75,20 @@ struct ResourceActivityPresentationTests {
+             lastKnown: failure == nil ? snapshot : nil)
+     }
+ 
++    @Test func macOSStorageUnitsDoNotChangeBinaryRatesOrCounters() {
++        let english = Locale(identifier: "en_US")
++        #expect(ResourceQuantityFormatter.storageBytes(994_662_584_320, locale: english) == "994.7 GB")
++        #expect(ResourceQuantityFormatter.storageBytes(821_368_794_995, locale: english) == "821.4 GB")
++        #expect(ResourceQuantityFormatter.storageBytes(999, locale: english) == "999.0 B")
++        #expect(ResourceQuantityFormatter.storageBytes(1_000, locale: english) == "1.0 KB")
++        #expect(ResourceQuantityFormatter.storageBytes(1_000_000, locale: english) == "1.0 MB")
++        #expect(ResourceQuantityFormatter.storageBytes(1_000_000_000, locale: english) == "1.0 GB")
++        #expect(ResourceQuantityFormatter.storageBytes(1_000_000_000_000, locale: english) == "1.0 TB")
++        #expect(ResourceQuantityFormatter.bytes(1 << 30, locale: english) == "1.0 GB")
++        #expect(ResourceQuantityFormatter.byteRate(Double(1 << 20), locale: english) == "1.0 MB/s")
++        #expect(ResourceQuantityFormatter.storageBytes(821_368_794_995, locale: Locale(identifier: "de_DE")) == "821,4 GB")
++    }
++
+     @Test func measuredZeroIsDistinctFromNoConnectionBaselineAndFailure() {
+         let zero = NetworkCardPresentation.assemble(activity: network(.rate, rate(0, 0)),
+             metadata: metadata(), epoch: 0, wasStopped: false)
+diff --git a/ResourceRunnerUITests/DiskCardUITests.swift b/ResourceRunnerUITests/DiskCardUITests.swift
+index fded9ee..9cbbc7e 100644
+--- a/ResourceRunnerUITests/DiskCardUITests.swift
++++ b/ResourceRunnerUITests/DiskCardUITests.swift
+@@ -58,6 +58,64 @@ final class DiskCardUITests: XCTestCase {
+         print("TASK011_ACTUAL_UI cardAfter=\(disk.frame) bodyAfter=\(dashboard.frame)")
+     }
+ 
++    @MainActor
++    func testSandboxCapacityUsesDecimalUnitsAndReclaimableSpace() throws {
++        let app = XCUIApplication()
++        app.launchArguments += ["--dashboard-preferences-ui-test", "-AppleLocale", "en_US"]
++        app.launch()
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 10))
++        status.click()
++        let disk = app.buttons["DiskCard"]
++        XCTAssertTrue(disk.waitForExistence(timeout: 10))
++        XCTAssertTrue(waitUntil({ disk.label.contains("저장 공간 전체") }, timeout: 15), disk.label)
++        let pattern = #"저장 공간 전체 ([0-9,.]+) ([KMGT]?B), 사용 가능 ([0-9,.]+) ([KMGT]?B)"#
++        let expression = try NSRegularExpression(pattern: pattern)
++        let label = disk.label
++        let match = try XCTUnwrap(expression.firstMatch(in: label, range: NSRange(label.startIndex..., in: label)))
++        let decimalUnits: [String: Double] = ["B": 1, "KB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12]
++        func displayedBytes(number: Int, unit: Int) throws -> Double {
++            let numberRange = try XCTUnwrap(Range(match.range(at: number), in: label))
++            let unitRange = try XCTUnwrap(Range(match.range(at: unit), in: label))
++            let value = try XCTUnwrap(Double(label[numberRange].replacingOccurrences(of: ",", with: "")))
++            return value * (try XCTUnwrap(decimalUnits[String(label[unitRange])]))
++        }
++        let values = try URL(fileURLWithPath: "/").resourceValues(forKeys: [
++            .volumeTotalCapacityKey, .volumeAvailableCapacityKey, .volumeAvailableCapacityForImportantUsageKey])
++        let total = try XCTUnwrap(values.volumeTotalCapacity)
++        let important = try XCTUnwrap(values.volumeAvailableCapacityForImportantUsage)
++        XCTAssertEqual(try displayedBytes(number: 1, unit: 2), Double(total), accuracy: 50_000_001)
++        // 보조 조회와 UI 관찰의 시각 차이를 허용하되 순수 여유 공간과 이진 환산의 큰 차이를 검출합니다.
++        XCTAssertEqual(try displayedBytes(number: 3, unit: 4), Double(important), accuracy: 1_000_000_000)
++        XCTAssertTrue(label.contains("회수 가능한 공간 포함"))
++        XCTAssertFalse(app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch.exists)
++        XCTAssertEqual(disk.frame.height, 112, accuracy: 1)
++        print("MACOS_CAPACITY_RAW total=\(total) rawAvailable=\(values.volumeAvailableCapacity ?? -1) importantAvailable=\(important) card=\(label) frame=\(disk.frame)")
++        let body = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
++        let bodyFrame = body.frame
++        let cardFrame = disk.frame
++        disk.click()
++        let summary = app.descendants(matching: .any).matching(identifier: "DiskSummary").firstMatch
++        XCTAssertTrue(summary.waitForExistence(timeout: 5))
++        XCTAssertTrue(summary.label.contains("회수할 수 있는 공간"))
++        XCTAssertTrue(summary.label.contains("실제 파일 점유량이 아닙니다"))
++        print("MACOS_CAPACITY_DETAIL summary=\(summary.label)")
++        let attachment = XCTAttachment(screenshot: app.screenshot())
++        attachment.name = "macOS-capacity-detail"
++        attachment.lifetime = .keepAlways
++        add(attachment)
++        let volume = app.descendants(matching: .any)
++            .matching(NSPredicate(format: "identifier BEGINSWITH %@", "DiskVolume-")).firstMatch
++        XCTAssertTrue(volume.waitForExistence(timeout: 5))
++        XCTAssertTrue(volume.label.contains("사용 중"))
++        XCTAssertTrue(volume.label.contains("회수할 수 있는 공간"))
++        print("MACOS_CAPACITY_VOLUME row=\(volume.label)")
++        app.buttons["DiskDetailClose"].click()
++        XCTAssertTrue(waitUntil({ !summary.exists }, timeout: 3))
++        XCTAssertEqual(disk.frame, cardFrame)
++        XCTAssertEqual(body.frame, bodyFrame)
++    }
++
+     private func waitUntil(_ condition: () -> Bool, timeout: TimeInterval) -> Bool {
+         let end = Date().addingTimeInterval(timeout)
+         while Date() < end {
+diff --git a/ResourceRunner/PrivacyInfo.xcprivacy b/ResourceRunner/PrivacyInfo.xcprivacy
+new file mode 100644
+index 0000000..fd2f6d8
+--- /dev/null
++++ b/ResourceRunner/PrivacyInfo.xcprivacy
+@@ -0,0 +1,29 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0">
++<dict>
++	<key>NSPrivacyTracking</key>
++	<false/>
++	<key>NSPrivacyCollectedDataTypes</key>
++	<array/>
++	<key>NSPrivacyAccessedAPITypes</key>
++	<array>
++		<dict>
++			<key>NSPrivacyAccessedAPIType</key>
++			<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
++			<key>NSPrivacyAccessedAPITypeReasons</key>
++			<array>
++				<string>85F4.1</string>
++			</array>
++		</dict>
++		<dict>
++			<key>NSPrivacyAccessedAPIType</key>
++			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
++			<key>NSPrivacyAccessedAPITypeReasons</key>
++			<array>
++				<string>CA92.1</string>
++			</array>
++		</dict>
++	</array>
++</dict>
++</plist>

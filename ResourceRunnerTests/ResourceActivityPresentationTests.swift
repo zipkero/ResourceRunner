@@ -75,6 +75,20 @@ struct ResourceActivityPresentationTests {
             lastKnown: failure == nil ? snapshot : nil)
     }
 
+    @Test func macOSStorageUnitsDoNotChangeBinaryRatesOrCounters() {
+        let english = Locale(identifier: "en_US")
+        #expect(ResourceQuantityFormatter.storageBytes(994_662_584_320, locale: english) == "994.7 GB")
+        #expect(ResourceQuantityFormatter.storageBytes(821_368_794_995, locale: english) == "821.4 GB")
+        #expect(ResourceQuantityFormatter.storageBytes(999, locale: english) == "999.0 B")
+        #expect(ResourceQuantityFormatter.storageBytes(1_000, locale: english) == "1.0 KB")
+        #expect(ResourceQuantityFormatter.storageBytes(1_000_000, locale: english) == "1.0 MB")
+        #expect(ResourceQuantityFormatter.storageBytes(1_000_000_000, locale: english) == "1.0 GB")
+        #expect(ResourceQuantityFormatter.storageBytes(1_000_000_000_000, locale: english) == "1.0 TB")
+        #expect(ResourceQuantityFormatter.bytes(1 << 30, locale: english) == "1.0 GB")
+        #expect(ResourceQuantityFormatter.byteRate(Double(1 << 20), locale: english) == "1.0 MB/s")
+        #expect(ResourceQuantityFormatter.storageBytes(821_368_794_995, locale: Locale(identifier: "de_DE")) == "821,4 GB")
+    }
+
     @Test func measuredZeroIsDistinctFromNoConnectionBaselineAndFailure() {
         let zero = NetworkCardPresentation.assemble(activity: network(.rate, rate(0, 0)),
             metadata: metadata(), epoch: 0, wasStopped: false)

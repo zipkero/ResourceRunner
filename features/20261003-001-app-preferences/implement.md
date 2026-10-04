@@ -106,7 +106,7 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 목적: 실제 앱에서 같은 설정 계약을 사용하고 기본 수집·표시 의미·배포 제약을 유지하는지 판정합니다.
   - 접근: 선행 task-001~task-009. 출발점은 `ResourceRunner/ApplicationCoordinator.swift`, `ResourceRunner/CollectionPipelines.swift`, `ResourceRunner/DashboardView.swift`, `ResourceRunner/CollectionDeliveryStore.swift`, `ResourceRunnerTests/IntegratedDashboardSummaryTests.swift`, `ResourceRunnerUITests/OneSessionMonitoringIntegrationUITests.swift`입니다. 선행 근거를 연결하고 새 통합 검증은 시작·재실행·연속 변경·복원·창/포커스 등 경계 간 동작에 한정합니다. mock·격리 adapter로 실제 로그인 등록·로그아웃 없이 판정합니다.
   - 검증 조건:
-    - Disk 현재 기준: 별도 Per-Request의 DESIGN §3.6 근거를 인수해1000 기반 저장 공간·important-usage available·상세/AX 정의·미확보 실패·privacy manifest 번들 포함·Sandbox 접근을 확인합니다. 원시값의 대상/시각·반올림과 Read/Write·누적량·Network·Memory 단위 불변을 대조합니다. 기존 raw available/1024 용량 근거는 새 정의의 성공으로 사용하지 않습니다.
+    - Disk 현재 기준: 별도 Per-Request의 DESIGN §3.6 [승인 근거](./evidence/disk-capacity-20261004/README.md)를 인수해1000 기반 저장 공간·important-usage available·상세/AX 정의·미확보 실패·privacy manifest 번들 포함·Sandbox 접근을 확인합니다. 원시값의 대상/시각·반올림과 Read/Write·누적량·Network·Memory 단위 불변을 대조합니다. 기존 raw available/1024 용량 근거는 새 정의의 성공으로 사용하지 않습니다.
     - 결과: 저장 설정의 첫 화면/일정·즉시 변경·전체 숨김 복구·그래프 재확대·복원 결과 분리가 일치합니다. 기본 CPU/Memory 계산·메뉴바·TOP 5/상세·Network 물리/부분 합계/보조·Disk 물리/볼륨 관계/현재값/상세를 유지합니다. 수집 영속화·외부 전송·추가 Helper/package/entitlement가 없고 arm64/macOS26.5/Sandbox/LSUIElement를 유지합니다.
     - 확인: 관련 단위·렌더·UI와 Debug/Release 빌드를 확인하고 실제 앱의 변경→재실행 첫 화면/일정→복원을 관찰합니다. 저장 payload·이력 초기화·profile apply 횟수·Release 접근·16개 카드/두 TOP 5 조합 근거, 기존 수집·summary/detail·AX를 대조합니다. 필수 미확인 항목은 이유를 적고 승인하지 않습니다. 다음 로그인·M3 보류를 완료 처리하지 않습니다.
   - 참조: SPEC §5.1~§5.9, §5.11, §5.12, §5.13; DESIGN §1.1~§1.4, §2.1~§2.6, §3.1~§3.6, §4.1, §4.2, §5 DP1~DP9.

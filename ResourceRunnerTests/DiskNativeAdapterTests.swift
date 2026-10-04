@@ -70,6 +70,20 @@ struct DiskNativeAdapterTests {
         #expect(throws: DiskNativeError.self) { try DiskNativeRules.unsigned(NSNumber(value: true), key: "Bytes (Read)") }
     }
 
+    @Test func importantCapacityRejectsMissingOrInvalidAvailabilityWithoutFallback() throws {
+        let total = NSNumber(value: 994_662_584_320 as UInt64)
+        let available = NSNumber(value: 821_368_794_995 as Int64)
+        let result = try DiskNativeRules.capacity(total: total, available: available)
+        #expect(result.0 == 994_662_584_320)
+        #expect(result.1 == 821_368_794_995)
+        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: nil) }
+        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: NSNumber(value: -1)) }
+        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: "821368794995") }
+        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: NSNumber(value: true)) }
+        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: total, available: NSNumber(value: 1.5)) }
+        #expect(throws: DiskNativeError.self) { try DiskNativeRules.capacity(total: 100, available: 101) }
+    }
+
     @Test func requiredBytesAndOptionalOperationsAreDistinct() throws {
         #expect(try DiskNativeRules.unsigned(NSNumber(value: 5_000_000_000), key: "Bytes (Read)") == 5_000_000_000)
         #expect(try DiskNativeRules.unsigned(NSNumber(value: UInt64.max), key: "Bytes (Read)") == UInt64.max)

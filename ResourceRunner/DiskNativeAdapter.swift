@@ -85,7 +85,7 @@ nonisolated enum DiskNativeRules {
 
     static func capacity(total: Any?, available: Any?) throws -> (UInt64, UInt64) {
         let total = try unsigned(total, key: "volumeTotalCapacityKey")
-        let available = try unsigned(available, key: "volumeAvailableCapacityKey")
+        let available = try unsigned(available, key: "volumeAvailableCapacityForImportantUsageKey")
         guard total > 0, available <= total else {
             throw DiskNativeError.invalid("capacity relation total=\(total) available=\(available)")
         }
@@ -270,13 +270,14 @@ nonisolated struct DiskNativeAdapter {
 
     private func readVolumes(session: DASession, physicalIDs: Set<UInt64>, virtualIDs: Set<UInt64>) throws -> [DiskVolumeReading] {
         let keys: Set<URLResourceKey> = [.volumeIsLocalKey, .volumeUUIDStringKey,
-            .volumeTotalCapacityKey, .volumeAvailableCapacityKey]
+            .volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey]
         let urls = try mountedDiskURLs()
         var readings: [DiskVolumeReading] = []
         for url in urls {
             let values = try url.resourceValues(forKeys: keys)
             guard url.path == "/" || values.volumeIsLocal == true else { continue }
-            let (total, available) = try DiskNativeRules.capacity(total: values.volumeTotalCapacity, available: values.volumeAvailableCapacity)
+            // macOS의 회수 가능한 공간 포함 값을 사용하며 미확보를 순수 여유 공간으로 대체하지 않습니다.
+            let (total, available) = try DiskNativeRules.capacity(total: values.volumeTotalCapacity, available: values.volumeAvailableCapacityForImportantUsage)
             let disk = DADiskCreateFromVolumePath(kCFAllocatorDefault, session, url as CFURL)
             let desc = disk.flatMap { DADiskCopyDescription($0) as? [String: Any] } ?? [:]
             let bsdName = disk.flatMap { DADiskGetBSDName($0) }.map { String(cString: $0) }

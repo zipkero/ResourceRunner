@@ -195,10 +195,10 @@ struct DiskDashboardViewTests {
     @Test func fullCapacityNumbersFitFirstAuxiliaryRowAcrossUnitsAndLocales() throws {
         let cases: [(String, DiskCapacityPresentation)] = [
             ("max-same-unit", capacity(total: UInt64.max, available: UInt64.max - 1)),
-            ("different-tb-gb", capacity(total: 1 << 40, available: 1 << 39)),
-            ("unit-boundary", capacity(total: 1 << 30, available: (1 << 30) - 1)),
+            ("different-tb-gb", capacity(total: 1_000_000_000_000, available: 500_000_000_000)),
+            ("unit-boundary", capacity(total: 1_000_000_000, available: 999_999_999)),
             ("zero", capacity(total: 0, available: 0)),
-            ("small-positive", capacity(total: 1_024, available: 1))
+            ("small-positive", capacity(total: 1_000, available: 1))
         ]
         let locales = ["en_US", "de_DE", "ko_KR", "gez_ER", "my_MM"]
         let font = NSFont.preferredFont(forTextStyle: .subheadline)
@@ -207,8 +207,8 @@ struct DiskDashboardViewTests {
             let locale = Locale(identifier: localeID)
             for (name, value) in cases {
                 let compact = DiskDisplayText.compactCapacitySummary(value, locale: locale)
-                let total = ResourceQuantityFormatter.bytes(value.totalBytes, locale: locale)
-                let available = ResourceQuantityFormatter.bytes(value.availableBytes, locale: locale)
+                let total = ResourceQuantityFormatter.storageBytes(value.totalBytes, locale: locale)
+                let available = ResourceQuantityFormatter.storageBytes(value.availableBytes, locale: locale)
                 let totalParts = total.split(separator: " ", omittingEmptySubsequences: false)
                 let availableParts = available.split(separator: " ", omittingEmptySubsequences: false)
                 #expect(compact.contains(String(totalParts.dropLast().joined(separator: " "))))
@@ -229,17 +229,17 @@ struct DiskDashboardViewTests {
         }
         let english = Locale(identifier: "en_US")
         #expect(DiskDisplayText.compactCapacitySummary(cases[0].1, locale: english)
-            == "전체 16,777,216.0·가용 16,777,216.0 TB")
+            == "전체 18,446,744.1·가용 18,446,744.1 TB")
         #expect(DiskDisplayText.compactCapacitySummary(cases[1].1, locale: english)
-            == "전체 1.0 TB·가용 512.0 GB")
+            == "전체 1.0 TB·가용 500.0 GB")
         #expect(DiskDisplayText.capacitySummary(cases[1].1, locale: english)
-            == "전체 1.0 TB · 사용 가능 512.0 GB")
+            == "전체 1.0 TB · 사용 가능 500.0 GB")
         let german = Locale(identifier: "de_DE")
         let germanCard = card(capacity: cases[1].1)
         #expect(germanCard.accessibilityLabel(locale: german).contains("전체 1,0 TB"))
-        #expect(germanCard.accessibilityLabel(locale: german).contains("사용 가능 512,0 GB"))
+        #expect(germanCard.accessibilityLabel(locale: german).contains("사용 가능 500,0 GB"))
         #expect(DiskDisplayText.capacitySummary(cases[1].1, locale: german)
-            .contains("사용 가능 512,0 GB"))
+            .contains("사용 가능 500,0 GB"))
     }
 
     @Test func conditionalOperationsAndExternalMountStatesStayDistinct() throws {

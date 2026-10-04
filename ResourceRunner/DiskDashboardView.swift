@@ -128,14 +128,14 @@ nonisolated enum DiskDisplayText {
 
     static func capacitySummary(_ capacity: DiskCapacityPresentation?, locale: Locale) -> String {
         guard let capacity else { return "시스템 / 용량 확인 중" }
-        return "전체 \(ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale))"
+        return "전체 \(ResourceQuantityFormatter.storageBytes(capacity.totalBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.storageBytes(capacity.availableBytes, locale: locale))"
     }
 
     /// 두 값의 단위가 같을 때만 단위를 공유해 고정 보조행에 두 숫자를 온전히 둡니다.
     static func compactCapacitySummary(_ capacity: DiskCapacityPresentation?, locale: Locale) -> String {
         guard let capacity else { return "시스템 / 용량 확인 중" }
-        let total = ResourceQuantityFormatter.bytes(capacity.totalBytes, locale: locale)
-        let available = ResourceQuantityFormatter.bytes(capacity.availableBytes, locale: locale)
+        let total = ResourceQuantityFormatter.storageBytes(capacity.totalBytes, locale: locale)
+        let available = ResourceQuantityFormatter.storageBytes(capacity.availableBytes, locale: locale)
         guard let totalSeparator = total.lastIndex(of: " "),
               let availableSeparator = available.lastIndex(of: " ") else {
             return "전체 \(total)·가용 \(available)"
@@ -148,7 +148,7 @@ nonisolated enum DiskDisplayText {
         return "전체 \(total)·가용 \(available)"
     }
 
-    static let usedDefinition = "사용 중 = 전체 − 사용 가능. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다."
+    static let usedDefinition = "사용 가능에는 macOS가 회수할 수 있는 공간이 포함됩니다. 사용 중 = 전체 − 사용 가능이며 실제 파일 점유량이 아닙니다. APFS 공유 공간에서는 볼륨별 독점 사용량이 아닙니다."
 }
 
 nonisolated enum DiskCardLayout {
@@ -337,7 +337,7 @@ struct DiskDetailPopoverContent: View {
                     if case .failure(let reason) = presentation.supplemental.phase { Text("용량 조회 실패: \(reason)") }
                     Text("시스템 / · \(DiskDisplayText.capacitySummary(presentation.supplemental.capacity, locale: locale))")
                     if let capacity = presentation.supplemental.capacity {
-                        Text("사용 중 \(ResourceQuantityFormatter.bytes(capacity.usedBytes, locale: locale))")
+                        Text("사용 중 \(ResourceQuantityFormatter.storageBytes(capacity.usedBytes, locale: locale))")
                         Text("용량 관계: \(capacity.relationReason)")
                     }
                     Text(DiskDisplayText.usedDefinition)
@@ -403,7 +403,7 @@ struct DiskDetailPopoverContent: View {
         let paths = item.mountPaths.sorted().joined(separator: ", ")
         let lines = [
             "\(paths.isEmpty ? item.identity : paths) · \(item.fileSystem ?? "파일 시스템 미확인") · \(DiskDisplayText.volumeScope(item.scope))",
-            "전체 \(ResourceQuantityFormatter.bytes(item.totalBytes, locale: locale)) · 사용 중 \(ResourceQuantityFormatter.bytes(item.usedBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.bytes(item.availableBytes, locale: locale))",
+            "전체 \(ResourceQuantityFormatter.storageBytes(item.totalBytes, locale: locale)) · 사용 중 \(ResourceQuantityFormatter.storageBytes(item.usedBytes, locale: locale)) · 사용 가능 \(ResourceQuantityFormatter.storageBytes(item.availableBytes, locale: locale))",
             "장치 관계: \(item.relationReason)",
             item.sharedCapacity ? "APFS 공유 공간 · 볼륨별 독점 사용량 아님" : "공유 공간 여부 미확인 또는 비공유",
             DiskDisplayText.usedDefinition

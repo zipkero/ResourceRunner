@@ -21,6 +21,16 @@ nonisolated enum ResourceQuantityFormatter {
         return formatted(Double(value) / selected.0, unit: selected.1, locale: locale)
     }
 
+    /// 저장 공간은 macOS와 같은 십진 단위로 표시하며 속도·누적량의 이진 단위와 분리합니다.
+    static func storageBytes(_ value: UInt64, locale: Locale = .current) -> String {
+        let units: [(Double, String)] = [
+            (1_000_000_000_000, "TB"), (1_000_000_000, "GB"),
+            (1_000_000, "MB"), (1_000, "KB"), (1, "B")
+        ]
+        let selected = units.first { Double(value) >= $0.0 } ?? units[units.count - 1]
+        return formatted(Double(value) / selected.0, unit: selected.1, locale: locale)
+    }
+
     static func linkBitsPerSecond(_ value: Double, locale: Locale = .current) -> String {
         guard value.isFinite, value > 0 else { return "-" }
         let units: [(Double, String)] = [

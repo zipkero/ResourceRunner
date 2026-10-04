@@ -372,6 +372,35 @@ native adapter는 `SMAppService.mainApp`, `status`, 명시적 `register()`·`unr
 현재값·진행·사유·필요한 동작·복원 결과는 키보드와 AX로 확인할 수 있어야 합니다.
 (`SPEC §5.9`, `SPEC §5.10`, `SPEC §5.11`, `SPEC §5.12`)
 
+### 3.6 사용자 승인 예외 — Disk 저장 공간 기준
+
+2026-10-04 사용자 선택 「macOS 기준으로 맞추기 — 회수 가능한 공간 포함」을 적용합니다.
+이 절은 기존 Disk 보조 의미 유지에서 저장 공간 정의만 한정해 대체합니다.
+전체는 같은 대상 볼륨의 `volumeTotalCapacityKey`, 사용 가능은
+`volumeAvailableCapacityForImportantUsageKey`를 읽은 바이트입니다.
+사용 중은 `전체 − 사용 가능`이며 회수 가능한 공간을 사용 가능에 포함한 나머지입니다.
+실제 파일 점유량·APFS 볼륨별 독점 사용량으로 설명하지 않습니다.
+APFS 공유 공간·대상 identity·관계·느린 수집·조회 시각·last-known 구분은 유지합니다.
+
+Disk 저장 공간 전용1000 기반 B/KB/MB/GB/TB formatter를 사용합니다.
+기존 로케일·소수 한 자리·반올림·그룹 구분과 compact 공통 단위 조립을 유지합니다.
+요약·상세·볼륨 행·AX에 같은 formatter와 정의를 적용하고 회수 가능 포함을 상세/AX에 설명합니다.
+공통 `bytes`·`byteRate`, Read/Write·드라이버 누적량과 다른 리소스 표시는 바꾸지 않습니다.
+
+important-usage 누락·잘못된 타입·음수·전체 초과·조회 throw는 기존 storage 보조 실패로 반환합니다.
+raw available fallback·0 대체·clamp·추정 성공을 사용하지 않습니다.
+새 정의의 과거 성공 값만 기존 identity/revision 조건에서 last-known으로 설명합니다.
+기존 snapshot 실패 단위를 유지하고 빠른 Disk I/O는 보조 실패와 독립적으로 갱신합니다.
+앱 번들의 `PrivacyInfo.xcprivacy`에 사용자 표시 용도의
+`NSPrivacyAccessedAPICategoryDiskSpace`/`85F4.1`을 선언하고 번들 포함을 확인합니다.
+추적·외부 전송이나 entitlement를 추가하지 않습니다.
+
+별도 `implement` Per-Request 수정 후 task-010이 현재 기준의 회귀 근거를 연결합니다.
+같은 볼륨·가까운 조회 시각의 total/important-usage 원시값, 단위·표시·AX·실패 격리,
+Sandbox 실제 접근과 기존 속도/누적량 formatter 불변을 확인합니다.
+OS 추정·조회 시각 차이로 다른 시각의 스크린샷 숫자 완전 일치는 완료 조건으로 삼지 않습니다.
+(`SPEC §5.13`; M3 `SPEC §5.2`, `§5.4`, `§5.10`~`§5.14`)
+
 ## 4. 영향 범위
 
 ### 4.1 변경 경계
@@ -461,7 +490,7 @@ M4의 관문·단위 회귀는 M3 task014/015 보류를 재개하거나 완료�
 | SPEC §5.10 | §2.6, §3.5, §4.3 |
 | SPEC §5.11 | §2.6, §3.5, §4.3 |
 | SPEC §5.12 | §1.3, §3.1~§3.3, §3.5, §4.2 |
-| SPEC §5.13 | §1.2~§1.4, §2.2~§2.5, §3.2~§3.4, §4.1~§4.3 |
+| SPEC §5.13 | §1.2~§1.4, §2.2~§2.5, §3.2~§3.4, §3.6, §4.1~§4.3 |
 
 ## 5. Decision Points
 
@@ -480,3 +509,5 @@ M4의 관문·단위 회귀는 M3 task014/015 보류를 재개하거나 완료�
 
 미채택 내부 결정은 없습니다.
 구현 중 승인된 사용자 관찰 결과·완료 조건의 의미 변경이 필요하면 근거·영향·수정 소유 단계를 main에 반환합니다.
+
+DP9: Disk 저장 공간만1000 기반·important-usage available을 사용합니다. 값 미확보는 기존 보조 실패이며 raw fallback은 없습니다. native 조회·전용 formatter·상세/AX·privacy manifest·task-010 회귀에 영향을 줍니다(SPEC §5.13).

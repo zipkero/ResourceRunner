@@ -8,6 +8,13 @@
 import AppKit
 import OSLog
 
+@MainActor
+private final class SettingsOpenRouter {
+    weak var coordinator: ApplicationCoordinator?
+
+    func open() { coordinator?.openSettings() }
+}
+
 /// 일반 설정의 단일 snapshot을 표시와 lifecycle에 전달합니다.
 /// 최초 시스템 상태가 적용되기 전에는 프로필 변경을 보류하고 가장 최신 snapshot만 보냅니다.
 @MainActor
@@ -65,6 +72,8 @@ final class ApplicationCoordinator {
     let collectionDeliveryStore: CollectionDeliveryStore
     let processRankingCache: ProcessRankingDeliveryCache
     let preferencesBinding: PreferencesPipelineBinding
+    let settingsWindowController: SettingsWindowController
+    private let settingsOpenRouter: SettingsOpenRouter
 
     var monitoringSampleStore: MonitoringSampleStore { collectionPipelines.systemStore }
     var processHistoryStore: ProcessHistoryStore { collectionPipelines.processStore }
@@ -101,9 +110,14 @@ final class ApplicationCoordinator {
         // 아이콘 캐시 수명은 앱 수명입니다. 여기서 한 번 만들어 뷰에 넘기면 팝오버를 여닫아도
         // 같은 앱의 아이콘을 다시 얻지 않습니다(ANALYSIS §5 DP11).
         let viewport = DashboardViewport()
+        let settingsRouter = SettingsOpenRouter()
+        settingsOpenRouter = settingsRouter
+        settingsWindowController = SettingsWindowController(preferencesStore: preferencesStore,
+            loginController: loginItemController)
         statusBarController = StatusBarController(
             popoverContent: DashboardView(store: dashboard, viewport: viewport,
-                iconProvider: ApplicationIconCache()), viewport: viewport
+                iconProvider: ApplicationIconCache(),
+                onOpenSettings: { [weak settingsRouter] in settingsRouter?.open() }), viewport: viewport
         )
         statusBarController.keyboardDismiss = { [weak dashboard] in
             guard let dashboard, dashboard.selection != .none else { return false }
@@ -149,6 +163,8 @@ final class ApplicationCoordinator {
         // 모든 저장 속성이 준비된 뒤에야 `self`를 다른 객체에 넘길 수 있으므로,
         // delegate 연결과 이후 소비 Task 시작은 여기부터 진행합니다.
         statusBarController.output = self
+        settingsRouter.coordinator = self
+        statusBarController.openSettings = { [weak self] in self?.openSettings() }
 
 #if DEBUG
         // 상태 전환을 사람이 직접 확인할 수 있도록 우클릭 디버그 메뉴를 상태 입력에 연결합니다.
@@ -165,6 +181,17 @@ final class ApplicationCoordinator {
                     case .network: preferences.showsNetworkCard.toggle()
                     case .disk: preferences.showsDiskCard.toggle()
                     case .none: break
+                    }
+                }
+            }
+            if ProcessInfo.processInfo.arguments.contains("--settings-ui-test") {
+                // 한 키 이벤트에서 상세 제거와 설정창 열기를 예약해 지연 포커스 복귀와 경합시킵니다.
+                statusBarController.debugSettingsFocusRace = { [weak self, weak dashboard] in
+                    guard let self, let dashboard, dashboard.selection == .cpu else { return }
+                    preferencesStore.update { $0.showsCPUCard = false }
+                    Task { @MainActor [weak self] in
+                        try? await Task.sleep(for: .milliseconds(20))
+                        self?.openSettings()
                     }
                 }
             }
@@ -204,6 +231,10 @@ final class ApplicationCoordinator {
 
     func refreshLoginStatus() {
         loginItemController.refresh()
+    }
+
+    func openSettings() {
+        settingsWindowController.open()
     }
 
     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.

@@ -20,7 +20,7 @@ protocol StatusBarControllerOutput: AnyObject {
 /// 상태가 바뀌어도 갱신되는 것은 버튼의 접근성 이름 하나뿐입니다.
 /// 팝오버는 `.transient` behavior로 외부 상호작용에서 스스로 닫히고,
 /// delegate가 보고하는 실제 표시 상태를 단일 소스로 삼아 클릭 토글과 어긋나지 않게 합니다.
-/// Debug 빌드에서는 우클릭이 다섯 상태를 주입하는 디버그 메뉴를 열며, 이 경로는 Release 빌드 산출물에 존재하지 않습니다.
+/// 우클릭은 설정 메뉴를 열고 Debug에서는 상태 주입 항목도 별도 구역에 둡니다.
 @MainActor
 final class StatusBarController: NSObject {
     /// 메뉴바 항목에 표시할 이미지의 한 변 길이.
@@ -35,6 +35,7 @@ final class StatusBarController: NSObject {
     private var correctionScheduled = false
     private var keyMonitor: Any?
     var keyboardDismiss: (() -> Bool)?
+    var openSettings: (() -> Void)?
 
     weak var output: StatusBarControllerOutput?
 
@@ -42,6 +43,7 @@ final class StatusBarController: NSObject {
     /// 우클릭 디버그 메뉴에서 상태를 고르면 호출되는 콜백. Release 빌드에는 이 진입점이 존재하지 않습니다.
     var debugStateInjector: ((CharacterActivityState) -> Void)?
     var debugCardVisibilityInjector: ((DashboardSelection) -> Void)?
+    var debugSettingsFocusRace: (() -> Void)?
 #endif
 
     init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
@@ -82,10 +84,8 @@ final class StatusBarController: NSObject {
             button.image = image
             button.target = self
             button.action = #selector(togglePopover)
-#if DEBUG
-            // 좌클릭은 기존 팝오버 토글을 그대로 쓰고, 우클릭만 디버그 상태 메뉴로 분기합니다.
+            // 좌클릭은 팝오버를 토글하고 우클릭은 설정 메뉴를 엽니다.
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-#endif
         }
     }
 
@@ -110,6 +110,10 @@ final class StatusBarController: NSObject {
         // UI fixture만 팝오버를 닫지 않은 채 카드 제거·포커스 복귀를 시험합니다.
         if debugCardVisibilityInjector != nil,
            modifiers == [.command, .shift] {
+            if event.keyCode == 25, debugSettingsFocusRace != nil {
+                debugSettingsFocusRace?()
+                return nil
+            }
             let card: DashboardSelection? = switch event.keyCode {
             case 18: .cpu
             case 19: .memory
@@ -164,12 +168,10 @@ final class StatusBarController: NSObject {
     @objc func togglePopover() {
         guard let button = statusItem.button else { return }
 
-#if DEBUG
         if NSApp.currentEvent?.type == .rightMouseUp {
-            showDebugStateMenu(relativeTo: button)
+            showContextMenu(relativeTo: button)
             return
         }
-#endif
 
         if popover.isShown {
             popover.performClose(nil)
@@ -227,13 +229,15 @@ final class StatusBarController: NSObject {
         }
     }
 
-#if DEBUG
-    /// 다섯 상태를 고를 수 있는 디버그 메뉴를 띄웁니다.
+    /// 설정 접근 메뉴를 띄웁니다. Debug 주입 항목은 아래쪽 별도 구역입니다.
     /// 이 메뉴를 여는 동작은 메뉴바 항목 클릭이라 `NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다.
-    /// 표시 경로에는 팝오버 참조가 없으므로 이 닫힘은 주입 수단의 성질입니다.
-    /// 메뉴 항목 제목은 XCUITest가 상태를 고르는 식별자이기도 하므로 상태 이름을 그대로 씁니다.
-    private func showDebugStateMenu(relativeTo button: NSStatusBarButton) {
+    private func showContextMenu(relativeTo button: NSStatusBarButton) {
         let menu = NSMenu()
+        let settings = NSMenuItem(title: "설정…", action: #selector(openSettingsFromMenu(_:)), keyEquivalent: "")
+        settings.target = self
+        menu.addItem(settings)
+#if DEBUG
+        menu.addItem(.separator())
         let states: [CharacterActivityState] = [.low, .moderate, .high, .veryHigh, .sustainedHigh]
         for state in states {
             let item = NSMenuItem(title: "\(state)", action: #selector(injectDebugState(_:)), keyEquivalent: "")
@@ -251,9 +255,15 @@ final class StatusBarController: NSObject {
                 menu.addItem(item)
             }
         }
+#endif
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
     }
 
+    @objc private func openSettingsFromMenu(_ sender: NSMenuItem) {
+        openSettings?()
+    }
+
+#if DEBUG
     @objc private func injectDebugState(_ sender: NSMenuItem) {
         guard let state = sender.representedObject as? CharacterActivityState else { return }
         debugStateInjector?(state)

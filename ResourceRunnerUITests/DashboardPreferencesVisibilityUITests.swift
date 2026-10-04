@@ -38,7 +38,9 @@ final class DashboardPreferencesVisibilityUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "NetworkCard").firstMatch.exists)
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "DiskCard").firstMatch.exists)
         settings.click()
-        XCTAssertTrue(container.exists)
+        let settingsWindow = app.windows["ResourceRunner 설정"]
+        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 3))
+        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
     }
 
     @MainActor

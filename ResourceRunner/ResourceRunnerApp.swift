@@ -13,9 +13,15 @@ struct ResourceRunnerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        // 일반 창을 만들지 않고 SwiftUI Scene 요구사항만 충족합니다.
+        // Scene 요구만 충족하며 제품 설정은 아래 명령과 AppKit 단일 창이 소유합니다.
         Settings {
             EmptyView()
+        }
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("설정…") { appDelegate.openSettings() }
+                    .keyboardShortcut(",", modifiers: .command)
+            }
         }
     }
 }

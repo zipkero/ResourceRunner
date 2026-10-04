@@ -10,7 +10,7 @@ Task는 문서 순서로 진행하며 각 항목의 선행 Task가 승인된 뒤
 같은 책임 경계를 유지하는 파일 분리는 구현 재량입니다.
 
 각 Task는 원본·diff·검증 방법·관찰 결과·미확인 범위를 근거로 한 번의 verify에서 판정할 수 있는 결과 단위입니다.
-현재 승인 근거나 최근 reject는 없습니다. 해당 필드는 구현·검증 단계에서 관리합니다.
+각 Task의 승인 근거와 최근 reject는 구현·검증 단계에서 관리합니다.
 검증은 각 Task의 결과를 판정하는 단위·렌더·UI 근거로 구성합니다.
 
 구현 계획 작성 단계에서는 제품 구현·로그인 등록/해제·로그아웃·재부팅을 수행하지 않았습니다.
@@ -93,13 +93,14 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.2, §5.12, §5.13; DESIGN §1.3, §3.2, §3.3, §4.2, §5 DP2, DP7.
   - 승인 근거: 2026-10-04 독립 verifier approved를 main이 확정했습니다. HEADb8a8397 기준7파일 SHA/patch 대응, signed 단위46/46·6suite·UI17/17·실패/skip0과4조합 실제frame를 확인했습니다. 현재 마지막 앵커·Memory 보정·stale 복귀 거부·Return/Space와 기본 본체/상세 회귀를 통과했습니다. [task-008 근거](./evidence/task-008/README.md). 구현 재시도0·근거 재검증0; key 설정창 최종UI는009이며 신규 SPEC 전체 완료 없음.
 
-- [ ] task-009: 단일 설정창과 접근·키보드·AX
+- [x] task-009: 단일 설정창과 접근·키보드·AX
   - 목적: Release 메뉴바에서 모든 설정·실제 로그인 상태·복원 결과를 조작하는 제품 화면을 완성합니다.
   - 접근: 선행 task-004~task-008. 출발점은 `ResourceRunner/ResourceRunnerApp.swift`, `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`, `ResourceRunner/StatusBarController.swift`, `ResourceRunner/DashboardView.swift`입니다. `PreferencesView`·단일 `SettingsWindowController`를 구성해 모든 접근을 coordinator.openSettings()로 연결합니다. Release 우클릭·앱 명령/⌘,·전체 숨김 버튼·EmptyView 중복 경로 정리, 시작·창 열기/재활성화·앱 재활성화 후 설정 확인·다시 확인·요청 완료/실패 재조회를 연결합니다.
   - 검증 조건:
     - 결과: 창을 재사용하고 명시적 열기만 활성화합니다. 앱/로그인 시작으로 창·대시보드를 열지 않으며 설정창이 popoverPresented를 바꾸지 않습니다. 표시·그래프·갱신·로그인·복원의 현재값·진행·오류·필요 동작을 native 컨트롤·문장으로 제공합니다. 승인 대기의 시스템 설정·등록 해제 경로가 있고 개발 저장 키·generation·축 식별자는 노출하지 않습니다.
     - 확인: 주입 로그인 adapter의 창/UI 검증으로 Release 우클릭·⌘,·닫힘/전체 숨김·단일창 재사용·복구를 확인합니다. 모든 컨트롤·현재값·오류 뒤 동작·다시 확인·복원을 키보드·AX로 조작합니다. `ResourceRunnerTests/StatusBarControllerTests.swift`, `ResourceRunnerUITests/StatusItemAccessibilityUITests.swift`의 좌클릭/transient/설명을 대조하고 key 설정창 포커스 보호를 확인합니다. 실제 native mutation은 task-011로 분리합니다.
   - 참조: SPEC §5.1, §5.2, §5.3, §5.4, §5.5, §5.9, §5.11, §5.12, §5.13; DESIGN §1.3, §1.4, §2.6, §3.1, §3.2, §3.3, §3.5, §4.2, §5 DP1, DP2, DP7, DP8.
+  - 승인 근거: 2026-10-04 main이 독립 verifier approved 후보를 최종 확정했습니다. HEADdf90292 기준9파일 SHA/patch 현재 대응, 기존 signed 단위46/46·Debug UI18/18·격리 Release UI1/1·실패/skip0와 최종 Release build를 확인했습니다. 단일창·접근·설정·복원·키보드/AX·key 설정창 보호를 승인하며 실제 native mutation/다음로그인은011에 남깁니다. [task-009 근거](./evidence/task-009/README.md). 구현 재시도0·근거 재검증0; 테스트 재실행 없음·신규 SPEC 전체 완료 없음.
 
 - [ ] task-010: 설정 통합 동작과 기본 구성 회귀
   - 목적: 실제 앱에서 같은 설정 계약을 사용하고 기본 수집·표시 의미·배포 제약을 유지하는지 판정합니다.

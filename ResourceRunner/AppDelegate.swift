@@ -37,7 +37,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 #else
         let preferences = PreferencesStore()
 #endif
-        let login = LoginItemController()
+        let login: LoginItemController
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--settings-ui-test") {
+            login = LoginItemController(service: SettingsUITestLoginService(
+                environment: ProcessInfo.processInfo.environment))
+        } else {
+            login = LoginItemController()
+        }
+#else
+        login = LoginItemController()
+#endif
         preferencesStore = preferences
         loginItemController = login
         coordinator = ApplicationCoordinator(preferencesStore: preferences,
@@ -46,6 +56,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidBecomeActive(_ notification: Notification) {
         coordinator?.refreshLoginStatus()
+    }
+
+    func openSettings() {
+        coordinator?.openSettings()
     }
 }
 
@@ -69,5 +83,48 @@ private final class DashboardUITestPreferencesStorage: PreferencesStorage {
 
     func read() -> Any? { value }
     func write(_ dictionary: [String: Any]) { value = dictionary }
+}
+
+/// UI 테스트 프로세스의 로그인 항목을 메모리에서만 시뮬레이션합니다.
+@MainActor
+private final class SettingsUITestLoginService: LoginItemServing {
+    private var currentStatus: LoginItemStatus
+    private let registerOutcome: String
+    private let unregisterOutcome: String
+
+    init(environment: [String: String]) {
+        switch environment["RR_LOGIN_STATUS"] {
+        case "enabled": currentStatus = .enabled
+        case "approval": currentStatus = .requiresApproval
+        case "notFound": currentStatus = .notFound
+        case "unknown": currentStatus = .unknown(99)
+        default: currentStatus = .notRegistered
+        }
+        registerOutcome = environment["RR_LOGIN_REGISTER_OUTCOME"] ?? "enabled"
+        unregisterOutcome = environment["RR_LOGIN_UNREGISTER_OUTCOME"] ?? "notRegistered"
+    }
+
+    func status() -> LoginItemStatus { currentStatus }
+
+    func register() async throws {
+        if registerOutcome == "failure" {
+            throw NSError(domain: "ResourceRunnerUITest", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "테스트 등록 실패"])
+        }
+        currentStatus = registerOutcome == "approval" ? .requiresApproval : .enabled
+    }
+
+    func unregister() async throws {
+        if unregisterOutcome == "failure" {
+            throw NSError(domain: "ResourceRunnerUITest", code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "테스트 해제 실패"])
+        }
+        currentStatus = .notRegistered
+    }
+
+    func openSystemSettingsLoginItems() {
+        // 명시적 버튼 동작만 테스트합니다. 시스템 설정이나 실제 등록 항목은 열지 않습니다.
+        currentStatus = .enabled
+    }
 }
 #endif

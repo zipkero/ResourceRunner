@@ -1,0 +1,1046 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 532bb12..5120e50 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -37,7 +37,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+ #else
+         let preferences = PreferencesStore()
+ #endif
+-        let login = LoginItemController()
++        let login: LoginItemController
++#if DEBUG
++        if ProcessInfo.processInfo.arguments.contains("--settings-ui-test") {
++            login = LoginItemController(service: SettingsUITestLoginService(
++                environment: ProcessInfo.processInfo.environment))
++        } else {
++            login = LoginItemController()
++        }
++#else
++        login = LoginItemController()
++#endif
+         preferencesStore = preferences
+         loginItemController = login
+         coordinator = ApplicationCoordinator(preferencesStore: preferences,
+@@ -47,6 +57,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidBecomeActive(_ notification: Notification) {
+         coordinator?.refreshLoginStatus()
+     }
++
++    func openSettings() {
++        coordinator?.openSettings()
++    }
+ }
+ 
+ #if DEBUG
+@@ -70,4 +84,47 @@ private final class DashboardUITestPreferencesStorage: PreferencesStorage {
+     func read() -> Any? { value }
+     func write(_ dictionary: [String: Any]) { value = dictionary }
+ }
++
++/// UI 테스트 프로세스의 로그인 항목을 메모리에서만 시뮬레이션합니다.
++@MainActor
++private final class SettingsUITestLoginService: LoginItemServing {
++    private var currentStatus: LoginItemStatus
++    private let registerOutcome: String
++    private let unregisterOutcome: String
++
++    init(environment: [String: String]) {
++        switch environment["RR_LOGIN_STATUS"] {
++        case "enabled": currentStatus = .enabled
++        case "approval": currentStatus = .requiresApproval
++        case "notFound": currentStatus = .notFound
++        case "unknown": currentStatus = .unknown(99)
++        default: currentStatus = .notRegistered
++        }
++        registerOutcome = environment["RR_LOGIN_REGISTER_OUTCOME"] ?? "enabled"
++        unregisterOutcome = environment["RR_LOGIN_UNREGISTER_OUTCOME"] ?? "notRegistered"
++    }
++
++    func status() -> LoginItemStatus { currentStatus }
++
++    func register() async throws {
++        if registerOutcome == "failure" {
++            throw NSError(domain: "ResourceRunnerUITest", code: 1,
++                userInfo: [NSLocalizedDescriptionKey: "테스트 등록 실패"])
++        }
++        currentStatus = registerOutcome == "approval" ? .requiresApproval : .enabled
++    }
++
++    func unregister() async throws {
++        if unregisterOutcome == "failure" {
++            throw NSError(domain: "ResourceRunnerUITest", code: 2,
++                userInfo: [NSLocalizedDescriptionKey: "테스트 해제 실패"])
++        }
++        currentStatus = .notRegistered
++    }
++
++    func openSystemSettingsLoginItems() {
++        // 명시적 버튼 동작만 테스트합니다. 시스템 설정이나 실제 등록 항목은 열지 않습니다.
++        currentStatus = .enabled
++    }
++}
+ #endif
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index a700736..6fc2e64 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -8,6 +8,13 @@
+ import AppKit
+ import OSLog
+ 
++@MainActor
++private final class SettingsOpenRouter {
++    weak var coordinator: ApplicationCoordinator?
++
++    func open() { coordinator?.openSettings() }
++}
++
+ /// 일반 설정의 단일 snapshot을 표시와 lifecycle에 전달합니다.
+ /// 최초 시스템 상태가 적용되기 전에는 프로필 변경을 보류하고 가장 최신 snapshot만 보냅니다.
+ @MainActor
+@@ -65,6 +72,8 @@ final class ApplicationCoordinator {
+     let collectionDeliveryStore: CollectionDeliveryStore
+     let processRankingCache: ProcessRankingDeliveryCache
+     let preferencesBinding: PreferencesPipelineBinding
++    let settingsWindowController: SettingsWindowController
++    private let settingsOpenRouter: SettingsOpenRouter
+ 
+     var monitoringSampleStore: MonitoringSampleStore { collectionPipelines.systemStore }
+     var processHistoryStore: ProcessHistoryStore { collectionPipelines.processStore }
+@@ -101,9 +110,14 @@ final class ApplicationCoordinator {
+         // 아이콘 캐시 수명은 앱 수명입니다. 여기서 한 번 만들어 뷰에 넘기면 팝오버를 여닫아도
+         // 같은 앱의 아이콘을 다시 얻지 않습니다(ANALYSIS §5 DP11).
+         let viewport = DashboardViewport()
++        let settingsRouter = SettingsOpenRouter()
++        settingsOpenRouter = settingsRouter
++        settingsWindowController = SettingsWindowController(preferencesStore: preferencesStore,
++            loginController: loginItemController)
+         statusBarController = StatusBarController(
+             popoverContent: DashboardView(store: dashboard, viewport: viewport,
+-                iconProvider: ApplicationIconCache()), viewport: viewport
++                iconProvider: ApplicationIconCache(),
++                onOpenSettings: { [weak settingsRouter] in settingsRouter?.open() }), viewport: viewport
+         )
+         statusBarController.keyboardDismiss = { [weak dashboard] in
+             guard let dashboard, dashboard.selection != .none else { return false }
+@@ -149,6 +163,8 @@ final class ApplicationCoordinator {
+         // 모든 저장 속성이 준비된 뒤에야 `self`를 다른 객체에 넘길 수 있으므로,
+         // delegate 연결과 이후 소비 Task 시작은 여기부터 진행합니다.
+         statusBarController.output = self
++        settingsRouter.coordinator = self
++        statusBarController.openSettings = { [weak self] in self?.openSettings() }
+ 
+ #if DEBUG
+         // 상태 전환을 사람이 직접 확인할 수 있도록 우클릭 디버그 메뉴를 상태 입력에 연결합니다.
+@@ -168,6 +184,17 @@ final class ApplicationCoordinator {
+                     }
+                 }
+             }
++            if ProcessInfo.processInfo.arguments.contains("--settings-ui-test") {
++                // 한 키 이벤트에서 상세 제거와 설정창 열기를 예약해 지연 포커스 복귀와 경합시킵니다.
++                statusBarController.debugSettingsFocusRace = { [weak self, weak dashboard] in
++                    guard let self, let dashboard, dashboard.selection == .cpu else { return }
++                    preferencesStore.update { $0.showsCPUCard = false }
++                    Task { @MainActor [weak self] in
++                        try? await Task.sleep(for: .milliseconds(20))
++                        self?.openSettings()
++                    }
++                }
++            }
+         }
+ #endif
+ 
+@@ -206,6 +233,10 @@ final class ApplicationCoordinator {
+         loginItemController.refresh()
+     }
+ 
++    func openSettings() {
++        settingsWindowController.open()
++    }
++
+     /// 초기 상태를 sink에 전달한 뒤 이후 상태 변경을 소비하는 Task를 시작합니다.
+     /// `init`과 테스트가 같은 소비 경로를 실제로 통과하도록 이 로직을 별도로 노출합니다.
+     static func consume(_ source: CharacterStateSource, into sink: CharacterPresentationSink) -> Task<Void, Never> {
+diff --git a/ResourceRunner/ResourceRunnerApp.swift b/ResourceRunner/ResourceRunnerApp.swift
+index 5cc08a4..bdb40c7 100644
+--- a/ResourceRunner/ResourceRunnerApp.swift
++++ b/ResourceRunner/ResourceRunnerApp.swift
+@@ -13,9 +13,15 @@ struct ResourceRunnerApp: App {
+     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+ 
+     var body: some Scene {
+-        // 일반 창을 만들지 않고 SwiftUI Scene 요구사항만 충족합니다.
++        // Scene 요구만 충족하며 제품 설정은 아래 명령과 AppKit 단일 창이 소유합니다.
+         Settings {
+             EmptyView()
+         }
++        .commands {
++            CommandGroup(replacing: .appSettings) {
++                Button("설정…") { appDelegate.openSettings() }
++                    .keyboardShortcut(",", modifiers: .command)
++            }
++        }
+     }
+ }
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index ec9097f..ea95832 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -20,7 +20,7 @@ protocol StatusBarControllerOutput: AnyObject {
+ /// 상태가 바뀌어도 갱신되는 것은 버튼의 접근성 이름 하나뿐입니다.
+ /// 팝오버는 `.transient` behavior로 외부 상호작용에서 스스로 닫히고,
+ /// delegate가 보고하는 실제 표시 상태를 단일 소스로 삼아 클릭 토글과 어긋나지 않게 합니다.
+-/// Debug 빌드에서는 우클릭이 다섯 상태를 주입하는 디버그 메뉴를 열며, 이 경로는 Release 빌드 산출물에 존재하지 않습니다.
++/// 우클릭은 설정 메뉴를 열고 Debug에서는 상태 주입 항목도 별도 구역에 둡니다.
+ @MainActor
+ final class StatusBarController: NSObject {
+     /// 메뉴바 항목에 표시할 이미지의 한 변 길이.
+@@ -35,6 +35,7 @@ final class StatusBarController: NSObject {
+     private var correctionScheduled = false
+     private var keyMonitor: Any?
+     var keyboardDismiss: (() -> Bool)?
++    var openSettings: (() -> Void)?
+ 
+     weak var output: StatusBarControllerOutput?
+ 
+@@ -42,6 +43,7 @@ final class StatusBarController: NSObject {
+     /// 우클릭 디버그 메뉴에서 상태를 고르면 호출되는 콜백. Release 빌드에는 이 진입점이 존재하지 않습니다.
+     var debugStateInjector: ((CharacterActivityState) -> Void)?
+     var debugCardVisibilityInjector: ((DashboardSelection) -> Void)?
++    var debugSettingsFocusRace: (() -> Void)?
+ #endif
+ 
+     init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
+@@ -82,10 +84,8 @@ final class StatusBarController: NSObject {
+             button.image = image
+             button.target = self
+             button.action = #selector(togglePopover)
+-#if DEBUG
+-            // 좌클릭은 기존 팝오버 토글을 그대로 쓰고, 우클릭만 디버그 상태 메뉴로 분기합니다.
++            // 좌클릭은 팝오버를 토글하고 우클릭은 설정 메뉴를 엽니다.
+             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+-#endif
+         }
+     }
+ 
+@@ -110,6 +110,10 @@ final class StatusBarController: NSObject {
+         // UI fixture만 팝오버를 닫지 않은 채 카드 제거·포커스 복귀를 시험합니다.
+         if debugCardVisibilityInjector != nil,
+            modifiers == [.command, .shift] {
++            if event.keyCode == 25, debugSettingsFocusRace != nil {
++                debugSettingsFocusRace?()
++                return nil
++            }
+             let card: DashboardSelection? = switch event.keyCode {
+             case 18: .cpu
+             case 19: .memory
+@@ -164,12 +168,10 @@ final class StatusBarController: NSObject {
+     @objc func togglePopover() {
+         guard let button = statusItem.button else { return }
+ 
+-#if DEBUG
+         if NSApp.currentEvent?.type == .rightMouseUp {
+-            showDebugStateMenu(relativeTo: button)
++            showContextMenu(relativeTo: button)
+             return
+         }
+-#endif
+ 
+         if popover.isShown {
+             popover.performClose(nil)
+@@ -227,13 +229,15 @@ final class StatusBarController: NSObject {
+         }
+     }
+ 
+-#if DEBUG
+-    /// 다섯 상태를 고를 수 있는 디버그 메뉴를 띄웁니다.
++    /// 설정 접근 메뉴를 띄웁니다. Debug 주입 항목은 아래쪽 별도 구역입니다.
+     /// 이 메뉴를 여는 동작은 메뉴바 항목 클릭이라 `NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다.
+-    /// 표시 경로에는 팝오버 참조가 없으므로 이 닫힘은 주입 수단의 성질입니다.
+-    /// 메뉴 항목 제목은 XCUITest가 상태를 고르는 식별자이기도 하므로 상태 이름을 그대로 씁니다.
+-    private func showDebugStateMenu(relativeTo button: NSStatusBarButton) {
++    private func showContextMenu(relativeTo button: NSStatusBarButton) {
+         let menu = NSMenu()
++        let settings = NSMenuItem(title: "설정…", action: #selector(openSettingsFromMenu(_:)), keyEquivalent: "")
++        settings.target = self
++        menu.addItem(settings)
++#if DEBUG
++        menu.addItem(.separator())
+         let states: [CharacterActivityState] = [.low, .moderate, .high, .veryHigh, .sustainedHigh]
+         for state in states {
+             let item = NSMenuItem(title: "\(state)", action: #selector(injectDebugState(_:)), keyEquivalent: "")
+@@ -251,9 +255,15 @@ final class StatusBarController: NSObject {
+                 menu.addItem(item)
+             }
+         }
++#endif
+         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
+     }
+ 
++    @objc private func openSettingsFromMenu(_ sender: NSMenuItem) {
++        openSettings?()
++    }
++
++#if DEBUG
+     @objc private func injectDebugState(_ sender: NSMenuItem) {
+         guard let state = sender.representedObject as? CharacterActivityState else { return }
+         debugStateInjector?(state)
+diff --git a/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift b/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift
+index f3ce891..4430da9 100644
+--- a/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift
++++ b/ResourceRunnerUITests/DashboardPreferencesVisibilityUITests.swift
+@@ -38,7 +38,9 @@ final class DashboardPreferencesVisibilityUITests: XCTestCase {
+         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "NetworkCard").firstMatch.exists)
+         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "DiskCard").firstMatch.exists)
+         settings.click()
+-        XCTAssertTrue(container.exists)
++        let settingsWindow = app.windows["ResourceRunner 설정"]
++        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 3))
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
+     }
+ 
+     @MainActor
+diff --git a/ResourceRunner/PreferencesView.swift b/ResourceRunner/PreferencesView.swift
+new file mode 100644
+index 0000000..09ce4ab
+--- /dev/null
++++ b/ResourceRunner/PreferencesView.swift
+@@ -0,0 +1,260 @@
++import SwiftUI
++
++/// 저장된 일반 설정과 macOS가 보고한 로그인 상태를 각각 표시합니다.
++struct PreferencesView: View {
++    let preferencesStore: PreferencesStore
++    let loginController: LoginItemController
++    @State private var restoredLoginOperationID: UInt64?
++    @State private var ordinaryRestoreMessage: String?
++
++    private enum SettingsFocus: Hashable {
++        case cpu, memory, network, disk, cpuTop, memoryTop, login
++
++        var shortcut: KeyEquivalent {
++            switch self {
++            case .cpu: "1"
++            case .memory: "2"
++            case .network: "3"
++            case .disk: "4"
++            case .cpuTop: "5"
++            case .memoryTop: "6"
++            case .login: "9"
++            }
++        }
++
++        var shortcutText: String {
++            switch self {
++            case .cpu: "1"
++            case .memory: "2"
++            case .network: "3"
++            case .disk: "4"
++            case .cpuTop: "5"
++            case .memoryTop: "6"
++            case .login: "9"
++            }
++        }
++    }
++
++    var body: some View {
++        Form {
++            Section("대시보드 표시") {
++                toggle("CPU", key: "SettingsCPUCard", value: \.showsCPUCard, focus: .cpu)
++                toggle("메모리", key: "SettingsMemoryCard", value: \.showsMemoryCard, focus: .memory)
++                toggle("네트워크", key: "SettingsNetworkCard", value: \.showsNetworkCard, focus: .network)
++                toggle("디스크", key: "SettingsDiskCard", value: \.showsDiskCard, focus: .disk)
++                toggle("CPU TOP 5 앱", key: "SettingsCPUTop5", value: \.showsCPUTopApplications, focus: .cpuTop)
++                toggle("메모리 TOP 5 앱", key: "SettingsMemoryTop5", value: \.showsMemoryTopApplications, focus: .memoryTop)
++            }
++
++            Section("그래프") {
++                HStack {
++                    Picker("표시 시간", selection: preferenceBinding(\.graphTimeRange)) {
++                        Text("최근 1분").tag(GraphTimeRange.oneMinute)
++                        Text("최근 5분").tag(GraphTimeRange.fiveMinutes)
++                        Text("최근 10분").tag(GraphTimeRange.tenMinutes)
++                    }
++                    .accessibilityIdentifier("SettingsGraphRange")
++                    .accessibilityLabel("표시 시간")
++                    Button("다음 시간", action: cycleGraphRange)
++                        .keyboardShortcut("7", modifiers: [.command, .option])
++                        .help("최근 1분, 5분, 10분을 순서대로 선택합니다. 단축키 ⌘⌥7")
++                        .accessibilityIdentifier("SettingsNextGraphRange")
++                        .focusable()
++                        .onKeyPress(keys: [.space, .return]) { press in
++                            guard press.modifiers.isEmpty else { return .ignored }
++                            cycleGraphRange()
++                            return .handled
++                        }
++                }
++                Text("CPU와 디스크 그래프에 적용됩니다.")
++                    .font(.caption).foregroundStyle(.secondary)
++            }
++
++            Section("갱신") {
++                HStack {
++                    Picker("갱신 속도", selection: preferenceBinding(\.refreshProfile)) {
++                        Text("빠름").tag(RefreshProfile.fast)
++                        Text("기본").tag(RefreshProfile.standard)
++                        Text("절전").tag(RefreshProfile.energySaving)
++                        Text("매우 절전").tag(RefreshProfile.maximumEnergySaving)
++                    }
++                    .accessibilityIdentifier("SettingsRefreshProfile")
++                    .accessibilityLabel("갱신 속도")
++                    Button("다음 속도", action: cycleRefreshProfile)
++                        .keyboardShortcut("8", modifiers: [.command, .option])
++                        .help("네 가지 갱신 속도를 순서대로 선택합니다. 단축키 ⌘⌥8")
++                        .accessibilityIdentifier("SettingsNextRefreshProfile")
++                        .focusable()
++                        .onKeyPress(keys: [.space, .return]) { press in
++                            guard press.modifiers.isEmpty else { return .ignored }
++                            cycleRefreshProfile()
++                            return .handled
++                        }
++                }
++                Text("대시보드를 닫거나 저전력 상태 또는 화면 중지 중에는 자동 조절됩니다.")
++                    .font(.caption).foregroundStyle(.secondary)
++            }
++
++            Section("로그인 시 실행") {
++                let loginBinding = Binding(
++                    get: { loginController.actualStatus.isEnabled },
++                    set: { loginController.requestEnabled($0) }
++                )
++                Toggle("로그인 시 실행", isOn: loginBinding)
++                .disabled(loginController.activeOperationID != nil)
++                .accessibilityIdentifier("SettingsLoginToggle")
++                .accessibilityLabel("로그인 시 실행")
++                .keyboardShortcut(SettingsFocus.login.shortcut, modifiers: [.command, .option])
++                .help("실제 로그인 항목 변경을 요청합니다. 단축키 ⌘⌥9")
++                .focusable(interactions: .activate)
++                .onKeyPress(keys: [.space, .return]) { press in
++                    guard press.modifiers.isEmpty,
++                          loginController.activeOperationID == nil else { return .ignored }
++                    loginBinding.wrappedValue.toggle()
++                    return .handled
++                }
++
++                Text(Self.statusDescription(loginController.actualStatus))
++                    .accessibilityIdentifier("SettingsLoginStatus")
++                if loginController.activeOperationID != nil {
++                    ProgressView("로그인 항목 변경 중…")
++                        .accessibilityIdentifier("SettingsLoginProgress")
++                }
++                if let result = loginController.lastResult {
++                    Text(Self.resultDescription(result))
++                        .accessibilityIdentifier("SettingsLoginResult")
++                }
++                HStack {
++                    Button("다시 확인", action: refreshLogin)
++                        .accessibilityIdentifier("SettingsLoginRefresh")
++                        .focusable()
++                        .onKeyPress(keys: [.space, .return]) { press in
++                            guard press.modifiers.isEmpty else { return .ignored }
++                            refreshLogin()
++                            return .handled
++                        }
++                    if loginController.actualStatus == .requiresApproval {
++                        Button("시스템 설정 열기", action: openSystemLoginSettings)
++                            .accessibilityIdentifier("SettingsOpenSystemLoginItems")
++                            .focusable()
++                            .onKeyPress(keys: [.space, .return]) { press in
++                                guard press.modifiers.isEmpty else { return .ignored }
++                                openSystemLoginSettings()
++                                return .handled
++                            }
++                        Button("등록 해제", action: unregisterLoginItem)
++                            .disabled(loginController.activeOperationID != nil)
++                            .accessibilityIdentifier("SettingsUnregisterLoginItem")
++                            .focusable()
++                            .onKeyPress(keys: [.space, .return]) { press in
++                                guard press.modifiers.isEmpty,
++                                      loginController.activeOperationID == nil else { return .ignored }
++                                unregisterLoginItem()
++                                return .handled
++                            }
++                    }
++                }
++            }
++
++            Section("기본값 복원") {
++                Button("기본값 복원", action: restoreDefaults)
++                .accessibilityIdentifier("SettingsRestoreDefaults")
++                .focusable()
++                .onKeyPress(keys: [.space, .return]) { press in
++                    guard press.modifiers.isEmpty else { return .ignored }
++                    restoreDefaults()
++                    return .handled
++                }
++                if let ordinaryRestoreMessage {
++                    Text(ordinaryRestoreMessage)
++                        .accessibilityIdentifier("SettingsOrdinaryRestoreResult")
++                }
++                if let restoredLoginOperationID {
++                    Text(restoreLoginDescription(for: restoredLoginOperationID))
++                        .accessibilityIdentifier("SettingsLoginRestoreResult")
++                }
++            }
++        }
++        .formStyle(.grouped)
++        .frame(minWidth: 410, minHeight: 510)
++    }
++
++    private func toggle(_ title: String, key: String,
++                        value: WritableKeyPath<AppPreferences, Bool>, focus: SettingsFocus) -> some View {
++        let binding = preferenceBinding(value)
++        return Toggle(title, isOn: binding)
++            .accessibilityIdentifier(key)
++            .accessibilityLabel(title)
++            .keyboardShortcut(focus.shortcut, modifiers: [.command, .option])
++            .help("단축키 ⌘⌥\(focus.shortcutText)")
++            .focusable(interactions: .activate)
++            .onKeyPress(keys: [.space, .return]) { press in
++                guard press.modifiers.isEmpty else { return .ignored }
++                binding.wrappedValue.toggle()
++                return .handled
++            }
++    }
++
++    private func refreshLogin() { loginController.refresh() }
++    private func openSystemLoginSettings() { loginController.openSystemSettingsLoginItems() }
++    private func unregisterLoginItem() { loginController.requestEnabled(false) }
++
++    private func cycleGraphRange() {
++        let ranges: [GraphTimeRange] = [.oneMinute, .fiveMinutes, .tenMinutes]
++        guard let index = ranges.firstIndex(of: preferencesStore.current.preferences.graphTimeRange) else { return }
++        preferencesStore.update { $0.graphTimeRange = ranges[(index + 1) % ranges.count] }
++    }
++
++    private func cycleRefreshProfile() {
++        let profiles: [RefreshProfile] = [.fast, .standard, .energySaving, .maximumEnergySaving]
++        guard let index = profiles.firstIndex(of: preferencesStore.current.preferences.refreshProfile) else { return }
++        preferencesStore.update { $0.refreshProfile = profiles[(index + 1) % profiles.count] }
++    }
++
++    private func restoreDefaults() {
++        let result = loginController.restoreDefaults(in: preferencesStore)
++        ordinaryRestoreMessage = "일반 설정을 기본값으로 복원했습니다."
++        restoredLoginOperationID = result.loginOperationID
++    }
++
++    private func preferenceBinding<Value>(_ keyPath: WritableKeyPath<AppPreferences, Value>) -> Binding<Value> {
++        Binding(
++            get: { preferencesStore.current.preferences[keyPath: keyPath] },
++            set: { value in preferencesStore.update { $0[keyPath: keyPath] = value } }
++        )
++    }
++
++    private func restoreLoginDescription(for operationID: UInt64) -> String {
++        if loginController.activeOperationID == operationID {
++            return "로그인 항목 해제를 확인하는 중입니다."
++        }
++        guard let result = loginController.lastResult,
++              result.operationID == operationID else {
++            return "로그인 항목 결과는 현재 상태와 다시 확인으로 확인하세요."
++        }
++        return "로그인 항목: " + Self.resultDescription(result)
++    }
++
++    static func statusDescription(_ status: LoginItemStatus) -> String {
++        switch status {
++        case .enabled: "등록되어 있으며 macOS에서 허용되었습니다."
++        case .notRegistered: "등록되지 않았습니다."
++        case .requiresApproval: "등록되었지만 macOS 승인이 필요합니다. 시스템 설정에서 승인하거나 등록을 해제할 수 있습니다."
++        case .notFound: "로그인 항목 서비스를 찾을 수 없습니다. 다시 확인하거나 등록을 시도하세요."
++        case .unknown: "로그인 항목 상태를 확인할 수 없습니다. 다시 확인하세요."
++        }
++    }
++
++    static func resultDescription(_ result: LoginItemRequestResult) -> String {
++        switch result.outcome {
++        case .succeeded, .alreadySatisfied:
++            return result.actualStatus == .enabled ? "켜기가 확인되었습니다." : "해제가 확인되었습니다."
++        case .requiresApproval:
++            return "등록 요청 뒤 macOS 승인이 필요합니다. 시스템 설정에서 확인하세요."
++        case .unconfirmed:
++            return "요청 뒤 상태를 확인할 수 없습니다. 다시 확인하세요."
++        case .failed(let reason):
++            return "요청에 실패했습니다: \(reason). 현재 상태를 확인하고 다시 시도하세요."
++        }
++    }
++}
+diff --git a/ResourceRunner/SettingsWindowController.swift b/ResourceRunner/SettingsWindowController.swift
+new file mode 100644
+index 0000000..a56a5b5
+--- /dev/null
++++ b/ResourceRunner/SettingsWindowController.swift
+@@ -0,0 +1,43 @@
++import AppKit
++import SwiftUI
++
++/// 앱 수명 동안 하나의 설정 창을 소유합니다. 창을 닫아도 인스턴스를 유지합니다.
++@MainActor
++final class SettingsWindowController: NSWindowController {
++    private let loginController: LoginItemController
++    private let activate: () -> Void
++
++    init(preferencesStore: PreferencesStore, loginController: LoginItemController,
++         activate: (() -> Void)? = nil) {
++        self.loginController = loginController
++        self.activate = activate ?? { NSApp.activate() }
++        let content = PreferencesView(preferencesStore: preferencesStore,
++            loginController: loginController)
++        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 620),
++            styleMask: [.titled, .closable, .miniaturizable, .resizable],
++            backing: .buffered, defer: false)
++        window.title = "ResourceRunner 설정"
++        window.identifier = NSUserInterfaceItemIdentifier("ResourceRunnerSettingsWindow")
++        window.isReleasedWhenClosed = false
++        window.contentViewController = NSHostingController(rootView: content)
++        window.center()
++        super.init(window: window)
++        window.delegate = self
++    }
++
++    required init?(coder: NSCoder) { nil }
++
++    func open() {
++        loginController.refresh()
++        activate()
++        showWindow(nil)
++        window?.makeKeyAndOrderFront(nil)
++    }
++}
++
++extension SettingsWindowController: NSWindowDelegate {
++    func windowDidBecomeKey(_ notification: Notification) {
++        // 같은 앱에서 다른 창을 거쳐 돌아올 때도 macOS의 실제 승인을 다시 읽습니다.
++        loginController.refresh()
++    }
++}
+diff --git a/ResourceRunnerTests/SettingsWindowControllerTests.swift b/ResourceRunnerTests/SettingsWindowControllerTests.swift
+new file mode 100644
+index 0000000..fe2ec78
+--- /dev/null
++++ b/ResourceRunnerTests/SettingsWindowControllerTests.swift
+@@ -0,0 +1,98 @@
++import AppKit
++import Testing
++@testable import ResourceRunner
++
++@MainActor
++private final class SettingsTestStorage: PreferencesStorage {
++    var saved: Any?
++    var writes = 0
++    func read() -> Any? { saved }
++    func write(_ dictionary: [String: Any]) { saved = dictionary; writes += 1 }
++}
++
++@MainActor
++private final class SettingsTestLoginService: LoginItemServing {
++    var current: LoginItemStatus = .notRegistered
++    var reads = 0
++    var mutations = 0
++    var settingsOpens = 0
++    func status() -> LoginItemStatus { reads += 1; return current }
++    func register() async throws { mutations += 1 }
++    func unregister() async throws { mutations += 1 }
++    func openSystemSettingsLoginItems() { settingsOpens += 1 }
++}
++
++@MainActor
++struct SettingsWindowControllerTests {
++    @Test func windowIsReusedAndOpenOnlyRefreshesActualStatus() {
++        let storage = SettingsTestStorage()
++        let preferences = PreferencesStore(storage: storage)
++        let service = SettingsTestLoginService()
++        let login = LoginItemController(service: service)
++        var activations = 0
++        let controller = SettingsWindowController(preferencesStore: preferences,
++            loginController: login, activate: { activations += 1 })
++        let original = controller.window
++
++        #expect(original != nil)
++        #expect(original?.identifier?.rawValue == "ResourceRunnerSettingsWindow")
++        #expect(original?.isVisible == false)
++        #expect(activations == 0)
++        #expect(service.reads == 1)
++        #expect(service.mutations == 0)
++        #expect(storage.writes == 0)
++
++        controller.open()
++        #expect(original?.isVisible == true)
++        #expect(activations == 1)
++        #expect(service.reads >= 2)
++        let readsAfterFirstOpen = service.reads
++        service.current = .requiresApproval
++        original?.close()
++        #expect(original?.isVisible == false)
++        controller.open()
++        #expect(controller.window === original)
++        #expect(login.actualStatus == .requiresApproval)
++        #expect(activations == 2)
++        #expect(service.reads > readsAfterFirstOpen)
++        #expect(service.mutations == 0)
++        #expect(service.settingsOpens == 0)
++        original?.close()
++    }
++
++    @Test func returningToAlreadyOpenSettingsWindowRefreshesActualStatus() {
++        let service = SettingsTestLoginService()
++        let login = LoginItemController(service: service)
++        let controller = SettingsWindowController(
++            preferencesStore: PreferencesStore(storage: SettingsTestStorage()),
++            loginController: login, activate: {})
++        controller.open()
++        let readsBeforeReturn = service.reads
++        service.current = .enabled
++        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification,
++            object: controller.window))
++        #expect(service.reads == readsBeforeReturn + 1)
++        #expect(login.actualStatus == .enabled)
++        #expect(service.mutations == 0)
++        controller.window?.close()
++    }
++
++    @Test func allActualStatesAndRequestResultsRemainDistinct() {
++        #expect(PreferencesView.statusDescription(.enabled).contains("허용"))
++        #expect(PreferencesView.statusDescription(.notRegistered).contains("등록되지"))
++        #expect(PreferencesView.statusDescription(.requiresApproval).contains("승인"))
++        #expect(PreferencesView.statusDescription(.notFound).contains("찾을 수 없"))
++        #expect(PreferencesView.statusDescription(.unknown(42)).contains("확인할 수 없"))
++
++        let success = LoginItemRequestResult(operationID: 1, requestedEnabled: true,
++            actualStatus: .enabled, outcome: .succeeded)
++        let pending = LoginItemRequestResult(operationID: 2, requestedEnabled: true,
++            actualStatus: .requiresApproval, outcome: .requiresApproval)
++        let failure = LoginItemRequestResult(operationID: 3, requestedEnabled: false,
++            actualStatus: .enabled, outcome: .failed("테스트 해제 실패"))
++        #expect(PreferencesView.resultDescription(success).contains("켜기가 확인"))
++        #expect(PreferencesView.resultDescription(pending).contains("승인"))
++        #expect(!PreferencesView.resultDescription(pending).contains("켜기가 확인"))
++        #expect(PreferencesView.resultDescription(failure).contains("테스트 해제 실패"))
++    }
++}
+diff --git a/ResourceRunnerUITests/SettingsWindowUITests.swift b/ResourceRunnerUITests/SettingsWindowUITests.swift
+new file mode 100644
+index 0000000..b01f60e
+--- /dev/null
++++ b/ResourceRunnerUITests/SettingsWindowUITests.swift
+@@ -0,0 +1,319 @@
++import XCTest
++
++final class SettingsWindowUITests: XCTestCase {
++    override func setUpWithError() throws { continueAfterFailure = false }
++
++    private func launch(cards: Int = 15, login: String = "notRegistered",
++                        register: String = "enabled", unregister: String = "notRegistered") -> XCUIApplication {
++        let app = XCUIApplication()
++        app.launchArguments += ["--dashboard-preferences-ui-test", "--settings-ui-test"]
++        app.launchEnvironment["RR_DASHBOARD_CARD_MASK"] = String(cards)
++        app.launchEnvironment["RR_LOGIN_STATUS"] = login
++        app.launchEnvironment["RR_LOGIN_REGISTER_OUTCOME"] = register
++        app.launchEnvironment["RR_LOGIN_UNREGISTER_OUTCOME"] = unregister
++        app.launch()
++        return app
++    }
++
++    private func settingsWindow(_ app: XCUIApplication) -> XCUIElement {
++        app.windows["ResourceRunner 설정"]
++    }
++
++    private func switchValue(_ element: XCUIElement) -> Int? {
++        (element.value as? NSNumber)?.intValue
++    }
++
++    private func textValue(_ element: XCUIElement) -> String {
++        (element.value as? String) ?? element.label
++    }
++
++    private func closeSettings(_ app: XCUIApplication) {
++        settingsWindow(app).buttons["_XCUI:CloseWindow"].click()
++    }
++
++    private func focusByTab(_ identifier: String, in app: XCUIApplication) -> Bool {
++        for _ in 0..<24 {
++            if let line = app.debugDescription.split(separator: "\n")
++                .first(where: { $0.contains("identifier: '\(identifier)'") }),
++               line.contains("Keyboard Focused") { return true }
++            app.typeKey(.tab, modifierFlags: [])
++        }
++        return false
++    }
++
++    private func settingsOwnsKeyboardFocus(_ app: XCUIApplication) -> Bool {
++        let tree = app.debugDescription
++        guard let start = tree.range(of: "identifier: 'ResourceRunnerSettingsWindow'") else {
++            return false
++        }
++        let suffix = tree[start.lowerBound...]
++        let windowTree = suffix.prefix(upTo: suffix.range(of: "    MenuBar,")?.lowerBound ?? suffix.endIndex)
++        return windowTree.contains("Keyboard Focused")
++    }
++
++    private func openFromStatusMenu(_ app: XCUIApplication) {
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.rightClick()
++        let item = app.menuItems["openSettingsFromMenu:"]
++        XCTAssertTrue(item.waitForExistence(timeout: 3))
++        item.click()
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++    }
++
++    @MainActor
++    func testRightClickAndCommandCommaReuseOneWindowWithoutOpeningAtLaunch() {
++        let app = launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch.exists)
++        openFromStatusMenu(app)
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
++        let login = app.staticTexts["SettingsLoginStatus"]
++        XCTAssertTrue(login.exists)
++        XCTAssertTrue(textValue(login).contains("등록되지"))
++        closeSettings(app)
++        XCTAssertFalse(settingsWindow(app).exists)
++        app.typeKey(",", modifierFlags: .command)
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
++    }
++
++    /// Release 구성에서도 실행되는 읽기 전용 진입 검증입니다.
++    @MainActor
++    func testReadOnlyStatusMenuSettingsAccess() {
++        let app = XCUIApplication()
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        openFromStatusMenu(app)
++        XCTAssertTrue(app.switches["SettingsLoginToggle"].exists)
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
++        closeSettings(app)
++        XCTAssertFalse(settingsWindow(app).exists)
++    }
++
++    @MainActor
++    func testReleaseBuildRightClickOpensSingleSettingsWindow() throws {
++        guard let path = ProcessInfo.processInfo.environment["RR_RELEASE_APP_PATH"] else {
++            throw XCTSkip("Release 앱 경로를 전달한 별도 실행에서 검증합니다.")
++        }
++        let app = XCUIApplication(url: URL(fileURLWithPath: path))
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        openFromStatusMenu(app)
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testAllCardsOffOpensSettingsAndRestoresVisibleCard() {
++        let app = launch(cards: 0)
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        let open = app.buttons["DashboardOpenSettings"]
++        XCTAssertTrue(open.waitForExistence(timeout: 3))
++        open.click()
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        Thread.sleep(forTimeInterval: 0.7)
++        XCTAssertTrue(settingsOwnsKeyboardFocus(app),
++            "지연된 대시보드 포커스 복귀가 설정창의 key 상태를 빼앗으면 안 됩니다.")
++        let cpu = app.switches["SettingsCPUCard"]
++        XCTAssertTrue(cpu.waitForExistence(timeout: 3))
++        XCTAssertEqual(switchValue(cpu), 0)
++        cpu.click()
++        XCTAssertEqual(switchValue(cpu), 1)
++        closeSettings(app)
++        if !app.buttons["CPUCard"].exists { status.click() }
++        XCTAssertTrue(app.buttons["CPUCard"].waitForExistence(timeout: 3))
++    }
++
++    @MainActor
++    func testAllOrdinaryControlsAndResetKeepSeparateLoginResult() {
++        let app = launch()
++        openFromStatusMenu(app)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            let control = app.switches[id]
++            XCTAssertTrue(control.exists, id)
++            XCTAssertEqual(switchValue(control), 1, id)
++            control.click()
++            XCTAssertEqual(switchValue(control), 0, id)
++        }
++        let graph = app.popUpButtons["SettingsGraphRange"]
++        XCTAssertTrue(graph.exists)
++        graph.click()
++        app.menuItems["최근 1분"].click()
++        XCTAssertTrue((graph.value as? String ?? "").contains("최근 1분"))
++        let profile = app.popUpButtons["SettingsRefreshProfile"]
++        XCTAssertTrue(profile.exists)
++        profile.click()
++        app.menuItems["매우 절전"].click()
++        XCTAssertTrue((profile.value as? String ?? "").contains("매우 절전"))
++
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        XCTAssertTrue(app.staticTexts["SettingsLoginRestoreResult"].waitForExistence(timeout: 3))
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 1, id)
++        }
++        XCTAssertTrue((graph.value as? String ?? "").contains("최근 10분"))
++        XCTAssertTrue((profile.value as? String ?? "").contains("기본"))
++    }
++
++    @MainActor
++    func testLoginSuccessFailureApprovalRefreshAndExplicitSystemSettings() {
++        let app = launch(login: "notRegistered", register: "approval")
++        openFromStatusMenu(app)
++        app.switches["SettingsLoginToggle"].click()
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 3))
++        XCTAssertTrue(textValue(status).contains("승인"))
++        XCTAssertTrue(textValue(result).contains("승인"))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertTrue(app.buttons["SettingsUnregisterLoginItem"].exists)
++        app.buttons["SettingsOpenSystemLoginItems"].click()
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertTrue(textValue(status).contains("허용"))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 1)
++        app.switches["SettingsLoginToggle"].click()
++        XCTAssertTrue(textValue(status).contains("등록되지"))
++    }
++
++    @MainActor
++    func testLoginFailureDoesNotUndoOrdinaryRestore() {
++        let app = launch(login: "enabled", unregister: "failure")
++        openFromStatusMenu(app)
++        app.switches["SettingsCPUCard"].click()
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 1)
++        XCTAssertTrue(app.staticTexts["SettingsOrdinaryRestoreResult"].exists)
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        let failure = NSPredicate(format: "value CONTAINS %@", "테스트 해제 실패")
++        expectation(for: failure, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 3)
++        XCTAssertTrue(textValue(app.staticTexts["SettingsLoginStatus"]).contains("허용"))
++        XCTAssertTrue(focusByTab("SettingsLoginRefresh", in: app))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(textValue(app.staticTexts["SettingsLoginStatus"]).contains("허용"))
++    }
++
++    @MainActor
++    func testSuccessfulRegistrationShowsConfirmedEnabledState() {
++        let app = launch()
++        openFromStatusMenu(app)
++        app.typeKey("9", modifierFlags: [.command, .option])
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 3))
++        XCTAssertTrue(textValue(result).contains("켜기가 확인"))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 1)
++        XCTAssertTrue(textValue(app.staticTexts["SettingsLoginStatus"]).contains("허용"))
++    }
++
++    @MainActor
++    func testNotFoundAndUnknownStatesKeepExplicitRefreshAndFailureSeparate() {
++        let missing = launch(login: "notFound", register: "failure")
++        openFromStatusMenu(missing)
++        let status = missing.staticTexts["SettingsLoginStatus"]
++        XCTAssertTrue(textValue(status).contains("찾을 수 없"))
++        missing.switches["SettingsLoginToggle"].click()
++        let result = missing.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 3))
++        XCTAssertTrue(textValue(result).contains("테스트 등록 실패"))
++        XCTAssertTrue(textValue(status).contains("찾을 수 없"))
++        XCTAssertTrue(focusByTab("SettingsLoginRefresh", in: missing))
++        missing.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(textValue(status).contains("찾을 수 없"))
++        missing.terminate()
++
++        let unknown = launch(login: "unknown")
++        openFromStatusMenu(unknown)
++        XCTAssertTrue(textValue(unknown.staticTexts["SettingsLoginStatus"])
++            .contains("확인할 수 없"))
++        XCTAssertTrue(unknown.buttons["SettingsLoginRefresh"].exists)
++    }
++
++    @MainActor
++    func testNativeSettingsControlsCanBeReachedAndActivatedByKeyboard() {
++        let app = launch(login: "approval")
++        openFromStatusMenu(app)
++        let cpu = app.switches["SettingsCPUCard"]
++        XCTAssertEqual(cpu.label, "CPU")
++        app.typeKey("1", modifierFlags: [.command, .option])
++        XCTAssertEqual(switchValue(cpu), 0)
++        for (key, identifier) in [("2", "SettingsMemoryCard"), ("3", "SettingsNetworkCard"),
++                                  ("4", "SettingsDiskCard"), ("5", "SettingsCPUTop5"),
++                                  ("6", "SettingsMemoryTop5")] {
++            app.typeKey(key, modifierFlags: [.command, .option])
++            XCTAssertEqual(switchValue(app.switches[identifier]), 0, identifier)
++        }
++
++        let graph = app.popUpButtons["SettingsGraphRange"]
++        XCTAssertEqual(graph.label, "표시 시간")
++        app.typeKey("7", modifierFlags: [.command, .option])
++        XCTAssertTrue((graph.value as? String ?? "").contains("최근 1분"))
++        app.typeKey("7", modifierFlags: [.command, .option])
++        XCTAssertTrue((graph.value as? String ?? "").contains("최근 5분"))
++        app.typeKey("7", modifierFlags: [.command, .option])
++        XCTAssertTrue((graph.value as? String ?? "").contains("최근 10분"))
++        XCTAssertTrue(focusByTab("SettingsNextGraphRange", in: app))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue((graph.value as? String ?? "").contains("최근 1분"))
++
++        let profile = app.popUpButtons["SettingsRefreshProfile"]
++        XCTAssertEqual(profile.label, "갱신 속도")
++        app.typeKey("8", modifierFlags: [.command, .option])
++        XCTAssertTrue((profile.value as? String ?? "").contains("절전"))
++        app.typeKey("8", modifierFlags: [.command, .option])
++        XCTAssertTrue((profile.value as? String ?? "").contains("매우 절전"))
++        app.typeKey("8", modifierFlags: [.command, .option])
++        XCTAssertTrue((profile.value as? String ?? "").contains("빠름"))
++        app.typeKey("8", modifierFlags: [.command, .option])
++        XCTAssertTrue((profile.value as? String ?? "").contains("기본"))
++        XCTAssertTrue(focusByTab("SettingsNextRefreshProfile", in: app))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue((profile.value as? String ?? "").contains("절전"))
++
++        XCTAssertTrue(focusByTab("SettingsOpenSystemLoginItems", in: app))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(focusByTab("SettingsLoginRefresh", in: app))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(textValue(app.staticTexts["SettingsLoginStatus"]).contains("허용"))
++
++        XCTAssertTrue(focusByTab("SettingsRestoreDefaults", in: app))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertEqual(switchValue(cpu), 1)
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++    }
++
++    @MainActor
++    func testApprovalCanBeUnregisteredByKeyboard() {
++        let app = launch(login: "approval")
++        openFromStatusMenu(app)
++        XCTAssertTrue(focusByTab("SettingsUnregisterLoginItem", in: app))
++        app.typeKey(" ", modifierFlags: [])
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let notRegistered = NSPredicate(format: "value CONTAINS %@", "등록되지")
++        expectation(for: notRegistered, evaluatedWith: status)
++        waitForExpectations(timeout: 3)
++    }
++
++    @MainActor
++    func testSettingsWindowKeepsKeyAfterSelectedCardIsRemovedDuringFocusReturn() {
++        let app = launch(cards: 3)
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        app.typeKey("1", modifierFlags: .command)
++        XCTAssertTrue(app.descendants(matching: .any)
++            .matching(identifier: "DashboardDetail").firstMatch.waitForExistence(timeout: 3))
++        // 명시적 DEBUG fixture 단축키는 제거와 설정 열기를 120ms 복귀보다 앞서 한 이벤트로 보냅니다.
++        app.typeKey("9", modifierFlags: [.command, .shift])
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        Thread.sleep(forTimeInterval: 0.7)
++        XCTAssertTrue(settingsOwnsKeyboardFocus(app))
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 0)
++        XCTAssertTrue(app.switches["SettingsMemoryCard"].isHittable)
++    }
++}

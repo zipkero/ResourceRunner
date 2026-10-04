@@ -1,0 +1,84 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/rr-m4-task009-derived/Build/Products/ResourceRunner_release_finalrun.xctestrun -destination platform=macOS,arch=arm64 -parallel-testing-enabled NO "-only-testing:ResourceRunnerUITests/SettingsWindowUITests/testReleaseBuildRightClickOpensSingleSettingsWindow" -resultBundlePath /tmp/rr-m4-task009-release-ui.xcresult
+
+2026-10-04 15:59:46.938 xcodebuild[55849:52693897] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Writing result bundle at path:
+	/tmp/rr-m4-task009-release-ui.xcresult
+
+2026-10-04 15:59:46.940 xcodebuild[55849:52693897] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006034-000811520144001C, name:My Mac }
+2026-10-04 15:59:47.190 xcodebuild[55849:52693897] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+2026-10-04 15:59:47.589938+0900 ResourceRunnerUITests-Runner[55873:52694091] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-04 15:59:47.617.
+Test Suite 'ResourceRunnerUITests.xctest' started at 2026-10-04 15:59:47.617.
+Test Suite 'SettingsWindowUITests' started at 2026-10-04 15:59:47.617.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testReleaseBuildRightClickOpensSingleSettingsWindow]' started.
+    t =     0.00s Start Test at 2026-10-04 15:59:47.617
+    t =     0.07s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner.Task009FinalRunA5
+    t =     0.09s     Launch com.zipkero.ResourceRunner.Task009FinalRunA5
+    t =     0.82s         Wait for accessibility to load
+    t =     0.87s         Setting up automation session
+    t =     0.89s         Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     0.89s Checking existence of `"ResourceRunner 설정" Window`
+    t =     0.93s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     1.96s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     1.96s         Checking existence of `StatusItem (First Match)`
+    t =     1.97s Right click StatusItem (First Match)
+    t =     1.97s     Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     1.97s     Find the StatusItem (First Match)
+    t =     2.00s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.00s     Open com.zipkero.ResourceRunner.Task009FinalRunA5
+    t =     2.00s         Activate com.zipkero.ResourceRunner.Task009FinalRunA5
+    t =     2.01s             Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     2.04s     Synthesize event
+    t =     2.41s     Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     2.42s Waiting 3.0s for "openSettingsFromMenu:" MenuItem to exist
+    t =     3.46s     Checking `Expect predicate `existsNoRetry == 1` for object "openSettingsFromMenu:" MenuItem`
+    t =     3.46s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     3.54s Click "openSettingsFromMenu:" MenuItem
+    t =     3.54s     Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     3.55s     Find the "openSettingsFromMenu:" MenuItem
+    t =     3.58s     Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     3.58s     Synthesize event
+    t =     3.58s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     3.61s         Hover menu item '설정…'
+    t =     3.61s             Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     3.61s             Find the "openSettingsFromMenu:" MenuItem
+    t =     3.64s             Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     3.64s             Synthesize event
+    t =     3.86s             Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     3.87s         Find the "openSettingsFromMenu:" MenuItem
+    t =     4.65s     Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     4.69s Waiting 3.0s for "ResourceRunner 설정" Window to exist
+    t =     5.72s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunner 설정" Window`
+    t =     5.73s         Checking existence of `"ResourceRunner 설정" Window`
+    t =     5.82s Get number of matches for: Elements matching predicate '"ResourceRunner 설정" IN identifiers'
+    t =     5.86s Click "_XCUI:CloseWindow" Button
+    t =     5.86s     Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     5.86s     Find the "_XCUI:CloseWindow" Button
+    t =     5.90s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =     5.91s     Synthesize event
+    t =     6.28s     Wait for com.zipkero.ResourceRunner.Task009FinalRunA5 to idle
+    t =     6.28s Tear Down
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testReleaseBuildRightClickOpensSingleSettingsWindow]' passed (6.626 seconds).
+Test Suite 'SettingsWindowUITests' passed at 2026-10-04 15:59:54.245.
+	 Executed 1 test, with 0 failures (0 unexpected) in 6.626 (6.628) seconds
+Test Suite 'ResourceRunnerUITests.xctest' passed at 2026-10-04 15:59:54.246.
+	 Executed 1 test, with 0 failures (0 unexpected) in 6.626 (6.629) seconds
+Test Suite 'Selected tests' passed at 2026-10-04 15:59:54.247.
+	 Executed 1 test, with 0 failures (0 unexpected) in 6.626 (6.630) seconds
+2026-10-04 15:59:54.559 xcodebuild[55849:52693897] [MT] IDETestOperationsObserverDebug: 7.366 elapsed -- Testing started completed.
+2026-10-04 15:59:54.559 xcodebuild[55849:52693897] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-04 15:59:54.559 xcodebuild[55849:52693897] [MT] IDETestOperationsObserverDebug: 7.366 sec, +7.366 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/rr-m4-task009-release-ui.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

@@ -1,14 +1,14 @@
 # Context
 
-저장: 2026-10-04 (설정창·Disk 승인 기록·분리 커밋·푸시)
+저장: 2026-10-05 (ROADMAP 마일스톤 체크리스트 반영)
 
 ## 현재 목표
 
-사용자 “1번하고”의 설정 화면(task-009)·Disk 수정 승인 기록과 main 분리 커밋·푸시를 완료한다. 다음 단계는 후속 요청에 따라 진행하며 task-010/011은 이번 요청에서 시작하지 않는다.
+설정 화면(task-009)·Disk 수정은 main에 분리 커밋·푸시 완료했다(3af86df/1180810). 현재 요청의 ROADMAP 체크박스와 승인된 완료 항목을 반영했다. 후속 구현은 진행 요청에 따라 재개하며 이번 문서 변경으로 Task 상태를 바꾸지 않는다.
 
 ## 현재 상태
 
-- branch main, 검증 기준 HEAD df90292a0ae1cac69cc642f60f05fc1a4d555ff7, 설정창 커밋3af86df. Disk 승인 기록과 코드는 이 CONTEXT와 동반하는 분리 커밋에 포함한다. M4 SPEC/DESIGN [x], IMPLEMENT [ ]; task001~009 승인,010/011 미착수.
+- branch main, 검증 기준 HEAD df90292a0ae1cac69cc642f60f05fc1a4d555ff7, 설정창 커밋3af86df. Disk 승인 기록과 코드는 커밋1180810으로 origin/main에 반영했다. M4 SPEC/DESIGN [x], IMPLEMENT [ ]; task001~009 승인,010/011 미착수.
 - task009 main approved. 현재9파일 SHA/patch 대응과 기존 signed 단위46/46·Debug UI18/18·격리 Release UI1/1·Release build를 확인했다. 키보드는 native 컨트롤과 동일값 순환 버튼/단축키 경로로 검증했고 실제 OS mutation은 하지 않았다. 근거는 evidence/task-009. loop 재시도0·근거 재검증0; 이번에 신규 SPEC 전체 완료 없음.
 - 별도 Disk Per-Request 9파일 구현/기존 단위48/48·Sandbox UI1/1·Release build·독립 approved 후보와 현재 소스 대응을 확인했다. main 최종 approved를 확정하고 승인 기록을 남겼다. 근거는 evidence/disk-capacity-20261004/README.md. 테스트 재실행은 없었다.
 - M3 용량 개정으로 취소된 task002/006/008/011/013/018은 개별 승인 복구 기록이 아직 없다. 독립 Disk 판정의 영향 분석은 확보돼 있다. 나머지 승인·task009 철회·task014/015 사용자 보류는 유지한다.
@@ -37,12 +37,14 @@
 ## 다음 작업
 
 - 작업: 후속 진행 요청에 따라 task010의 미확인 통합 경계를 진행한다. Disk 근거와 독립 영향 분석으로 M3 취소6개Task를 각각 검토·승인 기록한다.
-- 완료 기준: 기존 통과 결과를 현재 소스 대응 범위에서 재사용하고 설정 변경→재실행 최초 적용→복원의 미확인 경계만 새로 확인한다. 실제 native 로그인·세션 영향과 M3 보류 검증은 별도 관문을 유지한다. 현재 “1번” 요청은 완료 후 종료한다.
+- 완료 기준: 기존 통과 결과를 현재 소스 대응 범위에서 재사용하고 설정 변경→재실행 최초 적용→복원의 미확인 경계만 새로 확인한다. 실제 native 로그인·세션 영향과 M3 보류 검증은 별도 관문을 유지한다. 설정·Disk 승인/커밋 요청과 이번 ROADMAP 체크리스트 요청은 완료했다.
 
 ## 먼저 읽을 파일
 
 - M4 spec.md/design.md/implement.md와 두 evidence 폴더의 README/patch/SHA/독립 판정.
 - ~/.codex/skills/verify/SKILL.md, ~/.codex/docs/phased-state.md, ~/.codex/skills/context-save/SKILL.md.
+
+- ROADMAP 현재 상태에 M1~M5 체크박스와 완료/잔여 항목을 추가했다. M1 전체만 체크했고 M2~M4의 승인된 하위 항목을 체크했다. SPEC/DESIGN/Task 승인 의미·전체 미완료·보류는 유지하며 새 테스트를 실행하지 않았다.
 
 ## 문서 반영 필요
 

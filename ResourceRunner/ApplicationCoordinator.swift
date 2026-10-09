@@ -21,14 +21,16 @@ private final class SettingsOpenRouter {
 final class PreferencesPipelineBinding {
     private let store: PreferencesStore
     private let dashboard: DashboardPresentationStore
+    private let statusBar: StatusBarController?
     private let lifecycle: MonitoringLifecycleStore
     private var forwardedProfile: RefreshProfile
     private var initialApplied = false
 
     init(store: PreferencesStore, dashboard: DashboardPresentationStore,
-         lifecycle: MonitoringLifecycleStore) {
+         lifecycle: MonitoringLifecycleStore, statusBar: StatusBarController? = nil) {
         self.store = store
         self.dashboard = dashboard
+        self.statusBar = statusBar
         self.lifecycle = lifecycle
         forwardedProfile = store.current.preferences.refreshProfile
         store.onChange = { [weak self] snapshot in self?.apply(snapshot) }
@@ -41,6 +43,8 @@ final class PreferencesPipelineBinding {
 
     private func apply(_ snapshot: PreferencesSnapshot) {
         dashboard.applyPreferences(snapshot)
+        // 늦은 callback이 도착해도 behavior는 현재 저장 snapshot에서만 유도합니다.
+        statusBar?.applyAutomaticallyClosesPopover(store.current.preferences.automaticallyClosesPopover)
         guard initialApplied else { return }
         forwardCurrentProfileIfChanged()
     }
@@ -117,7 +121,8 @@ final class ApplicationCoordinator {
         statusBarController = StatusBarController(
             popoverContent: DashboardView(store: dashboard, viewport: viewport,
                 iconProvider: ApplicationIconCache(),
-                onOpenSettings: { [weak settingsRouter] in settingsRouter?.open() }), viewport: viewport
+                onOpenSettings: { [weak settingsRouter] in settingsRouter?.open() }), viewport: viewport,
+            automaticallyClosesPopover: initialPreferences.preferences.automaticallyClosesPopover
         )
         statusBarController.keyboardDismiss = { [weak dashboard] in
             guard let dashboard, dashboard.selection != .none else { return false }
@@ -132,6 +137,12 @@ final class ApplicationCoordinator {
         let admission = CollectionAdmission()
         let networkTopology = NetworkTopologyTracker()
         let diskTopology = DiskTopologyTracker()
+#if DEBUG
+        let processReader = UITestProcessSurveyReader(usesFixture:
+            ProcessInfo.processInfo.arguments.contains("--process-ranking-ui-fixture"))
+#else
+        let processReader = HostProcessSurveyReader()
+#endif
         let pipelines = CollectionPipelines.make(clock: clock, admission: admission,
             networkTopology: networkTopology, diskTopology: diskTopology,
             systemSource: SystemMetricsSampleSource(
@@ -139,7 +150,7 @@ final class ApplicationCoordinator {
                 memoryCollector: MemorySystemMetricsCollector(),
                 clock: clock, admission: admission),
             processSource: ProcessSurveySampleSource(
-                collector: ProcessSurveyCollector(reader: HostProcessSurveyReader()),
+                collector: ProcessSurveyCollector(reader: processReader),
                 admission: admission),
             networkSource: { metadata in NetworkActivitySource(
                 reader: SystemNetworkCounterReader(topology: networkTopology),
@@ -154,8 +165,9 @@ final class ApplicationCoordinator {
         collectionPipelines = pipelines
         collectionDeliveryStore = CollectionDeliveryStore()
         processRankingCache = ProcessRankingDeliveryCache()
+        dashboard.attachRankingCache(processRankingCache)
         preferencesBinding = PreferencesPipelineBinding(store: preferencesStore,
-            dashboard: dashboard, lifecycle: pipelines.lifecycle)
+            dashboard: dashboard, lifecycle: pipelines.lifecycle, statusBar: statusBarController)
         topologyObserver = ResourceTopologyObserver(networkTopology: networkTopology,
             diskTopology: diskTopology, lifecycle: pipelines.lifecycle)
         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
@@ -196,13 +208,18 @@ final class ApplicationCoordinator {
                 }
             }
         }
+        if ProcessInfo.processInfo.arguments.contains("--popover-behavior-ui-test") {
+            statusBarController.debugAutoCloseInjector = { [preferencesStore] in
+                preferencesStore.update { $0.automaticallyClosesPopover.toggle() }
+            }
+        }
 #endif
 
         let sink: CharacterPresentationSink = statusBarController
         characterStateTask = Self.consume(characterStateSource, into: sink)
 
         processRankingTask = Self.consumeProcessRanking(pipelines.processStore,
-            into: processRankingCache, admission: admission)
+            into: processRankingCache, dashboard: dashboard, admission: admission)
         cpuActivityTask = Self.consumeSystemMetrics(
             pipelines.systemStore,
             into: characterStateSource,
@@ -281,28 +298,28 @@ final class ApplicationCoordinator {
                 var processGroups: [ApplicationProcessGroup] = []
                 var nextResolver: ApplicationIdentityResolver?
                 var surveyFailed = false
+                var excludedCount = 0
                 if let rankingCache {
-                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch)
+                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch,
+                        includesSystemProcesses: dashboard.preferencesSnapshot.preferences.includesSystemProcesses)
                     ranking = current.ranking
                     processGroups = current.groups
                     surveyFailed = current.surveyFailed
+                    excludedCount = current.excludedCount
                 } else if let processHistory {
                     let input = await processHistory.rankingInput()
                     surveyFailed = input.surveyFailed
-                    let computed = ApplicationRanking.compute(
+                    let computed = ApplicationRanking.materials(
                         snapshots: input.snapshots,
                         currentTimestamp: now,
                         unreadableCount: input.unreadableCount,
+                        currentUserUnreadableCount: input.currentUserUnreadableCount,
                         resolver: resolver
                     )
-                    // 두 계산이 같은 resolver를 이어받아야 앱 키 유도가 서로 다른 결과를 내지 않습니다.
-                    let grouped = ApplicationRanking.groupByApplication(
-                        snapshots: input.snapshots,
-                        resolver: computed.resolver
-                    )
-                    nextResolver = grouped.resolver
-                    ranking = computed.sample
-                    processGroups = grouped.groups
+                    nextResolver = computed.resolver
+                    ranking = computed.materials.currentUser.ranking
+                    processGroups = computed.materials.currentUser.groups
+                    excludedCount = computed.materials.currentUser.excludedCount
                 }
 
                 @MainActor func updateDisplay() {
@@ -312,6 +329,7 @@ final class ApplicationCoordinator {
                         topApplications: ranking?.cpuUsage ?? [],
                         topApplicationsFailed: surveyFailed,
                         processGroups: processGroups,
+                        excludedCount: excludedCount, unreadableCount: ranking?.unreadableCount ?? 0,
                         currentTimestamp: now
                     )
                     dashboard.updateMemoryCard(
@@ -320,6 +338,7 @@ final class ApplicationCoordinator {
                         topApplicationsFailed: surveyFailed,
                         memoryIncrease: ranking?.memoryIncrease ?? [],
                         processGroups: processGroups,
+                        excludedCount: excludedCount, unreadableCount: ranking?.unreadableCount ?? 0,
                         currentTimestamp: now
                     )
                     guard let latest = displayValue.latest,
@@ -362,6 +381,7 @@ final class ApplicationCoordinator {
     /// 프로세스 순위의 actor 조회·집계를 시스템 tick에서 분리해 CPU·Memory와 메뉴바 소비를 기다리게 하지 않습니다.
     static func consumeProcessRanking(_ store: ProcessHistoryStore,
                                       into cache: ProcessRankingDeliveryCache,
+                                      dashboard: DashboardPresentationStore? = nil,
                                       admission: CollectionAdmission? = nil,
                                       beforeRankingCompute: (@Sendable () async -> Void)? = nil) -> Task<Void, Never> {
         let updates = store.rankingUpdates
@@ -369,30 +389,31 @@ final class ApplicationCoordinator {
             var resolver = ApplicationIdentityResolver()
             for await input in updates {
                 if let beforeRankingCompute { await beforeRankingCompute() }
-                let computed = ApplicationRanking.compute(snapshots: input.snapshots,
+                let computed = ApplicationRanking.materials(snapshots: input.snapshots,
                     currentTimestamp: input.timestamp, unreadableCount: input.unreadableCount,
+                    currentUserUnreadableCount: input.currentUserUnreadableCount,
                     resolver: resolver)
-                let grouped = ApplicationRanking.groupByApplication(snapshots: input.snapshots,
-                    resolver: computed.resolver)
                 let accepted = await MainActor.run { () -> Bool in
                     if let context = input.context, let admission {
-                        return admission.admitDisplay(context, timestamp: input.timestamp) {
-                            cache.update(ranking: computed.sample, groups: grouped.groups,
+                        return admission.admitDisplayOptional(context, timestamp: input.timestamp) {
+                            let updated = cache.update(materials: computed.materials,
                                 surveyFailed: input.surveyFailed, timestamp: input.timestamp,
-                                collectionEpoch: context.epoch)
+                                collectionEpoch: context.epoch, deliverySequence: input.deliverySequence)
 #if DEBUG
-                            debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)")
+                            if updated { debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)") }
 #endif
-                            return true
+                            return updated ? true : nil
                         } ?? false
                     } else {
-                        cache.update(ranking: computed.sample, groups: grouped.groups,
+                        return cache.update(materials: computed.materials,
                             surveyFailed: input.surveyFailed, timestamp: input.timestamp,
-                            collectionEpoch: input.context?.epoch)
-                        return true
+                            collectionEpoch: input.context?.epoch, deliverySequence: input.deliverySequence)
                     }
                 }
-                if accepted { resolver = grouped.resolver }
+                if accepted {
+                    resolver = computed.resolver
+                    await MainActor.run { dashboard?.refreshProcessRanking() }
+                }
             }
         }
     }

@@ -1,0 +1,47 @@
+{
+  "initial_read_only": {
+    "bundle": "/tmp/rr-task011-initial-clean.xcresult",
+    "result": "Passed",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "startTime": 1791508004.49,
+    "finishTime": 1791508012.79
+  },
+  "native_register": {
+    "bundle": "/tmp/rr-task011-register.xcresult",
+    "result": "Passed",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "startTime": 1791508023.816,
+    "finishTime": 1791508033.559
+  },
+  "unregister_and_restore": {
+    "bundle": "/tmp/rr-task011-cycle.xcresult",
+    "result": "Passed",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "startTime": 1791508063.001,
+    "finishTime": 1791508077.038
+  },
+  "system_settings_removal": {
+    "bundle": "/tmp/rr-task011-external-removal-final.xcresult",
+    "result": "Passed",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "startTime": 1791508338.944,
+    "finishTime": 1791508352.381
+  },
+  "next_login_preparation": {
+    "bundle": "/tmp/rr-task011-prepare-after-removal.xcresult",
+    "result": "Passed",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "startTime": 1791508363.884,
+    "finishTime": 1791508373.828
+  }
+}

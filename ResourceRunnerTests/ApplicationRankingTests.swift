@@ -100,13 +100,15 @@ private func snapshot(
     pid: pid_t,
     executablePath: String,
     recentValues: [ProcessRankingSample],
-    memoryBaselines: [ProcessMemoryBaselinePoint] = []
+    memoryBaselines: [ProcessMemoryBaselinePoint] = [],
+    ownership: ProcessOwnership = .unknown
 ) -> ProcessHistorySnapshot {
     ProcessHistorySnapshot(
         identity: ProcessIdentity(pid: pid, startTime: 0),
         executablePath: executablePath,
         recentValues: recentValues,
-        memoryBaselines: memoryBaselines
+        memoryBaselines: memoryBaselines,
+        ownership: ownership
     )
 }
 
@@ -369,11 +371,10 @@ struct ApplicationRankingUnreadableCountTests {
 
 // MARK: - task-001: 순위 계산 정원과 카드 표시 정원 분리
 
-/// task-001 검증 조건: 앱이 상세 표시 정원(20)보다 많은 입력에서 `compute`가 20개까지 돌려줍니다.
-/// 계산 정원을 카드 정원(5)으로 되돌리면 이 테스트가 실패해야 합니다.
+/// 표시 전에 자르지 않아야 필터와 상세 정원 변경에서 뒤쪽 항목이 살아납니다.
 struct ApplicationRankingComputationGantryTests {
 
-    @Test func computeReturnsUpToDetailCountFromLargerInput() {
+    @Test func computeKeepsEveryGroupBeforeDisplayLimit() {
         var snapshots: [ProcessHistorySnapshot] = []
         for index in 0..<25 {
             let value: Double = Double(25 - index)
@@ -388,8 +389,59 @@ struct ApplicationRankingComputationGantryTests {
             resolver: ApplicationIdentityResolver()
         )
 
-        #expect(sample.cpuUsage.count == ApplicationRankingSampling.detailCount)
-        #expect(sample.memoryUsage.count == ApplicationRankingSampling.detailCount)
+        #expect(sample.cpuUsage.count == 25)
+        #expect(sample.memoryUsage.count == 25)
+    }
+}
+
+struct ProcessRankingMaterialsTests {
+    @Test func filtersBeforeRankingAndKeepsGroupsBeyondTwenty() {
+        let system: [ProcessHistorySnapshot] = (0..<50).map { index in
+            snapshot(pid: pid_t(index + 1), executablePath: "/Applications/System\(index).app/bin/s",
+                recentValues: [rankingSample(cpuUsagePercent: Double(100 - index), residentBytes: 1_000)],
+                ownership: .otherUser)
+        }
+        let user = snapshot(pid: 100, executablePath: "/Applications/User.app/bin/u",
+            recentValues: [rankingSample(cpuUsagePercent: 1, residentBytes: 2_000)],
+            ownership: .currentUser)
+        let mixedUser = snapshot(pid: 101, executablePath: "/Applications/Shared.app/bin/u",
+            recentValues: [rankingSample(cpuUsagePercent: 4, residentBytes: 3_000)],
+            ownership: .currentUser)
+        let mixedSystem = snapshot(pid: 102, executablePath: "/Applications/Shared.app/bin/s",
+            recentValues: [rankingSample(cpuUsagePercent: 8, residentBytes: 5_000)],
+            ownership: .otherUser)
+        let computed = ApplicationRanking.materials(snapshots: system + [user, mixedUser, mixedSystem],
+            currentTimestamp: baseInstant, unreadableCount: 7, resolver: ApplicationIdentityResolver())
+        let current = computed.materials.currentUser
+        let all = computed.materials.allReadable
+        #expect(current.ranking.cpuUsage.count == 2)
+        #expect(current.ranking.cpuUsage.first?.key.value == "/Applications/Shared.app")
+        #expect(current.ranking.cpuUsage.first?.value == 4)
+        #expect(current.groups.first { $0.key.value == "/Applications/Shared.app" }?.processes.map(\.pid) == [101])
+        #expect(current.excludedCount == 51)
+        #expect(current.ranking.unreadableCount == 7)
+        #expect(all.ranking.cpuUsage.count == 52)
+        #expect(all.groups.count == 52)
+        #expect(all.ranking.cpuUsage.first { $0.key.value == "/Applications/Shared.app" }?.value == 12)
+        #expect(all.groups.first { $0.key.value == "/Applications/Shared.app" }?.processes.count == 2)
+        #expect(all.ranking.cpuUsage.last?.key.value == "/Applications/User.app")
+        #expect(all.excludedCount == 0)
+    }
+
+    @Test func currentUIDApplePathStaysVisibleAndUnknownOwnershipIsExcluded() {
+        let apple = snapshot(pid: 1, executablePath: "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder",
+            recentValues: [rankingSample(cpuUsagePercent: nil, residentBytes: 900)],
+            ownership: .currentUser)
+        let unknown = snapshot(pid: 2, executablePath: "/Applications/Unknown.app/bin/u",
+            recentValues: [rankingSample(cpuUsagePercent: 90, residentBytes: 10_000)])
+        let result = ApplicationRanking.materials(snapshots: [apple, unknown],
+            currentTimestamp: baseInstant, unreadableCount: 2, resolver: ApplicationIdentityResolver()).materials
+        #expect(result.currentUser.ranking.memoryUsage.map(\.displayName) == ["Finder"])
+        #expect(result.currentUser.ranking.cpuUsage.isEmpty)
+        #expect(result.currentUser.excludedCount == 1)
+        #expect(result.allReadable.ranking.memoryUsage.map(\.displayName) == ["Finder"])
+        #expect(result.allReadable.excludedCount == 1)
+        #expect(result.currentUser.ranking.unreadableCount == 2)
     }
 }
 
@@ -549,17 +601,11 @@ struct ApplicationRankingCardDetailConsistencyTests {
             Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
                 == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
         )
-        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
-        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함하므로,
-        // 한쪽만 다른 개수로 자르면(정원 앞뒤로 어긋나면) 배열 길이나 값이 달라져 실패합니다.
-        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
-        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
-        try #require(cardNames.count == cap)
-        #expect(cardNames == Array(detailNames.prefix(cap)))
-        // 경계 직후(21번째) 항목은 상세 전체 목록에는 있지만 카드 목록에는 없어야 합니다 —
-        // 위 전체 비교와 달리 상세 목록의 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
-        try #require(detailNames.count > cap)
-        #expect(!cardNames.contains(detailNames[cap]))
+        // 계산 자료는 전체 순위를 보관하고 표시 경계에서만 기본20개를 자릅니다.
+        #expect(cardNames == detailNames)
+        try #require(cardNames.count > cap)
+        #expect(Array(cardNames.prefix(cap)) == Array(detailNames.prefix(cap)))
+        #expect(!Array(cardNames.prefix(cap)).contains(detailNames[cap]))
     }
 
     /// `groupByApplication(_:)`이 `compute(_:)`와 같은 평활화 값을 만듭니다.
@@ -679,16 +725,10 @@ struct ApplicationRankingCardTopEntriesTieBreakTests {
             Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
                 == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
         )
-        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
-        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함합니다.
-        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
-        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
-        try #require(cardNames.count == cap)
-        #expect(cardNames == Array(detailNames.prefix(cap)))
-        // 경계 직후(21번째) 항목은 카드 목록에 없어야 합니다 — 위 전체 비교와 달리 상세 목록의
-        // 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
-        try #require(detailNames.count > cap)
-        #expect(!cardNames.contains(detailNames[cap]))
+        #expect(cardNames == detailNames)
+        try #require(cardNames.count > cap)
+        #expect(Array(cardNames.prefix(cap)) == Array(detailNames.prefix(cap)))
+        #expect(!Array(cardNames.prefix(cap)).contains(detailNames[cap]))
     }
 }
 
@@ -1107,6 +1147,30 @@ struct ApplicationProcessGroupOrderingTests {
     /// task-001 검증 조건: 펼친 행이 없어도 정원보다 많은 그룹을 받으면 정원만큼만 돌려주고,
     /// 그 순서는 자르기 전 정렬 결과의 앞부분과 같습니다. 정원 인자를 무시하고 전체를 돌려주도록
     /// 바꾸면 개수 단언이 실패해야 합니다.
+    @Test func scopeSelectionDropsExcludedExpandedRowsButKeepsVisibleRows() {
+        let user = group("/User", sortValue: 10)
+        let system = group("/System", sortValue: 20)
+        let expanded: Set<ApplicationKey> = [user.key, system.key]
+        let remaining = ApplicationProcessGroupOrdering.visibleExpandedKeys(
+            groups: [user], stableOrder: [system.key, user.key],
+            expandedKeys: expanded, cap: 20)
+        #expect(remaining == [user.key])
+    }
+
+    @Test func reducingLimitDropsOnlyExpandedRowsThatDisappear() {
+        let groups = (0..<50).map { group("/App\($0)", sortValue: Double(50 - $0)) }
+        let stableOrder = groups.map(\.key)
+        let expanded: Set<ApplicationKey> = [groups[5].key, groups[25].key]
+        let atFifty = ApplicationProcessGroupOrdering.visibleExpandedKeys(
+            groups: groups, stableOrder: stableOrder, expandedKeys: expanded, cap: 50)
+        let atTwenty = ApplicationProcessGroupOrdering.visibleExpandedKeys(
+            groups: groups, stableOrder: stableOrder, expandedKeys: atFifty, cap: 20)
+        #expect(atFifty == expanded)
+        #expect(atTwenty == [groups[5].key])
+        #expect(ApplicationProcessGroupOrdering.displayedGroups(
+            groups: groups, stableOrder: stableOrder, hasExpandedRow: !atTwenty.isEmpty, cap: 20).count == 20)
+    }
+
     @Test func capLimitsResultToLeadingEntriesWhenNoRowIsExpanded() {
         let groups = (0..<5).map { group("/App\($0)", sortValue: Double(5 - $0)) }
 

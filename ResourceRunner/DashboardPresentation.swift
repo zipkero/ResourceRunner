@@ -246,6 +246,9 @@ nonisolated struct CPUCardPresentation: Sendable, Equatable {
     /// 이 tick의 프로세스 조사가 실패했는지. 실패해도 시스템 지표 수치(전체 사용률 등)는 그대로 표시되고
     /// TOP 5만 실패를 나타냅니다(task-011, ANALYSIS §2 「실패 경로」).
     let topApplicationsFailed: Bool
+    let includesSystemProcesses: Bool
+    let excludedProcessCount: Int
+    let unreadableProcessCount: Int
     /// 카드를 선택했을 때만 쓰이는 상세 지표(task-010, SPEC §5.2).
     let detail: CPUCardDetail
 }
@@ -260,6 +263,7 @@ nonisolated struct CPUCardDetail: Sendable, Equatable {
     /// 앱 단위로 묶은 하위 프로세스 목록. 앱 항목을 펼치면 이 목록이 나타납니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
     /// CPU 사용량 순위 역할도 겸하므로 순위 전용 필드를 따로 두지 않습니다(ANALYSIS §5 DP1).
     let applications: [ApplicationProcessGroup]
+    let applicationsLimit: Int
     /// `applications` 목록의 머리글. 어떤 지표의 순위이고 정원이 얼마인지 알립니다(ANALYSIS §5 DP1, DP2).
     let applicationsHeading: String
     /// `applications` 목록 머리글 아래 안내 줄. 정원을 뷰가 고르지 않도록 조립 시점에 만들어 둡니다.
@@ -275,6 +279,15 @@ extension CPUCardPresentation {
     static let topApplicationsAccessibilityText = ApplicationRankingSampling.cardTopApplicationsAccessibilityText(
         count: ApplicationRankingSampling.cardDisplayCount
     )
+
+    var currentTopApplicationsAccessibilityText: String {
+        ApplicationRankingSampling.cardTopApplicationsAccessibilityText(
+            count: ApplicationRankingSampling.cardDisplayCount,
+            includesSystemProcesses: includesSystemProcesses,
+            excludedCount: excludedProcessCount,
+            unreadableCount: unreadableProcessCount
+        )
+    }
 
     /// 시스템 전체 CPU 사용률의 단위 라벨. 코어별 tick 합에서 계산하므로 항상 0~100% 범위이고,
     /// 여러 코어를 합산해 100%를 넘을 수 있는 프로세스 사용률의 단위(`ApplicationProcessDetail.cpuUsageUnitLabel`)와
@@ -307,6 +320,9 @@ extension CPUCardPresentation {
         topApplications: [ApplicationRankingEntry],
         topApplicationsFailed: Bool = false,
         processGroups: [ApplicationProcessGroup] = [],
+        detailListLimit: Int = ApplicationRankingSampling.detailCount,
+        includesSystemProcesses: Bool = false,
+        excludedCount: Int = 0, unreadableCount: Int = 0,
         currentTimestamp: ContinuousClock.Instant
     ) -> CPUCardPresentation {
         let windowStart = currentTimestamp - HistoryCapacity.defaultTimeRange
@@ -330,17 +346,21 @@ extension CPUCardPresentation {
             graphPoints: graphPoints,
             topApplications: Array(topApplications.prefix(ApplicationRankingSampling.cardDisplayCount)),
             topApplicationsFailed: topApplicationsFailed,
+            includesSystemProcesses: includesSystemProcesses,
+            excludedProcessCount: excludedCount, unreadableProcessCount: unreadableCount,
             detail: CPUCardDetail(
                 idleRatio: cpu.idleRatio,
                 coreUsages: cpu.coreUsages,
                 loadAverage: cpu.loadAverage,
                 applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .cpuUsage),
+                applicationsLimit: detailListLimit,
                 applicationsHeading: ApplicationRankingSampling.applicationListHeading(
                     metricLabel: "CPU 사용량 순위, 합계 내림차순",
-                    count: ApplicationRankingSampling.detailCount
+                    count: detailListLimit
                 ),
                 applicationsExclusionNote: ApplicationRankingSampling.topApplicationsCaption(
-                    count: ApplicationRankingSampling.detailCount
+                    count: detailListLimit, includesSystemProcesses: includesSystemProcesses,
+                    excludedCount: excludedCount, unreadableCount: unreadableCount
                 )
             )
         )
@@ -588,7 +608,7 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
             let timeAxis = HistoryGraphTimeAxis.make(points: presentation.graphPoints,
                 currentTimestamp: now ?? timestamp, timeRange: duration)
             let ranking = showsTopApplications
-                ? ", \(CPUCardPresentation.topApplicationsAccessibilityText)" : ""
+                ? ", \(presentation.currentTopApplicationsAccessibilityText)" : ""
             return "CPU 카드, \(presentation.cpuAccessibilityMetricsLabel), "
                 + "\(timeAxis.accessibilityLabel)\(ranking), \(shortcut)"
         case .failure(let lastKnown):
@@ -602,8 +622,10 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
                 currentTimestamp: now ?? lastKnown.timestamp,
                 timeRange: duration
             )
+            let ranking = showsTopApplications
+                ? ", \(lastKnown.presentation.currentTopApplicationsAccessibilityText)" : ""
             return "CPU 카드, 수집 실패, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
-                + "\(timeAxis.accessibilityLabel), \(shortcut)"
+                + "\(timeAxis.accessibilityLabel)\(ranking), \(shortcut)"
         case .stopped(let lastKnown):
             guard let lastKnown else {
                 let timeAxis = HistoryGraphTimeAxis.make(points: [],
@@ -615,8 +637,10 @@ extension ResourceCardState where Presentation == CPUCardPresentation {
                 currentTimestamp: now ?? lastKnown.timestamp,
                 timeRange: duration
             )
+            let ranking = showsTopApplications
+                ? ", \(lastKnown.presentation.currentTopApplicationsAccessibilityText)" : ""
             return "CPU 카드, 수집 중지, 마지막 \(lastKnown.presentation.cpuAccessibilityMetricsLabel), "
-                + "\(timeAxis.accessibilityLabel), \(shortcut)"
+                + "\(timeAxis.accessibilityLabel)\(ranking), \(shortcut)"
         }
     }
 }
@@ -1092,6 +1116,9 @@ nonisolated struct MemoryCardPresentation: Sendable, Equatable {
     let topApplications: [ApplicationRankingEntry]
     /// 이 tick의 프로세스 조사가 실패했는지. CPU 카드의 같은 필드와 같은 뜻입니다(task-011).
     let topApplicationsFailed: Bool
+    let includesSystemProcesses: Bool
+    let excludedProcessCount: Int
+    let unreadableProcessCount: Int
     /// 카드를 선택했을 때만 쓰이는 상세 지표(task-010, SPEC §5.2).
     let detail: MemoryCardDetail
 }
@@ -1115,6 +1142,7 @@ nonisolated struct MemoryCardDetail: Sendable, Equatable {
     /// 앱 단위로 묶은 하위 프로세스 목록. CPU 상세와 같은 그룹(`ApplicationRanking.groupByApplication(_:)`)을 공유하며,
     /// 현재 메모리 사용량 순위 역할도 겸합니다(정체성별 최근 세 개 평균의 앱 단위 합산을 Resident Memory 기준 내림차순 정렬, ANALYSIS §5 DP1).
     let applications: [ApplicationProcessGroup]
+    let applicationsLimit: Int
     /// `applications` 목록의 머리글. 「현재 사용량」 순위임과 정원을 알립니다(ANALYSIS §5 DP1, DP2).
     let applicationsHeading: String
     /// `applications` 목록 머리글 아래 안내 줄. 정원을 뷰가 고르지 않도록 조립 시점에 만들어 둡니다.
@@ -1191,6 +1219,15 @@ extension MemoryCardPresentation {
     /// 카드 접근성 이름에 들어가는 순위 안내. CPU 카드와 같은 문구를 공유합니다.
     static let topApplicationsAccessibilityText = CPUCardPresentation.topApplicationsAccessibilityText
 
+    var currentTopApplicationsAccessibilityText: String {
+        ApplicationRankingSampling.cardTopApplicationsAccessibilityText(
+            count: ApplicationRankingSampling.cardDisplayCount,
+            includesSystemProcesses: includesSystemProcesses,
+            excludedCount: excludedProcessCount,
+            unreadableCount: unreadableProcessCount
+        )
+    }
+
     /// Memory 카드를 선택·복귀하는 키보드 단축키의 실제 키. CPU 카드와 다른 단축키를 씁니다(ANALYSIS §5 DP15).
     static let selectionShortcutKey: Character = "2"
 
@@ -1212,6 +1249,9 @@ extension MemoryCardPresentation {
         topApplicationsFailed: Bool = false,
         memoryIncrease: [ApplicationRankingEntry] = [],
         processGroups: [ApplicationProcessGroup] = [],
+        detailListLimit: Int = ApplicationRankingSampling.detailCount,
+        includesSystemProcesses: Bool = false,
+        excludedCount: Int = 0, unreadableCount: Int = 0,
         currentTimestamp: ContinuousClock.Instant
     ) -> MemoryCardPresentation {
         let trimmedTopApplications = Array(topApplications.prefix(ApplicationRankingSampling.cardDisplayCount))
@@ -1227,22 +1267,27 @@ extension MemoryCardPresentation {
             ),
             topApplications: trimmedTopApplications,
             topApplicationsFailed: topApplicationsFailed,
+            includesSystemProcesses: includesSystemProcesses,
+            excludedProcessCount: excludedCount, unreadableProcessCount: unreadableCount,
             detail: MemoryCardDetail(
                 appBytes: memory.appBytes,
                 wiredBytes: memory.wiredBytes,
                 compressedBytes: memory.compressedBytes,
                 cachedBytes: memory.cachedBytes,
-                recentIncreaseRanking: Array(memoryIncrease.prefix(ApplicationRankingSampling.detailCount)),
+                recentIncreaseRanking: Array(memoryIncrease.prefix(detailListLimit)),
                 recentIncreaseRankingCaption: ApplicationRankingSampling.topApplicationsCaption(
-                    count: ApplicationRankingSampling.detailCount
+                    count: detailListLimit, includesSystemProcesses: includesSystemProcesses,
+                    excludedCount: excludedCount, unreadableCount: unreadableCount
                 ),
                 applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .residentMemory),
+                applicationsLimit: detailListLimit,
                 applicationsHeading: ApplicationRankingSampling.applicationListHeading(
                     metricLabel: "현재 사용량 순위, Memory 사용량 합계 내림차순",
-                    count: ApplicationRankingSampling.detailCount
+                    count: detailListLimit
                 ),
                 applicationsExclusionNote: ApplicationRankingSampling.topApplicationsCaption(
-                    count: ApplicationRankingSampling.detailCount
+                    count: detailListLimit, includesSystemProcesses: includesSystemProcesses,
+                    excludedCount: excludedCount, unreadableCount: unreadableCount
                 )
             )
         )
@@ -1285,18 +1330,22 @@ extension ResourceCardState where Presentation == MemoryCardPresentation {
             return "Memory 카드, 수집 중, \(shortcut)"
         case .normal(let presentation, _):
             let ranking = showsTopApplications
-                ? ", \(MemoryCardPresentation.topApplicationsAccessibilityText)" : ""
+                ? ", \(presentation.currentTopApplicationsAccessibilityText)" : ""
             return "Memory 카드, \(presentation.memoryAccessibilityMetricsLabel)\(ranking), \(shortcut)"
         case .failure(let lastKnown):
             guard let lastKnown else {
                 return "Memory 카드, 수집 실패, \(shortcut)"
             }
-            return "Memory 카드, 수집 실패, 마지막 \(lastKnown.presentation.memoryAccessibilityMetricsLabel), \(shortcut)"
+            let ranking = showsTopApplications
+                ? ", \(lastKnown.presentation.currentTopApplicationsAccessibilityText)" : ""
+            return "Memory 카드, 수집 실패, 마지막 \(lastKnown.presentation.memoryAccessibilityMetricsLabel)\(ranking), \(shortcut)"
         case .stopped(let lastKnown):
             guard let lastKnown else {
                 return "Memory 카드, 수집 중지, \(shortcut)"
             }
-            return "Memory 카드, 수집 중지, 마지막 \(lastKnown.presentation.memoryAccessibilityMetricsLabel), \(shortcut)"
+            let ranking = showsTopApplications
+                ? ", \(lastKnown.presentation.currentTopApplicationsAccessibilityText)" : ""
+            return "Memory 카드, 수집 중지, 마지막 \(lastKnown.presentation.memoryAccessibilityMetricsLabel)\(ranking), \(shortcut)"
         }
     }
 }

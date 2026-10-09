@@ -1,0 +1,89 @@
+--- ResourceRunner/AppDelegate.swift	2026-10-09 09:21:43
++++ /tmp/rr-task014-probe/ResourceRunner/AppDelegate.swift	2026-10-09 10:47:41
+@@ -61,6 +61,13 @@
+         loginItemController = login
+         coordinator = ApplicationCoordinator(preferencesStore: preferences,
+             loginItemController: login)
++#if DEBUG
++        if ProcessInfo.processInfo.arguments.contains("--task014-probe") {
++            Task014Probe.emit("probe-ready pid=\(getpid())")
++            coordinator?.statusBarController.togglePopover()
++            Task014Probe.emit("popover-shown=\(coordinator?.statusBarController.popover.isShown ?? false)")
++        }
++#endif
+     }
+ 
+     func applicationDidBecomeActive(_ notification: Notification) {
+--- ResourceRunner/NetworkActivity.swift	2026-10-03 21:49:51
++++ /tmp/rr-task014-probe/ResourceRunner/NetworkActivity.swift	2026-10-09 10:47:41
+@@ -302,6 +302,13 @@
+ 
+     func append(_ sample: TimestampedSample<NetworkActivitySample>) {
+         latest = sample
++#if DEBUG
++        let value = sample.value
++        let targets = value.interfaces.map { item in
++            "\(item.key.name):\(item.key.index):\(item.key.registryID.map(String.init) ?? "nil"):\(item.key.lifetime):\(item.kind):\(item.linkActive.map(String.init) ?? "nil"):rx=\(item.receivedBytes):tx=\(item.sentBytes):rate=\(String(describing: item.rate))"
++        }.joined(separator: "|")
++        Task014Probe.emit("activity epoch=\(sample.collectionEpoch) rev=\(value.topologyRevision) segment=\(value.rateSegment) status=\(value.status) complete=\(value.physicalTotalsComplete) representative=\(String(describing: value.representative)) known=\(String(describing: value.knownPhysicalRates)) targets=[\(targets)]")
++#endif
+         if let rate = sample.value.representative {
+             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+             lastSuccess = sample
+@@ -309,6 +316,9 @@
+                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
+                 maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
+         }
++#if DEBUG
++        Task014Probe.emit("history count=\(history.count) last=\(String(describing: history.elements.last))")
++#endif
+         continuation.yield(snapshot(at: sample.value.readAt))
+     }
+ 
+--- ResourceRunner/NetworkMetadata.swift	2026-10-01 22:32:01
++++ /tmp/rr-task014-probe/ResourceRunner/NetworkMetadata.swift	2026-10-09 10:47:41
+@@ -172,6 +172,17 @@
+     func append(_ sample: TimestampedSample<NetworkMetadataResult>) {
+         latest = sample
+         if case .available(let value) = sample.value { lastKnown = value }
++#if DEBUG
++        switch sample.value {
++        case .available(let value):
++            let records = value.records.map { item in
++                "\(item.key.name):\(item.key.index):\(item.key.registryID.map(String.init) ?? "nil"):\(item.key.lifetime):\(item.kind):link=\(item.linkActive.map(String.init) ?? "nil"):ipv4=\(item.ipv4.count):ipv6=\(item.ipv6.count):speed=\(item.linkSpeed)"
++            }.joined(separator: "|")
++            Task014Probe.emit("metadata epoch=\(sample.collectionEpoch) rev=\(value.topologyRevision) complete=\(value.physicalTotalsComplete) native=\(value.nativeStatus) records=[\(records)]")
++        case .failure(let reason, let revision):
++            Task014Probe.emit("metadata-failure epoch=\(sample.collectionEpoch) rev=\(String(describing: revision)) reason=\(reason)")
++        }
++#endif
+         continuation.yield(NetworkMetadataStatus(latest: latest, lastKnown: lastKnown))
+     }
+ 
+--- ResourceRunner/NetworkTopology.swift	2026-10-01 20:53:37
++++ /tmp/rr-task014-probe/ResourceRunner/NetworkTopology.swift	2026-10-09 10:47:41
+@@ -173,6 +173,12 @@
+             let expectedRevision = topology.currentRevision
+             let raw = try routeRead()
+             let readAt = ContinuousClock().now
++#if DEBUG
++            let counters = raw.filter { $0.name == "en0" || $0.name.hasPrefix("en4") || $0.name.hasPrefix("en5") || $0.name.hasPrefix("en6") }.map { item in
++                "\(item.name):\(item.index):flags=\(item.flags):type=\(item.linkType):rx=\(item.receivedBytes):tx=\(item.sentBytes):baud=\(item.baudrate)"
++            }.joined(separator: "|")
++            Task014Probe.emit("raw expectedRev=\(expectedRevision) counters=[\(counters)]")
++#endif
+             let observed: (interfaces: [NetworkCounterInterface], revision: UInt64)?
+             if let context, let admission {
+                 var changedRevision = false
+--- /dev/null	2026-10-09 10:52:26
++++ /tmp/rr-task014-probe/ResourceRunner/Task014Probe.swift	2026-10-09 10:47:41
+@@ -0,0 +1,9 @@
++import Foundation
++
++// 임시 실기기 관찰: 한 줄에 하나의 관측을 남기며 제품 계산에는 관여하지 않습니다.
++nonisolated enum Task014Probe {
++    static func emit(_ event: String) {
++        let line = "TASK014 wall=\(Date().ISO8601Format()) \(event)\n"
++        FileHandle.standardOutput.write(Data(line.utf8))
++    }
++}

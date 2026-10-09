@@ -19,7 +19,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
 #if DEBUG
         let preferences: PreferencesStore
-        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
+        if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-ui-test"),
+           let suite = ProcessInfo.processInfo.environment["RR_PREFERENCES_TEST_SUITE"],
+           suite.hasPrefix("ResourceRunnerUITest."),
+           let defaults = UserDefaults(suiteName: suite) {
+            // 재실행 UI 검증은 테스트별 격리 domain을 사용해 실제 사용자 설정을 건드리지 않습니다.
+            if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-cleanup") {
+                defaults.removePersistentDomain(forName: suite)
+            }
+            if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-seed-schema1"),
+               defaults.object(forKey: UserDefaultsPreferencesStorage.key) == nil {
+                // 과거 payload의 기존 선택은 유지하고 새 세 필드만 기본값으로 해독하는 경로를 검증합니다.
+                defaults.set(["schemaVersion": 1, "showsCPUCard": false,
+                              "showsMemoryCard": true, "showsNetworkCard": true,
+                              "showsDiskCard": true, "showsCPUTopApplications": false,
+                              "showsMemoryTopApplications": true,
+                              "graphTimeRange": "fiveMinutes", "refreshProfile": "energySaving"],
+                             forKey: UserDefaultsPreferencesStorage.key)
+            }
+            preferences = PreferencesStore(storage: UserDefaultsPreferencesStorage(defaults: defaults))
+        } else if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
             let environment = ProcessInfo.processInfo.environment
             let cardMask = Int(environment["RR_DASHBOARD_CARD_MASK"] ?? "15") ?? 15
             let topMask = Int(environment["RR_DASHBOARD_TOP_MASK"] ?? "3") ?? 3

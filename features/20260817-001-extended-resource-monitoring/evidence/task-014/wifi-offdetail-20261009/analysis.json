@@ -1,0 +1,29 @@
+{
+  "command_off_on_utc": [
+    "2026-10-09T02:59:44Z",
+    "2026-10-09T02:59:57Z"
+  ],
+  "stable_off_observation_utc": [
+    "2026-10-09T02:59:48Z",
+    "2026-10-09T02:59:56Z"
+  ],
+  "ax_network_card_off_samples": 8,
+  "ax_card_no_current_speed": 8,
+  "ax_en0_off_rows": 9,
+  "ax_en0_link_inactive": 9,
+  "ax_en0_ipv4_absent": 9,
+  "ax_en0_zero_rx_tx": 9,
+  "raw_en0_off_reads": 5,
+  "activity_samples_through_recovery": 14,
+  "activity_baseline": 6,
+  "activity_partial": 8,
+  "activity_disconnected": 0,
+  "en0_rate_max_rx_bytes_per_second": 42425.681194086574,
+  "en0_rate_max_tx_bytes_per_second": 15334.583564127677,
+  "en0_rate_negative_count": 0,
+  "history_count_min_max": [
+    0,
+    0
+  ],
+  "post_disk_card_present": true
+}

@@ -21,6 +21,20 @@ nonisolated enum RefreshProfile: String, CaseIterable, Sendable {
     case maximumEnergySaving
 }
 
+nonisolated enum DetailListLimit: String, CaseIterable, Sendable {
+    case ten
+    case twenty
+    case fifty
+
+    var count: Int {
+        switch self {
+        case .ten: 10
+        case .twenty: 20
+        case .fifty: 50
+        }
+    }
+}
+
 nonisolated struct AppPreferences: Equatable, Sendable {
     var showsCPUCard = true
     var showsMemoryCard = true
@@ -30,6 +44,9 @@ nonisolated struct AppPreferences: Equatable, Sendable {
     var showsMemoryTopApplications = true
     var graphTimeRange: GraphTimeRange = .tenMinutes
     var refreshProfile: RefreshProfile = .standard
+    var includesSystemProcesses = false
+    var detailListLimit: DetailListLimit = .twenty
+    var automaticallyClosesPopover = true
 
     static let defaults = AppPreferences()
 }

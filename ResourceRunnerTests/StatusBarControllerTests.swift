@@ -50,6 +50,28 @@ struct StatusBarControllerTests {
         #expect(controller.popover.behavior == .transient)
     }
 
+    @Test func savedOffAndRapidChangesKeepPopoverAndDelegateIdentity() {
+        let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
+            automaticallyClosesPopover: false)
+        let output = RecordingOutput()
+        controller.output = output
+        let popover = controller.popover
+        let content = popover.contentViewController
+        let delegate = popover.delegate
+        #expect(popover.behavior == .applicationDefined)
+
+        controller.applyAutomaticallyClosesPopover(true)
+        #expect(popover.behavior == .transient)
+        controller.applyAutomaticallyClosesPopover(false)
+        #expect(popover.behavior == .applicationDefined)
+        controller.applyAutomaticallyClosesPopover(true)
+        #expect(popover.behavior == .transient)
+        #expect(controller.popover === popover)
+        #expect(popover.contentViewController === content)
+        #expect(popover.delegate === delegate)
+        #expect(output.reportedValues.isEmpty)
+    }
+
     /// 아래 출력 테스트는 delegate 메서드를 직접 호출하므로 `NSPopover`를 거치지 않습니다.
     /// 배선이 끊겨도 그 테스트는 통과하므로, 실제 delegate 연결은 여기서 따로 확인합니다.
     /// 이 연결이 끊기면 `popoverPresented(_:)`가 영영 호출되지 않고 수집 일정이 팝오버 상태에 반응하지 않습니다.
@@ -138,6 +160,8 @@ struct StatusBarControllerTests {
     /// `NSPopover`가 외부 클릭으로 판정해 팝오버를 닫는데, 그것은 주입 수단의 성질이지 표시 경로의 결과가 아닙니다.
     @Test func renderKeepsAnOpenPopoverShown() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        let output = RecordingOutput()
+        controller.output = output
         guard let button = controller.statusItem.button else {
             Issue.record("status item에 button이 없습니다")
             return
@@ -158,6 +182,19 @@ struct StatusBarControllerTests {
             Issue.record("팝오버가 열리지 않아 보존 여부를 관찰할 수 없습니다 (앱 활성 상태: \(NSApp.isActive))")
             return
         }
+
+        let originalPopover = controller.popover
+        let originalContent = controller.popover.contentViewController
+        let delegateCount = output.reportedValues.count
+        controller.applyAutomaticallyClosesPopover(false)
+        #expect(controller.popover.behavior == .applicationDefined)
+        #expect(controller.popover.isShown)
+        controller.applyAutomaticallyClosesPopover(true)
+        #expect(controller.popover.behavior == .transient)
+        #expect(controller.popover.isShown)
+        #expect(controller.popover === originalPopover)
+        #expect(controller.popover.contentViewController === originalContent)
+        #expect(output.reportedValues.count == delegateCount)
 
         let states: [CharacterActivityState] = [.low, .moderate, .high, .veryHigh, .sustainedHigh]
         for state in states {

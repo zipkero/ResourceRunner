@@ -11,7 +11,7 @@ import Foundation
 /// `sysctl(KERN_PROC_ALL)` 열거에서 얻는, 조사 대상 판별에 필요한 프로세스 한 항목.
 nonisolated struct ProcessListEntry: Sendable, Equatable {
     let identity: ProcessIdentity
-    let uid: uid_t
+    let uid: uid_t?
     let parentPID: pid_t
     let isTranslated: Bool
 }
@@ -24,13 +24,13 @@ nonisolated struct ProcessTaskInfo: Sendable, Equatable {
 }
 
 /// 프로세스 조사에 쓰는 시스템 호출 경계.
-/// 이 경계를 분리해 두어야 uid 사전 판별·매 조사 경로 조회를 원본 주입으로 검증할 수 있습니다.
+/// 이 경계를 분리해 두어야 UID별 실제 읽기·매 조사 경로 조회를 원본 주입으로 검증할 수 있습니다.
 nonisolated protocol ProcessSurveying: Sendable {
     /// `sysctl(KERN_PROC_ALL)` 한 번으로 전체 프로세스를 열거합니다.
     func listProcesses() throws(CollectorFailure) -> [ProcessListEntry]
-    /// 현재 유효 uid와 같은 프로세스에 대해서만 호출됩니다.
+    /// 열거된 모든 프로세스에 대해 호출을 시도합니다.
     func taskInfo(pid: pid_t) throws(CollectorFailure) -> ProcessTaskInfo
-    /// 현재 유효 uid의 값을 읽은 프로세스마다 매 조사 호출됩니다.
+    /// task-info를 읽은 프로세스마다 매 조사 호출됩니다.
     func executablePath(pid: pid_t) throws(CollectorFailure) -> String
 }
 
@@ -125,12 +125,12 @@ nonisolated struct HostProcessSurveyReader: ProcessSurveying {
     }
 }
 
-/// 한 번의 조사로 사용자 소유 프로세스 조사 결과를 만드는 계약.
+/// 한 번의 조사로 읽을 수 있는 프로세스 조사 결과를 만드는 계약.
 nonisolated protocol ProcessSurveyCollecting: Sendable {
     mutating func survey() throws(CollectorFailure) -> ProcessSurveyReport
 }
 
-/// `ProcessSurveying` 경계를 소유하고 uid 사전 판별과 현재 실행 경로 조회를 적용하는 Collector.
+/// `ProcessSurveying` 경계를 소유하고 UID별 실제 읽기와 현재 실행 경로 조회를 적용하는 Collector.
 nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurveyCollecting {
     private let reader: Reader
     private let effectiveUID: @Sendable () -> uid_t
@@ -147,23 +147,20 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
         var samples: [ProcessSample] = []
         samples.reserveCapacity(entries.count)
         var unreadableCount = 0
+        var currentUserUnreadableCount = 0
 
         for entry in entries {
-            // uid가 다른 프로세스는 proc_pidinfo를 호출하지 않고 곧바로 읽지 못한 수에 더합니다.
-            guard entry.uid == currentUID else {
-                unreadableCount += 1
-                continue
-            }
-
             guard let taskInfo = try? reader.taskInfo(pid: entry.identity.pid) else {
                 // 호출이 실패한 프로세스(조사 사이의 종료 등)는 값을 추정해 채우지 않고 읽지 못한 수에 더합니다.
                 unreadableCount += 1
+                if entry.uid == nil || entry.uid == currentUID { currentUserUnreadableCount += 1 }
                 continue
             }
 
             // 같은 정체성이 exec할 수 있으므로 CPU·메모리를 읽은 tick마다 현재 경로를 확인합니다.
             guard let path = try? reader.executablePath(pid: entry.identity.pid) else {
                 unreadableCount += 1
+                if entry.uid == nil || entry.uid == currentUID { currentUserUnreadableCount += 1 }
                 continue
             }
 
@@ -175,11 +172,13 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
                     parentPID: entry.parentPID,
                     cpuTimeNanoseconds: taskInfo.cpuTimeNanoseconds,
                     residentBytes: taskInfo.residentBytes,
-                    isTranslated: entry.isTranslated
+                    isTranslated: entry.isTranslated,
+                    ownership: entry.uid.map { $0 == currentUID ? .currentUser : .otherUser } ?? .unknown
                 )
             )
         }
 
-        return ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount)
+        return ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount,
+                                   currentUserUnreadableCount: currentUserUnreadableCount)
     }
 }

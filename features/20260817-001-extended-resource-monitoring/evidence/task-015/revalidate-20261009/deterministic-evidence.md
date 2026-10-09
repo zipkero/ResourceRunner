@@ -1,0 +1,13 @@
+# 현재 소스 대응 결정적 근거
+
+이 표는 실제 OS 전이 근거와 구별합니다. `task-018/revalidate-20261009/source-snapshot-sha256.txt`의 실행 당시 테스트 소스 SHA가 2026-10-09 task-015 검토 당시 원본 SHA와 일치함을 직접 대조했습니다. 같은 패킷의 `unit.log`에는 전체 unit 674/674 통과, 실패·건너뜀 0이 있으며 아래 실제 test ID가 모두 `passed`입니다. task-018의 최종 승인 상태를 task-015에 전용하지 않고 같은 현재 원본의 실행 근거만 사용합니다.
+
+| 필요한 결정적 경계 | 현재 테스트와 SHA-256 | 실제 실행 근거 | 판정 범위 |
+|---|---|---|---|
+| 모든 중지 이유·여섯 축 일정 | `AuxiliaryCollectionSchedulerTests.swift` `4461dfa3…`, `MonitoringLifecycleTests.swift` `fa061f76…` | `allSixAxisSchedulesMatchTheApprovedTable`, `allCombinationsOfPopoverPowerLockDisplaySleepAndSessionProduceExpectedPlan` 통과 | 잠금·unknown·디스플레이·세션·시스템 sleep 정책. 실제 다른 계정 전환은 SPEC §4에서 제외. |
+| 짧은 중지 병합과 wake sequence/epoch | `CollectionAdmissionTests.swift` `c999ab98…` | `workspaceSleepNotificationsReachTheCombinedSnapshot`, `newestSnapshotStillCarriesStopResumeBoundary`, `coalescedRunningSnapshotRestartsBothAxesAtNewEpoch` 통과 | 최신 snapshot 하나만 소비해도 짧은 stop/resume sequence와 새 epoch를 보존. |
+| 세션 비활성·복귀 | `MonitoringLifecycleTests.swift` `fa061f76…`, `SystemLifecycleObserverTests.swift` `0f2f50e5…` | `eachUnobservableSignalStopsBothAxesAndResumeDoesNotCatchUp(signal:)` 네 인자 중 `.sessionInactive`, `workspaceNotificationsUpdateDisplaySleepAndSessionFields` 통과 | 세션 inactive와 잠금/디스플레이 사유 병합, 재개 따라잡기 없음. 실제 다른 계정 전환은 하지 않음. |
+| 늦은 결과의 source/store/display 거부 | `CollectionAdmissionTests.swift` `c999ab98…`, `NetworkActivityTests.swift` `e840cd3c…`, `DiskActivityTests.swift` `a9eed394…` | `delayedConsumerAndReorderedStopCannotReverseRealCards`, `staleSourceAndStoreResultsCannotChangeBaselineLatestOrHistory`, `sourceAndStoreRejectBoundaryOrTopologyChangedDuringSuspension`, `lateBoundaryRejectsSourceBaselineAndStoreHistory` 통과 | 중지 전 늦은 결과가 baseline·최신값·이력·카드를 바꾸지 않음. 실제 OS 시험에서 경쟁을 강제로 만들었다고 주장하지 않음. |
+| CPU 재개·Disk/Network segment·그래프 단절 | `MonitoringLifecycleTests.swift` `fa061f76…`, `DiskActivityTests.swift` `a9eed394…`, `ResourceRateGraphTests.swift` `37b47631…`, `ResourceRateGraphRenderingTests.swift` `fba3a133…` | `fiveShortPausesResetCPUAndSeparateHistoryAcrossBothSchedules`, `briefFailureAndRecoveryCreateDistinctStoredRateSegmentsWithoutZeroPoints`, `epochSegmentAndMoreThanTenSecondsSplitBeforeSamplingWithoutFakeZero`, `smallDiskPlotKeepsSurfaceGridlineRealZeroAndDisconnectedGap` 통과 | 가짜 0점 없이 epoch/segment/시각 간격으로 연결을 끊고 Disk 42pt 판의 공백을 그림. |
+
+기본 원자료: [task-018 unit.log](../../task-018/revalidate-20261009/unit.log), [task-018 source-snapshot-sha256.txt](../../task-018/revalidate-20261009/source-snapshot-sha256.txt), [unit-summary.json](../../task-018/revalidate-20261009/unit-summary.json). 실제 3전이는 [README.md](./README.md)의 로그·캡처가 독립 증거입니다.

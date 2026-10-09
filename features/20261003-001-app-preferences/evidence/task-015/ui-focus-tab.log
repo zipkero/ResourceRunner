@@ -1,0 +1,108 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/rr-m4-015-unique-dd/Build/Products/ResourceRunner_ResourceRunner_macosx26.5-arm64.xctestrun -destination platform=macOS,arch=arm64 -parallel-testing-enabled NO -resultBundlePath /tmp/rr-m4-015-unique-focus-tab.xcresult "-only-testing:ResourceRunnerUITests/SettingsWindowUITests/testSettingsWindowKeepsKeyAfterSelectedCardIsRemovedDuringFocusReturn" CODE_SIGNING_ALLOWED=YES
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-09 14:28:17.548 xcodebuild[87807:57361170] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Writing result bundle at path:
+	/tmp/rr-m4-015-unique-focus-tab.xcresult
+
+2026-10-09 14:28:17.550 xcodebuild[87807:57361170] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006034-000811520144001C, name:My Mac }
+2026-10-09 14:28:17.793 xcodebuild[87807:57361170] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+2026-10-09 14:28:18.211240+0900 ResourceRunnerUITests-Runner[87832:57361376] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-09 14:28:18.269.
+Test Suite 'ResourceRunnerUITests.xctest' started at 2026-10-09 14:28:18.269.
+Test Suite 'SettingsWindowUITests' started at 2026-10-09 14:28:18.269.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testSettingsWindowKeepsKeyAfterSelectedCardIsRemovedDuringFocusReturn]' started.
+    t =     0.00s Start Test at 2026-10-09 14:28:18.269
+    t =     0.06s Set Up
+    t =     0.07s Open com.zipkero.ResourceRunner.Task015
+    t =     0.07s     Launch com.zipkero.ResourceRunner.Task015
+2026-10-09 14:28:18.370 xcodebuild[87807:57361170] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:28:18.370 xcodebuild[87807:57361170] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.47s         Wait for accessibility to load
+    t =     0.54s         Setting up automation session
+    t =     0.55s         Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     0.55s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     1.59s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     1.59s         Checking existence of `StatusItem (First Match)`
+    t =     1.61s Click StatusItem (First Match)
+    t =     1.61s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     1.61s     Find the StatusItem (First Match)
+    t =     1.63s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     1.63s     Open com.zipkero.ResourceRunner.Task015
+    t =     1.63s         Activate com.zipkero.ResourceRunner.Task015
+    t =     1.64s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     1.68s     Synthesize event
+    t =     2.07s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.08s Type '1' key with modifiers '⌘' (0x10)
+    t =     2.08s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.08s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     2.14s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     2.14s     Synthesize event
+    t =     2.23s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.24s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =     3.27s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     3.27s         Checking existence of `"DashboardDetail" Any`
+    t =     3.34s Type '9' key with modifiers '⌘⇧' (0x12)
+    t =     3.34s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     3.34s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     3.36s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     3.36s     Synthesize event
+    t =     3.53s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     3.54s Waiting 3.0s for "ResourceRunner 설정" Window to exist
+    t =     4.57s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunner 설정" Window`
+    t =     4.57s         Checking existence of `"ResourceRunner 설정" Window`
+    t =     5.37s Requesting snapshot of accessibility hierarchy for app with pid 87843
+    t =     5.48s Requesting snapshot of accessibility hierarchy for app with pid 87843
+    t =     5.55s Requesting snapshot of accessibility hierarchy for app with pid 87843
+    t =     5.62s Requesting snapshot of accessibility hierarchy for app with pid 87843
+2026-10-09 14:28:23.962680+0900 ResourceRunnerUITests-Runner[87832:57361376] RR_SETTINGS_FOCUS_TREE Attributes: Application, 0x81c55b5c0, pid: 87843, title: 'ResourceRunner', Disabled
+Element subtree:
+ →Application, 0x81c55b5c0, pid: 87843, title: 'ResourceRunner', Disabled
+    Window (Main), 0x81c55b700, {{863.0, 33.0}, {410.0, 542.0}}, identifier: 'ResourceRunnerSettingsWindow', title: 'ResourceRunner 설정', Disabled
+      Group, 0x81c55b840, {{863.0, 65.0}, {410.0, 510.0}}, Disabled
+        ScrollView, 0x81c55b980, {{863.0, 65.0}, {410.0, 510.0}}, Disabled
+          StaticText, 0x81c55bac0, {{893.0, 85.0}, {71.0, 16.0}}, label: '대시보드 표시'
+          Group, 0x81c55bc00, {{883.0, 111.0}, {370.0, 224.0}}
+            StaticText, 0x81c55bd40, {{893.0, 121.0}, {27.0, 16.0}}, value: CPU
+            Switch, 0x81c55be80, {{1206.0, 120.5}, {38.0, 18.0}}, identifier: 'SettingsCPUCard', label: 'CPU', value: 0
+            StaticText, 0x81c55c000, {{893.0, 158.5}, {34.0, 16.0}}, value: 메모리
+            Switch, 0x81c55c140, {{1206.0, 158.0}, {38.0, 18.0}}, identifier: 'Setting
+    t =     5.69s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     5.69s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     5.70s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     5.73s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     5.73s     Synthesize event
+    t =     5.77s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     5.78s Requesting snapshot of accessibility hierarchy for app with pid 87843
+    t =     5.86s Requesting snapshot of accessibility hierarchy for app with pid 87843
+2026-10-09 14:28:24.195371+0900 ResourceRunnerUITests-Runner[87832:57361376] RR_SETTINGS_AFTER_TAB=yes
+    t =     5.93s Requesting snapshot of accessibility hierarchy for app with pid 87843
+    t =     6.00s Requesting snapshot of accessibility hierarchy for app with pid 87843
+    t =     6.06s Find the "SettingsCPUCard" Switch
+    t =     6.10s Find the "SettingsMemoryCard" Switch
+    t =     6.16s Tear Down
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testSettingsWindowKeepsKeyAfterSelectedCardIsRemovedDuringFocusReturn]' passed (6.469 seconds).
+Test Suite 'SettingsWindowUITests' passed at 2026-10-09 14:28:24.740.
+	 Executed 1 test, with 0 failures (0 unexpected) in 6.469 (6.471) seconds
+Test Suite 'ResourceRunnerUITests.xctest' passed at 2026-10-09 14:28:24.741.
+	 Executed 1 test, with 0 failures (0 unexpected) in 6.469 (6.472) seconds
+Test Suite 'Selected tests' passed at 2026-10-09 14:28:24.742.
+	 Executed 1 test, with 0 failures (0 unexpected) in 6.469 (6.474) seconds
+2026-10-09 14:28:25.049 xcodebuild[87807:57361170] [MT] IDETestOperationsObserverDebug: 7.254 elapsed -- Testing started completed.
+2026-10-09 14:28:25.049 xcodebuild[87807:57361170] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-09 14:28:25.049 xcodebuild[87807:57361170] [MT] IDETestOperationsObserverDebug: 7.254 sec, +7.254 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/rr-m4-015-unique-focus-tab.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

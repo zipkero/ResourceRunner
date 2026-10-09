@@ -1,0 +1,40 @@
+wall=2026-10-09T04:12:09Z
+62528 Ss      34:28 /tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+64228 S    02:41:07 /Applications/Amphetamine.app/Contents/MacOS/Amphetamine
+64258 S    02:41:07 /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Sleep Count:3878
+Dark Wake Count:3699
+User Wake Count:239
+Scheduled power events:
+ [0]  wake at 10/09/2026 18:44:02 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'
+ [1]  wake at 10/10/2026 08:51:51 by 'com.apple.alarm.user-invisible-com.apple.osanalytics.hardhighengagementtimer'
+2026-10-09 13:12:09 +0900 
+Assertion status system-wide:
+   BackgroundTask                 0
+   ApplePushServiceTask           0
+   UserIsActive                   1
+   PreventUserIdleDisplaySleep    0
+   SoftwareUpdateTask             0
+   PreventSystemSleep             0
+   ExternalMedia                  0
+   InternalPreventDisplaySleep    1
+   PreventUserIdleSystemSleep     1
+   NetworkClientActive            0
+   InternalPreventSleep           1
+Listed by owning process:
+   pid 597(WindowServer): [0x00114d5f00098eaf] 00:02:42 UserIsActive named: "com.apple.iohideventsystem.queue.tickle serviceID:100000d26 service:AppleMultitouchDevice product:Apple Internal Keyboard / Trackpad eventType:11"  
+	Timeout will fire in 438 secs Action=TimeoutActionRelease
+   pid 536(powerd): [0x00114ecf00018f1b] 00:00:14 PreventUserIdleSystemSleep named: "Powerd - Prevent sleep while display is on"  
+   pid 536(powerd): [0x00114ecf00098f1a] 00:00:14 UserIsActive named: "com.apple.powermanagement.kernel.useractive IOPMrootDomain:RTC debug alarm"  
+	Timeout will fire in 585 secs Action=TimeoutActionRelease
+   pid 536(powerd): [0x00114ecf000d8f1d] 00:00:14 InternalPreventSleep named: "com.apple.powermanagement.acwakelinger"  
+	Timeout will fire in 31 secs Action=TimeoutActionRelease
+   pid 536(powerd): [0x00114ec800108308] 00:00:22 InternalPreventDisplaySleep named: "com.apple.powermanagement.delayDisplayOff"  
+	Timeout will fire in 278 secs Action=TimeoutActionTurnOff
+   pid 836(mds_stores): [0x00114edc000b8f55] 00:00:01 BackgroundTask named: "com.apple.metadata.mds_stores.power"  
+Kernel Assertions: 0x100=MAGICWAKE
+   id=582  level=255 0x100=MAGICWAKE creat=  mod= description=en0 owner=IOSkywalkNetworkBSDClient
+    6634 /tmp/rr-task015-probe/probe.log
+     568 /tmp/rr-task015-probe/ax.log
+    7202 total
+/tmp/rr-task015-probe/mark-stage.sh:17: no such file or directory: /usr/bin/rg

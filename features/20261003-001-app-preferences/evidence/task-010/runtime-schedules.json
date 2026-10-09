@@ -1,0 +1,898 @@
+[
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490278,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:41.831798+0900",
+    "machTimestamp": 85115795868640,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490295,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:41.831803+0900",
+    "machTimestamp": 85115795868753,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490296,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:41.831844+0900",
+    "machTimestamp": 85115795869757,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490278,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:41.831845+0900",
+    "machTimestamp": 85115795869776,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490276,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:52.742461+0900",
+    "machTimestamp": 85116057724551,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(10.0 seconds) generation=2 collectionEpoch=0 appendedTotal=2",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490278,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:52.742461+0900",
+    "machTimestamp": 85116057724552,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(10.0 seconds) generation=2 collectionEpoch=0 appendedTotal=5",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490297,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:52.742461+0900",
+    "machTimestamp": 85116057724552,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(10.0 seconds) generation=2 collectionEpoch=0 appendedTotal=5",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56490275,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:52.742490+0900",
+    "machTimestamp": 85116057725260,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(10.0 seconds) generation=2 collectionEpoch=0 appendedTotal=5",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2447,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491123,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:54.459700+0900",
+    "machTimestamp": 85116098938290,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(10.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491122,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:54.459700+0900",
+    "machTimestamp": 85116098938294,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(10.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491113,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:54.459704+0900",
+    "machTimestamp": 85116098938379,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(10.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491114,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:54.459704+0900",
+    "machTimestamp": 85116098938384,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(10.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491113,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:56.531976+0900",
+    "machTimestamp": 85116148672924,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491112,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:56.531979+0900",
+    "machTimestamp": 85116148672978,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491114,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:56.532048+0900",
+    "machTimestamp": 85116148674654,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491116,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:56.532054+0900",
+    "machTimestamp": 85116148674788,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(5.0 seconds) generation=2 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491122,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:58.164930+0900",
+    "machTimestamp": 85116187863816,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(10.0 seconds) generation=3 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491122,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:58.167502+0900",
+    "machTimestamp": 85116187925546,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(10.0 seconds) generation=3 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491122,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:58.167583+0900",
+    "machTimestamp": 85116187927486,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(10.0 seconds) generation=3 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491122,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:22:58.167607+0900",
+    "machTimestamp": 85116187928060,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(10.0 seconds) generation=3 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491112,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:00.061719+0900",
+    "machTimestamp": 85116233386753,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=4 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491114,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:00.061719+0900",
+    "machTimestamp": 85116233386753,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=4 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491113,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:00.061730+0900",
+    "machTimestamp": 85116233387021,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=4 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491122,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:00.061810+0900",
+    "machTimestamp": 85116233388921,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=4 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2728,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491711,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:03.209904+0900",
+    "machTimestamp": 85116308943184,
+    "eventMessage": "apply axis=SystemMetricsSampleSource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2967,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491698,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:03.209906+0900",
+    "machTimestamp": 85116308943242,
+    "eventMessage": "apply axis=ProcessSurveySampleSource schedule=running(5.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2967,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491712,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:03.209915+0900",
+    "machTimestamp": 85116308943439,
+    "eventMessage": "apply axis=DiskActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2967,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "apply axis=%{public}s schedule=%{public}s generation=%{public}ld collectionEpoch=%{public}ld appendedTotal=%{public}ld",
+    "userID": 501,
+    "activityIdentifier": 0,
+    "subsystem": "com.zipkero.ResourceRunner",
+    "category": "MonitoringScheduler",
+    "threadID": 56491697,
+    "senderImageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1688120,
+          "imageUUID": "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/Users/zipkero/Library/Developer/Xcode/DerivedData/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "senderImagePath": "/private/tmp/rr-task010-derived/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "timestamp": "2026-10-09 09:23:03.209927+0900",
+    "machTimestamp": 85116308943730,
+    "eventMessage": "apply axis=NetworkActivitySource schedule=running(2.0 seconds) generation=1 collectionEpoch=0 appendedTotal=0",
+    "processImageUUID": "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+    "traceID": 12493888099450884,
+    "processID": 2967,
+    "senderProgramCounter": 1688120,
+    "parentActivityIdentifier": 0
+  }
+]

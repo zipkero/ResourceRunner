@@ -1,0 +1,809 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 5120e50..543902d 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -19,7 +19,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidFinishLaunching(_ notification: Notification) {
+ #if DEBUG
+         let preferences: PreferencesStore
+-        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
++        if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-ui-test"),
++           let suite = ProcessInfo.processInfo.environment["RR_PREFERENCES_TEST_SUITE"],
++           suite.hasPrefix("ResourceRunnerUITest."),
++           let defaults = UserDefaults(suiteName: suite) {
++            // 재실행 UI 검증은 테스트별 격리 domain을 사용해 실제 사용자 설정을 건드리지 않습니다.
++            if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-cleanup") {
++                defaults.removePersistentDomain(forName: suite)
++            }
++            preferences = PreferencesStore(storage: UserDefaultsPreferencesStorage(defaults: defaults))
++        } else if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
+             let environment = ProcessInfo.processInfo.environment
+             let cardMask = Int(environment["RR_DASHBOARD_CARD_MASK"] ?? "15") ?? 15
+             let topMask = Int(environment["RR_DASHBOARD_TOP_MASK"] ?? "3") ?? 3
+diff --git a/ResourceRunner/AppPreferences.swift b/ResourceRunner/AppPreferences.swift
+index 0a26cf0..0c3dd62 100644
+--- a/ResourceRunner/AppPreferences.swift
++++ b/ResourceRunner/AppPreferences.swift
+@@ -21,6 +21,20 @@ nonisolated enum RefreshProfile: String, CaseIterable, Sendable {
+     case maximumEnergySaving
+ }
+ 
++nonisolated enum DetailListLimit: String, CaseIterable, Sendable {
++    case ten
++    case twenty
++    case fifty
++
++    var count: Int {
++        switch self {
++        case .ten: 10
++        case .twenty: 20
++        case .fifty: 50
++        }
++    }
++}
++
+ nonisolated struct AppPreferences: Equatable, Sendable {
+     var showsCPUCard = true
+     var showsMemoryCard = true
+@@ -30,6 +44,9 @@ nonisolated struct AppPreferences: Equatable, Sendable {
+     var showsMemoryTopApplications = true
+     var graphTimeRange: GraphTimeRange = .tenMinutes
+     var refreshProfile: RefreshProfile = .standard
++    var includesSystemProcesses = false
++    var detailListLimit: DetailListLimit = .twenty
++    var automaticallyClosesPopover = true
+ 
+     static let defaults = AppPreferences()
+ }
+diff --git a/ResourceRunner/PreferencesStore.swift b/ResourceRunner/PreferencesStore.swift
+index 9a7253d..7d5655e 100644
+--- a/ResourceRunner/PreferencesStore.swift
++++ b/ResourceRunner/PreferencesStore.swift
+@@ -92,6 +92,12 @@ final class PreferencesStore {
+            let profile = RefreshProfile(rawValue: rawProfile) {
+             preferences.refreshProfile = profile
+         }
++        preferences.includesSystemProcesses = boolean(dictionary["includesSystemProcesses"]) ?? preferences.includesSystemProcesses
++        if let rawLimit = dictionary["detailListLimit"] as? String,
++           let limit = DetailListLimit(rawValue: rawLimit) {
++            preferences.detailListLimit = limit
++        }
++        preferences.automaticallyClosesPopover = boolean(dictionary["automaticallyClosesPopover"]) ?? preferences.automaticallyClosesPopover
+         return preferences
+     }
+ 
+@@ -111,7 +117,10 @@ final class PreferencesStore {
+             "showsCPUTopApplications": preferences.showsCPUTopApplications,
+             "showsMemoryTopApplications": preferences.showsMemoryTopApplications,
+             "graphTimeRange": preferences.graphTimeRange.rawValue,
+-            "refreshProfile": preferences.refreshProfile.rawValue
++            "refreshProfile": preferences.refreshProfile.rawValue,
++            "includesSystemProcesses": preferences.includesSystemProcesses,
++            "detailListLimit": preferences.detailListLimit.rawValue,
++            "automaticallyClosesPopover": preferences.automaticallyClosesPopover
+         ]
+     }
+ }
+diff --git a/ResourceRunnerTests/ApplicationCoordinatorTests.swift b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+index 34d1561..43c6225 100644
+--- a/ResourceRunnerTests/ApplicationCoordinatorTests.swift
++++ b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+@@ -93,11 +93,17 @@ struct ApplicationCoordinatorTests {
+         let task = ApplicationCoordinator.startMonitoring(lifecycleSource, into: lifecycle) {
+             binding.initialMonitoringApplied()
+         }
+-        await waitUntil { await system.schedules.count >= 2 }
++        await waitUntil {
++            let systemCount = await system.schedules.count
++            let processCount = await process.schedules.count
++            return systemCount >= 2 && processCount >= 2
++        }
+         let schedules = await system.schedules
++        let processSchedules = await process.schedules
+         #expect(schedules.first == .running(.seconds(10)))
+         #expect(schedules.last == .running(.seconds(5)))
+         #expect(!schedules.contains(.running(.seconds(2))))
++        #expect(processSchedules == [.running(.seconds(10)), .running(.seconds(8))])
+ 
+         dashboard.applyPreferences(first)
+         #expect(dashboard.preferencesSnapshot.revision == 2)
+@@ -105,6 +111,7 @@ struct ApplicationCoordinatorTests {
+         await waitUntil { dashboard.preferencesSnapshot.revision == 3 }
+         #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .energySaving)
+         #expect(await system.schedules.count == schedules.count)
++        #expect(await process.schedules.count == processSchedules.count)
+         task.cancel()
+     }
+ 
+diff --git a/ResourceRunnerTests/PreferencesStoreTests.swift b/ResourceRunnerTests/PreferencesStoreTests.swift
+index a21c1f2..a8a9f95 100644
+--- a/ResourceRunnerTests/PreferencesStoreTests.swift
++++ b/ResourceRunnerTests/PreferencesStoreTests.swift
+@@ -45,6 +45,9 @@ struct PreferencesStoreTests {
+         #expect(store.current == PreferencesSnapshot(preferences: .defaults, revision: 0))
+         #expect(storage.writes.isEmpty)
+         #expect(store.current.preferences.graphTimeRange.duration == 600)
++        #expect(store.current.preferences.includesSystemProcesses == false)
++        #expect(store.current.preferences.detailListLimit == .twenty)
++        #expect(store.current.preferences.automaticallyClosesPopover == true)
+     }
+ 
+     @Test func invalidContainerOrSchemaUsesAllDefaults() {
+@@ -84,6 +87,108 @@ struct PreferencesStoreTests {
+         #expect(storage.writes.isEmpty)
+     }
+ 
++    @Test func previousPayloadPreservesExistingChoicesAndDefaultsOnlyNewFields() {
++        let storage = RecordingPreferencesStorage([
++            "schemaVersion": 1,
++            "showsCPUCard": false,
++            "showsMemoryCard": false,
++            "showsNetworkCard": false,
++            "showsDiskCard": false,
++            "showsCPUTopApplications": false,
++            "showsMemoryTopApplications": false,
++            "graphTimeRange": "oneMinute",
++            "refreshProfile": "energySaving"
++        ])
++        let store = PreferencesStore(storage: storage)
++        let preferences = store.current.preferences
++
++        #expect(preferences.showsCPUCard == false)
++        #expect(preferences.showsMemoryCard == false)
++        #expect(preferences.showsNetworkCard == false)
++        #expect(preferences.showsDiskCard == false)
++        #expect(preferences.showsCPUTopApplications == false)
++        #expect(preferences.showsMemoryTopApplications == false)
++        #expect(preferences.graphTimeRange == .oneMinute)
++        #expect(preferences.refreshProfile == .energySaving)
++        #expect(preferences.includesSystemProcesses == false)
++        #expect(preferences.detailListLimit == .twenty)
++        #expect(preferences.automaticallyClosesPopover == true)
++        #expect(store.current.revision == 0)
++        #expect(storage.writes.isEmpty)
++    }
++
++    @Test func eachInvalidNewFieldFallsBackWithoutChangingOtherFields() {
++        let valid: [String: Any] = [
++            "schemaVersion": 1,
++            "showsCPUCard": false,
++            "graphTimeRange": "fiveMinutes",
++            "refreshProfile": "fast",
++            "includesSystemProcesses": true,
++            "detailListLimit": "fifty",
++            "automaticallyClosesPopover": false
++        ]
++        let invalidFields: [(String, Any, Bool, DetailListLimit, Bool)] = [
++            ("includesSystemProcesses", 1, false, .fifty, false),
++            ("includesSystemProcesses", "true", false, .fifty, false),
++            ("detailListLimit", 50, true, .twenty, false),
++            ("detailListLimit", "hundred", true, .twenty, false),
++            ("automaticallyClosesPopover", 0, true, .fifty, true),
++            ("automaticallyClosesPopover", "false", true, .fifty, true)
++        ]
++        for (key, value, included, limit, closes) in invalidFields {
++            var payload = valid
++            payload[key] = value
++            let storage = RecordingPreferencesStorage(payload)
++            let preferences = PreferencesStore(storage: storage).current.preferences
++            #expect(preferences.showsCPUCard == false)
++            #expect(preferences.graphTimeRange == .fiveMinutes)
++            #expect(preferences.refreshProfile == .fast)
++            #expect(preferences.includesSystemProcesses == included)
++            #expect(preferences.detailListLimit == limit)
++            #expect(preferences.automaticallyClosesPopover == closes)
++            #expect(storage.writes.isEmpty)
++        }
++        for key in ["includesSystemProcesses", "detailListLimit", "automaticallyClosesPopover"] {
++            var payload = valid
++            payload.removeValue(forKey: key)
++            let preferences = PreferencesStore(storage: RecordingPreferencesStorage(payload)).current.preferences
++            #expect(preferences.showsCPUCard == false)
++            #expect(preferences.includesSystemProcesses == (key == "includesSystemProcesses" ? false : true))
++            #expect(preferences.detailListLimit == (key == "detailListLimit" ? .twenty : .fifty))
++            #expect(preferences.automaticallyClosesPopover == (key == "automaticallyClosesPopover" ? true : false))
++        }
++    }
++
++    @Test func newSettingsPublishOneSnapshotPerChangeAndRestore() {
++        let storage = RecordingPreferencesStorage()
++        let store = PreferencesStore(storage: storage)
++        var seen: [PreferencesSnapshot] = []
++        store.onChange = { seen.append($0) }
++
++        store.update { $0.includesSystemProcesses = true }
++        store.update { $0.detailListLimit = .ten }
++        store.update { $0.automaticallyClosesPopover = false }
++        #expect(seen.map(\.revision) == [1, 2, 3])
++        #expect(seen[0].preferences.includesSystemProcesses == true)
++        #expect(seen[0].preferences.detailListLimit == .twenty)
++        #expect(seen[1].preferences.detailListLimit == .ten)
++        #expect(seen[1].preferences.automaticallyClosesPopover == true)
++        #expect(seen[2] == store.current)
++        #expect(storage.writes.count == 3)
++        #expect(store.current.preferences.includesSystemProcesses == true)
++        #expect(store.current.preferences.detailListLimit == .ten)
++        #expect(store.current.preferences.automaticallyClosesPopover == false)
++
++        store.restoreDefaults()
++        #expect(seen.count == 4)
++        #expect(storage.writes.count == 4)
++        #expect(store.current == PreferencesSnapshot(preferences: .defaults, revision: 4))
++        #expect(seen[3] == store.current)
++        #expect(storage.writes[3]["includesSystemProcesses"] as? Bool == false)
++        #expect(storage.writes[3]["detailListLimit"] as? String == "twenty")
++        #expect(storage.writes[3]["automaticallyClosesPopover"] as? Bool == true)
++    }
++
+     @Test func explicitChangesAndRestoreEachPublishAndSaveOnce() {
+         let storage = RecordingPreferencesStorage()
+         let store = PreferencesStore(storage: storage)
+@@ -109,7 +214,8 @@ struct PreferencesStoreTests {
+         #expect(Set(storage.writes[2].keys) == Set([
+             "schemaVersion", "showsCPUCard", "showsMemoryCard", "showsNetworkCard",
+             "showsDiskCard", "showsCPUTopApplications", "showsMemoryTopApplications",
+-            "graphTimeRange", "refreshProfile"
++            "graphTimeRange", "refreshProfile", "includesSystemProcesses",
++            "detailListLimit", "automaticallyClosesPopover"
+         ]))
+     }
+ 
+@@ -130,19 +236,37 @@ struct PreferencesStoreTests {
+             $0.showsMemoryTopApplications = false
+             $0.graphTimeRange = .fiveMinutes
+             $0.refreshProfile = .maximumEnergySaving
++            $0.includesSystemProcesses = true
++            $0.detailListLimit = .fifty
++            $0.automaticallyClosesPopover = false
+         }
+         let restored = PreferencesStore(storage: storage)
+         #expect(restored.current.preferences == initial.current.preferences)
+         #expect(restored.current.revision == 0)
+         let payload = defaults.dictionary(forKey: UserDefaultsPreferencesStorage.key)!
+-        #expect(payload.count == 9)
++        #expect(payload.count == 12)
+         #expect(payload["schemaVersion"] as? Int == 1)
+         #expect(payload["refreshProfile"] as? String == "maximumEnergySaving")
+         #expect(payload["graphTimeRange"] as? String == "fiveMinutes")
++        #expect(payload["detailListLimit"] as? String == "fifty")
+         for key in ["showsCPUCard", "showsMemoryCard", "showsNetworkCard", "showsDiskCard",
+-                    "showsCPUTopApplications", "showsMemoryTopApplications"] {
++                    "showsCPUTopApplications", "showsMemoryTopApplications",
++                    "includesSystemProcesses", "automaticallyClosesPopover"] {
+             let number = payload[key] as? NSNumber
+             #expect(number != nil && CFGetTypeID(number!) == CFBooleanGetTypeID())
+         }
+     }
++
++    @Test func allDetailLimitsRoundTripWithTheirDerivedCounts() {
++        for (limit, count) in [(DetailListLimit.ten, 10), (.twenty, 20), (.fifty, 50)] {
++            let storage = RecordingPreferencesStorage()
++            let store = PreferencesStore(storage: storage)
++            store.update { $0.detailListLimit = limit }
++            let restored = PreferencesStore(storage: storage)
++            #expect(restored.current.preferences.detailListLimit == limit)
++            #expect(restored.current.preferences.detailListLimit.count == count)
++            #expect(storage.writes.count == 1)
++            #expect(storage.writes[0]["detailListLimit"] as? String == limit.rawValue)
++        }
++    }
+ }
+diff --git a/ResourceRunnerTests/StorageMetadataTests.swift b/ResourceRunnerTests/StorageMetadataTests.swift
+index dad0fe3..10c373f 100644
+--- a/ResourceRunnerTests/StorageMetadataTests.swift
++++ b/ResourceRunnerTests/StorageMetadataTests.swift
+@@ -240,6 +240,50 @@ struct StorageMetadataTests {
+         #expect(await store.relationship(for: current).volumes.count == 2)
+     }
+ 
++    @Test func capacityRefreshFailureAndVolumeReplacementPreserveCacheLifetime() async throws {
++        let topology = DiskTopologyTracker()
++        let initial = storageVolume("volume-a", paths: ["/"], drivers: [1], available: 400)
++        let refreshed = storageVolume("volume-a", paths: ["/"], drivers: [1], available: 450)
++        let replacement = storageVolume("volume-b", paths: ["/"], drivers: [1], available: 300)
++        let script = StorageNativeScript { call in
++            let volume = call == 1 ? initial : (call == 2 ? refreshed : replacement)
++            return storageNative(drivers: [storageDriver(1)], volumes: [volume])
++        }
++        let reader = SystemStorageMetadataReader(topology: topology, nativeRead: { script.read() })
++        let store = StorageMetadataStore(topology: topology)
++
++        let first = try reader.read()
++        await store.append(TimestampedSample(timestamp: first.readAt, value: .available(first)))
++        let second = try reader.read()
++        #expect(second.topologyRevision == first.topologyRevision)
++        #expect(second.readAt >= first.readAt)
++        #expect(second.systemVolume.identity == "volume-a")
++        #expect(second.systemVolume.availableBytes == 450)
++        #expect(second.systemVolume.usedBytes == 550)
++        await store.append(TimestampedSample(timestamp: second.readAt, value: .available(second)))
++
++        let failedSource = StorageMetadataSource(reader: SystemStorageMetadataReader(
++            topology: topology, nativeRead: { throw DiskNativeError.invalid("important usage unavailable") }))
++        let failure = try #require(await failedSource.sample(collectionEpoch: 0))
++        await store.append(TimestampedSample(timestamp: second.readAt + .seconds(1), value: failure))
++        let failedStatus = await store.status()
++        if case .failure(_, let revision) = failedStatus.latest?.value {
++            #expect(revision == second.topologyRevision)
++        } else { Issue.record("용량 조회 실패가 현재 상태여야 합니다") }
++        #expect(failedStatus.lastKnown?.systemVolume.availableBytes == 450)
++        #expect(failedStatus.lastKnown?.readAt == second.readAt)
++
++        let third = try reader.read()
++        #expect(third.topologyRevision == second.topologyRevision + 1)
++        let current = DiskCounterSnapshot(readAt: origin, devices: [storageCounter(1)],
++            topologyRevision: third.topologyRevision)
++        #expect(await store.relationship(for: current).systemVolume == nil)
++        await store.append(TimestampedSample(timestamp: third.readAt, value: .available(third)))
++        let currentVolume = await store.relationship(for: current).systemVolume
++        #expect(currentVolume?.identity == "volume-b")
++        #expect(currentVolume?.availableBytes == 300)
++    }
++
+     @Test func slowStorageSuspensionDoesNotBlockFastDiskSamples() async throws {
+         let hold = BlockingStorageReader()
+         let slow = StorageMetadataSource(reader: hold)
+diff --git a/ResourceRunnerUITests/DiskCardUITests.swift b/ResourceRunnerUITests/DiskCardUITests.swift
+index 9cbbc7e..9434df8 100644
+--- a/ResourceRunnerUITests/DiskCardUITests.swift
++++ b/ResourceRunnerUITests/DiskCardUITests.swift
+@@ -1,9 +1,53 @@
++import AppKit
+ import XCTest
+ 
+ /// 서명된 앱의 Disk 카드와 실제 볼륨·드라이버 상세, 공통 닫힘 경로를 확인합니다.
+ final class DiskCardUITests: XCTestCase {
+     override func setUpWithError() throws { continueAfterFailure = false }
+ 
++    @MainActor
++    func testFourCardSummaryFitsVisibleScreenAndKeepsDiskCapacityAccessible() throws {
++        let app = XCUIApplication()
++        app.launch()
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 10))
++        status.click()
++
++        let body = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
++        XCTAssertTrue(body.waitForExistence(timeout: 5))
++        let cards = ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard"].map {
++            app.descendants(matching: .any).matching(identifier: $0).firstMatch
++        }
++        for card in cards {
++            XCTAssertTrue(card.waitForExistence(timeout: 5))
++            XCTAssertTrue(card.isHittable, "네 카드가 스크롤 없이 보여야 합니다: \(card.identifier)")
++        }
++        XCTAssertFalse(app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch.exists)
++        XCTAssertEqual(body.frame.width, 280, accuracy: 1)
++        XCTAssertEqual(cards[0].frame.width, 264, accuracy: 1)
++        XCTAssertEqual(cards[0].frame.height, 241, accuracy: 1)
++        XCTAssertEqual(cards[2].frame.height, 112, accuracy: 1)
++        XCTAssertEqual(cards[3].frame.height, 112, accuracy: 1)
++        for pair in zip(cards, cards.dropFirst()) {
++            XCTAssertEqual(pair.1.frame.minY - pair.0.frame.maxY, 6, accuracy: 1)
++        }
++        let screen = try XCTUnwrap(NSScreen.main)
++        let visible = screen.visibleFrame
++        XCTAssertLessThanOrEqual(body.frame.maxY, screen.frame.height - visible.minY)
++        XCTAssertGreaterThanOrEqual(body.frame.minY, screen.frame.height - visible.maxY)
++        XCTAssertTrue(cards[0].label.contains("TOP 5"))
++        XCTAssertTrue(cards[1].label.contains("Pressure"))
++        XCTAssertTrue(cards[1].label.contains("Swap"))
++        XCTAssertTrue(cards[3].label.contains("Disk 최근 10분 그래프"))
++        XCTAssertTrue(waitUntil({ cards[3].label.contains("저장 공간 전체") }, timeout: 15))
++        XCTAssertTrue(cards[3].label.contains("회수 가능한 공간 포함"))
++        print("TASK011_FOUR_CARD visible=\(visible) body=\(body.frame) cards=\(cards.map(\.frame)) disk=\(cards[3].label)")
++        let attachment = XCTAttachment(screenshot: app.screenshot())
++        attachment.name = "task011-four-card-summary"
++        attachment.lifetime = .keepAlways
++        add(attachment)
++    }
++
+     @MainActor
+     func testRealDiskCardDetailAndReturnKeepFrames() throws {
+         let app = XCUIApplication()
+diff --git a/ResourceRunnerUITests/SettingsWindowUITests.swift b/ResourceRunnerUITests/SettingsWindowUITests.swift
+index b01f60e..db5edb1 100644
+--- a/ResourceRunnerUITests/SettingsWindowUITests.swift
++++ b/ResourceRunnerUITests/SettingsWindowUITests.swift
+@@ -15,6 +15,15 @@ final class SettingsWindowUITests: XCTestCase {
+         return app
+     }
+ 
++    private func persistentApp(suite: String) -> XCUIApplication {
++        let app = XCUIApplication()
++        app.launchArguments += ["--preferences-persistence-ui-test", "--settings-ui-test"]
++        app.launchEnvironment["RR_PREFERENCES_TEST_SUITE"] = suite
++        app.launchEnvironment["RR_LOGIN_STATUS"] = "enabled"
++        app.launchEnvironment["RR_LOGIN_UNREGISTER_OUTCOME"] = "failure"
++        return app
++    }
++
+     private func settingsWindow(_ app: XCUIApplication) -> XCUIElement {
+         app.windows["ResourceRunner 설정"]
+     }
+@@ -104,6 +113,140 @@ final class SettingsWindowUITests: XCTestCase {
+         closeSettings(app)
+     }
+ 
++    // 안정 경로의 Release 앱에서만 실행하며, 각 단계의 실제 OS 상태는 외부에서 대조합니다.
++    private func nativeReleaseApp() throws -> XCUIApplication {
++        guard let path = ProcessInfo.processInfo.environment["RR_NATIVE_RELEASE_APP_PATH"] else {
++            throw XCTSkip("실제 로그인 검증용 Release 앱 경로가 필요합니다.")
++        }
++        return XCUIApplication(url: URL(fileURLWithPath: path))
++    }
++
++    @MainActor
++    func testNativeLoginInitialReadOnly() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch.exists)
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let firstStatus = textValue(status)
++        NSLog("RR_NATIVE_INITIAL status=%@", firstStatus)
++        XCTAssertTrue(firstStatus.contains("등록되지") || firstStatus.contains("찾을 수 없"), firstStatus)
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertEqual(textValue(status), firstStatus)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginRegister() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let firstStatus = textValue(status)
++        XCTAssertTrue(firstStatus.contains("등록되지") || firstStatus.contains("찾을 수 없"), firstStatus)
++        app.switches["SettingsLoginToggle"].click()
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        let statusText = textValue(status)
++        let resultText = textValue(result)
++        NSLog("RR_NATIVE_REGISTER status=%@ result=%@", statusText, resultText)
++        XCTAssertFalse(resultText.contains("실패"), resultText)
++        XCTAssertTrue(statusText.contains("허용") || statusText.contains("승인"), statusText)
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertTrue(textValue(status).contains("허용") || textValue(status).contains("승인"))
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginUnregisterAndRestore() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let initialStatus = textValue(status)
++        XCTAssertTrue(initialStatus.contains("허용") || initialStatus.contains("승인"), initialStatus)
++        if initialStatus.contains("승인") {
++            app.buttons["SettingsUnregisterLoginItem"].click()
++        } else {
++            app.switches["SettingsLoginToggle"].click()
++        }
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        NSLog("RR_NATIVE_UNREGISTER status=%@ result=%@", textValue(status), textValue(result))
++        XCTAssertTrue(textValue(status).contains("등록되지"), textValue(status))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
++
++        app.switches["SettingsLoginToggle"].click()
++        let registered = NSPredicate(format: "value CONTAINS %@ OR value CONTAINS %@", "허용", "승인")
++        expectation(for: registered, evaluatedWith: status)
++        waitForExpectations(timeout: 10)
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        XCTAssertTrue(loginRestore.waitForExistence(timeout: 10))
++        let restored = NSPredicate(format: "value CONTAINS %@", "해제가 확인")
++        expectation(for: restored, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 10)
++        XCTAssertTrue(textValue(status).contains("등록되지"), textValue(status))
++        NSLog("RR_NATIVE_RESTORE status=%@ login=%@", textValue(status), textValue(loginRestore))
++        XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginPrepareNextLogin() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let initialStatus = textValue(status)
++        XCTAssertTrue(initialStatus.contains("등록되지") || initialStatus.contains("찾을 수 없"), initialStatus)
++        app.switches["SettingsLoginToggle"].click()
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        NSLog("RR_NATIVE_PREPARE status=%@ result=%@", textValue(status), textValue(result))
++        XCTAssertTrue(textValue(status).contains("허용"), textValue(status))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 1)
++        closeSettings(app)
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch.exists)
++    }
++
++    @MainActor
++    func testNativeSystemSettingsRemovalRefreshesAppStatus() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        XCTAssertTrue(textValue(status).contains("허용"), textValue(status))
++        let systemSettings = XCUIApplication(bundleIdentifier: "com.apple.systempreferences")
++        systemSettings.activate()
++        let loginItem = systemSettings.staticTexts["open-at-login-item-ResourceRunner.app-icon"]
++        XCTAssertTrue(loginItem.waitForExistence(timeout: 5))
++        XCTAssertEqual((loginItem.value as? String) ?? loginItem.label, "ResourceRunner.app")
++        loginItem.click()
++        let remove = systemSettings.buttons["제거"]
++        XCTAssertTrue(remove.isEnabled)
++        remove.click()
++        let itemGone = NSPredicate(format: "exists == false")
++        expectation(for: itemGone, evaluatedWith: loginItem)
++        waitForExpectations(timeout: 10)
++        app.activate()
++        app.buttons["SettingsLoginRefresh"].click()
++        let refreshed = textValue(status)
++        NSLog("RR_NATIVE_EXTERNAL_REMOVAL status=%@", refreshed)
++        XCTAssertTrue(refreshed.contains("등록되지") || refreshed.contains("찾을 수 없"), refreshed)
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertFalse(app.staticTexts["SettingsLoginResult"].exists)
++        systemSettings.terminate()
++        closeSettings(app)
++    }
++
+     @MainActor
+     func testAllCardsOffOpensSettingsAndRestoresVisibleCard() {
+         let app = launch(cards: 0)
+@@ -161,6 +304,77 @@ final class SettingsWindowUITests: XCTestCase {
+         XCTAssertTrue((profile.value as? String ?? "").contains("기본"))
+     }
+ 
++    @MainActor
++    func testChangedSettingsSurviveRelaunchThenRestoreSeparatelyFromLoginFailure() {
++        let suite = "ResourceRunnerUITest.\(UUID().uuidString)"
++        let app = persistentApp(suite: suite)
++        addTeardownBlock {
++            if app.state != .notRunning { app.terminate() }
++            app.launchArguments.append("--preferences-persistence-cleanup")
++            app.launch()
++            app.terminate()
++        }
++        app.launch()
++        openFromStatusMenu(app)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            app.switches[id].click()
++            XCTAssertEqual(switchValue(app.switches[id]), 0, id)
++        }
++        let graph = app.popUpButtons["SettingsGraphRange"]
++        graph.click()
++        app.menuItems["최근 1분"].click()
++        let profile = app.popUpButtons["SettingsRefreshProfile"]
++        profile.click()
++        app.menuItems["매우 절전"].click()
++        app.terminate()
++
++        // 같은 격리 domain에서 새 프로세스를 띄워 저장값의 최초 표시를 확인합니다.
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        XCTAssertTrue(app.buttons["DashboardOpenSettings"].waitForExistence(timeout: 3))
++        for id in ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard"] {
++            XCTAssertFalse(app.buttons[id].exists, id)
++        }
++        app.buttons["DashboardOpenSettings"].click()
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 0, id)
++        }
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 1분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("매우 절전"))
++
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        let failure = NSPredicate(format: "value CONTAINS %@", "테스트 해제 실패")
++        expectation(for: failure, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 3)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 1, id)
++        }
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 10분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("기본"))
++        app.terminate()
++
++        app.launch()
++        openFromStatusMenu(app)
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 1)
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 10분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("기본"))
++    }
++
+     @MainActor
+     func testLoginSuccessFailureApprovalRefreshAndExplicitSystemSettings() {
+         let app = launch(login: "notRegistered", register: "approval")
+diff --git a/docs/design.md b/docs/design.md
+index 967b57c..f657d76 100644
+--- a/docs/design.md
++++ b/docs/design.md
+@@ -13,11 +13,15 @@
+ 
+ ### 현재 확인된 구현
+ 
+-M1 기반과 CPU·Memory 모니터링, M3의 Network·Disk 수집·표시가 반영된 상태입니다.
+-M3의 실제 연결 전환과 잠금·절전 복귀 검증은 보류 중이며 전체 완료를 뜻하지 않습니다.
++M1 기반과 CPU·Memory 모니터링, M3의 Network·Disk 수집·표시, M4의 설정창·저장·즉시 적용이 반영된 상태입니다.
++M3의 용량 기준 변경에 따른 Task 승인 복구와 잠금·절전 복귀 재검증은 진행 중입니다.
++M4 첫 범위의 실제 로그인 실행은 확인됐으며, 추가 설정 세 가지는 저장 모델만 구현된 상태입니다.
++이 상태는 M3 전체 완료나 M4 추가 설정의 화면·동작 완료를 뜻하지 않습니다.
+ 
+ - 앱 진입점은 `Settings { EmptyView() }`와 `@NSApplicationDelegateAdaptor`로 구성하고,
+   생성 Info.plist의 `LSUIElement`로 Dock 아이콘 없이 실행합니다.
++  Settings Scene은 껍질로 유지하며 설정 명령·메뉴바 우클릭·전체 숨김 버튼은
++  `ApplicationCoordinator.openSettings()`와 단일 `SettingsWindowController`로 연결합니다.
+ - `ApplicationCoordinator`가 메뉴바 항목·팝오버, 상태 표시 경로, 생명주기 관찰과 수집 기반을
+   각각 한 번씩 만들어 종료까지 보유합니다.
+ - 메뉴바 항목은 `NSStatusItem.squareLength`와 `.transient` `NSPopover`를 사용하고,
+@@ -28,7 +32,17 @@ M3의 실제 연결 전환과 잠금·절전 복귀 검증은 보류 중이며 
+ - 네 요약 카드는 지원 화면에서 본체 스크롤 없이 표시하며 각 카드에 앵커한 상세에서 추가 정보를 봅니다.
+   CPU·Memory TOP 5, CPU 그래프·Memory 구성 표시와 Disk 미니 그래프가 있고 Network 요약에는 그래프가 없습니다.
+   물리 대상 일부만 확인되면 Network·Disk는 완전한 대표값 대신 부분 합계임을 표시합니다.
+-- 메뉴바 상태는 실제 CPU 지표로 전환하며 캐릭터 애니메이션과 사용자 설정은 후속 마일스톤 작업입니다.
++- `PreferencesStore`는 일반 설정을 하나의 snapshot으로 저장·게시합니다. 저장 설정은 최초 대시보드와
++  수집 프로필 구성부터 적용하며 표시 변경은 즉시, 프로필 변경은 다음 유효 일정에 반영합니다.
++  네 카드·두 TOP 5 표시, CPU·Disk 공통1/5/10분 범위와 갱신4단계를 제공합니다.
++  시스템 프로세스 포함·상세 목록 정원·팝오버 자동 닫기 세 필드의 저장·복원은 구현됐고,
++  해당 UI와 수집·표시 동작은 후속 Task에 남아 있습니다.
++- `LoginItemService`는 공개 `SMAppService.mainApp` adapter이며 `LoginItemController`가 실제 상태·요청·결과를
++  구분합니다. 조회는 등록 상태를 바꾸지 않고 일반 설정 복원과 로그인 해제 결과를 분리합니다.
++  실제 등록·해제와 다음 로그인 자동 실행은 M4 task-011에서 확인됐습니다.
++- Disk 저장 공간은1000 기반이며 사용 가능에 macOS가 보고한 회수 가능한 공간을 포함합니다.
++  Read/Write 속도·누적량과 다른 자원 단위는 유지합니다. 상세 정의는 [M4 DESIGN §3.6](../features/20261003-001-app-preferences/design.md#36-사용자-승인-예외--disk-저장-공간-기준)을 따릅니다.
++- 메뉴바 상태는 실제 CPU 지표로 전환하며 캐릭터 애니메이션은 후속 마일스톤 작업입니다.
+ - ResourceRunnerTests와 ResourceRunnerUITests 대상이 존재합니다.
+ - 세 대상 모두 macOS deployment target은 26.5, Swift language version 설정은 5.0이고,
+   앱 실행 파일은 arm64 단일 슬라이스입니다. App Sandbox가 활성화돼 있습니다.
+@@ -248,14 +262,17 @@ TOP 5·앱 집계·전체 상태 계산
+ | 절전 | 2초 | 4초 | 5초 |
+ | 매우 절전 | 5초 | 5초 | 10초 |
+ 
+-기본값은 기본입니다. 이 수치는 성능 검증 결과에 따라 app-preferences feature에서 조정할 수 있습니다.
++기본값은 기본입니다. 현재 값은 승인된 [app-preferences 설계](../features/20261003-001-app-preferences/design.md#22-프로필과-생명주기의-정확한-병합)를 따릅니다.
++닫힌 상태의 TOP 5 주기는 빠름·기본·절전·매우 절전 순서로5·5·8·10초입니다.
++Network·저장 공간 보조 수집은 열림30초·닫힘60초이며 프로필 변경과 분리합니다.
+ 
+ ### 생명주기 반영
+ 
+ - 팝오버가 닫히면 전체 지표와 TOP 5 수집을 감속합니다.
+ - 선택한 프로세스 상세 수집은 상세 UI가 닫히면 중지합니다.
+-- 저전력 모드에서는 절전 프로필을 적용할 수 있습니다.
+-- 화면 잠금 상태에서는 수집을 중지하거나 최소화합니다.
++- 저전력 모드는 사용자 선택과 축별 하한의 최댓값으로 병합합니다.
++  빠른 지표의 열림/닫힘 하한은2/5초, TOP 5는4/10초, 보조 수집은60/120초입니다.
++- 화면 잠금·잠금 상태 확인 불가·디스플레이 슬립·세션 비활성·시스템 sleep에서는 여섯 축을 모두 중지합니다.
+ - 절전 복귀 후 첫 샘플은 변화량 계산에서 제외합니다.
+ - 설정 변경은 타이머 중복 없이 다음 일정에 즉시 반영되어야 합니다.
+ 
+@@ -272,40 +289,35 @@ TOP 5·앱 집계·전체 상태 계산
+ 
+ 중지한 구간은 최근 그래프에서 공백으로 남습니다. 그 구간을 채우거나 이어 붙이지 않습니다.
+ 
+-시스템 슬립은 성격이 다릅니다. 프로세스가 멈추므로 일정을 조절할 일이 없고,
+-복귀 첫 샘플의 경과 시간이 실제 수면 시간만큼 커지는 것이 문제입니다.
+-변화량으로 속도를 계산하는 Network와 Disk가 들어올 때 기준점 재설정이 필요하며,
+-`NSWorkspaceWillSleep`·`DidWake`로 복귀 시점을 알 수 있습니다.
++시스템 sleep은 `NSWorkspaceWillSleep`·`DidWake`로 전달하며 중지·복귀 때 collection epoch와 기준점을 갱신합니다.
++팝오버·저전력·잠금뿐 아니라 디스플레이 슬립·세션 활성·시스템 sleep도 현재 생명주기 입력에 연결돼 있습니다.
++실제 잠금·절전 복귀 관찰은 M3 task-015에서 재검증 중입니다.
+ 
+-M1이 구현한 생명주기 입력은 팝오버 열림·닫힘, 저전력 모드, 화면 잠금 셋입니다.
+-디스플레이 슬립과 빠른 사용자 전환은 core-resource-monitoring에서 함께 연결합니다.
++CPU·Network·Disk 차분은 실행권 발급 당시 유효 주기 P에 대해 `G(P) = max(10초, 2 × P)`를 허용 간격으로 사용합니다.
++계산 분모는 실제 샘플 시각 차이이며 중지·실패·대상 변경의 강제 단절을 G로 연결하지 않습니다.
++프로필 변경 시 이전 실행권의 반영을 차단하고 실제 조회 종료까지 새 조회와 중복 실행하지 않습니다.
+ 
+ ## 최근 데이터 순환 버퍼
+ 
+-최근 그래프 데이터는 설정한 시간 범위와 실제 수집 주기를 기준으로 고정 크기 순환 버퍼에 보관합니다.
++시스템·Network·Disk 활동 이력은 최대600초와 최단 지원 주기0.5초를 기준으로 각각1203개 링에 보관합니다.
++양 끝점과 시각 여유를 포함한 고정 용량이며 사용자 주기·표시 범위가 바뀌어도 줄이지 않습니다.
+ 
+ ~~~text
+-버퍼 용량 = 그래프 시간 범위 ÷ 실제 수집 주기
++양 끝점 포함 최소 용량 = ceil(600초 ÷ 0.5초) + 1 = 1201개
++현재 고정 용량 = 1203개
+ ~~~
+ 
+-| 그래프 범위 | 수집 주기 | 필요한 샘플 수 |
+-| ---: | ---: | ---: |
+-| 10분 | 0.5초 | 1,200개 |
+-| 10분 | 1초 | 600개 |
+-| 10분 | 2초 | 300개 |
+-| 10분 | 5초 | 120개 |
+-
+ ### 버퍼 규칙
+ 
+ - 새 샘플을 뒤에 추가합니다.
+ - 용량을 넘으면 가장 오래된 샘플을 제거합니다.
+ - 앱 시작 직후에는 실제로 수집된 구간만 제공합니다.
+-- 설정 변경 시 새 범위와 주기에 맞춰 용량을 다시 계산합니다.
++- 설정 변경으로 링 용량이나 최대 보관 이력을 줄이지 않습니다.
+ - 존재하지 않는 과거를 현재값으로 채우지 않습니다.
+-- 시간 범위를 줄이면 범위를 벗어난 오래된 데이터를 제거합니다.
++- 표시 범위를 줄이면 해당 범위 밖의 샘플은 그리지 않으며 최대 이력은 유지합니다.
+ - 시간 범위를 늘리더라도 존재하지 않는 과거 데이터는 생성하지 않습니다.
+ 
+-버퍼 인덱싱, 용량 재계산과 시간 범위 변경은 자동 테스트로 검증합니다.
++버퍼 인덱싱, 고정 용량·실제600초 범위와 표시 범위 변경은 자동 테스트로 검증합니다.
+ 
+ 용량 계산은 샘플이 수집 주기마다 균등하게 쌓인다고 가정합니다.
+ 수집이 중지되었다 재개되면 이 가정이 깨지고, 버퍼는 개수로만 축출하므로
+@@ -319,8 +331,10 @@ M1의 1시간 잠금 관찰에서 잠금 직전 146개가 해제 뒤에도 그
+ 최근 그래프는 샘플의 실제 시각을 기준으로 그리고, 수집하지 않은 구간은 비워 둡니다.
+ 샘플을 순번대로 이어 붙이면 중지 구간이 사라져 오래된 값이 방금 값 옆에 붙으므로 그렇게 하지 않습니다.
+ 표시 대상은 시간 범위 안에 든 샘플로 한정하며, 범위를 벗어난 샘플은 버퍼에 남아 있어도 그리지 않습니다.
+-용량 계산과 별개로 시간 기준 선별이 필요하다는 뜻이며,
+-구체적인 방식은 최근 그래프가 만들어지는 core-resource-monitoring에서 확정합니다.
++용량 계산과 별개로 시간 기준 선별이 필요하다는 뜻입니다.
++CPU·Disk 렌더는 같은 `GraphTimeRange`로 구간·축·진행·AX를 계산하고,
++뒤쪽 점의 당시 G와 epoch·연속성 표식으로 연결 여부를 판단합니다.
++Memory Swap·증가 순위의600초 계산 창은 표시 범위와 별개로 유지합니다.
+ 
+ ## 데이터 저장과 캐시
+ 
+diff --git a/docs/product.md b/docs/product.md
+index c7287b0..a6f2648 100644
+--- a/docs/product.md
++++ b/docs/product.md
+@@ -302,6 +302,13 @@ Disk 정보는 저장 공간과 실시간 입출력을 구분해서 표시합니
+ 
+ 저장 공간은 초 단위로 바뀌지 않으므로 CPU, Network와 실시간 Disk I/O보다 느린 주기로 갱신합니다. 프로세스별 합계와 장치 전체 합계가 다를 수 있음을 오해 없이 표현해야 합니다.
+ 
++저장 공간의 전체·사용 가능·사용 중은 macOS 기준1000 기반 단위로 표시합니다.
++사용 가능은 OS가 보고한 회수 가능한 공간을 포함하며, 사용 중은 전체에서 사용 가능을 뺀 나머지입니다.
++실제 파일 점유량이나 APFS 볼륨별 독점 사용량으로 설명하지 않습니다.
++값을 확보하지 못하면 조회 실패로 구분하고, 요약·상세·접근성에 같은 정의를 적용합니다.
++Read/Write 속도·누적량·Network·Memory의 기존 단위는 유지합니다.
++승인된 정의는 [app-preferences DESIGN §3.6](../features/20261003-001-app-preferences/design.md#36-사용자-승인-예외--disk-저장-공간-기준)을 따릅니다.
++
+ ## 최근 그래프와 데이터 보관
+ 
+ | 항목 | 1.0 기본값 |
+@@ -331,8 +338,19 @@ Disk 정보는 저장 공간과 실시간 입출력을 구분해서 표시합니
+ 갱신4단계, 로그인 자동 실행과 기본값 복원입니다.
+ [app-preferences SPEC](../features/20261003-001-app-preferences/spec.md)이 이번 범위를 정의하며,
+ 아래의 시스템 프로세스 필터·상세 정원·팝오버 자동 닫기 옵션과 애니메이션 설정은 후속 범위입니다.
++앞의 세 옵션은 저장·복원 모델만 구현됐으며 설정 화면과 실제 동작은 아직 추가되지 않았습니다.
+ 업데이트 확인은 배포 정책 확정 뒤 결정합니다. 목표 항목의 존재를 현재 구현 완료로 간주하지 않습니다.
+ 
++현재 설정창은 메뉴바 우클릭·`⌘,`·전체 숨김 화면의 「설정 열기」에서 접근하며 같은 창을 재사용합니다.
++카드·TOP 5 표시와 CPU·Disk 그래프 범위는 즉시 반영되고 갱신 프로필은 다음 일정에 적용됩니다.
++숨긴 구역의 공간은 예약하지 않으며 모든 카드를 숨겨도 설명과 설정 복구 경로를 제공합니다.
++일반 설정은 재실행 첫 화면·최초 일정부터 복원하고 수집값·그래프·프로세스 목록은 빈 메모리로 시작합니다.
++저장값이 없거나 손상·미지원 값이면 해당 기본값을 사용합니다.
++
++기본값 복원은 네 카드·두 TOP 5 켜기, 최근10분과 기본 갱신 프로필을 저장·적용합니다.
++로그인 항목의 실제 상태·승인 대기·실패와 일반 설정 복원 결과를 따로 설명합니다.
++로그인 조회는 등록 상태를 바꾸지 않으며 실제 등록·해제·다음 로그인 실행은 M4 task-011에서 확인됐습니다.
++
+ ### 일반
+ 
+ - 로그인 시 자동 실행

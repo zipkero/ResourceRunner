@@ -32,6 +32,8 @@ nonisolated struct ProcessMemoryBaselinePoint: Sendable, Equatable {
 /// `ProcessHistoryStore` 밖으로는 `ProcessHistorySnapshot`으로만 노출됩니다.
 private struct ProcessHistoryEntry {
     var executablePath: String
+    var uid: uid_t?
+    var ownership: ProcessOwnership
     /// 매 조사마다 이번 조사 값으로 갱신됩니다. 같은 정체성에서 실행 이미지가 바뀌면
     /// 경로와 함께 이 값도 새 실행 이미지의 조사 결과를 따릅니다.
     var isTranslated: Bool
@@ -55,13 +57,19 @@ nonisolated struct ProcessHistorySnapshot: Sendable, Equatable {
     /// 기본값이 합성 memberwise 초기화 매개변수에 반영되려면 `var`여야 하므로 `var`로 선언합니다.
     /// 실제 값은 `ProcessHistoryStore.append(_:)`가 매 조사마다 채웁니다.
     var isTranslated: Bool = false
+    /// 조사 당시 UID 소속. 이전 리터럴의 누락값은 사용자 소속으로 추정하지 않습니다.
+    var ownership: ProcessOwnership = .unknown
+    /// 열거 당시의 UID입니다. 합성 입력의 누락은 임의 UID로 보충하지 않습니다.
+    var uid: uid_t? = nil
 }
 
 nonisolated struct ProcessRankingInput: Sendable {
     let timestamp: ContinuousClock.Instant
+    let deliverySequence: UInt64
     let context: CollectionRunContext?
     let snapshots: [ProcessHistorySnapshot]
     let unreadableCount: Int
+    let currentUserUnreadableCount: Int
     let surveyFailed: Bool
 }
 
@@ -115,11 +123,13 @@ actor ProcessHistoryStore: MonitoringSampleSink {
     /// 마지막 조사에서 읽지 못한 프로세스 수.
     /// 순위 계산 입력의 일부이므로 정체성별 이력과 같은 시점의 값으로 함께 나가야 합니다.
     private var latestUnreadableCount = 0
+    private var latestCurrentUserUnreadableCount = 0
     /// 마지막 조사가 실패했는지. 다음 성공 조사까지 유지됩니다.
     /// 시스템 지표 축이 더 빠르게 tick하며 순위를 다시 읽어 가므로, 이 값을 조사 축에서만 바꿔야
     /// 실패 표시가 tick마다 켜졌다 꺼지지 않습니다.
     private var latestSurveyFailed = false
     private var lastCollectionEpoch: Int?
+    private var deliverySequence: UInt64 = 0
 
     /// 한 번의 조사 결과를 반영합니다.
     /// 이번 조사에서 관찰된 정체성만 남기고 나머지는 이 호출에서 바로 제거됩니다.
@@ -143,6 +153,7 @@ actor ProcessHistoryStore: MonitoringSampleSink {
 
         latestSurveyFailed = false
         latestUnreadableCount = report.unreadableCount
+        latestCurrentUserUnreadableCount = report.currentUserUnreadableCount ?? report.unreadableCount
         var observed: Set<ProcessIdentity> = []
         observed.reserveCapacity(report.samples.count)
 
@@ -151,11 +162,16 @@ actor ProcessHistoryStore: MonitoringSampleSink {
 
             // 같은 정체성의 exec 이후에는 이전 실행 이미지의 CPU·순위·메모리 기준점을 잇지 않습니다.
             var entry: ProcessHistoryEntry
-            if let existing = entries[process.identity], existing.executablePath == process.executablePath {
+            if let existing = entries[process.identity],
+               existing.executablePath == process.executablePath,
+               existing.uid == process.uid,
+               existing.ownership == process.ownership {
                 entry = existing
             } else {
                 entry = ProcessHistoryEntry(
                     executablePath: process.executablePath,
+                    uid: process.uid,
+                    ownership: process.ownership,
                     isTranslated: process.isTranslated,
                     cpuBaseline: nil,
                     recentValues: CircularBuffer(capacity: ProcessHistorySampling.recentValueCount),
@@ -163,6 +179,8 @@ actor ProcessHistoryStore: MonitoringSampleSink {
                 )
             }
             entry.executablePath = process.executablePath
+            entry.uid = process.uid
+            entry.ownership = process.ownership
             entry.isTranslated = process.isTranslated
 
             let cpuUsagePercent = Self.cpuUsagePercent(process: process, timestamp: timestamp, entry: &entry)
@@ -178,8 +196,11 @@ actor ProcessHistoryStore: MonitoringSampleSink {
     }
 
     private func publishRankingInput(for sample: TimestampedSample<ProcessSurveySample>) {
+        deliverySequence &+= 1
         rankingContinuation.yield(ProcessRankingInput(timestamp: sample.timestamp,
+            deliverySequence: deliverySequence,
             context: sample.context, snapshots: snapshot(), unreadableCount: latestUnreadableCount,
+            currentUserUnreadableCount: latestCurrentUserUnreadableCount,
             surveyFailed: latestSurveyFailed))
     }
 
@@ -199,7 +220,9 @@ actor ProcessHistoryStore: MonitoringSampleSink {
                 executablePath: entry.executablePath,
                 recentValues: entry.recentValues.elements,
                 memoryBaselines: entry.memoryBaselines.elements,
-                isTranslated: entry.isTranslated
+                isTranslated: entry.isTranslated,
+                ownership: entry.ownership,
+                uid: entry.uid
             )
         }
     }
@@ -208,9 +231,10 @@ actor ProcessHistoryStore: MonitoringSampleSink {
     /// 정체성별 이력과 읽지 못한 프로세스 수를 따로 읽으면 두 번의 actor 진입 사이에 조사가 끼어들어
     /// 서로 다른 조사의 값이 섞일 수 있으므로 한 번의 호출로 함께 내보냅니다.
     /// 마지막 조사의 실패 여부도 같은 이유로 함께 나갑니다.
-    func rankingInput() async -> (snapshots: [ProcessHistorySnapshot], unreadableCount: Int, surveyFailed: Bool) {
+    func rankingInput() async -> (snapshots: [ProcessHistorySnapshot], unreadableCount: Int,
+                                  currentUserUnreadableCount: Int, surveyFailed: Bool) {
         if let beforeRankingInput { await beforeRankingInput() }
-        return (snapshot(), latestUnreadableCount, latestSurveyFailed)
+        return (snapshot(), latestUnreadableCount, latestCurrentUserUnreadableCount, latestSurveyFailed)
     }
 
     /// 관찰 중인 정체성 수. 종료된 프로세스 제거를 사전 크기로 단언하는 테스트가 씁니다.

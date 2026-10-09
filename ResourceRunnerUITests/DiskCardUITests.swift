@@ -1,8 +1,52 @@
+import AppKit
 import XCTest
 
 /// 서명된 앱의 Disk 카드와 실제 볼륨·드라이버 상세, 공통 닫힘 경로를 확인합니다.
 final class DiskCardUITests: XCTestCase {
     override func setUpWithError() throws { continueAfterFailure = false }
+
+    @MainActor
+    func testFourCardSummaryFitsVisibleScreenAndKeepsDiskCapacityAccessible() throws {
+        let app = XCUIApplication()
+        app.launch()
+        let status = app.statusItems.firstMatch
+        XCTAssertTrue(status.waitForExistence(timeout: 10))
+        status.click()
+
+        let body = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
+        XCTAssertTrue(body.waitForExistence(timeout: 5))
+        let cards = ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard"].map {
+            app.descendants(matching: .any).matching(identifier: $0).firstMatch
+        }
+        for card in cards {
+            XCTAssertTrue(card.waitForExistence(timeout: 5))
+            XCTAssertTrue(card.isHittable, "네 카드가 스크롤 없이 보여야 합니다: \(card.identifier)")
+        }
+        XCTAssertFalse(app.scrollViews.containing(.any, identifier: "DiskCard").firstMatch.exists)
+        XCTAssertEqual(body.frame.width, 280, accuracy: 1)
+        XCTAssertEqual(cards[0].frame.width, 264, accuracy: 1)
+        XCTAssertEqual(cards[0].frame.height, 241, accuracy: 1)
+        XCTAssertEqual(cards[2].frame.height, 112, accuracy: 1)
+        XCTAssertEqual(cards[3].frame.height, 112, accuracy: 1)
+        for pair in zip(cards, cards.dropFirst()) {
+            XCTAssertEqual(pair.1.frame.minY - pair.0.frame.maxY, 6, accuracy: 1)
+        }
+        let screen = try XCTUnwrap(NSScreen.main)
+        let visible = screen.visibleFrame
+        XCTAssertLessThanOrEqual(body.frame.maxY, screen.frame.height - visible.minY)
+        XCTAssertGreaterThanOrEqual(body.frame.minY, screen.frame.height - visible.maxY)
+        XCTAssertTrue(cards[0].label.contains("TOP 5"))
+        XCTAssertTrue(cards[1].label.contains("Pressure"))
+        XCTAssertTrue(cards[1].label.contains("Swap"))
+        XCTAssertTrue(cards[3].label.contains("Disk 최근 10분 그래프"))
+        XCTAssertTrue(waitUntil({ cards[3].label.contains("저장 공간 전체") }, timeout: 15))
+        XCTAssertTrue(cards[3].label.contains("회수 가능한 공간 포함"))
+        print("TASK011_FOUR_CARD visible=\(visible) body=\(body.frame) cards=\(cards.map(\.frame)) disk=\(cards[3].label)")
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "task011-four-card-summary"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 
     @MainActor
     func testRealDiskCardDetailAndReturnKeepFrames() throws {

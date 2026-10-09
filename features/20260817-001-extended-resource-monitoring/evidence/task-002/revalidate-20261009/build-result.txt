@@ -1,0 +1,3 @@
+Build: xcodebuild -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/rr-task002-probe/DerivedData build CODE_SIGNING_ALLOWED=YES
+CWD: /tmp/rr-task002-probe
+** BUILD SUCCEEDED **

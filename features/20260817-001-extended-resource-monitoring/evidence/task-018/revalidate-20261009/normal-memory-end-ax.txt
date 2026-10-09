@@ -1,0 +1,9 @@
+pid=30218 command=dump ownedPopovers=1 time=2026-10-09T04:29:14Z
+status id= role=AXMenuBarItem title= desc=ResourceRunner, 낮음 value=nil frame=Optional((1125.0, 4.5, 24.0, 24.0))
+AX id=DashboardContainer role=AXGroup title= desc= value=nil frame=Optional((977.0, 54.0, 280.0, 668.0))
+AX id=CPUCard role=AXButton title= desc=CPU 카드, 전체 사용률 14%, User 10%, System 4%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 데이터 수집 중 · 01:18 / 10:00, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘1 value=nil frame=Optional((985.0, 62.0, 264.0, 241.0))
+AX id=MemoryCard role=AXButton title= desc=Memory 카드, 사용 중 21.1 GB, 전체 물리 메모리 36.0 GB, Memory Pressure 정상, Swap 0.0 KB, Swap 최근 변화 +0.0 KB, App 15.0 GB, Wired 4.2 GB, Compressed 543.3 MB, Cached 13.5 GB, 구성 합계 33.3 GB, 앱 TOP 5 · 시스템 프로세스 제외, 단축키 ⌘2 value=nil frame=Optional((985.0, 309.0, 264.0, 169.0))
+AX id=DashboardDetail role=AXScrollArea title= desc= value=nil frame=Optional((1262.0, 154.0, 400.0, 480.0))
+AX id=MemoryDetailClose role=AXButton title= desc=닫기 value=nil frame=Optional((1599.5, -561.0, 46.5, 24.0))
+AX id=NetworkCard role=AXButton title= desc=Network 카드, 일부 수집 실패: 물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다, 확인된 일부 합계 다운로드 26.8 KB/s, 업로드 0.0 B/s, 일부 수집 실패: 대상 identity 또는 물리 정보 일부 미확인, 활성 확인 4개 · 논리·Wi-Fi·가상 · 상태 미확인 8개, 단축키 ⌘3 value=nil frame=Optional((985.0, 484.0, 264.0, 112.0))
+AX id=DiskCard role=AXButton title= desc=Disk 카드, 정상 측정, 현재 Read 0.0 B/s, Write 23.4 MB/s, 보조 정보 확인됨, 저장 공간 전체 994.7 GB, 사용 가능 834.9 GB, 사용 가능은 macOS 회수 가능한 공간 포함, 사용 중은 전체에서 사용 가능을 뺀 값이며 실제 파일 점유량이 아님, APFS 공유 공간이며 볼륨별 독점 사용량이 아님, Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 0–47.7 MB/s, 현재 측정, 수집 공백은 이어 그리지 않음, 데이터 수집 중 · 01:19 / 10:00, 단축키 ⌘4 value=nil frame=Optional((985.0, 602.0, 264.0, 112.0))

@@ -1,0 +1,3 @@
+CAPTURE wall=2026-10-09T04:11:20Z waiting-for-unlock pid=62528 path=/tmp/rr-task015-probe/system-after.png
+CAPTURE wall=2026-10-09T04:11:55Z unlock-notification
+CAPTURE wall=2026-10-09T04:12:00Z pid=62528 missing-app-window path=/tmp/rr-task015-probe/system-after.png

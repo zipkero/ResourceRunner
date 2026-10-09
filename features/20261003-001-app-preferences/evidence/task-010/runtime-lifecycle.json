@@ -1,0 +1,94 @@
+[{
+  "timezoneName" : "",
+  "messageType" : "Default",
+  "eventType" : "logEvent",
+  "source" : null,
+  "formatString" : "initial snapshot: %{public}s",
+  "userID" : 501,
+  "activityIdentifier" : 0,
+  "subsystem" : "com.zipkero.ResourceRunner",
+  "category" : "SystemLifecycle",
+  "threadID" : 56490242,
+  "senderImageUUID" : "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+  "backtrace" : {
+    "frames" : [
+      {
+        "imageOffset" : 52160,
+        "imageUUID" : "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+      }
+    ]
+  },
+  "bootUUID" : "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+  "processImagePath" : "\/Users\/zipkero\/Library\/Developer\/Xcode\/DerivedData\/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz\/Build\/Products\/Debug\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner",
+  "senderImagePath" : "\/private\/tmp\/rr-task010-derived\/Build\/Products\/Debug\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner.debug.dylib",
+  "timestamp" : "2026-10-09 09:22:41.779637+0900",
+  "machTimestamp" : 85115794616772,
+  "eventMessage" : "initial snapshot: SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)",
+  "processImageUUID" : "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+  "traceID" : 12489215175032836,
+  "processID" : 2447,
+  "senderProgramCounter" : 52160,
+  "parentActivityIdentifier" : 0
+},{
+  "timezoneName" : "",
+  "messageType" : "Default",
+  "eventType" : "logEvent",
+  "source" : null,
+  "formatString" : "initial snapshot: %{public}s",
+  "userID" : 501,
+  "activityIdentifier" : 0,
+  "subsystem" : "com.zipkero.ResourceRunner",
+  "category" : "SystemLifecycle",
+  "threadID" : 56491098,
+  "senderImageUUID" : "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+  "backtrace" : {
+    "frames" : [
+      {
+        "imageOffset" : 52160,
+        "imageUUID" : "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+      }
+    ]
+  },
+  "bootUUID" : "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+  "processImagePath" : "\/Users\/zipkero\/Library\/Developer\/Xcode\/DerivedData\/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz\/Build\/Products\/Debug\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner",
+  "senderImagePath" : "\/private\/tmp\/rr-task010-derived\/Build\/Products\/Debug\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner.debug.dylib",
+  "timestamp" : "2026-10-09 09:22:54.405621+0900",
+  "machTimestamp" : 85116097640399,
+  "eventMessage" : "initial snapshot: SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)",
+  "processImageUUID" : "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+  "traceID" : 12489215175032836,
+  "processID" : 2728,
+  "senderProgramCounter" : 52160,
+  "parentActivityIdentifier" : 0
+},{
+  "timezoneName" : "",
+  "messageType" : "Default",
+  "eventType" : "logEvent",
+  "source" : null,
+  "formatString" : "initial snapshot: %{public}s",
+  "userID" : 501,
+  "activityIdentifier" : 0,
+  "subsystem" : "com.zipkero.ResourceRunner",
+  "category" : "SystemLifecycle",
+  "threadID" : 56491694,
+  "senderImageUUID" : "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7",
+  "backtrace" : {
+    "frames" : [
+      {
+        "imageOffset" : 52160,
+        "imageUUID" : "9218417F-BEB2-3FA9-B2D7-FAB6C67B57E7"
+      }
+    ]
+  },
+  "bootUUID" : "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+  "processImagePath" : "\/Users\/zipkero\/Library\/Developer\/Xcode\/DerivedData\/ResourceRunner-cufxzwfvyfbittblhgjtdbdkjkuz\/Build\/Products\/Debug\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner",
+  "senderImagePath" : "\/private\/tmp\/rr-task010-derived\/Build\/Products\/Debug\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner.debug.dylib",
+  "timestamp" : "2026-10-09 09:23:03.157749+0900",
+  "machTimestamp" : 85116307691466,
+  "eventMessage" : "initial snapshot: SystemLifecycleSnapshot(revision: 0, lowPowerMode: false, screenLockState: ResourceRunner.ScreenLockState.unlocked, displayAsleep: false, sessionActive: true, systemAsleep: false, boundarySequence: 0)",
+  "processImageUUID" : "83E68B7A-9D59-3D56-B654-CCC4255760DF",
+  "traceID" : 12489215175032836,
+  "processID" : 2967,
+  "senderProgramCounter" : 52160,
+  "parentActivityIdentifier" : 0
+}]

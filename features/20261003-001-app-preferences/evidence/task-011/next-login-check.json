@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-10-09T10:33:15.665228+09:00",
+  "userReport": "로그인했는데 켜져있는데?",
+  "userStartupWindows": "메뉴바에만 나타남",
+  "commands": {
+    "process": {
+      "argv": [
+        "/bin/ps",
+        "-p",
+        "64258",
+        "-o",
+        "pid,ppid,lstart,command"
+      ],
+      "exitCode": 0,
+      "stdout": "  PID  PPID STARTED                      COMMAND\n64258     1 Fri Oct  9 10:31:02 2026     /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner\n",
+      "stderr": ""
+    },
+    "console": {
+      "argv": [
+        "/usr/bin/who"
+      ],
+      "exitCode": 0,
+      "stdout": "zipkero          ttys001      Oct  9 10:31 \nzipkero          ttys002      Oct  9 10:31 \nzipkero          ttys003      Oct  9 10:31 \nzipkero          ttys004      Oct  9 10:32 \nzipkero          console      Oct  9 10:31 \n",
+      "stderr": ""
+    },
+    "executableSHA256": {
+      "argv": [
+        "/usr/bin/shasum",
+        "-a",
+        "256",
+        "/Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner"
+      ],
+      "exitCode": 0,
+      "stdout": "4b1bbb1da9e36cc5f7f217eb93b8e7c5a06b2bf9b20e101581b849fa41acc0de  /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner\n",
+      "stderr": ""
+    },
+    "signature": {
+      "argv": [
+        "/usr/bin/codesign",
+        "--verify",
+        "--deep",
+        "--strict",
+        "/Users/zipkero/Applications/ResourceRunner.app"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "readOnlyObservation": "앱 launch/open/activate 및 XCTest 실행 없이 NSWorkspace, AXUIElementCopyAttributeValue, CGWindowListCopyWindowInfo 조회만 수행"
+}

@@ -21,6 +21,8 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
 
 ## 체크리스트
 
+2026-10-09 확장: 승인 SPEC §5.14~16·DESIGN DP10~13을 task012~016으로 구현합니다. main이 analyzer의5개 후보를 채택했습니다. 기존001~011 승인·기본값·과거 근거는 유지하며 새 선택의 완료 근거로 확대하지 않습니다. 순서대로 선행 승인을 확인합니다. worker는 공유 파일의 해당 책임 구역만 수정하고 다른 미커밋을 되돌리지 않습니다. 문서 승인·상태는 main 소유, 추가 사용자 결정은 없습니다.
+
 - [x] task-001: 검증된 일반 설정 snapshot과 저장·복원
   - 목적: 지원 설정만 저장·게시하고 잘못된 값은 기본값으로 복구하는 단일 일반 설정 원본을 완성합니다.
   - 접근: 선행 없음. 새 `AppPreferences`·enum·`PreferencesStore`·저장 adapter를 구성합니다. 출발점은 `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`입니다. `UserDefaults.standard`의 `preferences.v1` dictionary에 schemaVersion 1·여섯 Bool·두 enum raw value만 저장합니다. dictionary/schema 오류는 전체 기본값, 지원 dictionary의 필드 오류는 해당 기본값으로 복구합니다. snapshot·revision을 함께 게시하고 복원은 한 snapshot으로 처리합니다. 초기 배선은 task-005, 로그인은 task-004가 소유합니다.
@@ -102,7 +104,7 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
   - 참조: SPEC §5.1, §5.2, §5.3, §5.4, §5.5, §5.9, §5.11, §5.12, §5.13; DESIGN §1.3, §1.4, §2.6, §3.1, §3.2, §3.3, §3.5, §4.2, §5 DP1, DP2, DP7, DP8.
   - 승인 근거: 2026-10-04 main이 독립 verifier approved 후보를 최종 확정했습니다. HEADdf90292 기준9파일 SHA/patch 현재 대응, 기존 signed 단위46/46·Debug UI18/18·격리 Release UI1/1·실패/skip0와 최종 Release build를 확인했습니다. 단일창·접근·설정·복원·키보드/AX·key 설정창 보호를 승인하며 실제 native mutation/다음로그인은011에 남깁니다. [task-009 근거](./evidence/task-009/README.md). 구현 재시도0·근거 재검증0; 테스트 재실행 없음·신규 SPEC 전체 완료 없음.
 
-- [ ] task-010: 설정 통합 동작과 기본 구성 회귀
+- [x] task-010: 설정 통합 동작과 기본 구성 회귀
   - 목적: 실제 앱에서 같은 설정 계약을 사용하고 기본 수집·표시 의미·배포 제약을 유지하는지 판정합니다.
   - 접근: 선행 task-001~task-009. 출발점은 `ResourceRunner/ApplicationCoordinator.swift`, `ResourceRunner/CollectionPipelines.swift`, `ResourceRunner/DashboardView.swift`, `ResourceRunner/CollectionDeliveryStore.swift`, `ResourceRunnerTests/IntegratedDashboardSummaryTests.swift`, `ResourceRunnerUITests/OneSessionMonitoringIntegrationUITests.swift`입니다. 선행 근거를 연결하고 새 통합 검증은 시작·재실행·연속 변경·복원·창/포커스 등 경계 간 동작에 한정합니다. mock·격리 adapter로 실제 로그인 등록·로그아웃 없이 판정합니다.
   - 검증 조건:
@@ -111,7 +113,10 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
     - 확인: 관련 단위·렌더·UI와 Debug/Release 빌드를 확인하고 실제 앱의 변경→재실행 첫 화면/일정→복원을 관찰합니다. 저장 payload·이력 초기화·profile apply 횟수·Release 접근·16개 카드/두 TOP 5 조합 근거, 기존 수집·summary/detail·AX를 대조합니다. 필수 미확인 항목은 이유를 적고 승인하지 않습니다. 다음 로그인·M3 보류를 완료 처리하지 않습니다.
   - 참조: SPEC §5.1~§5.9, §5.11, §5.12, §5.13; DESIGN §1.1~§1.4, §2.1~§2.6, §3.1~§3.6, §4.1, §4.2, §5 DP1~DP9.
 
-- [ ] task-011: 실제 mainApp 등록·해제와 다음 로그인 실행
+  - 승인 근거: 2026-10-09 독립 verifier의 재판정 approved를 main이 최종 확정했습니다. HEAD5435c7d와 제품/테스트3파일·상위문서2파일 미커밋 patch·24소스 SHA 대응, signed 관련 단위24/24·실제 UI1/1·Release build를 확인했습니다. 실제 UI 재실행 PID2447→2728→2967의 첫 scheduler apply·초기 lifecycle·DEBUG dylib UUID/SHA를 대조해 저장 매우 절전10초와 복원 후 기본2초/process5초를 확인했습니다. 기존64렌더조합·포커스·Release접근·Disk 승인 근거를 인수했으며 SPEC §5.1~§5.8이 성립합니다. [task-010 근거](./evidence/task-010/README.md). 최초 evidence reject는 이력으로 보존하고 현재 reject에서 제거합니다. 구현 재시도0·근거 재검증1; 보완 중 suite 재실행·native 로그인 mutation 없음. task-011·M3 취소6개/보류 관문·IMPLEMENT 전체는 미완료입니다.
+
+- [x] task-011: 실제 mainApp 등록·해제와 다음 로그인 실행
+  - 승인 근거: 2026-10-09 독립 verifier의 재판정 approved를 main이 확정했습니다. native UI5/5·실패/skip0과 현재9파일 SHA/고정 Release 서명 대응, 사용자 별도 승인 후 실제 다음 로그인 근거를 대조했습니다. 새 console 로그인10:31과 loginwindow의10:31:02.665 performAutolaunch, 같은 경로의 PID64258/시작 시각이 일치합니다. 비활성 읽기 전용 AX창0·화면 표시창0과 사용자 메뉴바만 표시 관찰로 창·대시보드 비자동 열림을 확인했습니다. SPEC §5.9~§5.13 성립, 모든11개Task 승인으로 IMPLEMENT 완료입니다. [실제 검증 근거](./evidence/task-011/README.md). 구현 재시도0·근거 재검증1, 최초 evidence reject는 이력으로 보존하고 현재 reject에서 제거합니다. suite 재실행·제품 코드 변경 없음.
   - 목적: 실제 macOS에서 로그인 상태·다음 로그인 자동 실행을 관찰해 native 계약을 최종 판정합니다.
   - 접근: 선행 task-010. 출발점은 구현된 `LoginItemService`·`LoginItemController`, `ResourceRunner/AppDelegate.swift`, `ResourceRunner/ApplicationCoordinator.swift`, 빌드 설정·entitlement 원본입니다. main이 당시 운영 접근·사용자 승인 범위를 확인하고 같은 bundle identifier·서명·entitlement의 앱을 안정된 경로에서 실제 adapter로 관찰합니다. 등록 bundle을 다른 빌드/경로로 바꾸지 않습니다. 로그아웃·재부팅 등 세션 영향은 그 시점의 별도 승인 범위 안에서만 진행합니다.
   - 검증 조건:
@@ -119,23 +124,86 @@ M3 task014/015 보류와 기존 승인은 유지하며 해당 관문을 재개�
     - 확인: 대상 macOS·arm64·Sandbox·LSUIElement·번들/실행 파일·서명·Helper/package 없음, 초기 status/mutation 없음, native 결과·macOS 항목, 승인/철회 후 재확인·UI/AX·필요 동작을 기록합니다. 다음 로그인의 실행 시각·bundle 경로로 수동 실행·이전 창 복원과 구분합니다. 해제·복원과 일반/로그인 결과 분리도 확인합니다. mock·status·수동 실행만으로 승인하지 않습니다. 필수 환경·권한·증거가 없으면 이유·SPEC 영향을 반환하고 미승인으로 남깁니다.
   - 참조: SPEC §5.9, §5.10, §5.11, §5.12, §5.13; DESIGN §1.3, §2.6, §3.5, §4.1, §4.3, §5 DP1, DP2, DP8.
 
+- [x] task-012: 새 세 설정의 additive 저장·복원
+  - 승인 근거(2026-10-09): 독립 verify approved를 main이 확정했습니다. HEAD5435c7d 작업트리의3파일SHA/patch와 signedPreferencesStoreTests10/10·실패/skip0 원본xcresult를대조했습니다. 기존schema1/9키 비기본보존·새3필드개별오류복구·strictBool/enum·10/20/50roundtrip·12키·초기write0·개별변경/복원snapshot/write/callback/revision1회·설정만영속화가충족됐습니다. `evidence/task-012/README.md`. 구현재시도0·근거재검증0, 완료SPEC조건없음. UI/수집/behavior는후속Task입니다.
+  - 목적: 기존 설정을 보존하며 시스템 포함·상세 정원·자동 닫기를 유효 snapshot으로 저장·복원합니다.
+  - 접근: 선행001/004/011. 소유 `AppPreferences.swift`, `PreferencesStore.swift`, `PreferencesStoreTests.swift`. `includesSystemProcesses=false`, `detailListLimit=twenty`, `automaticallyClosesPopover=true`; enum `ten`/`twenty`/`fifty`에서10/20/50을 유도합니다. preferences.v1/schema1·기존 키/raw value·snapshot/revision 계약을 유지합니다. 로그인·수집·UI 배선은 후속 Task입니다.
+  - 검증 조건:
+    - 결과: 이전 payload의 새 필드 누락은 새 기본값만 복구하고 기존 비기본 선택을 보존합니다. Bool은 실제 Boolean, 정원은 정확한 enum 문자열만 허용합니다. 필드 오류는 해당 기본값, container/schema 오류는 기존 전체 기본값입니다. 초기 쓰기0, 명시 변경/복원 저장·게시·revision 각1회, 설정만 영속화합니다.
+    - 확인: 격리 PreferencesStoreTests에서 이전 비기본 카드/TOP5/그래프/프로필, 각 새 필드 누락·숫자/문자열 Bool·숫자 정원·미지원 문자열·세 정원 round-trip을 검증합니다. 각각 변경/전체 복원의 snapshot·callback·쓰기 횟수와12키/schema1·Bool/enum 타입을 대조합니다. 기존9키 단언을 확장하며 기존 값 보존·fresh store 수집 데이터 부재를 확인합니다.
+  - 참조: SPEC §5.7, SPEC §5.8, SPEC §5.9, SPEC §5.13, SPEC §5.14, SPEC §5.15, SPEC §5.16, DESIGN §1.2, DESIGN §2.6, DESIGN §4.2, DESIGN §4.3
+
+- [x] task-013: 읽기 가능한 시스템 항목과 제한 전 두 순위 자료
+  - 승인 근거(2026-10-09): main이 독립 verifier의 approved를 확정했습니다. 현재 소유10파일 SHA와 최종patch71a82fe의 원본/격리 대응, 원본24suite92/92·실패/skip0, 동일 소스 격리 전체679/679 및 Release/서명을 확인했습니다. UID별 실제 조회·소속변경 단절·실패범위 구분, 필터 후 두 unbounded 순위·하위 목록, 50그룹·기존3/21링·resolver512, 최신cache/역순/epoch/admission와 메뉴바 독립 진행이 충족됐습니다. [task-013 근거](./evidence/task-013/README.md). 구현 재시도0·근거 재검증0, 이번에 완료되는 SPEC 전체 조건은 없습니다. 설정 UI·즉시 표시 선택은014에서 구현합니다.
+  - 목적: 같은 조사에서 제외/포함 정확한 순위·하위 목록을 확보하고 최신 자료만 제한된 메모리에 보관합니다.
+  - 접근: 선행012. 소유 `ProcessSurvey.swift`, `ProcessSurveyCollector.swift`, `ProcessHistoryStore.swift`, `ApplicationRanking.swift`, `CollectionDeliveryStore.swift`, coordinator의 consumeProcessRanking 구역 및 해당 테스트. UID 사전 제외를 제거하고 기존 task-info/현재 경로 조회를 적용합니다. 조사 당시 소속을 전달하며 소속 변경은 exec처럼 평활화/기준점을 단절합니다. 독립 소비에서 소속 선별 후 앱 집계/정렬한 두 자료를 만들고20개로 선절단하지 않습니다. 캐시는 최신 자료·시각·실패 상태·epoch·순서를 보관합니다. 후속 표시 전에도 기본 제외/20 의미를 유지합니다.
+  - 검증 조건:
+    - 결과: 현재 UID의 Apple 경로는 기본에도 유지, 다른 UID의 실제 읽기 성공만 포함합니다. 항목 실패/종료/경로 실패 격리·전체 열거 실패·혼합 소속 그룹의 제외 합계/하위 격리를 유지합니다. CPU/Memory 최대3 평균·조사시각600초/최고령 기준점·30초/21링·PID재사용/exec/종료 제거를 유지합니다. 실패 수와 제외 수를 구별하며 admission/동일epoch순서로 오래된 자료를 거릅니다.
+    - 확인: 주입 reader의 UID별 조회·항목/전체 실패, PID재사용/exec/소속 변경·혼합 UID 같은 앱의 두 자료 원시 기대값을 대조합니다. 시스템 상위20+뒤 사용자 자료로 필터 전 절단 오류, 최소50개 그룹·동률/nil·실패 보존·최신한조사·resolver512·3/21링·종료 제거를 확인합니다. 대기계산/역순/새epoch/중지늦은결과와 시스템지표/메뉴바 독립 진행을 검증합니다. source/timer 추가가 없음을 원본으로 대조합니다.
+  - 참조: SPEC §5.6, SPEC §5.13, SPEC §5.14, SPEC §5.15, DESIGN §2.3, DESIGN §2.7, DESIGN §3.7, DESIGN §4.3
+
+- [x] task-014: 시스템 포함·상세 정원의 즉시 표시와 두 설정 UI
+  - 재승인 근거(2026-10-09): main이 독립 verifier approved를 확정했습니다. 보완2파일 SHA/patch와 signed17/17·실패/skip0 원본xcresult 대응, 정상/실패/중지의 현재 포함 범위·제외/읽기실패 수·TOP5고정/숨김을 확인했습니다. 기존014 조건은 영향 구분해 인수하고 실제AX 최종관문은016에서 이어갑니다. 구현 보완1회·근거재검증0회, 완료SPEC조건 없음.
+  - 재개 사유(2026-10-09): task016 실제 AX에서 상세 목록은 포함/TOP50인데 CPU·Memory 카드 AX 설명의 static 기본값이 제외로 고정된 결함을 발견했습니다. 기존 승인 이력을 보존하고 이 범위만 수정·단위 및 실제 AX 재검증합니다. 다른 task014 조건·012/013/015 승인은 유지하며 선행 영향은016에서 대조합니다. main 확정 원인 소유는 DashboardPresentation.swift 및 해당 테스트입니다.
+  - 승인 근거(2026-10-09): main이 독립 verifier approved를 확정했습니다. 현재12파일SHA/patch와 원본signed18suite94/94·실패/skip0, 고유bundle UI8/8·최종설정UI1/1, Release/엄격서명 성공을 대조했습니다. 현재snapshot의 cached 즉시선택·공통10/20/50·TOP5/하위보존, 빈/older/newEpoch/중지 상태와 시각·그래프·일정불변, 키보드/AX가 충족됐습니다. 일반조사 동일앱복귀 펼침 기대값은 유지하고 필터/정원에서만 cleanup하도록 보완했습니다. 초기잘못된cwd UI와 Release테스트타깃 직접빌드실패는 승인근거에서 제외한 이력입니다. [task-014 근거](./evidence/task-014/README.md). 구현 재시도0·근거 재검증0, 완료SPEC조건 없음. 자동닫기015·최종실제관문016 진행.
+  - 목적: 현재 선택을 사용량/증가량·상세·안내/AX에 즉시 적용하고 TOP5·하위 목록·포커스를 보존합니다.
+  - 접근: 선행013. 소유 DashboardPresentation/Store/View, PreferencesView, SettingsWindowController, coordinator 초기/PreferencesPipelineBinding/표시 소비와 해당 단위·SettingsWindow/ProcessList/Expansion UI 테스트. 두 자료를 표시 경계에 보존하고 현재 snapshot으로 자료/정원/AX를 유도합니다. 캐시로 즉시 재표시하고 다음tick/조사/source를 기다리지 않습니다. Toggle·10/20/50 Picker를 단일창에 연결합니다.
+  - 검증 조건:
+    - 결과: 선별→집계→정렬→펼친순서안정화→정원 적용, CPU/Memory 그룹/증가량 공통10/20/50·TOP5고정5·하위무절단·실제부족수 유지. 안내/AX·10분 증가량 정의 일치, 대표값/원본시각/상태/그래프/창/일정 불변. 사라진 펼친 앱/포커스만 정리하고 남은 목록·상세/복귀 유지, last-known을 최신 성공으로 바꾸지 않습니다.
+    - 확인: 두tick 대기 fixture의 포함on/off·10→50→20 즉시성과 source/일정apply 증가0,20밖 사용자/50그룹/혼합UID/동률/nil/부족/펼친안정화·제거를 원시합계/AX에 대조합니다. 늦은조사/역순설정/epoch/중지실패의 현재선택·시각/과거상태 확인. Tab/Space/Return/Picker로 컨트롤·현재값·설명·스크롤에 도달합니다. 단축키·400×480 상세/앵커·본체무스크롤 유지. persistence/전체회귀는016에서 연결합니다.
+  - 참조: SPEC §5.3, SPEC §5.6, SPEC §5.7, SPEC §5.9, SPEC §5.12, SPEC §5.13, SPEC §5.14, SPEC §5.15, DESIGN §1.2, DESIGN §2.1, DESIGN §2.7, DESIGN §3.1, DESIGN §3.3, DESIGN §3.7, DESIGN §4.3
+
+- [x] task-015: 본체 자동 닫기·명시적 Escape와 설정 배선
+  - 승인 근거(2026-10-09): main이 독립 verifier approved를 확정했습니다. 현재7파일SHA/patch·고유clone 대응과 signed단위41/41(동적47)·실패/skip0, 최종고유UI5/5·기존상세scroll1/1·Release/엄격서명 성공을 대조했습니다. 최초/current behavior·동일값 idempotence·열린identity/선택/delegate0·stalecallback·일정불변, 소유Escape 상세우선/본체명시닫기·nil소비·타창/PageUpDown 비간섭, Toggle실키/AX가 충족됐습니다. 설정창 실제 key/main 보호는 별도 관찰계측과 최종Tab/AX로 확인했고 계측은 최종원본/clone에서 제거했습니다. [task-015 근거](./evidence/task-015/README.md). 구현 재시도0·근거 재검증0, 완료SPEC조건 없음. 실제외부/재실행·복원관문은016에서 진행합니다.
+  - 목적: 최초/열린 본체에 자동 닫기를 반영하며 명시적 닫기·상세 복귀·설정창 포커스를 유지합니다.
+  - 접근: 선행014. 소유 StatusBarController/PreferencesView, coordinator StatusBar초기/설정전달/keyboardDismiss, 관련 controller/coordinator/SettingsWindow·새팝오버 테스트. 최초/현재snapshot으로 `.transient`/`.applicationDefined`, 소유 로컬키 Escape 상세우선→본체performClose, 단일창 Toggle를 연결합니다.
+  - 검증 조건:
+    - 결과: 열린behavior만 바꾸고 재생성/강제재개폐/선택제거/syntheticdelegate 없음. 토글/명시닫기 유지, 타앱/설정키 비간섭·key설정/지연포커스 보호. 실제delegate만lifecycle 갱신, 끔에서도 모든화면중지 우선. 상세고정/시간닫기로 확대하지 않습니다.
+    - 확인: 최초값/연속변경/복원의behavior·identity·선택·delegate횟수, Escape본체/상세·외부창키·토글·PageUpDown·key설정/늦은callback을 검증합니다. 기존lifecycle근거로 중지/새기준점 대조, 실제Toggle키보드/AX/current 확인. behavior 단위만으로§5.16완료하지않으며 실제외부관문은016입니다.
+  - 참조: SPEC §5.5, SPEC §5.6, SPEC §5.7, SPEC §5.9, SPEC §5.12, SPEC §5.13, SPEC §5.16, DESIGN §1.2, DESIGN §1.3, DESIGN §2.1, DESIGN §2.2, DESIGN §3.1, DESIGN §3.3, DESIGN §3.7, DESIGN §4.3
+
+- [x] task-016: 확장 설정의 실제 상호작용·재실행과 기본 회귀
+  - 승인 근거(2026-10-09): main이 독립 verifier approved를 확정했습니다. 현재10파일SHA/patch·제품/격리UI 대응과 원본전체단위690/690·실제선택UI21/21·50그룹fixture1/1·고유Release읽기전용1/1, 모두실패/skip0을 확인했습니다. 실제 외부클릭/Finder활성의 켬/끔·열린양방향전환, CPU/Memory사용량·증가량10/20/50과혼합UID하위/합계/경계/50행접근, 실제9→12키payload·재실행/복원/로그인실패분리·기존기본회귀를 충족했습니다. §5.1~5.9·5.11~5.16 성립, §5.10 선행011 승인을 유지하여 적용16개조건/16개Task 모두 완료입니다. [최종 근거](./evidence/task-016/README.md). task016 구현/근거재검증0회, 별도014 AX결함 보완1/근거재검증0회 이력 유지. 실제설치경로 반영은 main이 별도 기록합니다.
+  - 목적: 새 세 설정의 실제앱/AX·저장/즉시성/복원과 기존기본동작을 최종판정합니다.
+  - 접근: 선행012~015. 소유 관련 SettingsWindow/ProcessList/Expansion/OneSession UI·새팝오버suite, 필요한 AppDelegate/coordinator DEBUG fixture 분기만. 결정적50그룹/혼합UID와 고유suite를 주입하고 mocklogin으로 복원성공/로그인실패를 분리해 실제등록을 변경하지않습니다. native수집과 fixture를 구별합니다. 제품수정은원인Task로반환, 완료후 docs/product.md/design.md 현행설명갱신, 승인/ROADMAP는main소유입니다.
+  - 검증 조건:
+    - 결과: 포함/제외·10/20/50 사용량/증가량/하위/AX 일치, 기본제외/20. 켬은실제외부클릭/타앱활성닫힘·끔은유지, 열린양방향변경강제닫기/포커스탈취없음. 최초저장값·복원제외/20/켬+기존기본snapshot1회, 일반복원/로그인실패분리. 로그인mutation/수집영속화/Helper/package/entitlement추가없음.
+    - 확인: 고유 ResourceRunnerUITest. suite의 이전schema1→새기본·포함/50/끔변경→재실행첫화면/behavior→복원→재실행, 초기창비자동열림·payload/빈이력·AX·login초기mutation0/복원실패분리를 관찰합니다. 실제AppKit 켬/끔 각각외부클릭/타앱활성·열린양방향변경·토글/Escape본체상세/PageUpDown/key설정/늦은포커스와 delegate/lifecycle연결. native읽기가능프로세스/미확보안내확인, root성공추정금지. 50/혼합UID는실제렌더fixtureAX이며native성공주장금지. Debug영향단위/UI·Release빌드/읽기전용설정진입, 기존64표시조합·geometry·CPU/Memory계산/메뉴바/일정/600초·Network/Disk·decimalimportantUsage·로그인분리를현재소스대조. 동일독립근거재사용범위를설명하며 실제관문미확인은승인하지않습니다. M3실기기/M5장기성능을이번승인으로완료하지않습니다.
+  - 참조: SPEC §5.1, SPEC §5.2, SPEC §5.3, SPEC §5.4, SPEC §5.5, SPEC §5.6, SPEC §5.7, SPEC §5.8, SPEC §5.9, SPEC §5.11, SPEC §5.12, SPEC §5.13, SPEC §5.14, SPEC §5.15, SPEC §5.16, DESIGN §1.2, DESIGN §2.1, DESIGN §2.6, DESIGN §2.7, DESIGN §3.1, DESIGN §3.3, DESIGN §3.6, DESIGN §3.7, DESIGN §4.2, DESIGN §4.3
+
+### 확장 검증 명령과 근거
+
+cwd 프로젝트루트, 기존scheme/서명 유지, UI직렬. 아래형식의 실제suite명·새Task별경로를 사용하고 실행0/skip/본문전인증실패를통과로계산하지않습니다. 관련새사례/영향회귀를선택하며전체suite를무조건반복하지않습니다.
+
+```sh
+xcodebuild test -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination 'platform=macOS,arch=arm64' -parallel-testing-enabled NO -derivedDataPath <새경로> -resultBundlePath <새결과경로> -only-testing:<target/suite> CODE_SIGNING_ALLOWED=YES
+xcodebuild build -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Release -destination 'platform=macOS,arch=arm64' -derivedDataPath <새Release경로> CODE_SIGNING_ALLOWED=YES
+```
+
+012 PreferencesStoreTests;013 ProcessSurveyCollector/ProcessHistoryStore/ApplicationRanking/ApplicationCoordinatorTests;014 DashboardPresentation/PreferencesVisibility/ApplicationCoordinator/RankingTests+SettingsWindow/ProcessList/ExpansionUITests;015 StatusBarController/ApplicationCoordinator/MonitoringLifecycle/DashboardViewportTests+SettingsWindow/새팝오버UI;016 해당영향suite와 OneSessionMonitoringIntegrationUITests를 선택합니다. Release 접근은 SettingsWindowUITests/testReadOnlyStatusMenuSettingsAccess를 Release로선택합니다. 실제외부관문은자동UI 또는같은서명앱 AX/화면 관찰로실동작근거를남깁니다. 로그인변경/로그아웃은안합니다. Task별명령·case/실패/skip·xcresult·diff/SHA·앱/runner서명·DEBUG실제dylib·fixture/native·시각/화면AX·한계를남기며 고유suite/프로세스/창은정리합니다.
+
 ## 완료 조건 매핑
 
 | SPEC | Task |
 | --- | --- |
-| §5.1 설정 접근·전체 숨김 복구 | task-007, task-009, task-010 |
-| §5.2 카드·상세 정리·기본 배치 | task-005, task-007, task-008, task-009, task-010 |
-| §5.3 TOP 5·대표값/상세 보존 | task-007, task-009, task-010 |
-| §5.4 CPU·Disk1/5/10분 | task-005, task-006, task-009, task-010 |
-| §5.5 프로필·생명주기 | task-002, task-003, task-005, task-009, task-010 |
-| §5.6 일정·단일 실행·차분/단절 | task-002, task-003, task-005, task-010 |
-| §5.7 저장·최초 적용·제한 이력 | task-001, task-003, task-005, task-006, task-010 |
-| §5.8 잘못된 저장값 | task-001, task-005, task-010 |
-| §5.9 기본값 복원·로그인 결과 | task-001, task-004, task-009, task-010, task-011 |
+| §5.1 설정 접근·전체 숨김 복구 | task-007, task-009, task-010, task-016 |
+| §5.2 카드·상세 정리·기본 배치 | task-005, task-007, task-008, task-009, task-010, task-016 |
+| §5.3 TOP 5·대표값/상세 보존 | task-007, task-009, task-010, task-014, task-016 |
+| §5.4 CPU·Disk1/5/10분 | task-005, task-006, task-009, task-010, task-016 |
+| §5.5 프로필·생명주기 | task-002, task-003, task-005, task-009, task-010, task-015, task-016 |
+| §5.6 일정·단일 실행·차분/단절 | task-002, task-003, task-005, task-010, task-013, task-014, task-015, task-016 |
+| §5.7 저장·최초 적용·제한 이력 | task-001, task-003, task-005, task-006, task-010, task-012, task-014, task-015, task-016 |
+| §5.8 잘못된 저장값 | task-001, task-005, task-010, task-012, task-016 |
+| §5.9 기본값 복원·로그인 결과 | task-001, task-004, task-009, task-010, task-011, task-012, task-014, task-015, task-016 |
 | §5.10 실제 mainApp 로그인 실행 | task-004, task-011 |
-| §5.11 실제 상태·실패/승인 | task-004, task-005, task-009, task-010, task-011 |
-| §5.12 키보드·AX·단축키/복귀 | task-007, task-008, task-009, task-010, task-011 |
-| §5.13 기존 의미·개인정보·배포 | task-001~task-011 |
+| §5.11 실제 상태·실패/승인 | task-004, task-005, task-009, task-010, task-011, task-016 |
+| §5.12 키보드·AX·단축키/복귀 | task-007, task-008, task-009, task-010, task-011, task-014, task-015, task-016 |
+| §5.13 기존 의미·개인정보·배포 | task-001~task-016 |
+| §5.14 시스템 프로세스 포함·집계·의미 보존 | task-012, task-013, task-014, task-016 |
+| §5.15 상세10/20/50·TOP5·저장/복원 | task-012, task-013, task-014, task-016 |
+| §5.16 자동 닫기·명시적 닫기·포커스·저장/복원 | task-012, task-015, task-016 |
+
+DP10은012/014/015/016, DP11·DP12는013/014/016, DP13은015/016에서 확인했습니다. 2026-10-09 task016 최종 승인으로 기존13조건과 추가3조건의 모든 적용 매핑이 완료되어 전체 IMPLEMENT [x]입니다.
 
 DP1은 task-001/004/005/009/011, DP2는 task-008/009/011,
 DP3·DP4는 task-002, DP5는 task-002/003/006, DP6는 task-003/006,

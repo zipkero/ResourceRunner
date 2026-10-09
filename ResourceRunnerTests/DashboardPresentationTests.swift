@@ -706,6 +706,36 @@ struct CPUCardPresentationAssembleTests {
 /// task-008 검증 조건: 카드의 접근성 이름에 현재 사용률과 상태, TOP 5의 안내 문구가 포함됩니다.
 struct CPUCardAccessibilityLabelTests {
 
+    @Test func lastKnownCardAccessibilityKeepsCurrentIncludedScope() {
+        let presentation = CPUCardPresentation.assemble(cpu: cpuMetrics(), history: [],
+            topApplications: [], includesSystemProcesses: true, currentTimestamp: baseInstant)
+        let known = LastKnownCardValue(presentation: presentation, timestamp: baseInstant)
+        let failure = ResourceCardState<CPUCardPresentation>.failure(lastKnown: known)
+        let stopped = ResourceCardState<CPUCardPresentation>.stopped(lastKnown: known)
+        #expect(failure.cpuAccessibilityLabel.contains("수집 실패"))
+        #expect(failure.cpuAccessibilityLabel.contains("앱 TOP 5 · 읽기 가능한 시스템 프로세스 포함"))
+        #expect(stopped.cpuAccessibilityLabel.contains("수집 중지"))
+        #expect(stopped.cpuAccessibilityLabel.contains("앱 TOP 5 · 읽기 가능한 시스템 프로세스 포함"))
+        #expect(!stopped.cpuAccessibilityLabel(timeRange: .tenMinutes, showsTopApplications: false).contains("앱 TOP 5"))
+    }
+
+    @Test func cardAccessibilityUsesCurrentScopeAndFiveRowsEvenWithFiftyDetails() {
+        let included = CPUCardPresentation.assemble(cpu: cpuMetrics(), history: [],
+            topApplications: [], detailListLimit: 50, includesSystemProcesses: true,
+            unreadableCount: 2, currentTimestamp: baseInstant)
+        let includedLabel = ResourceCardState.normal(included, timestamp: baseInstant).cpuAccessibilityLabel
+        #expect(includedLabel.contains("앱 TOP 5 · 읽기 가능한 시스템 프로세스 포함 · 읽기 실패 2개"))
+        #expect(!includedLabel.contains("앱 TOP 50"))
+        #expect(!includedLabel.contains("시스템 프로세스 제외"))
+
+        let excluded = CPUCardPresentation.assemble(cpu: cpuMetrics(), history: [],
+            topApplications: [], detailListLimit: 10, excludedCount: 3,
+            unreadableCount: 1, currentTimestamp: baseInstant)
+        let excludedLabel = ResourceCardState.normal(excluded, timestamp: baseInstant).cpuAccessibilityLabel
+        #expect(excludedLabel.contains("앱 TOP 5 · 시스템 프로세스 제외 · 소속 기준 제외 3개 · 읽기 실패 1개"))
+        #expect(!excludedLabel.contains("시스템 프로세스 포함"))
+    }
+
     @Test func hiddenTopApplicationsRemoveOnlyRankingFromAccessibility() {
         let presentation = CPUCardPresentation.assemble(
             cpu: cpuMetrics(overallUsage: 55, userRatio: 40, systemRatio: 15),
@@ -1164,6 +1194,36 @@ struct MemoryCardPresentationAssembleTests {
 
 /// task-009 검증 조건: 카드 접근성 이름에 현재 단계와 사용 중 메모리가 포함됩니다.
 struct MemoryCardAccessibilityLabelTests {
+
+    @Test func lastKnownCardAccessibilityKeepsCurrentIncludedScope() {
+        let presentation = MemoryCardPresentation.assemble(memory: memoryMetricsForTests(),
+            history: [], topApplications: [], includesSystemProcesses: true, currentTimestamp: baseInstant)
+        let known = LastKnownCardValue(presentation: presentation, timestamp: baseInstant)
+        let failure = ResourceCardState<MemoryCardPresentation>.failure(lastKnown: known)
+        let stopped = ResourceCardState<MemoryCardPresentation>.stopped(lastKnown: known)
+        #expect(failure.memoryAccessibilityLabel.contains("수집 실패"))
+        #expect(failure.memoryAccessibilityLabel.contains("앱 TOP 5 · 읽기 가능한 시스템 프로세스 포함"))
+        #expect(stopped.memoryAccessibilityLabel.contains("수집 중지"))
+        #expect(stopped.memoryAccessibilityLabel.contains("앱 TOP 5 · 읽기 가능한 시스템 프로세스 포함"))
+        #expect(!stopped.memoryAccessibilityLabel(showsTopApplications: false).contains("앱 TOP 5"))
+    }
+
+    @Test func cardAccessibilityUsesCurrentScopeAndFiveRowsEvenWithFiftyDetails() {
+        let included = MemoryCardPresentation.assemble(memory: memoryMetricsForTests(), history: [],
+            topApplications: [], detailListLimit: 50, includesSystemProcesses: true,
+            unreadableCount: 4, currentTimestamp: baseInstant)
+        let includedLabel = ResourceCardState.normal(included, timestamp: baseInstant).memoryAccessibilityLabel
+        #expect(includedLabel.contains("앱 TOP 5 · 읽기 가능한 시스템 프로세스 포함 · 읽기 실패 4개"))
+        #expect(!includedLabel.contains("앱 TOP 50"))
+        #expect(!includedLabel.contains("시스템 프로세스 제외"))
+
+        let excluded = MemoryCardPresentation.assemble(memory: memoryMetricsForTests(), history: [],
+            topApplications: [], detailListLimit: 10, excludedCount: 5,
+            unreadableCount: 2, currentTimestamp: baseInstant)
+        let excludedLabel = ResourceCardState.normal(excluded, timestamp: baseInstant).memoryAccessibilityLabel
+        #expect(excludedLabel.contains("앱 TOP 5 · 시스템 프로세스 제외 · 소속 기준 제외 5개 · 읽기 실패 2개"))
+        #expect(!excludedLabel.contains("시스템 프로세스 포함"))
+    }
 
     @Test func hiddenTopApplicationsKeepCompositionPressureAndSwapInAccessibility() {
         let presentation = MemoryCardPresentation.assemble(
@@ -2363,5 +2423,119 @@ struct HistoryGraphGridlinePlaceholderDrawOrderTests {
         // 위 두 배열 단언이 그 사실을 목록 전수로 잡습니다.
         #expect(HistoryGraphGridline.placeholderDrawOrder.count == 1)
         #expect(HistoryGraphView.drawOrder.count == 5)
+    }
+}
+
+@MainActor
+struct DashboardRankingSelectionTests {
+    @Test func emptyAndOlderRankingCacheStillRefreshCurrentCaptionsAndLimits() {
+        let dashboard = DashboardPresentationStore()
+        let cache = ProcessRankingDeliveryCache()
+        dashboard.attachRankingCache(cache)
+        let now = ContinuousClock().now
+        let display = SystemMetricsDisplayValue(latest: TimestampedSample(timestamp: now,
+            value: SystemMetricsSample(cpu: .success(cpuMetrics()), memory: .success(memoryMetricsForTests())),
+            collectionEpoch: 1), recentHistory: [])
+        dashboard.updateCPUCard(with: display, topApplications: [], currentTimestamp: now)
+        dashboard.updateMemoryCard(with: display, topApplications: [], currentTimestamp: now)
+        var choices = AppPreferences.defaults
+        choices.includesSystemProcesses = true
+        choices.detailListLimit = .fifty
+        dashboard.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 1))
+        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsLimit == 50)
+        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsExclusionNote.contains("시스템 프로세스") == true)
+        #expect(dashboard.memoryCard.lastKnownValue?.presentation.detail.recentIncreaseRanking.isEmpty == true)
+
+        let empty = ApplicationRankingSample(cpuUsage: [], memoryUsage: [], memoryIncrease: [], unreadableCount: 0)
+        let material = ProcessRankingMaterial(ranking: empty, groups: [], excludedCount: 0)
+        #expect(cache.update(materials: ProcessRankingMaterials(currentUser: material, allReadable: material),
+            surveyFailed: false, timestamp: now - .seconds(1), collectionEpoch: 0, deliverySequence: 1))
+        choices.includesSystemProcesses = false
+        choices.detailListLimit = .ten
+        dashboard.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 2))
+        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsLimit == 10)
+        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsExclusionNote.contains("포함되지") == true)
+        #expect(dashboard.cpuCard.lastKnownValue?.presentation.topApplications.isEmpty == true)
+        if case .normal(_, let timestamp) = dashboard.cpuCard {
+            #expect(timestamp == now)
+        } else { Issue.record("설정 변경이 현재 시스템 표본 상태를 바꿨습니다") }
+    }
+    @Test func cachedMaterialsFollowCurrentSelectionImmediatelyAndPreserveStoppedTimestamp() {
+        let store = DashboardPresentationStore()
+        let cache = ProcessRankingDeliveryCache()
+        store.attachRankingCache(cache)
+        let now = ContinuousClock().now
+        let userEntries = (0..<30).map { index in
+            ApplicationRankingEntry(key: ApplicationKey(value: "user\(index)"),
+                displayName: "User \(index)", value: Double(30 - index))
+        }
+        let systemEntries = (0..<55).map { index in
+            ApplicationRankingEntry(key: ApplicationKey(value: "system\(index)"),
+                displayName: "System \(index)", value: Double(100 - index))
+        }
+        let user = ProcessRankingMaterial(ranking: ApplicationRankingSample(
+            cpuUsage: userEntries, memoryUsage: userEntries, memoryIncrease: userEntries,
+            unreadableCount: 2), groups: [], excludedCount: 55)
+        let all = ProcessRankingMaterial(ranking: ApplicationRankingSample(
+            cpuUsage: systemEntries + userEntries, memoryUsage: systemEntries + userEntries,
+            memoryIncrease: systemEntries + userEntries, unreadableCount: 2),
+            groups: [], excludedCount: 0)
+        #expect(cache.update(materials: ProcessRankingMaterials(currentUser: user, allReadable: all),
+            surveyFailed: false, timestamp: now, collectionEpoch: 0, deliverySequence: 1))
+        let display = SystemMetricsDisplayValue(latest: TimestampedSample(timestamp: now,
+            value: SystemMetricsSample(cpu: .success(cpuMetrics()),
+                memory: .success(memoryMetricsForTests())), collectionEpoch: 0),
+            recentHistory: [historyPoint(secondsFromBase: -30)])
+        store.updateCPUCard(with: display, topApplications: userEntries, currentTimestamp: now)
+        store.updateMemoryCard(with: display, topApplications: userEntries,
+            memoryIncrease: userEntries, currentTimestamp: now)
+        let originalGraph = store.cpuCard.lastKnownValue?.presentation.graphPoints
+        store.markCollectionStopped()
+        var choices = AppPreferences.defaults
+        choices.includesSystemProcesses = true
+        choices.detailListLimit = .fifty
+        store.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 1))
+        if case .stopped(let known) = store.cpuCard {
+            #expect(known?.timestamp == now)
+            #expect(known?.presentation.topApplications.first?.displayName == "System 0")
+            #expect(known?.presentation.detail.applicationsLimit == 50)
+            #expect(known?.presentation.detail.applicationsExclusionNote.contains("읽기 실패 2개") == true)
+            #expect(known?.presentation.graphPoints == originalGraph)
+        } else { Issue.record("중지 상태가 바뀌었습니다") }
+        if case .stopped(let known) = store.memoryCard {
+            #expect(known?.presentation.detail.recentIncreaseRanking.count == 50)
+            #expect(known?.presentation.detail.recentIncreaseRankingCaption.contains("시스템 프로세스") == true)
+        } else { Issue.record("중지 상태가 바뀌었습니다") }
+        #expect(cache.update(materials: ProcessRankingMaterials(currentUser: user, allReadable: all),
+            surveyFailed: true, timestamp: now + .seconds(1), collectionEpoch: 1, deliverySequence: 2))
+        store.refreshProcessRanking()
+        if case .stopped(let known) = store.cpuCard {
+            #expect(known?.timestamp == now)
+            #expect(known?.presentation.topApplicationsFailed == true)
+        } else { Issue.record("새 epoch의 조사가 중지 상태를 바꿨습니다") }
+        choices.includesSystemProcesses = false
+        choices.detailListLimit = .ten
+        store.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 2))
+        #expect(store.cpuCard.lastKnownValue?.presentation.topApplications.first?.displayName == "User 0")
+        #expect(store.cpuCard.lastKnownValue?.presentation.detail.applicationsExclusionNote.contains("소속 기준 제외 55개") == true)
+        #expect(store.memoryCard.lastKnownValue?.presentation.detail.recentIncreaseRanking.count == 10)
+        let baseline = SystemMetricsDisplayValue(latest: TimestampedSample(
+            timestamp: now + .seconds(2),
+            value: SystemMetricsSample(cpu: .success(nil), memory: .success(memoryMetricsForTests())),
+            collectionEpoch: 1), recentHistory: [])
+        store.updateCPUCard(with: baseline, topApplications: [], currentTimestamp: now + .seconds(2))
+        if case .stopped = store.cpuCard {} else { Issue.record("새 epoch의 기준점만으로 정상 상태가 되었습니다") }
+        let next = SystemMetricsDisplayValue(latest: TimestampedSample(
+            timestamp: now + .seconds(3),
+            value: SystemMetricsSample(cpu: .success(cpuMetrics()), memory: .success(memoryMetricsForTests())),
+            collectionEpoch: 1), recentHistory: [])
+        let selected = cache.snapshot(for: 1, includesSystemProcesses: false)
+        store.updateCPUCard(with: next, topApplications: selected.ranking?.cpuUsage ?? [],
+            topApplicationsFailed: selected.surveyFailed, currentTimestamp: now + .seconds(3))
+        if case .normal(let current, let timestamp) = store.cpuCard {
+            #expect(timestamp == now + .seconds(3))
+            #expect(current.topApplications.first?.displayName == "User 0")
+            #expect(current.detail.applicationsLimit == 10)
+        } else { Issue.record("정상 tick을 표시하지 못했습니다") }
     }
 }

@@ -13,7 +13,7 @@ final class SettingsWindowController: NSWindowController {
         self.activate = activate ?? { NSApp.activate() }
         let content = PreferencesView(preferencesStore: preferencesStore,
             loginController: loginController)
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 620),
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 670),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
         window.title = "ResourceRunner 설정"

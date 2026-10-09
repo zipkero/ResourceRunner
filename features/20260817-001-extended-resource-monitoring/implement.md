@@ -1,11 +1,15 @@
 # Network·Disk 확장 리소스 모니터링 구현
 
+## 2026-10-09 현재 실행 범위
+
+최신 사용자 지시로 Disk 기준 변경의 task002/006/008/011/013/018 재검증과 task015 잠금·시스템 절전·디스플레이 복귀 검증을 진행합니다. task002/006 승인 복구 완료, task014 Wi-Fi 실제 시험 승인 완료입니다. VPN·외장·유선 LAN·다른 계정 전환 실시험은 SPEC §4에서 제외합니다. 아래 과거 「task015 보류」·「전이를 유발하지 않음」·「이번 축소 요청만」은 당시 이력이며 현재 승인 실행 범위보다 우선하지 않습니다. 제품의 제외 대상 동작과 결정적 검증 계약은 유지합니다.
+
 ## 2026-10-03 남은 M3 검증 재개
 
 사용자가 잠금·절전 복귀를 제외한 나머지 작업 진행을 요청했습니다. 현재 실행 대상은 task012·013·014·016·017·018이며 task015는 사용자 지시로 보류합니다. 보류는 완료/철회가 아니며 기존SPEC매핑을 보존합니다. Task013/018의 과거590pt·고정카드치수·본체스크롤 설명은 최신스크롤없는280pt본체·Memory자연높이 요구보다 우선하지 않습니다. 현재요약치수/정보/가독성을 유지해 검증하고, 잠금·절전·디스플레이수면·사용자전환을 유발하지 않습니다.
 
 
-사용자는 추가 장비 문의에 “그럼 그건 패스해”라고 답해 실제 VPN·외장 디스크 연결/해제 관찰도 보류했습니다. task014는 완료/철회로 바꾸지 않습니다. 현재 Ethernet 링크 전환 장비도 미확보이며 해당 미확인 영향을 보존합니다. 사용자 지시로 보류한 실장치/잠금 관문을 완료 근거로 대체하지 않고 독립적으로 실행 가능한 task013→016→017→018 검증을 이어갑니다.
+2026-10-09 사용자 지시와 SPEC §4에 따라 실제 VPN·외장 디스크·Wi-Fi↔Ethernet 전환 시험은 완료 관문에서 제외합니다. 기존 제품 동작과 결정적 검증은 유지합니다. task014는 미승인으로 Wi-Fi 끊김·복귀 검증을 유지하며 사용자 승인에 따라 자동 복구를 준비한 뒤 수행합니다. task015 사용자 보류는 유지합니다.
 
 ## 2026-10-03 Memory 하단 여백 수정 (Per-Request)
 
@@ -63,7 +67,7 @@ task-001·task-002는 production과 같은 native adapter를 빌드·서명된 S
 SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 근거를 대신하지 않습니다.
 
 검증 근거에는 확인한 원본·빌드, OS·장치·Sandbox 설정, 절차·원시 결과와 판정을 남깁니다.
-필수 API나 실제 하드웨어·VPN·화면·사용자 전환 항목을 확인하지 못하면
+SPEC §4의 제외 시험 이외의 필수 API·하드웨어·화면·사용자 전환 항목을 확인하지 못하면
 항목·원인·영향을 반환하고 해당 Task를 완료로 처리하지 않습니다.
 필수 API 문제는 승인된 접근 안에서 재조사하고, 설계 변경이 필요하면 `design-init`,
 사용자 관찰 결과나 완료 기준 변경이 필요하면 `spec-init` 소유 문제로 반환합니다.
@@ -93,13 +97,13 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       원시 카운터·식별 근거·주소·상태·반환 코드와 링크 속도의 지원 여부·사유,
       OS·하드웨어·빌드·entitlement를 기록합니다.
       필수 항목 미확보는 관문 실패로 반환합니다.
-      실제 VPN·Wi-Fi↔Ethernet 전환 관찰은 task-014에서 이어 확인합니다.
+      실제 Wi-Fi↔Ethernet·VPN 전환 시험은 SPEC §4에 따라 제외하며 분류·중복 방지 검증은 유지합니다. Wi-Fi 끊김·복귀는 task-014에서 확인합니다.
   - 참조: SPEC §5.1, SPEC §5.3, SPEC §5.5, SPEC §5.7, SPEC §5.13, SPEC §5.18,
     DESIGN §1.1, DESIGN §1.2, DESIGN §3.1, DESIGN §3.2, DESIGN §4.1, DESIGN §4.3
 
   - 승인 근거: 2026-10-01 독립 verifier의 approved 후보를 main이 원본·실행 근거와 대조해 approved로 확정했습니다. 검증 기준 HEAD `002414b`의 NetworkNativeAdapter·AppDelegate DEBUG probe·직접 테스트 미커밋 상태이며, `evidence/task-001/environment.txt`의 세 소스 SHA-256이 현재 파일과 일치합니다. 결정적 테스트 6개 통과와 별도 build-only arm64 Sandbox 앱의 실제 RX·TX·IPv4/IPv6·provider·Link Active 조회를 확인했습니다. 새 temporary-exception 없이 실행했고 llw0의 unknown·합계 complete=false를 보존했습니다. 원자료는 같은 evidence 디렉터리의 sandbox-network-probe.log·network-native-adapter-tests.log입니다. 실제 VPN·연결 전환은 task-014에 남으며 이번 승인으로 마지막 매핑이 끝난 SPEC 완료 조건은 없습니다. Swift 6 격리 경고는 후속 source·격리 배선에서 확인할 품질 위험으로 남깁니다.
 
-- [ ] task-002: Disk·볼륨 native adapter와 실제 Sandbox 접근 관문
+- [x] task-002: Disk·볼륨 native adapter와 실제 Sandbox 접근 관문
   - 목적: 물리 저장 장치의 Read·Write 바이트 통계, 시스템 볼륨 용량과
     장치·볼륨 관계를 Sandbox 앱 내부에서 실제로 읽는 원본 경로를 확보합니다.
   - 접근: 물리 whole media에 대응하는 `IOBlockStorageDriver`의 `Statistics`를 읽고
@@ -124,12 +128,12 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       registry ID·BSD 장치·볼륨 관계·용량·반환 코드,
       OS·장치·빌드·entitlement를 기록합니다.
       필수 값이나 식별 관계를 확보하지 못하면 정상 완료로 처리하지 않습니다.
-      실제 외장 연결·해제 관찰은 task-014에서 이어 확인합니다.
+      실제 외장 연결·제거 시험은 SPEC §4에 따라 제외하며 외장 판정·상태·대상 수명 검증은 유지합니다.
   - 참조: SPEC §5.2, SPEC §5.4, SPEC §5.7, SPEC §5.9, SPEC §5.10, SPEC §5.13, SPEC §5.18,
     DESIGN §1.1, DESIGN §1.3, DESIGN §1.4, DESIGN §3.1, DESIGN §4.1, DESIGN §4.3
 
   - 과거 승인 근거(2026-10-04 Disk 용량 기준 변경으로 취소): 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `eed1f53`의 DiskNativeAdapter·직접 테스트·AppDelegate Disk probe와 Network nonisolated 선언 diff를 검증했고 `evidence/task-002/environment.txt`의 소스 4개 SHA-256이 현재 파일과 일치합니다. Disk 테스트 7개와 Network 회귀 6개 통과, 별도 build-only arm64 Sandbox 앱 PID 20826에서 물리 disk0 드라이버 ID 4294969732의 Read·Write 바이트·Operations, `/` 용량과 APFS 볼륨 8개의 관계를 확인했습니다. physicalComplete·relationshipsComplete가 true이며 새 예외가 없습니다. verifier가 같은 빌드의 Network probe PID 24040을 직접 재실행해 task-001 동작·complete=false 보존을 확인하고 종료했습니다. 실제 외장 전환은 task-014에 남고 마지막 매핑이 끝난 SPEC 조건은 없습니다. NetworkRouteReader 생성의 Swift 6 격리 경고는 현재 Swift 5 빌드·실행 통과와 별도로 후속 배선의 품질 위험으로 남깁니다.
-  - 현재 재검증: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인 취소. 새 important-usage/1000 기준의 관련 원본·실행 근거를 verify한 뒤 main이 이 Task의 승인을 복구합니다. 영향 없는 이전 근거는 범위를 구분해 재사용합니다.
+  - 승인 복구: 2026-10-09 독립 verifier approved를 main이 확정했습니다. 현재 native/formatter/privacy/test SHA가 개정된 용량 승인 근거와 일치하며, 별도 signed arm64 Sandbox PID37363에서 원본 adapter를 실행했습니다. important-usage 원시값840213850793 B와 adapter가 일치하고 used=전체−available,1000 기반 표시에 대응합니다. 물리disk0·APFS8볼륨 관계complete와 서명/샌드박스·필수 오류 계약을 확인했습니다. 기존 단위48/48·Sandbox UI1/1을 현재SHA로 인수해 재실행하지 않았습니다. [재검증 근거](./evidence/task-002/revalidate-20261009/README.md). 구현 재시도0·근거 재검증0, 새 SPEC 전체 완료 없음. 제품 변경 없이 2026-10-04의 해당 승인 취소를 해소합니다.
 
 - [x] task-003: 공통 수집 경계와 source·store·표시의 원자적 admission
   - 목적: 짧은 중지·복귀와 취소를 무시하는 늦은 응답이
@@ -220,7 +224,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `90204a1`의 Network activity/metadata/topology·native 격리·reader phase/admission·DEBUG probe와 직접 테스트 diff를 검증했고 관련 소스 8개 SHA-256이 `evidence/task-005/source-sha256.txt`와 일치합니다. 실제 읽기 시각 차분·모든 기준점 단절·5→1초 정상 변경·0 B/s·물리/VPN 집계·부분 실패·대상 제거/재사용/누적revision·캐시불일치·늦은 native/source/store·601링/600초/segment 조건을 집중24/24로 확인했고 전체unit552/552·Release·별도서명Debug빌드가 통과했습니다. Sandbox PID36178에서 첫baseline→약1초뒤 en0 knownPhysical 18485/17512 B/s, llw0 unknown에 따른 partial/representative nil을 확인하고 종료했습니다. 기존 native 격리 경고를 해소했으며 task-001·003·004의 의미와 승인을 유지합니다. 전체scheme UIrunner가 기동후 무진행으로 중단됐고 unit은 별도552/552 완료했습니다. production 배선·실제NIC/VPN·최종UI는 후속 관문이며 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
-- [ ] task-006: Disk 속도·장치 수명·용량 캐시와 최근 이력
+- [x] task-006: Disk 속도·장치 수명·용량 캐시와 최근 이력
+  - 승인 복구 근거(2026-10-09): 독립 verify approved를 main이 확정했습니다. HEAD5435c7d 작업 트리의 핵심6개 소스 SHA 일치, 집중31/31, 새 용량 갱신·실패 lastKnown 시각·볼륨 교체 캐시 수명 테스트와 signed Sandbox PID45599 실측을 대조했습니다. important-usage 용량·identity/readAt 캐시와 실제1.059초 차분 Read/Write/IOPS, 현재1203링/600초·기준점·segment·늦은 결과 차단이 충족됐습니다. 근거 `evidence/task-006/revalidate-20261009/README.md`. 제품코드 무변경, 외장 실제 전환 제외, 설치Release64258 유지. 구현 재시도0·근거 재검증0; 완료 SPEC 조건 없음.
   - 목적: 현재 물리 장치의 Read·Write와 조건부 IOPS를 계산하고
     느린 볼륨 용량·장치 관계와 빠른 활동을 서로 지연시키지 않게 합니다.
   - 접근: task-002의 reader를 독립 Disk 활동 source와 storage 보조 source에 연결합니다.
@@ -249,7 +254,6 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
     DESIGN §2.4, DESIGN §2.5, DESIGN §3.1, DESIGN §3.2
 
   - 과거 승인 근거(2026-10-04 Disk 용량 기준 변경으로 취소): 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `854c97d`의 변경 소스 7개 SHA-256과 최종 patch가 `evidence/task-006/`의 실행 근거와 일치합니다. 물리 드라이버의 실제 시각 Bytes/Operations 차분, 필수 Bytes partial/부분속도, 조건부 IOPS 기준점, 장치·마운트 수명과 관계 캐시, 모든 연속성 경계, 601링/600초/짧은 실패 segment, 늦은 reader/source/store 폐기와 느린 storage 중 빠른 Disk 진행을 집중27/27로 확인했습니다. 전체unit572/572·Release·서명Debug빌드가 통과했고 Sandbox PID43148에서 disk0 ID4294969732·볼륨8개·시스템용량/관계·첫baseline 이후 Read/Write189012.39/13691584.82 B/s와 IOPS11.54/28.84회/s를 확인했습니다. 기존 승인과 SPEC·DESIGN 의미를 유지하며 완료된 SPEC 조건은 없습니다. production 배선과 실제 외장 전환은 task-007·014의 후속 관문입니다.
-  - 현재 재검증: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인 취소. 새 important-usage/1000 기준의 관련 원본·실행 근거를 verify한 뒤 main이 이 Task의 승인을 복구합니다. 영향 없는 이전 근거는 범위를 구분해 재사용합니다.
 
 - [x] task-007: production 여섯 축 배선과 실패 격리
   - 목적: 앱 한 세션에서 네 카드의 수집 흐름과 두 보조 흐름이 독립적으로 작동하고
@@ -276,7 +280,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-01 독립 verify 재검증 approved를 main이 확정했습니다. 기준 HEAD `c61f76e`의 production 여섯 축 factory·독립 소비·순위 경계·topology 알림·보조 cache replay와 직접 테스트 15개 소스 해시 및 최종 patch가 `evidence/task-007/`과 일치합니다. 초기 lifecycle 전 무호출, 지표별 실패 원인 보존, 느린 보조/순위 중 카드·메뉴바 진행, 취소 무시 결과·늦은 실패·역순 cache replay·epoch/topology 폐기를 확인했습니다. 집중23/23·전체unit579/579·Release/서명Debug빌드가 통과했습니다. 실제 Sandbox PID31677에서 최초 여섯 축 전달·팝오버 개폐·알림 등록, DEBUG observer의 저전력 snapshot revision1에 따른 닫힘5/10/120초·열림2/4/60초·닫힘 전환과 revision2 일반 복원을 관찰했습니다. 실제 OS lowPower는 false였고 OS 설정 변경·실제 OS 전환으로 주장하지 않습니다. 최초 evidence reject의 앱 저전력 로그 부족은 보완됐으며 기존 SPEC·DESIGN·task-001~006 승인을 유지합니다. 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
-- [ ] task-008: 활동·보조 상태 조립과 지표별 단위
+- [x] task-008: 활동·보조 상태 조립과 지표별 단위
+  - 승인 복구 근거(2026-10-09): 독립 verify approved를 main이 확정했습니다. 현재 소스/M4 용량9파일 SHA 대응, 집중36/36·CPU/Memory24/24와 task002native/task006cache31/31 인수 범위를 대조했습니다. 상태·partial/last-known·필수/조건부 실패·1024/1000/bit/s/IOPS·시각/identity/revision/epoch·역순 admission이 충족됐습니다. `evidence/task-008/revalidate-20261009/README.md`. 제품코드 무변경, 구현 재시도0·근거 재검증0. 마지막 매핑이 끝난 SPEC §5.7은 선행001/002/005/006/014 현재 승인·실제 Wi-Fi Off/복귀 근거를 합쳐 성립합니다.
   - 목적: Network·Disk의 현재 속도·누적량·저장 공간을 구분하고
     일부 실패나 조건부 미지원에서도 성공한 값과 상태를 정확히 표시하는 모델을 완성합니다.
   - 접근: `DashboardPresentation.swift`·`DashboardPresentationStore.swift`에서
@@ -306,7 +311,6 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
     DESIGN §1.4, DESIGN §2.3, DESIGN §2.4, DESIGN §3.1, DESIGN §3.2, DESIGN §3.3, DESIGN §4.2
 
   - 과거 승인 근거(2026-10-04 Disk 용량 기준 변경으로 취소): 2026-10-01 독립 verify approved를 main이 확정했습니다. 기준 HEAD `c42a0cd5`의 표시 모델·formatter·production 네 소비자·최종 topology display commit 및 직접 테스트 7개 파일 해시/patch가 `evidence/task-008/`과 일치합니다. 활동/보조 identity·revision·원본시각 조립, 보조 실패 중 속도 갱신, 성공이력 없는 상태·정상0·연결/장치없음·baseline·partial·과거값/시각·중지상세 rate 제거·조건부 미지원/실패 사유·단위/작은속도/로케일·AX 및 대기중 구 topology/epoch 표시 거절을 확인했습니다. 집중23/23·전체unit588/588·Release빌드와 diff-check가 통과했습니다. 전체unit 이후 production 변경 없이 Operations 표시 테스트 단언만 추가했고 최종집중을 재실행했습니다. CPU·Memory 및 기존 경계 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. 실제 graph·카드 렌더는 task-009~011에서 확인합니다.
-  - 현재 재검증: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인 취소. 새 important-usage/1000 기준의 관련 원본·실행 근거를 verify한 뒤 main이 이 Task의 승인을 복구합니다. 영향 없는 이전 근거는 범위를 구분해 재사용합니다.
 
 - task-009: [철회] 두 독립 속도 계열과 공통 그래프 판
   - 적용 상태: 2026-10-03 사용자 확정 SPEC과 DESIGN §3.4·DP5에 따라
@@ -392,7 +396,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 승인 근거: 2026-10-03 verify_compact_task010의 최종 독립 재검증 approved 후보를 main이 확정했습니다. 근거는 evidence/task-010/sample-compact/ 및 retry-cadence/입니다. 기준 HEAD e63e515와 초기/보완 patch·최종 소스/Debug/Release 실행파일/PNG 해시가 현재 상태에 대응합니다. Network101pt·248/264직접렌더·5로케일UInt64.max 전체숫자/단위·활성8종류/보조실패·graph/footer삭제와상세/AX/선택을 확인했습니다. 초기집중9/9·전체606/606·보완Network4/4·Release/서명Debug가 통과했습니다. 실제SandboxPID41825 카드248×101·상세400×480/자식426×506·en0/utun·NetworkUpdateCadence AX359×28의빠른/별도느린갱신설명·조회시각·AXPress닫기/재선택/frame불변과기존Disk294/CPU·Memory회귀를 확인했습니다. 이전correctness reject를 해소하고 최근reject를 제거합니다(README이력보존). 완료 SPEC 조건은 없으며최종264배선/네카드동시표시와전체키보드/실전VPN은012/013/014관문입니다.
   - 과거 승인 근거(2026-10-03 계약 변경으로 승인 취소, 현재 기준 재검증 필요): 2026-10-02 독립 verifier의 approved 후보를 main이 원본·실행 근거와 대조해 확정했습니다. 기준 HEAD `2926498`의 카드/상세·공통 선택·최소 본체 ScrollView·범례 마커·DEBUG UI probe 및 직접 테스트 소스7개와 PNG42개 해시/patch가 `evidence/task-010/`과 일치합니다. 상태별·최장값·로케일294pt 렌더, 물리 대표와VPN/터널상세 범위, 긴 이름·현재/누적/주소/조건부 링크 사유를 확인했습니다. 집중16/16·전체unit601/601·Release/서명Debug빌드가 통과했습니다. 실제Sandbox PID77408의 카드248×294·상세400×480·본문306×627·자식426×506과 en0/utun 항목, AXPress닫기·재선택·개폐전후frame 보존을 확인했습니다. XCUITest는 automation mode 활성timeout으로 본문전에 실패했고 성공 근거로 사용하지 않았습니다. 실제 카드 클릭·전체 키보드/AX·네 카드 viewport·VPN 전환은 후속012~014에 남습니다. SPEC·DESIGN과 선행 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다.
 
-- [ ] task-011: 네 카드 통합 축소·가독성·TOP 5 여백과 Disk 미니 그래프
+- [x] task-011: 네 카드 통합 축소·가독성·TOP 5 여백과 Disk 미니 그래프
+  - 승인 복구 근거(2026-10-09): 독립 재판정 approved를 main이 확정했습니다. 현재18파일 SHA·26/26+보완42/42·signedUI3/3·Debug/Release와 light/dark/실제 전체PNG를 대조했습니다. 본체280×668·Memory169자연높이·264폭네카드·모든5행·noScroll/하단·10pt가독성·TOP5여백·CPU66.67/Disk42판·새용량/AX·상세frame유지가 충족됐습니다. 첫 evidence reject(실제suite선택자누락)는8개suite42/42로해소했고이력으로보존합니다. `evidence/task-011/revalidate-20261009/README.md`. 제품화면코드 무변경, UItest1개 추가. 구현 재시도0·근거재검증1, 완료SPEC조건없음.
   - 목적: CPU·Memory도 함께 줄여 현재 지원 화면에서 네 카드를 스크롤 없이 읽을 수 있게 표시합니다.
   - 접근: DashboardView/Style·CPU 그래프·Memory 구성·순위·Network/Disk 요약·본체 크기 연결을 함께 수정합니다.
     본체폭280pt·padding8pt·카드간격6pt, 기본 제목/상태/단위/랭킹10pt이상, 대표17.33pt, CPU판66.67pt를 사용합니다.
@@ -417,7 +422,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: 최신 SPEC·DESIGN 첫머리, SPEC §5.1–5.5·5.8–5.10·5.12·5.15–5.16·5.19.
   - 과거 승인 근거(2026-10-04 Disk 용량 기준 변경으로 취소): 2026-10-03 독립 verifier FINAL approved를 main이 확정했습니다. `evidence/task-011/readable-integrated/`의 최종소스11개/Debug·Release해시와patch가현재코드에대응합니다. 전체unit610/610·Release/서명Debug빌드·실제PID94070의280×698pt/본체스크롤없음/네카드AX/Memory·Disk상세개폐·본체불변을확인했습니다. 많은Network종류는종류수/활성·미확인수로읽기좋게요약하고전체종류명은상세/부모AX에보존합니다. TOP5아래3pt·실제아이콘·CPU66.67/Disk42판·하단삭제를확인했습니다. 추가화면/외곽chrome·전체M3검증은후속Task이며완료된SPEC조건은없습니다.
   - 과거 승인 근거(2026-10-03 계약 변경으로 승인 취소, 현재 기준 재검증 필요): 2026-10-03 독립 verifier의 재검증 approved 후보를 main이 확정했습니다. 기준 HEAD `331bdc5`의 변경 소스7개와 signed Debug dylib SHA-256/최종patch가 `evidence/task-011/retry/`와 일치합니다. DESIGN §3.3의 가용 라벨·같은 단위 공유로 최대 UInt64 두 값과 단위 경계·0·작은 양수·5로케일25개248×294 렌더의 말줄임을 해소했으며 상세/AX 전체 라벨·단위·로케일을 유지합니다. 직접5/5·전체unit606/606·Release/서명Debug빌드가 통과했습니다. 실제Sandbox PID73723의 `/` 용량·APFS 공유 정의·볼륨8개·disk0 현재/원시누적/드라이버IOPS·외장없음과 카드248×294·상세400×480·본문306×627·자식426×506·AXPress닫기/재선택/frame보존을 확인했습니다. main/verifier가 실제PNG3개와 최장값렌더를 직접 확인했습니다. 이전 design/scope reject는 해소됐고 최근 reject를 제거합니다. SPEC·DESIGN·선행 승인을 유지하며 마지막 매핑이 끝난 SPEC 조건은 없습니다. XCUITest 성공은 주장하지 않고 실제 앱 probe로 이번 UI 근거를 확인했으며 viewport/키보드AX/실제외장 전환은012~014에 남습니다.
-  - 현재 재검증: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인 취소. 새 important-usage/1000 기준의 관련 원본·실행 근거를 verify한 뒤 main이 이 Task의 승인을 복구합니다. 영향 없는 이전 근거는 범위를 구분해 재사용합니다.
+  - 재검증 이력: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인을 취소했으며, 2026-10-09 새 important-usage/1000 기준의 원본·실행 근거를 독립 검증해 승인을 복구했습니다. 현재 승인 근거는 위 기록이며 영향 없는 이전 근거는 범위를 구분해 재사용했습니다.
 
 - [x] task-012: 추가 화면별 viewport·chrome 검증
   - 목적: task-011의통합축소를인수해추가가용화면과상세창의화면경계/chrome를검증합니다.
@@ -430,7 +435,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
 
   - 승인 근거: 2026-10-03 독립 verifier의 FINAL approved를 main이 확정했습니다. 기준 HEAD43de4d3의 소스9개·Debug 실행파일/실제 Swift dylib·Release 해시가 evidence/task-012 패킷과 일치하고 관련38/38·Release·서명Debug가 통과했습니다. 실제 PID4865 현재 visible1728×1084와 PID5951 추가 실제1168×755 모드(visible1168×729)에서 본체280×668/스크롤없음·외곽8pt·네 상세 카드앵커·개폐프레임불변·상세끝정보를 확인했습니다. 상세는 각 화면에서 공유400×480/400×136입니다. DEBUG 최장 원본fixture PID6563에서 Memory169→184/본체668→683pt·두줄 원문 보존에도 상세400×136불변/Disky8을 확인했고 main이 PNG를 직접 대조했습니다. 실제 모드는 복원했고 관찰앱은 종료했습니다. 외부 물리화면 미확보와 본체가 들어가지 않는 더 작은 모드의 새 정책 경계를 명시하며 해당 지원 성공은 주장하지 않습니다. 후속 매핑이 남아 이번 승인으로 완료되는 SPEC 조건은 없습니다.
 
-- [ ] task-013: 네 카드 키보드 선택·복귀와 접근성 도달
+- [x] task-013: 네 카드 키보드 선택·복귀와 접근성 도달
+  - 승인 복구 근거(2026-10-09): 독립 verify approved를 main이 확정했습니다. 현재20파일 SHA·M4task008 unit46/UI17·task009 UI18·기존실제작은화면 키보드/Page 끝/복귀 근거와 새DisksignedUI3/3 대응을경계별로대조했습니다. 설정메뉴개정은Escape/Page경로무변화, 용량개정은currentcard/detail/volumeAX 실측으로충족했습니다. 추가XCTeststartup정체0건은성공에포함하지않고임시test를제거했습니다. `evidence/task-013/revalidate-20261009/README.md`. 제품/테스트변경없음, 구현0·근거재검증0·완료SPEC조건없음.
   - 목적: 키보드 탐색 기본 설정에서도 네 카드와 각 상세의 넘치는 정보를 사용할 수 있고
     색상 없이 현재 상태·지표 의미를 식별할 수 있게 합니다.
   - 접근: eager 카드 Button에 ⌘1·⌘2를 유지하고 Network ⌘3·Disk ⌘4를 등록합니다.
@@ -462,14 +468,14 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
     DESIGN §3.2, DESIGN §3.3, DESIGN §3.4, DESIGN §3.5, DESIGN §4.2, DESIGN §4.3
 
   - 과거 승인 근거(2026-10-04 Disk 용량 기준 변경으로 취소): 2026-10-03 독립 verifier의 FINAL approved를 main이 확정했습니다. 기준 HEAD54a89e1의 변경소스11개·Debug stub/실제Swift dylib·Release의14개SHA-256이 evidence/task-013과 일치합니다. 전체unit614/614·Release·서명Debug 통과, 최종PID39610 현재화면과40448 실제1168×755모드에서 keyboardMode0·단일⌘1~4전환/재선택·네명시AX닫기/Escape·부모key창유지·정확선택카드AX포커스복귀를 확인했습니다. same-kind oldgeneration 회귀·네상세PageDown끝/Up역이동·Network/Disk전체행/상태/누적·두갱신주기/미니그래프AX를 실제조회했습니다. 본체306×694/스크롤없음·작은상세400×136과원화면복원을보존했습니다. 초기키중복·구CPU머리글픽셀기준실패는진단으로분리해최종성공과구별했습니다. XCUITest시작timeout/실제외부키보드조작/VoiceOver음성성공을주장하지않습니다. 마지막매핑이남아완료되는SPEC조건은없습니다.
-  - 현재 재검증: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인 취소. 새 important-usage/1000 기준의 관련 원본·실행 근거를 verify한 뒤 main이 이 Task의 승인을 복구합니다. 영향 없는 이전 근거는 범위를 구분해 재사용합니다.
 
-- [ ] task-014: 실제 VPN·인터페이스·외장 장치 전환
+- [x] task-014: 실제 Wi-Fi 끊김·복귀
+  - 승인 근거: 2026-10-09 독립 verifier의재판정 approved를 main이 확정했습니다. 독립 자동복구 후 실제11:59:44off→11:59:57on→12:00:06On/en0Reachable 복구, 설치 Release PID64258의 Off 카드8/8·en0상세9/9 연결비활성/주소없음/누적고정과복귀, 같은소스 signedSandbox 진단의baseline/lifetime/새segment/다음부분속도·음수0을대조했습니다. 전환중DiskCard 측정·보조갱신도확인했습니다. unknown/incomplete의partial/대표nil/history0은보수적계약대로이며 현재SHA일치M4task003 NetworkActivityTests 포함단위86통과를인수해 유효점분리와VPN중복방지도확인했습니다. 마지막매핑이완료된 SPEC §5.5 성립. [보완 근거](./evidence/task-014/wifi-offdetail-20261009/README.md), [첫 시험](./evidence/task-014/wifi-20261009/README.md). 구현 재시도0·근거 재검증1, 제품 수정·suite 재실행 없음. 최초evidence reject는이력보존/현재해소. 원문에없는disconnected출력/대표유효점존재강요는verifier가정정했으며승인기준의의미변경없음. VPN·외장·유선LAN 실제시험제외, Disk재검증6개와task015보류유지.
   - 목적: 실제 연결 전환에서 대표 합계·상세 목록·대상 수명이 일관되게 바뀌고
     이전 대상 값이나 허위 순간값이 남지 않는지 확인합니다.
-  - 접근: 선택한 Sandbox 앱에서 Wi-Fi↔Ethernet,
-    VPN 연결·해제, 네트워크 연결 없음과 복귀,
-    외장 디스크 연결·해제를 관찰합니다.
+  - 접근: 선택한 Sandbox 앱에서 Wi-Fi 끊김·복귀를 관찰합니다.
+    실제 VPN·외장 디스크·Wi-Fi↔Ethernet 전환 시험은 SPEC §4에 따라 제외하며 Ethernet 분류를 포함한 기존 제품 동작과 결정적 검증은 유지합니다.
+    사용자 승인에 따라 연결 상태를 기록하고 독립 자동 복구를 먼저 준비한 뒤 Wi-Fi를 끊으며 복귀 후 원래 연결 상태를 확인합니다.
     원시 identity·topology revision·카운터·실제 시각·baseline-only·현재 합계·목록·보조 캐시와
     화면 상태를 함께 기록하고 필요한 경우 승인된 collector·표시 경계에서 수정합니다.
   - 검증 조건:
@@ -479,20 +485,23 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       제거 대상의 속도·누적값이 현재 목록에서 빠지고 새 대상의 이력·캐시로 이어지지 않습니다.
       연결 없음·복수 활성·외장 없음·미마운트·조회 실패가 각각 구별됩니다.
       링크 속도·IOPS는 실제 대상의 지원 여부·의미·사유와 일치합니다.
-    - 확인: 시나리오마다 전환 전후 원시값·반환 코드·대상/볼륨 관계와
+    - 확인: Wi-Fi 끊김·복귀 시나리오에서 전환 전후 원시값·반환 코드·대상 관계와
       Network·Disk의 현재값·목록·보조 정보·카드·상세 상태를 대조합니다.
       baseline·rate segment·내부 이력의 수명은 원자료로 확인하며 제거된 Network 그래프 화면을 요구하지 않습니다.
-      VPN 서비스와 터널 분류 근거, 외장 장치의 연결 특성과 드라이버 ID를 기록합니다.
-      장비·VPN 미확보는 해당 항목·이유·영향을 반환하며 mock 통과로 실제 관문을 대체하지 않습니다.
+      VPN·터널 분류·중복 방지와 외장 상태·대상 수명은 기존 결정적 근거와 관련 원본으로 회귀를 확인합니다.
+      제외된 실제 전환 시험의 실기기 근거는 요구하지 않으며 실제 전환 성공으로 보고하지 않습니다.
+      남은 실제 Network 시험의 장비·권한 미확보는 해당 항목·이유·영향을 반환하며 mock으로 대체하지 않습니다.
   - 참조: SPEC §5.3, SPEC §5.4, SPEC §5.5, SPEC §5.7, SPEC §5.9, SPEC §5.13, SPEC §5.18,
     DESIGN §1.2, DESIGN §1.3, DESIGN §1.4, DESIGN §2.2, DESIGN §2.3,
     DESIGN §3.2, DESIGN §3.4, DESIGN §4.3
 
-- [ ] task-015: 실제 시스템 sleep/wake와 화면 중지·재개
+- [x] task-015: 실제 시스템 sleep/wake와 화면 중지·재개
+  - 승인 근거(2026-10-09): 독립 verify approved를 main이 확정했습니다. 같은 signedSandbox62528 세션의 실제 잠금12분59초·명시display4초·명시systemSoftwareSleep/DeepIdle(실제3초)의 seq1~6/epoch1~6에서 여섯 accepted·N/D raw/store 중지반영0, 각첫CPU nil/Memory순간값/N·D newEpoch baseline nil→둘째 readAt원시차분속도·Diskhistory503→503→504/626→626→627/756→756→757·segment1→2→3→4가 충족됐습니다. 현재15핵심/12계측원본/8test SHA와674/674 실행의 late/merge/sessioninactive/graph회귀, 실제6전후PNG를대조했습니다. 현재Memory시계열그래프는없어 구성/Swap만실측하며 Network대표partial/historynil은 en0부분속도·결정적segment근거로구별합니다. `evidence/task-015/revalidate-20261009/README.md`. 다른계정전환실시험제외, 전체대표점을발명하지않음. 예정relativewake30의wake원인은추정하지않습니다. diag/AX/watchers종료·stable64258/Amp64228/power예약보존. 구현0·근거재검증0. 마지막매핑 SPEC §5.9 성립.
+  - 현재 범위(2026-10-09): 최신 사용자 지시로 잠금·절전·디스플레이 복귀 보류를 해제합니다. 다른 계정 전환 실시험만 제외하며 과거 보류 이력은 현재 실행 금지가 아닙니다.
   - 목적: 실제 수면·화면 중지 뒤 첫 속도 샘플이 기준점 전용이고
     Network·Disk 내부 이력의 연속성과 유지되는 CPU·Memory·Disk 그래프의 중지 공백이 보존되는지 확인합니다.
   - 접근: 같은 Sandbox 앱에서 시스템 sleep/wake, 화면 잠금/해제,
-    디스플레이 sleep/wake와 빠른 사용자 전환/복귀를 수행합니다.
+    디스플레이 sleep/wake를 수행합니다. 다른 일반 계정 전환 실시험은 SPEC §4의 사용자 선택으로 제외하고 세션 비활성·복귀는 기존 결정적 lifecycle/통합 근거로 확인합니다.
     모든 축의 적용 일정·boundary sequence·epoch·허용 token·샘플 누적 수,
     첫 두 카운터 snapshot·실제 읽기 시각·rate segment·화면을 기록합니다.
     복귀 때 다른 중지 이유가 남는 경우도 확인합니다.
@@ -511,8 +520,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
       제거된 Network 그래프·두 카드의 그래프 진행/하단 안내를 다시 표시해 관찰하지 않습니다.
       다른 중지 사유가 남았을 때 실행이 재개되지 않는지 확인하고
       짧은 병합·늦은 결과는 결정적 통합 테스트 근거도 함께 확인합니다.
-      둘째 사용자 환경 등 미확보 항목은 이유·영향을 반환합니다.
-      M2에서 인정된 빠른 사용자 전환 미확인을 M3의 승인으로 자동 승계하지 않습니다.
+      다른 계정 전환을 제외한 필수 실제 전이의 미확보 항목은 이유·영향을 반환합니다. 세션 비활성의 중지·병합·기준점·늦은 결과 차단 근거를 함께 대조하며 M2 과거 미확인과 이번 명시적 제외를 구별합니다.
   - 참조: SPEC §5.8, SPEC §5.9, SPEC §5.11, SPEC §5.15, SPEC §5.19,
     DESIGN §2.1, DESIGN §2.2, DESIGN §2.4, DESIGN §2.5, DESIGN §3.4, DESIGN §4.2, DESIGN §4.3
 
@@ -565,7 +573,8 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
   - 참조: SPEC §5.6, SPEC §5.13,
     DESIGN §1.3, DESIGN §3.3, DESIGN §3.4, DESIGN §4.1, DESIGN §4.4
 
-- [ ] task-018: 네 리소스 통합·CPU·Memory 회귀와 production 구성
+- [x] task-018: 네 리소스 통합·CPU·Memory 회귀와 production 구성
+  - 승인 복구 근거(2026-10-09): main이 독립 verifier의 approved를 확정했습니다. 현재 원본127파일 SHA 일치, signed 전체unit674/674·실패/skip0, Debug/Release 성공을 대조했습니다. 전체 UI54case 중48통과·실패0·skip6은 native로그인5개의 기존 task011 승인 인수와 Release접근1개의 별도1/1 보완으로 구별했습니다. 정상 Sandbox ReleasePID30218 한세션의 네카드·네상세 시작/끝/복귀, important-usage/1000 용량, 실제CPU6~12%→88~89%→6~8% 및 메뉴바 반응, 자체앱/부하 정리를 확인했습니다. [현재 재검증 근거](./evidence/task-018/revalidate-20261009/README.md). 구현 재시도0·근거 재검증0; 마지막 매핑 SPEC §5.1~4·§5.8·§5.10~16·§5.18~19 성립. 철회009/§5.17을 제외한 모든 적용Task/조건 승인으로 IMPLEMENT 완료입니다. 이후 M4 확장 변경은 별도 영향 검증을 수행합니다.
   - 과거 main 승인(2026-10-03, 2026-10-04 용량 기준 변경으로 취소): worker FINAL completed와 독립 verifier FINAL approved를 인수했습니다. 임시 DEBUG 관찰 진입점을 제거한 정상 Sandbox 앱 PID95172의 네 카드·상세·끝 페이지와 실제 CPU 부하의 메뉴바 상승/회복을 확인했습니다. unit614/614·Debug/Release 통과, UI 전체29/30 뒤 AXValue 단언 보완한 해당1/1 통과를 구분해 인수했습니다. 최종 소스·실행 파일 해시, production 구성과 선행 화면/키보드 근거의 경로 불변을 대조했습니다. 근거: [task-018](./evidence/task-018/README.md). 이번 승인으로 SPEC §5.1·§5.2·§5.10·§5.12·§5.14·§5.16을 충족합니다. task014/015와 IMPLEMENT 전체는 미완료입니다.
   - 목적: 네 리소스가 한 앱 세션에서 함께 동작하고
     공통 경계·요약 통합이 기존 CPU·Memory와 배포·개인정보 계약을 훼손하지 않은 결과를 완성합니다.
@@ -602,7 +611,7 @@ SDK 조사, 비Sandbox 도구와 과거 접근 표는 해당 관문의 승인 �
     SPEC §5.15, SPEC §5.16, SPEC §5.18, SPEC §5.19,
     DESIGN §1.1, DESIGN §2.1, DESIGN §2.4, DESIGN §2.5,
     DESIGN §3.2, DESIGN §3.3, DESIGN §3.4, DESIGN §3.5, DESIGN §4.1, DESIGN §4.2, DESIGN §4.3
-  - 현재 재검증: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인 취소. 새 important-usage/1000 기준의 관련 원본·실행 근거를 verify한 뒤 main이 이 Task의 승인을 복구합니다. 영향 없는 이전 근거는 범위를 구분해 재사용합니다.
+  - 재검증 이력: 2026-10-04 사용자 승인 용량 개정의 직접/의존 영향으로 승인을 취소했으며, 2026-10-09 새 important-usage/1000 기준의 원본·실행 근거를 독립 검증해 승인을 복구했습니다. 현재 승인 근거는 위 기록이며 영향 없는 이전 근거는 범위를 구분해 재사용했습니다.
 
 ## 완료 조건 매핑
 

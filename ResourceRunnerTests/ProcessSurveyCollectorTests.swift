@@ -13,7 +13,7 @@ import Testing
 // MARK: - 테스트용 프로세스 조사 원본 공급자
 
 /// 미리 준비한 원본을 돌려주는 `ProcessSurveying`.
-/// pid별 호출 횟수를 세어 uid 사전 판별과 매 조사 경로 조회를 확인합니다.
+/// pid별 호출 횟수를 세어 UID별 조회 시도와 매 조사 경로 조회를 확인합니다.
 private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendable {
     static let missingTaskInfoFailure = CollectorFailure(metric: .process, cause: .systemCall(name: "stub.taskInfo", code: -1))
     static let missingPathFailure = CollectorFailure(metric: .process, cause: .systemCall(name: "stub.executablePath", code: -1))
@@ -106,7 +106,7 @@ private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendab
 private func entry(
     pid: pid_t,
     startTime: TimeInterval = 0,
-    uid: uid_t,
+    uid: uid_t?,
     parentPID: pid_t = 1,
     isTranslated: Bool = false
 ) -> ProcessListEntry {
@@ -118,13 +118,51 @@ private func entry(
     )
 }
 
-// MARK: - uid 사전 판별과 읽지 못한 프로세스
+// MARK: - UID별 실제 읽기와 읽지 못한 프로세스
 
-/// task-004 검증 조건: uid가 다른 프로세스는 목록에서 빠지고 `proc_pidinfo`가 호출되지 않으며,
-/// 실패한 프로세스의 값이 추정값으로 채워지지 않고, 결과 목록과 읽지 못한 수의 합이 전체 열거 수와 같습니다.
+/// UID에 관계없이 실제 읽기를 시도하고 소속과 실패를 구분합니다.
 struct ProcessSurveyCollectorTests {
 
-    @Test func effectiveUIDFiltersProcessesWhenRealUIDDiffers() throws {
+    @Test func currentOtherAndMissingUIDFailuresStayInTheirDisplayScopes() async throws {
+        let currentUID = geteuid()
+        let otherUID = currentUID + 1
+        let entries = [
+            entry(pid: 101, uid: currentUID),
+            entry(pid: 102, uid: currentUID),
+            entry(pid: 201, uid: otherUID),
+            entry(pid: 202, uid: otherUID),
+            entry(pid: 301, uid: nil),
+        ]
+        let reader = StubProcessSurveyReader(listOutcomes: [.success(entries)],
+            taskInfoOutcomes: [
+                101: .success(ProcessTaskInfo(cpuTimeNanoseconds: 0, residentBytes: 100)),
+                201: .success(ProcessTaskInfo(cpuTimeNanoseconds: 0, residentBytes: 200)),
+            ],
+            pathOutcomes: [101: .success("/System/Library/CoreServices/Finder.app/bin/Finder"),
+                           201: .success("/Applications/Other.app/bin/Other")])
+        var collector = ProcessSurveyCollector(reader: reader, effectiveUID: { currentUID })
+        let report = try collector.survey()
+        #expect(report.samples.map(\.identity.pid) == [101, 201])
+        #expect(report.unreadableCount == 3)
+        // 현재 UID 실패와 UID 자체를 알 수 없는 실패는 기본에 남고, 알려진 다른 UID 실패만 빠집니다.
+        #expect(report.currentUserUnreadableCount == 2)
+        let history = ProcessHistoryStore()
+        let now = ContinuousClock().now
+        await history.append(TimestampedSample(timestamp: now,
+            value: ProcessSurveySample(result: .success(report))))
+        let input = await history.rankingInput()
+        let variants = ApplicationRanking.materials(snapshots: input.snapshots,
+            currentTimestamp: now, unreadableCount: input.unreadableCount,
+            currentUserUnreadableCount: input.currentUserUnreadableCount,
+            resolver: ApplicationIdentityResolver()).materials
+        #expect(variants.currentUser.ranking.unreadableCount == 2)
+        #expect(variants.allReadable.ranking.unreadableCount == 3)
+        #expect(variants.currentUser.excludedCount == 1)
+        #expect(variants.currentUser.ranking.memoryUsage.map(\.displayName) == ["Finder"])
+        #expect(variants.allReadable.ranking.memoryUsage.map(\.displayName) == ["Other", "Finder"])
+    }
+
+    @Test func effectiveUIDLabelsReadableProcessesWhenRealUIDDiffers() throws {
         let realUID = getuid()
         let effectiveUID = realUID + 1
         let entries = [
@@ -143,16 +181,16 @@ struct ProcessSurveyCollectorTests {
 
         let survey = try collector.survey()
 
-        #expect(survey.samples.map(\.identity.pid) == [200])
-        #expect(survey.samples.first?.uid == effectiveUID)
-        #expect(survey.unreadableCount == 1)
-        #expect(reader.taskInfoCallCount(for: 100) == 0)
+        #expect(survey.samples.map(\.identity.pid) == [100, 200])
+        #expect(survey.samples.map(\.ownership) == [.otherUser, .currentUser])
+        #expect(survey.unreadableCount == 0)
+        #expect(reader.taskInfoCallCount(for: 100) == 1)
         #expect(reader.taskInfoCallCount(for: 200) == 1)
-        #expect(reader.pathCallCount(for: 100) == 0)
+        #expect(reader.pathCallCount(for: 100) == 1)
         #expect(reader.pathCallCount(for: 200) == 1)
     }
 
-    @Test func nonMatchingUIDProcessesAreExcludedWithoutTaskInfoCall() throws {
+    @Test func nonMatchingUIDReadFailuresAreCountedWithoutInventingValues() throws {
         let currentUID = geteuid()
         let otherUID = currentUID + 1
         let entries = [
@@ -171,10 +209,9 @@ struct ProcessSurveyCollectorTests {
 
         #expect(survey.samples.map(\.identity.pid) == [100])
         #expect(survey.unreadableCount == 2)
-        // uid가 다른 200·300에는 proc_pidinfo가 한 번도 호출되지 않습니다.
-        #expect(reader.taskInfoCallCount == 1)
-        #expect(reader.taskInfoCallCount(for: 200) == 0)
-        #expect(reader.taskInfoCallCount(for: 300) == 0)
+        #expect(reader.taskInfoCallCount == 3)
+        #expect(reader.taskInfoCallCount(for: 200) == 1)
+        #expect(reader.taskInfoCallCount(for: 300) == 1)
     }
 
     /// 이 단언이 고정하는 것은 "읽지 못한 프로세스를 값으로 채우지 않는다"입니다.
@@ -429,7 +466,7 @@ private final class CallCountingProcessSurveyReader: ProcessSurveying, @unchecke
 /// `taskInfoCallCount`가 uid가 같은 프로세스 수를 넘어서 이 테스트가 실패해야 합니다.
 struct ProcessSurveyRealDevicePathTests {
 
-    @Test func realSurveyExcludesOtherUIDsAndRefreshesOwnPath() throws {
+    @Test func realSurveyAttemptsEveryUIDAndRefreshesOwnPath() throws {
         let decorator = CallCountingProcessSurveyReader(underlying: HostProcessSurveyReader())
         var collector = ProcessSurveyCollector(reader: decorator)
 
@@ -443,10 +480,9 @@ struct ProcessSurveyRealDevicePathTests {
 
         // 결과 목록 크기와 읽지 못한 수의 합이 열거된 전체 프로세스 수와 같습니다.
         #expect(survey.samples.count + survey.unreadableCount == entries.count)
-        // root를 비롯한 다른 uid 소유 프로세스가 실기기에는 상당수 있어 읽지 못한 수가 0보다 큽니다.
-        #expect(survey.unreadableCount > 0)
-        // uid가 다른 프로세스에는 proc_pidinfo가 호출되지 않으므로 총 호출 수가 uid가 같은 프로세스 수와 같습니다.
-        #expect(decorator.taskInfoCallCount == matchingUIDCount)
+        // 다른 UID에도 조회를 시도하지만 읽기에 실패할 수 있습니다.
+        #expect(decorator.taskInfoCallCount == entries.count)
+        #expect(survey.samples.filter { $0.ownership == .currentUser }.count <= matchingUIDCount)
 
         let selfPID = getpid()
         let selfSample = try #require(survey.samples.first { $0.identity.pid == selfPID })

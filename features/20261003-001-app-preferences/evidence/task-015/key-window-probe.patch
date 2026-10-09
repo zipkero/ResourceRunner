@@ -1,0 +1,12 @@
+--- ResourceRunner/SettingsWindowController.swift
++++ /tmp/rr-m4-015-isolated/ResourceRunner/SettingsWindowController.swift (temporary probe)
+@@
+         showWindow(nil)
+         window?.makeKeyAndOrderFront(nil)
++        Task { @MainActor [weak self] in
++            try? await Task.sleep(for: .milliseconds(700))
++            guard let self else { return }
++            let value = "settingsIsKey=\(self.window?.isKeyWindow == true) keyTitle=\(NSApp.keyWindow?.title ?? "nil") mainTitle=\(NSApp.mainWindow?.title ?? "nil")\n"
++            try? value.write(toFile: NSTemporaryDirectory() + "rr-m4-015-settings-focus.log", atomically: true,
++                encoding: .utf8)
++        }

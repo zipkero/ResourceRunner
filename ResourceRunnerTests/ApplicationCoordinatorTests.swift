@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import AppKit
+import SwiftUI
 import Testing
 @testable import ResourceRunner
 
@@ -37,6 +39,82 @@ private actor PreferenceScheduleTarget: CollectionScheduleTarget {
 /// 이 테스트가 그 mutation을 잡습니다.
 @MainActor
 struct ApplicationCoordinatorTests {
+
+    @Test func rankingCacheRejectsOlderSameEpochAndOldEpochDeliveries() {
+        let cache = ProcessRankingDeliveryCache()
+        let now = ContinuousClock().now
+        let empty = ApplicationRankingSample(cpuUsage: [], memoryUsage: [], memoryIncrease: [], unreadableCount: 0)
+        let material = ProcessRankingMaterial(ranking: empty, groups: [], excludedCount: 0)
+        let materials = ProcessRankingMaterials(currentUser: material, allReadable: material)
+        #expect(cache.update(materials: materials, surveyFailed: false,
+            timestamp: now, collectionEpoch: 10, deliverySequence: 2))
+        #expect(!cache.update(materials: materials, surveyFailed: true,
+            timestamp: now - .seconds(1), collectionEpoch: 10, deliverySequence: 3))
+        #expect(!cache.update(materials: materials, surveyFailed: true,
+            timestamp: now, collectionEpoch: 10, deliverySequence: 1))
+        #expect(!cache.update(materials: materials, surveyFailed: true,
+            timestamp: now + .seconds(1), collectionEpoch: 10, deliverySequence: 1))
+        #expect(cache.update(materials: materials, surveyFailed: true,
+            timestamp: now, collectionEpoch: 10, deliverySequence: 3))
+        #expect(cache.update(materials: materials, surveyFailed: false,
+            timestamp: now + .seconds(1), collectionEpoch: 11, deliverySequence: 4))
+        #expect(!cache.update(materials: materials, surveyFailed: true,
+            timestamp: now + .seconds(2), collectionEpoch: 10, deliverySequence: 5))
+        #expect(cache.collectionEpoch == 11)
+        #expect(cache.snapshot(for: 11).surveyFailed == false)
+        #expect(cache.snapshot(for: 10).ranking == nil)
+    }
+
+    @Test func rankingDisplayPreferencesDoNotApplyCollectionSchedules() async {
+        let preferences = PreferencesStore(storage: SavedPreferencesStorage(nil))
+        let dashboard = DashboardPresentationStore(preferencesSnapshot: preferences.current)
+        let system = PreferenceScheduleTarget()
+        let process = PreferenceScheduleTarget()
+        let lifecycle = MonitoringLifecycleStore(definition: .m3,
+            systemMetricsTarget: system, processSurveyTarget: process,
+            initialProfile: preferences.current.preferences.refreshProfile)
+        let binding = PreferencesPipelineBinding(store: preferences, dashboard: dashboard,
+            lifecycle: lifecycle)
+        binding.initialMonitoringApplied()
+        preferences.update { $0.includesSystemProcesses = true }
+        preferences.update { $0.detailListLimit = .fifty }
+        preferences.update { $0.detailListLimit = .twenty }
+        #expect(dashboard.preferencesSnapshot.revision == 3)
+        #expect(await system.schedules.isEmpty)
+        #expect(await process.schedules.isEmpty)
+    }
+
+    @Test func autoCloseChangesAndRestoreOnlyUpdatePopoverBehavior() async {
+        let preferences = PreferencesStore(storage: SavedPreferencesStorage([
+            "schemaVersion": 1, "automaticallyClosesPopover": false
+        ]))
+        let dashboard = DashboardPresentationStore(preferencesSnapshot: preferences.current)
+        dashboard.selectCard(.cpu)
+        let statusBar = StatusBarController(popoverContent: EmptyView(),
+            automaticallyClosesPopover: preferences.current.preferences.automaticallyClosesPopover)
+        let originalPopover = statusBar.popover
+        let system = PreferenceScheduleTarget()
+        let process = PreferenceScheduleTarget()
+        let lifecycle = MonitoringLifecycleStore(definition: .m3,
+            systemMetricsTarget: system, processSurveyTarget: process,
+            initialProfile: preferences.current.preferences.refreshProfile)
+        let binding = PreferencesPipelineBinding(store: preferences, dashboard: dashboard,
+            lifecycle: lifecycle, statusBar: statusBar)
+        binding.initialMonitoringApplied()
+        #expect(statusBar.popover.behavior == .applicationDefined)
+        let stale = preferences.current
+        let callback = preferences.onChange
+        preferences.update { $0.automaticallyClosesPopover = true }
+        preferences.update { $0.automaticallyClosesPopover = false }
+        preferences.restoreDefaults()
+        callback?(stale)
+        #expect(statusBar.popover.behavior == .transient)
+        #expect(statusBar.popover === originalPopover)
+        #expect(dashboard.selection == .cpu)
+        #expect(dashboard.preferencesSnapshot.revision == 3)
+        #expect(await system.schedules.isEmpty)
+        #expect(await process.schedules.isEmpty)
+    }
 
     @Test func persistedChoicesReloadWithoutRestoringCollectionOrProcessHistory() async {
         let storage = SavedPreferencesStorage(nil)
@@ -93,11 +171,17 @@ struct ApplicationCoordinatorTests {
         let task = ApplicationCoordinator.startMonitoring(lifecycleSource, into: lifecycle) {
             binding.initialMonitoringApplied()
         }
-        await waitUntil { await system.schedules.count >= 2 }
+        await waitUntil {
+            let systemCount = await system.schedules.count
+            let processCount = await process.schedules.count
+            return systemCount >= 2 && processCount >= 2
+        }
         let schedules = await system.schedules
+        let processSchedules = await process.schedules
         #expect(schedules.first == .running(.seconds(10)))
         #expect(schedules.last == .running(.seconds(5)))
         #expect(!schedules.contains(.running(.seconds(2))))
+        #expect(processSchedules == [.running(.seconds(10)), .running(.seconds(8))])
 
         dashboard.applyPreferences(first)
         #expect(dashboard.preferencesSnapshot.revision == 2)
@@ -105,6 +189,7 @@ struct ApplicationCoordinatorTests {
         await waitUntil { dashboard.preferencesSnapshot.revision == 3 }
         #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .energySaving)
         #expect(await system.schedules.count == schedules.count)
+        #expect(await process.schedules.count == processSchedules.count)
         task.cancel()
     }
 
@@ -485,7 +570,8 @@ private func processSurveySample(
                             parentPID: 1,
                             cpuTimeNanoseconds: process.cpuTimeNanoseconds,
                             residentBytes: process.residentBytes,
-                            isTranslated: false
+                            isTranslated: false,
+                            ownership: .currentUser
                         )
                     },
                     unreadableCount: 0

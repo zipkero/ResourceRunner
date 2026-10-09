@@ -1,0 +1,446 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild build -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Release -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/rr-task018-revalidate-20261009/DerivedData CODE_SIGNING_ALLOWED=YES
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-09 13:07:03.750 xcodebuild[4342:57037474] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'ResourceRunner' in project 'ResourceRunner' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 2246f7a6b270e1d5d06ffc982b59e364
+Build description path: /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/XCBuildData/2246f7a6b270e1d5d06ffc982b59e364.xcbuilddata
+CreateBuildDirectory /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Release
+    cd /tmp/rr-task018-revalidate-20261009/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Release
+
+CreateBuildDirectory /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release
+    cd /tmp/rr-task018-revalidate-20261009/ResourceRunner.xcodeproj
+    builtin-create-build-directory /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release
+
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+    cd /tmp/rr-task018-revalidate-20261009/ResourceRunner.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -o /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner-8c3503f0990367d409751a2585fa2393-VFS/all-product-headers.yaml
+    cd /tmp/rr-task018-revalidate-20261009/ResourceRunner.xcodeproj
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner-8c3503f0990367d409751a2585fa2393-VFS/all-product-headers.yaml
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/empty-ResourceRunner.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/empty-ResourceRunner.plist
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-target-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-non-framework-target-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.hmap
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-generated-files.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-generated-files.hmap
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-own-target-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-own-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-project-headers.hmap (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-project-headers.hmap
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.DependencyStaticMetadataFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.DependencyMetadataFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.DependencyMetadataFileList
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftConstValuesFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.LinkFileList (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.LinkFileList
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json
+
+MkDir /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /bin/mkdir -p /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+
+WriteAuxiliaryFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/Entitlements.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    write-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/Entitlements.plist
+
+MkDir /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /bin/mkdir -p /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents
+
+MkDir /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /bin/mkdir -p /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources
+
+MkDir /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /bin/mkdir -p /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS
+
+ProcessProductPackaging "" /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+    Entitlements:
+    
+    {
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.get-task-allow" = 1;
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent
+
+ProcessProductPackagingDER /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent.der (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /usr/bin/derq query -f xml -i /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent.der --raw
+
+CpResource /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources/PrivacyInfo.xcprivacy /tmp/rr-task018-revalidate-20261009/ResourceRunner/PrivacyInfo.xcprivacy (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /tmp/rr-task018-revalidate-20261009/ResourceRunner/PrivacyInfo.xcprivacy /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources
+
+GenerateAssetSymbols /tmp/rr-task018-revalidate-20261009/ResourceRunner/Assets.xcassets (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /tmp/rr-task018-revalidate-20261009/ResourceRunner/Assets.xcassets --compile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources --output-format human-readable-text --notices --warnings --export-dependency-info /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_dependencies --output-partial-info-plist /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.5 --platform macosx --bundle-identifier com.zipkero.ResourceRunner.Task018Revalidate --generate-swift-asset-symbols /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.h
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+MkDir /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/thinned (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /bin/mkdir -p /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/thinned
+
+MkDir /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/unthinned (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /bin/mkdir -p /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/unthinned
+
+CompileAssetCatalogVariant thinned /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources /tmp/rr-task018-revalidate-20261009/ResourceRunner/Assets.xcassets (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /tmp/rr-task018-revalidate-20261009/ResourceRunner/Assets.xcassets --compile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_dependencies_thinned --output-partial-info-plist /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 26.5 --platform macosx
+/* com.apple.actool.compilation-results */
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist_thinned
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/thinned/Assets.car
+
+
+SwiftDriver ResourceRunner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunner -O -whole-module-optimization @/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -swift-version 5 -I /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -F /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -emit-localized-strings -emit-localized-strings-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64 -c -num-threads 14 -Xcc -ivfsstatcache -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -sdk-module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-generated-files.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-own-target-headers.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-project-headers.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/include -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources-normal/arm64 -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/arm64 -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources -emit-objc-header -emit-objc-header-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -working-directory /tmp/rr-task018-revalidate-20261009 -no-emit-module-separately-wmo
+
+LinkAssetCatalog /tmp/rr-task018-revalidate-20261009/ResourceRunner/Assets.xcassets (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-linkAssetCatalog --thinned /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/thinned --thinned-dependencies /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist_thinned --unthinned /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_output/unthinned --unthinned-dependencies /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist_unthinned --output /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources --plist-output /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist
+note: Emplaced /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources/Assets.car (in target 'ResourceRunner' from project 'ResourceRunner')
+
+ProcessInfoPlistFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Info.plist /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/empty-ResourceRunner.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-infoPlistUtility /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/empty-ResourceRunner.plist -producttype com.apple.product-type.application -genpkginfo /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/assetcatalog_generated_info.plist -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Info.plist
+
+SwiftDriver\ Compilation ResourceRunner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunner -O -whole-module-optimization @/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -swift-version 5 -I /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -F /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -emit-localized-strings -emit-localized-strings-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64 -c -num-threads 14 -Xcc -ivfsstatcache -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -sdk-module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-generated-files.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-own-target-headers.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-project-headers.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/include -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources-normal/arm64 -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/arm64 -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources -emit-objc-header -emit-objc-header-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -working-directory /tmp/rr-task018-revalidate-20261009 -no-emit-module-separately-wmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdbool-A2E7ZDY5L8KA1VRO1TZP0FYW7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ptrauth-7LT3CEJK3TRT0GXOEQW1POH8T.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SwiftShims-561I1TQ1DF0P1BTHOCHRHQME2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_AvailabilityInternal-8K22M1LCZILAMFRHW7XZ33PI2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_SwiftConcurrencyShims-9NHWHZIBLXT9GYZ5KGPQS1S7B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/DeveloperToolsSupport-1W463X43E6LKZEOSD0SS6CS5N.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_float-579O83DOIR2XZ2SVAN5SGX1YV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdarg-6KK6XEE1OMRECJNYUCQ0SP6VY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ptrcheck-DR4TDAOO32L8O693JYRWPTG7A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stddef-6DV4CK1EMWQVAJKQU2LHTY43H.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_DarwinFoundation1-ADPZKE1YJN76GCIHH3SZVJRE4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_DarwinFoundation2-3M7YIMI5SCXQWZDDQUF7FL1LY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_limits-6GAXSIV539OVTB0RHOTQ4ZDP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/sys_types-86OOVAQ6TAMSOLR0UZ6XC61L5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_tgmath-VE94TAHN41KTWEUAU7W7G7T5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdint-6UVE0OJRL2OVYFWEG5OY0PBCY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdatomic-BFF5Y0G5UBG92RH8M7E3PSITH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/libDER-AX7PSR4PKMBVGTBFF6GF11GSN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_DarwinFoundation3-7JAXK5Q44MFDCIILFA21F8T6Y.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_intrinsics-51ZODJL250YG27A60TNA0VNQM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/OpenGL-3QCINGVPWTAKCWC0G153LC5UQ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_inttypes-B02SSONY689757CZHOHMO6JJR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Darwin-EDA69HOOOHTFS4W9DM7RS29K2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/simd-9D6CY9KSGZ80BKC0M7AS4W1PI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/MachO-3QTJFJFDMVKG98YPXXQF1TCHH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CUPS-5KFTY4N4F6C8EADK0KMZ7EOJN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/libkern-A1QGKBT56YO6HE4WOCCVH69R8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/launch-JXQFOFLBZZM4P19D6S2N5EZJ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ObjectiveC-F18FZK463ZP7NFQ4LEQJPFKVH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Spatial-C9IXHRDR4AEVFXRCZ102BYVYT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/os_object-2QKOSP7NZ6PQ67SOS1SKW4D5X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/os_workgroup-6FNI2EL86AVIE3K0QE89SSUT8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Dispatch-C8AGYUDKXI9RTOMK6AY9OJLR9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/XPC-CNQVN0JDW67HUS2MYUGWEC5S3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreFoundation-BTD2XADOTORX4JA0IQCM3BAC7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/os-B1AZCGG3Z5LPKU25K9BOPFGZ2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/IOKit-215CXTKJE9BG2NGII3PYVNROT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CFNetwork-3KCO3CNSF2RS9RDS63VKQU0FX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ColorSync-B8II42TLPG1OG5SA2ICRO2SN5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Security-41MWS0WY0WSTW6MTYG9MMI614.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SystemConfiguration-3CHLDUTDWL00PJX8WOTVFZC1J.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/DiskArbitration-A0TZ70R32GS2YMM60FL5V7D89.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreGraphics-9BCNWX1A0QMKF4ZFZC1KW65C7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreServices-92NT2ZXG5PRH2HCHQQGUNFGFF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreText-CN8JGGTGRV93J7XGPNZBXJFIP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ImageIO-7MKMVB1GVYMUB7XSZTZZ8ZBFF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Foundation-866ZLWBV8KKLLIYP9KD8FQKGM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Accessibility-BRO8Q2S0Q8CBDLJKAFA3K193A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/DataDetection-4R4M7RD1B8VOS19YJD01N3I5P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreData-ESZIQQXHEZKI1YFBOO7XJMO7X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/UniformTypeIdentifiers-DUE5QMWQEM4INPUGBODXCL6HR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreTransferable-5731TGET0NR43NAO46C7W1AN9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/OSLog-NSS1E8M5X7FSHLTJYPXUFFCF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ServiceManagement-8UVKGIY29GMIG8EX66TOBBSAL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Symbols-E18CNIFU2LSD0TS79VNL786SM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/IOSurface-DBG4BYZ3D0FMHJA6TR0MJEHJ2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ApplicationServices-5MMV9CJ5M0FRZP5P8N63ZZ3FA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Metal-3FOBO6B7R5TLO5JWMCQKMJREH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreVideo-55E7BNWBHMM6J8XL8MBL3214A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreImage-BPT4C5Q7VF0HW7WT3NZXCFTQI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/QuartzCore-6WLEZMU9DB2YFGWGAGOBRRM0U.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SwiftUICore-3TLCPLS1UBVD1VVBHHUVRAN3M.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/AppKit-O9XMX763SVR9VLD92QQMK4XC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SwiftUI-9IINLCVGURVE94DGXDIA3C6T1.pcm
+
+SwiftCompile normal arm64 Compiling\ AppDelegate.swift,\ ApplicationCoordinator.swift,\ ApplicationIconCache.swift,\ ApplicationRanking.swift,\ ApplicationRowIcon.swift,\ AppPreferences.swift,\ AuxiliaryCollectionScheduler.swift,\ CharacterStateSource.swift,\ CollectionAdmission.swift,\ CollectionDeliveryStore.swift,\ CollectionPipelines.swift,\ CPUActivityStateEvaluator.swift,\ CPUSystemMetricsCollector.swift,\ DashboardColorPalette.swift,\ DashboardPresentation.swift,\ DashboardPresentationStore.swift,\ DashboardStyle.swift,\ DashboardView.swift,\ DashboardViewport.swift,\ DiskActivity.swift,\ DiskDashboardView.swift,\ DiskNativeAdapter.swift,\ DiskTopology.swift,\ LoginItemController.swift,\ LoginItemService.swift,\ MemorySystemMetricsCollector.swift,\ MonitoringLifecycle.swift,\ MonitoringSampleStore.swift,\ MonitoringScheduler.swift,\ NetworkActivity.swift,\ NetworkDashboardView.swift,\ NetworkMetadata.swift,\ NetworkNativeAdapter.swift,\ NetworkTopology.swift,\ PreferencesStore.swift,\ PreferencesView.swift,\ ProcessHistoryStore.swift,\ ProcessSurvey.swift,\ ProcessSurveyCollector.swift,\ ProcessSurveySampleSource.swift,\ ResourceActivityPresentation.swift,\ ResourceQuantityFormatter.swift,\ ResourceRateGraph.swift,\ ResourceRateGraphView.swift,\ ResourceRunnerApp.swift,\ ResourceTopologyObserver.swift,\ SettingsWindowController.swift,\ StatusBarController.swift,\ StorageMetadata.swift,\ SystemLifecycleObserver.swift,\ SystemMetrics.swift,\ SystemMetricsSampleSource.swift,\ GeneratedAssetSymbols.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/AppDelegate.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ApplicationCoordinator.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ApplicationIconCache.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ApplicationRanking.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ApplicationRowIcon.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/AppPreferences.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/AuxiliaryCollectionScheduler.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/CharacterStateSource.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/CollectionAdmission.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/CollectionDeliveryStore.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/CollectionPipelines.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/CPUActivityStateEvaluator.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/CPUSystemMetricsCollector.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardColorPalette.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardPresentation.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardPresentationStore.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardStyle.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardViewport.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DiskActivity.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DiskDashboardView.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DiskNativeAdapter.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/DiskTopology.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/LoginItemController.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/LoginItemService.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/MemorySystemMetricsCollector.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/MonitoringLifecycle.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/MonitoringSampleStore.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/MonitoringScheduler.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/NetworkActivity.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/NetworkDashboardView.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/NetworkMetadata.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/NetworkNativeAdapter.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/NetworkTopology.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/PreferencesStore.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/PreferencesView.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ProcessHistoryStore.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ProcessSurvey.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ProcessSurveyCollector.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ProcessSurveySampleSource.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ResourceActivityPresentation.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ResourceQuantityFormatter.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ResourceRateGraph.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ResourceRateGraphView.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ResourceRunnerApp.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/ResourceTopologyObserver.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/SettingsWindowController.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/StatusBarController.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/StorageMetadata.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/SystemLifecycleObserver.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/SystemMetrics.swift /tmp/rr-task018-revalidate-20261009/ResourceRunner/SystemMetricsSampleSource.swift /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/GeneratedAssetSymbols.swift /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/SwiftUI.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/ObjectiveC.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Symbols.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/DeveloperToolsSupport.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/OSLog.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreTransferable.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/QuartzCore.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreGraphics.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/simd.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/IOKit.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Observation.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/SwiftUICore.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Combine.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/DataDetection.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/UniformTypeIdentifiers.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Accessibility.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Metal.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreText.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Dispatch.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/_Concurrency.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreVideo.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/_DarwinFoundation2.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/_DarwinFoundation3.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Darwin.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Swift.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/XPC.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/_DarwinFoundation1.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreData.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/os.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/_Builtin_float.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/System.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Foundation.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/AppKit.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/Spatial.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreFoundation.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/CoreImage.swiftmodule/arm64e-apple-macos.swiftmodule /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/prebuilt-modules/26.5/_StringProcessing.swiftmodule/arm64e-apple-macos.swiftmodule /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/os-B1AZCGG3Z5LPKU25K9BOPFGZ2.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Darwin-EDA69HOOOHTFS4W9DM7RS29K2.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ObjectiveC-F18FZK463ZP7NFQ4LEQJPFKVH.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_AvailabilityInternal-8K22M1LCZILAMFRHW7XZ33PI2.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_DarwinFoundation3-7JAXK5Q44MFDCIILFA21F8T6Y.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Foundation-866ZLWBV8KKLLIYP9KD8FQKGM.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/AppKit-O9XMX763SVR9VLD92QQMK4XC.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ServiceManagement-8UVKGIY29GMIG8EX66TOBBSAL.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/MachO-3QTJFJFDMVKG98YPXXQF1TCHH.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_float-579O83DOIR2XZ2SVAN5SGX1YV.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SwiftShims-561I1TQ1DF0P1BTHOCHRHQME2.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/OpenGL-3QCINGVPWTAKCWC0G153LC5UQ.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/IOSurface-DBG4BYZ3D0FMHJA6TR0MJEHJ2.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreText-CN8JGGTGRV93J7XGPNZBXJFIP.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_inttypes-B02SSONY689757CZHOHMO6JJR.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreVideo-55E7BNWBHMM6J8XL8MBL3214A.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CFNetwork-3KCO3CNSF2RS9RDS63VKQU0FX.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreTransferable-5731TGET0NR43NAO46C7W1AN9.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdatomic-BFF5Y0G5UBG92RH8M7E3PSITH.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stddef-6DV4CK1EMWQVAJKQU2LHTY43H.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ApplicationServices-5MMV9CJ5M0FRZP5P8N63ZZ3FA.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Metal-3FOBO6B7R5TLO5JWMCQKMJREH.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/XPC-CNQVN0JDW67HUS2MYUGWEC5S3.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_tgmath-VE94TAHN41KTWEUAU7W7G7T5.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/DeveloperToolsSupport-1W463X43E6LKZEOSD0SS6CS5N.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreData-ESZIQQXHEZKI1YFBOO7XJMO7X.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/DataDetection-4R4M7RD1B8VOS19YJD01N3I5P.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SwiftUICore-3TLCPLS1UBVD1VVBHHUVRAN3M.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/os_workgroup-6FNI2EL86AVIE3K0QE89SSUT8.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ptrauth-7LT3CEJK3TRT0GXOEQW1POH8T.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/libkern-A1QGKBT56YO6HE4WOCCVH69R8.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/QuartzCore-6WLEZMU9DB2YFGWGAGOBRRM0U.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/UniformTypeIdentifiers-DUE5QMWQEM4INPUGBODXCL6HR.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/simd-9D6CY9KSGZ80BKC0M7AS4W1PI.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/DiskArbitration-A0TZ70R32GS2YMM60FL5V7D89.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SwiftUI-9IINLCVGURVE94DGXDIA3C6T1.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreImage-BPT4C5Q7VF0HW7WT3NZXCFTQI.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Spatial-C9IXHRDR4AEVFXRCZ102BYVYT.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_limits-6GAXSIV539OVTB0RHOTQ4ZDP.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Symbols-E18CNIFU2LSD0TS79VNL786SM.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/sys_types-86OOVAQ6TAMSOLR0UZ6XC61L5.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_SwiftConcurrencyShims-9NHWHZIBLXT9GYZ5KGPQS1S7B.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreFoundation-BTD2XADOTORX4JA0IQCM3BAC7.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_intrinsics-51ZODJL250YG27A60TNA0VNQM.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdbool-A2E7ZDY5L8KA1VRO1TZP0FYW7.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_DarwinFoundation2-3M7YIMI5SCXQWZDDQUF7FL1LY.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ptrcheck-DR4TDAOO32L8O693JYRWPTG7A.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Security-41MWS0WY0WSTW6MTYG9MMI614.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Dispatch-C8AGYUDKXI9RTOMK6AY9OJLR9.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/OSLog-NSS1E8M5X7FSHLTJYPXUFFCF.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/os_object-2QKOSP7NZ6PQ67SOS1SKW4D5X.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/SystemConfiguration-3CHLDUTDWL00PJX8WOTVFZC1J.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreServices-92NT2ZXG5PRH2HCHQQGUNFGFF.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/libDER-AX7PSR4PKMBVGTBFF6GF11GSN.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_DarwinFoundation1-ADPZKE1YJN76GCIHH3SZVJRE4.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/launch-JXQFOFLBZZM4P19D6S2N5EZJ.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdint-6UVE0OJRL2OVYFWEG5OY0PBCY.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ImageIO-7MKMVB1GVYMUB7XSZTZZ8ZBFF.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CoreGraphics-9BCNWX1A0QMKF4ZFZC1KW65C7.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/IOKit-215CXTKJE9BG2NGII3PYVNROT.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/_Builtin_stdarg-6KK6XEE1OMRECJNYUCQ0SP6VY.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/CUPS-5KFTY4N4F6C8EADK0KMZ7EOJN.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Accessibility-BRO8Q2S0Q8CBDLJKAFA3K193A.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/ColorSync-B8II42TLPG1OG5SA2ICRO2SN5.pcm /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-dependencies-1.json (in target 'ResourceRunner' from project 'ResourceRunner')
+
+CompileSwift normal arm64 (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:380:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text("\(Int(lastKnown.presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
+                ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:387:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text("\(Int(lastKnown.presentation.overallUsage.rounded()))\(CPUCardPresentation.overallUsageUnitLabel)")
+                ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:417:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                            + Text(entry.valueText).dashboardTypography(DashboardStyle.TypographyRole.value)
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:596:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text(" / \(DashboardValueColumn.byteText(presentation.totalPhysicalBytes))")
+                ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:603:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
+                ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:610:17: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                + Text(DashboardValueColumn.byteText(lastKnown.presentation.usedBytes))
+                ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:635:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(Image(systemName: name))
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:637:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" \(text)")
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:639:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" · ")
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:641:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text("Swap \(text)")
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:643:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" (\(text))")
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:645:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text("구성 \(text)")
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:666:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(Image(systemName: "square.fill"))
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:669:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text(" \(text)")
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:671:29: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                return line + Text("  ")
+                            ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/DashboardView.swift:1353:25: warning: '+' was deprecated in macOS 26.0: Use string interpolation on `Text` instead: `Text("Hello \(name)")`
+                        + Text("\(fmt(load.oneMinute)) / \(fmt(load.fiveMinutes)) / \(fmt(load.fifteenMinutes))")
+                        ^
+/tmp/rr-task018-revalidate-20261009/ResourceRunner/StatusBarController.swift:70:23: warning: conformance of 'NSEvent' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode
+            MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
+                      ^
+note: conformance of 'NSEvent' to 'Sendable' has been explicitly marked unavailable here
+@_nonSendable(_assumed)
+^
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppDelegate.swift, ApplicationCoordinator.swift, ApplicationIconCache.swift, ApplicationRanking.swift, ApplicationRowIcon.swift, AppPreferences.swift, AuxiliaryCollectionScheduler.swift, CharacterStateSource.swift, CollectionAdmission.swift, CollectionDeliveryStore.swift, CollectionPipelines.swift, CPUActivityStateEvaluator.swift, CPUSystemMetricsCollector.swift, DashboardColorPalette.swift, DashboardPresentation.swift, DashboardPresentationStore.swift, DashboardStyle.swift, DashboardView.swift, DashboardViewport.swift, DiskActivity.swift, DiskDashboardView.swift, DiskNativeAdapter.swift, DiskTopology.swift, LoginItemController.swift, LoginItemService.swift, MemorySystemMetricsCollector.swift, MonitoringLifecycle.swift, MonitoringSampleStore.swift, MonitoringScheduler.swift, NetworkActivity.swift, NetworkDashboardView.swift, NetworkMetadata.swift, NetworkNativeAdapter.swift, NetworkTopology.swift, PreferencesStore.swift, PreferencesView.swift, ProcessHistoryStore.swift, ProcessSurvey.swift, ProcessSurveyCollector.swift, ProcessSurveySampleSource.swift, ResourceActivityPresentation.swift, ResourceQuantityFormatter.swift, ResourceRateGraph.swift, ResourceRateGraphView.swift, ResourceRunnerApp.swift, ResourceTopologyObserver.swift, SettingsWindowController.swift, StatusBarController.swift, StorageMetadata.swift, SystemLifecycleObserver.swift, SystemMetrics.swift, SystemMetricsSampleSource.swift, GeneratedAssetSymbols.swift (in target 'ResourceRunner' from project 'ResourceRunner')
+
+SwiftDriver\ Compilation\ Requirements ResourceRunner normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ResourceRunner -O -whole-module-optimization @/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -target arm64-apple-macos26.5 -g -module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -swift-version 5 -I /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -F /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -emit-localized-strings -emit-localized-strings-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64 -c -num-threads 14 -Xcc -ivfsstatcache -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache -output-file-map /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -sdk-module-cache-path /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/rr-task018-revalidate-20261009/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-generated-files.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-own-target-headers.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner-project-headers.hmap -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/include -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources-normal/arm64 -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/arm64 -Xcc -I/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources -emit-objc-header -emit-objc-header-path /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -working-directory /tmp/rr-task018-revalidate-20261009 -no-emit-module-separately-wmo
+
+SwiftMergeGeneratedHeaders /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/ResourceRunner-Swift.h /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-swiftHeaderTool -arch arm64 /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-Swift.h -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/DerivedSources/ResourceRunner-Swift.h
+
+Copy /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/arm64-apple-macos.abi.json /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.abi.json (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.abi.json /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/arm64-apple-macos.swiftdoc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftdoc (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftdoc /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/arm64-apple-macos.swiftdoc
+
+Copy /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/arm64-apple-macos.swiftmodule /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/arm64-apple-macos.swiftmodule
+
+Copy /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftsourceinfo (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftsourceinfo /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+Ld /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner normal (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos26.5 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -Os -L/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Release -L/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -F/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Release -F/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release -filelist /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.LinkFileList -Xlinker -rpath -Xlinker @executable_path/../Frameworks -Xlinker -object_path_lto -Xlinker /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_lto.o -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.swiftmodule @/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner-linker-args.resp -Xlinker -no_adhoc_codesign -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner
+
+CopySwiftLibs /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Frameworks --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/PlugIns --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Library/SystemExtensions --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ResourceRunner --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk --xcode-version 17F113 --platform-family macOS --deployment-target 26.5 --bundle-identifier com.zipkero.ResourceRunner.Task018Revalidate --output /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources --target-triple arm64-apple-macos26.5 --binary-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner --dependency-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner_dependency_info.dat --stringsdata-file /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftFileList --metadata-file-list /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.DependencyMetadataFileList --static-metadata-file-list /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.DependencyStaticMetadataFileList --swift-const-vals-list /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/Objects-normal/arm64/ResourceRunner.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-09 13:07:23.222 appintentsmetadataprocessor[4932:57049050] Starting appintentsmetadataprocessor export
+2026-10-09 13:07:23.223 appintentsmetadataprocessor[4932:57049050] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+GenerateDSYMFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app.dSYM /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app.dSYM
+
+CodeSign /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Release/ResourceRunner.build/ResourceRunner.app.xcent --timestamp\=none --generate-entitlement-der /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+
+RegisterExecutionPolicyException /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-RegisterExecutionPolicyException /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+
+Validate /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-validationUtility /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+Touch /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /usr/bin/touch -c /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+
+RegisterWithLaunchServices /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+
+** BUILD SUCCEEDED **
+

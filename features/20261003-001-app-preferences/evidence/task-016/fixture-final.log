@@ -1,0 +1,799 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/rr-m4-016-unique-dd/Build/Products/ResourceRunner_ResourceRunner_macosx26.5-arm64.xctestrun -destination platform=macOS "-only-testing:ResourceRunnerUITests/ExpandedPreferencesIntegrationUITests/testRenderedFiftyGroupsAndMixedUIDUseProductionRankingPath" -resultBundlePath /tmp/rr-m4-016-ui-final-boundary.xcresult
+
+2026-10-09 15:11:13.492 xcodebuild[41464:57720107] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Writing result bundle at path:
+	/tmp/rr-m4-016-ui-final-boundary.xcresult
+
+2026-10-09 15:11:13.494 xcodebuild[41464:57720107] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64e, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Mac Catalyst, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:DriverKit, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64e, variant:Designed for [iPad,iPhone], id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006034-000811520144001C, name:My Mac }
+2026-10-09 15:11:13.740 xcodebuild[41464:57720107] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+2026-10-09 15:11:14.178255+0900 ResourceRunnerUITests-Runner[41489:57720294] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-09 15:11:14.263.
+Test Suite 'ResourceRunnerUITests.xctest' started at 2026-10-09 15:11:14.263.
+Test Suite 'ExpandedPreferencesIntegrationUITests' started at 2026-10-09 15:11:14.263.
+Test Case '-[ResourceRunnerUITests.ExpandedPreferencesIntegrationUITests testRenderedFiftyGroupsAndMixedUIDUseProductionRankingPath]' started.
+    t =     0.00s Start Test at 2026-10-09 15:11:14.264
+    t =     0.08s Set Up
+    t =     0.08s Open com.zipkero.ResourceRunner.Task016
+    t =     0.09s     Launch com.zipkero.ResourceRunner.Task016
+2026-10-09 15:11:14.382 xcodebuild[41464:57720107] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 15:11:14.382 xcodebuild[41464:57720107] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.50s         Wait for accessibility to load
+    t =     0.58s         Setting up automation session
+    t =     0.58s         Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     0.59s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     1.63s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     1.63s         Checking existence of `StatusItem (First Match)`
+    t =     1.65s Open com.zipkero.ResourceRunner.Task016
+    t =     1.65s     Activate com.zipkero.ResourceRunner.Task016
+    t =     1.66s         Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     2.01s Click StatusItem (First Match)
+    t =     2.02s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     2.02s     Find the StatusItem (First Match)
+    t =     2.03s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.04s     Synthesize event
+    t =     2.47s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     2.48s Waiting 3.0s for "DashboardContainer" Any to exist
+    t =     3.51s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =     3.51s         Checking existence of `"DashboardContainer" Any`
+    t =     3.57s Find the "CPUCard" Any
+    t =     3.72s Find the "CPUCard" Button
+    t =     3.87s Find the "CPUCard" Button
+    t =     4.01s Find the "CPUCard" Button
+    t =     4.06s Find the "CPUCard" Button
+    t =     4.10s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.10s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     4.10s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =     4.12s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.12s     Synthesize event
+    t =     4.25s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     4.26s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =     5.30s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     5.30s         Checking existence of `"DashboardDetail" Any`
+    t =     5.36s Checking existence of `StaticText (First Match)`
+    t =     5.37s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =     5.42s Checking existence of `"AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle`
+    t =     5.43s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =     5.47s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.49s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.52s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.54s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.56s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.58s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.60s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.62s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.63s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.65s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.67s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.69s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.72s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.73s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.74s Click "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     5.74s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     5.74s     Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.75s     Check for interrupting elements affecting "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.76s     Synthesize event
+    t =     5.76s         Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     5.77s         Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     6.17s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     6.17s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     6.19s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =     6.24s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =     6.29s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+TASK016_CURRENT_CHILD_VALUES ["Optional(RRFixtureGroup00, current (PID 50000))", "Optional(-)"]
+    t =     6.33s Get number of matches for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =     6.38s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =     6.43s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =     6.47s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =     6.52s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =     6.56s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =     6.61s Checking existence of `"DashboardContainer" Any`
+    t =     6.63s Click "DashboardContainer" Any
+    t =     6.63s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     6.63s     Find the "DashboardContainer" Any
+    t =     6.65s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =     6.78s     Synthesize event
+    t =     7.22s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     7.22s Type '1' key with modifiers '⌘' (0x10)
+    t =     7.22s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     7.23s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =     7.29s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     7.29s     Synthesize event
+    t =     7.45s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     7.45s Type '2' key with modifiers '⌘' (0x10)
+    t =     7.45s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     7.46s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =     7.51s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     7.51s     Synthesize event
+    t =     7.71s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     7.71s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =     8.75s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =     8.75s         Checking existence of `"DashboardDetail" Any`
+    t =     8.82s Find the "MemoryCard" Any
+    t =     8.85s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =     8.90s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =     8.94s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =     8.96s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =     9.08s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =     9.20s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =     9.30s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =     9.39s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =     9.44s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =     9.54s Requesting snapshot of accessibility hierarchy for app with pid 41516
+TASK016_DEFAULT_MEMORY_AX usage=20 increase=20 currentMB=Optional(551.5)
+    t =     9.63s Type ',' key with modifiers '⌘' (0x10)
+    t =     9.63s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     9.63s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =     9.68s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.68s     Synthesize event
+    t =     9.84s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =     9.84s Waiting 3.0s for "ResourceRunner 설정" Window to exist
+    t =    10.88s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunner 설정" Window`
+    t =    10.88s         Checking existence of `"ResourceRunner 설정" Window`
+    t =    10.97s Press "ResourceRunner 설정" Window[0.50, 0.03] for 0.2 seconds, then drag to "ResourceRunner 설정" Window[0.50, 0.03] -> (-450.0, 0.0) with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    10.97s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    10.98s     Find the "ResourceRunner 설정" Window
+    t =    11.02s     Check for interrupting elements affecting "ResourceRunnerSettingsWindow" Window
+    t =    11.03s     Synthesize event
+    t =    11.03s         Find the "ResourceRunnerSettingsWindow" Window
+    t =    11.08s         Find the "ResourceRunnerSettingsWindow" Window
+    t =    11.13s         Find the "ResourceRunnerSettingsWindow" Window
+    t =    11.17s         Find the "ResourceRunnerSettingsWindow" Window
+    t =    12.59s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    12.60s Click "SettingsAutomaticallyClosesPopover" Switch
+    t =    12.60s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    12.60s     Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =    12.67s     Check for interrupting elements affecting "SettingsAutomaticallyClosesPopover" Switch
+    t =    12.69s     Synthesize event
+    t =    12.75s         Scroll element to visible
+    t =    12.75s             Scroll ScrollView (Identity Binding) by dx: -157.00, dy: -585.00
+    t =    12.75s                 Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    12.75s                 Find the ScrollView (Identity Binding)
+    t =    12.80s                 Check for interrupting elements affecting ScrollView
+    t =    12.81s                 Synthesize event
+    t =    13.17s                 Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    13.18s         Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =    13.62s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    13.62s Type '0' key with modifiers '⌘⌥' (0x18)
+    t =    13.62s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    13.63s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    13.68s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    13.68s     Synthesize event
+    t =    13.78s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    13.79s Click "SettingsDetailListLimit" PopUpButton
+    t =    13.79s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    13.79s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    13.85s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    13.87s     Synthesize event
+    t =    14.55s         Scroll element to visible
+    t =    14.55s             Scroll ScrollView (Identity Binding) by dx: -56.50, dy: 418.00
+    t =    14.55s                 Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    14.55s                 Find the ScrollView (Identity Binding)
+    t =    14.61s                 Check for interrupting elements affecting ScrollView
+    t =    14.62s                 Synthesize event
+    t =    14.92s                 Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    14.93s         Find the "SettingsDetailListLimit" PopUpButton
+    t =    15.38s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    15.39s Click "50개" MenuItem
+    t =    15.39s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    15.39s     Find the "50개" MenuItem
+    t =    15.46s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    15.47s     Synthesize event
+    t =    15.47s         Checking existence of `"menuAction:" MenuItem`
+    t =    15.51s         Hover menu item '50개'
+    t =    15.51s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    15.51s             Find the "menuAction:" MenuItem
+    t =    15.56s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    15.56s             Synthesize event
+    t =    15.78s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    15.79s         Find the "menuAction:" MenuItem
+    t =    16.56s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    16.56s Find the "SettingsDetailListLimit" PopUpButton
+    t =    16.61s Find the "SettingsIncludeSystemProcesses" Switch
+    t =    16.66s Click "_XCUI:CloseWindow" Button
+    t =    16.66s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    16.67s     Find the "_XCUI:CloseWindow" Button
+    t =    16.72s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    16.72s     Synthesize event
+    t =    17.08s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    17.09s Checking existence of `"DashboardContainer" Any`
+    t =    17.13s Open com.zipkero.ResourceRunner.Task016
+    t =    17.14s     Activate com.zipkero.ResourceRunner.Task016
+    t =    17.14s         Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    17.50s Click StatusItem (First Match)
+    t =    17.50s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    17.51s     Find the StatusItem (First Match)
+    t =    17.52s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =    17.52s     Synthesize event
+    t =    17.93s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    17.94s Waiting 3.0s for "DashboardContainer" Any to exist
+    t =    18.97s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =    18.97s         Checking existence of `"DashboardContainer" Any`
+    t =    19.00s Checking existence of `"DashboardContainer" Any`
+    t =    19.02s Click "DashboardContainer" Any
+    t =    19.02s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    19.02s     Find the "DashboardContainer" Any
+    t =    19.04s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    19.06s     Synthesize event
+    t =    19.59s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    19.59s Type '2' key with modifiers '⌘' (0x10)
+    t =    19.59s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    19.62s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    19.73s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    19.73s     Synthesize event
+    t =    19.86s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    19.87s Type '1' key with modifiers '⌘' (0x10)
+    t =    19.87s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    19.87s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    19.89s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    19.89s     Synthesize event
+    t =    20.04s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    20.04s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    21.08s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    21.08s         Checking existence of `"DashboardDetail" Any`
+    t =    21.16s Checking existence of `StaticText (First Match)`
+    t =    21.18s Find the "CPUCard" Button
+    t =    21.21s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =    21.22s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    21.30s Checking existence of `"AppRow-/tmp/RRFixtureGroup48.app" DisclosureTriangle`
+    t =    21.33s Checking existence of `"AppRow-/tmp/RRFixtureGroup49.app" DisclosureTriangle`
+    t =    21.38s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.41s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.44s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.47s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.53s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.56s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.58s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.60s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.62s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.64s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.66s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.68s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.70s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.72s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.73s Click "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =    21.73s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    21.73s     Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.74s     Check for interrupting elements affecting "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.75s     Synthesize event
+    t =    21.75s         Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    21.76s         Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    22.13s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    22.13s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    22.15s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =    22.24s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    22.31s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    22.39s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    22.47s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+TASK016_MIXED_CHILD_VALUES ["Optional(RRFixtureGroup00, other (PID 60000))", "Optional(17% (코어 합산))", "Optional(RRFixtureGroup00, current (PID 50000))", "Optional(16% (코어 합산))"]
+    t =    22.55s Get number of matches for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =    22.66s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =    22.74s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    22.81s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =    22.89s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    22.97s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    23.05s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    23.12s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    23.20s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    23.21s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    23.30s Get number of matches for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+TASK016_CPU50_AX count=50 mixedChildElements=4 otherOnly=1
+    t =    23.38s Type ',' key with modifiers '⌘' (0x10)
+    t =    23.38s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    23.38s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    23.43s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    23.43s     Synthesize event
+    t =    23.63s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    23.63s Waiting 3.0s for "ResourceRunnerSettingsWindow" Window to exist
+    t =    24.67s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunnerSettingsWindow" Window`
+    t =    24.67s         Checking existence of `"ResourceRunnerSettingsWindow" Window`
+    t =    24.75s Click "SettingsDetailListLimit" PopUpButton
+    t =    24.75s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    24.76s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    24.81s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    24.83s     Synthesize event
+    t =    25.18s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    25.18s Click "10개" MenuItem
+    t =    25.18s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    25.18s     Find the "10개" MenuItem
+    t =    25.24s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    25.24s     Synthesize event
+    t =    25.24s         Checking existence of `"menuAction:" MenuItem`
+    t =    25.28s         Hover menu item '10개'
+    t =    25.28s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    25.29s             Find the "menuAction:" MenuItem
+    t =    25.33s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    25.33s             Synthesize event
+    t =    25.55s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    25.56s         Find the "menuAction:" MenuItem
+    t =    26.31s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    26.32s Find the "SettingsDetailListLimit" PopUpButton
+    t =    26.39s Click "_XCUI:CloseWindow" Button
+    t =    26.39s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    26.39s     Find the "_XCUI:CloseWindow" Button
+    t =    26.45s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    26.45s     Synthesize event
+    t =    26.86s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    26.87s Checking existence of `"DashboardContainer" Any`
+    t =    26.89s Click "DashboardContainer" Any
+    t =    26.89s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    26.90s     Find the "DashboardContainer" Any
+    t =    26.92s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    26.94s     Synthesize event
+    t =    27.41s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    27.42s Type '2' key with modifiers '⌘' (0x10)
+    t =    27.42s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    27.42s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    27.51s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    27.51s     Synthesize event
+    t =    27.62s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    27.62s Type '1' key with modifiers '⌘' (0x10)
+    t =    27.62s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    27.63s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    27.65s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    27.66s     Synthesize event
+    t =    27.75s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    27.75s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    28.79s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    28.79s         Checking existence of `"DashboardDetail" Any`
+    t =    28.85s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    28.88s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =    28.89s Checking existence of `"AppRow-/tmp/RRFixtureGroup09.app" DisclosureTriangle`
+    t =    28.92s Type ',' key with modifiers '⌘' (0x10)
+    t =    28.92s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    28.92s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    28.95s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    28.95s     Synthesize event
+    t =    29.06s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    29.06s Waiting 3.0s for "ResourceRunnerSettingsWindow" Window to exist
+    t =    30.10s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunnerSettingsWindow" Window`
+    t =    30.10s         Checking existence of `"ResourceRunnerSettingsWindow" Window`
+    t =    30.19s Click "SettingsDetailListLimit" PopUpButton
+    t =    30.19s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    30.20s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    30.25s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    30.27s     Synthesize event
+    t =    30.65s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    30.66s Click "20개" MenuItem
+    t =    30.66s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    30.66s     Find the "20개" MenuItem
+    t =    30.71s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    30.71s     Synthesize event
+    t =    30.71s         Checking existence of `"menuAction:" MenuItem`
+    t =    30.75s         Hover menu item '20개'
+    t =    30.75s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    30.76s             Find the "menuAction:" MenuItem
+    t =    30.80s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    30.80s             Synthesize event
+    t =    31.01s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    31.01s         Find the "menuAction:" MenuItem
+    t =    31.76s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    31.77s Find the "SettingsDetailListLimit" PopUpButton
+    t =    31.83s Click "_XCUI:CloseWindow" Button
+    t =    31.83s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    31.83s     Find the "_XCUI:CloseWindow" Button
+    t =    31.89s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    31.90s     Synthesize event
+    t =    32.27s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    32.27s Checking existence of `"DashboardContainer" Any`
+    t =    32.30s Click "DashboardContainer" Any
+    t =    32.30s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    32.30s     Find the "DashboardContainer" Any
+    t =    32.33s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    32.35s     Synthesize event
+    t =    32.80s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    32.80s Type '2' key with modifiers '⌘' (0x10)
+    t =    32.80s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    32.81s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    32.88s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    32.88s     Synthesize event
+    t =    32.95s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    32.96s Type '1' key with modifiers '⌘' (0x10)
+    t =    32.96s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    32.96s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    32.98s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    32.98s     Synthesize event
+    t =    33.09s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    33.09s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    34.12s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    34.12s         Checking existence of `"DashboardDetail" Any`
+    t =    34.18s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    34.23s Checking existence of `"AppRow-/tmp/RRFixtureGroup18.app" DisclosureTriangle`
+    t =    34.24s Checking existence of `"AppRow-/tmp/RRFixtureGroup19.app" DisclosureTriangle`
+    t =    34.28s Type ',' key with modifiers '⌘' (0x10)
+    t =    34.28s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    34.28s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    34.32s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    34.32s     Synthesize event
+    t =    34.47s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    34.48s Waiting 3.0s for "ResourceRunnerSettingsWindow" Window to exist
+    t =    35.52s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunnerSettingsWindow" Window`
+    t =    35.52s         Checking existence of `"ResourceRunnerSettingsWindow" Window`
+    t =    35.60s Click "SettingsDetailListLimit" PopUpButton
+    t =    35.60s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    35.61s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    35.66s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    35.67s     Synthesize event
+    t =    36.02s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    36.03s Click "50개" MenuItem
+    t =    36.03s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    36.03s     Find the "50개" MenuItem
+    t =    36.09s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    36.10s     Synthesize event
+    t =    36.10s         Checking existence of `"menuAction:" MenuItem`
+    t =    36.14s         Hover menu item '50개'
+    t =    36.14s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    36.14s             Find the "menuAction:" MenuItem
+    t =    36.19s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    36.19s             Synthesize event
+    t =    36.42s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    36.44s         Find the "menuAction:" MenuItem
+    t =    37.19s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    37.20s Find the "SettingsDetailListLimit" PopUpButton
+    t =    37.27s Click "_XCUI:CloseWindow" Button
+    t =    37.27s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    37.27s     Find the "_XCUI:CloseWindow" Button
+    t =    37.33s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    37.34s     Synthesize event
+    t =    37.70s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    37.71s Checking existence of `"DashboardContainer" Any`
+    t =    37.73s Click "DashboardContainer" Any
+    t =    37.73s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    37.73s     Find the "DashboardContainer" Any
+    t =    37.75s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    37.77s     Synthesize event
+    t =    38.32s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    38.32s Type '2' key with modifiers '⌘' (0x10)
+    t =    38.32s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    38.33s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    38.53s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    38.53s     Synthesize event
+    t =    38.65s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    38.65s Type '1' key with modifiers '⌘' (0x10)
+    t =    38.65s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    38.66s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    38.68s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    38.68s     Synthesize event
+    t =    38.83s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    38.84s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    39.86s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    39.86s         Checking existence of `"DashboardDetail" Any`
+    t =    39.94s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    40.01s Checking existence of `"DashboardContainer" Any`
+    t =    40.03s Click "DashboardContainer" Any
+    t =    40.03s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    40.04s     Find the "DashboardContainer" Any
+    t =    40.06s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    40.08s     Synthesize event
+    t =    40.60s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    40.61s Type '1' key with modifiers '⌘' (0x10)
+    t =    40.61s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    40.64s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    40.80s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    40.80s     Synthesize event
+    t =    41.02s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    41.02s Type '2' key with modifiers '⌘' (0x10)
+    t =    41.02s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    41.02s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    41.12s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    41.12s     Synthesize event
+    t =    41.38s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    41.38s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    42.41s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    42.41s         Checking existence of `"DashboardDetail" Any`
+    t =    42.49s Find the "MemoryCard" Button
+    t =    42.53s Checking existence of `StaticText (First Match)`
+    t =    42.57s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    42.72s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =    42.74s Checking existence of `"AppRow-/tmp/RRFixtureGroup48.app" DisclosureTriangle`
+    t =    42.78s Checking existence of `"AppRow-/tmp/RRFixtureGroup49.app" DisclosureTriangle`
+    t =    42.85s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+TASK016_MEMORY_GROUP00_LABEL RRFixtureGroup00, 1.2,  GB
+    t =    42.87s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+TASK016_MIXED_MEMORY_AX groupGB=Optional(1.2)
+    t =    42.89s Checking existence of `StaticText (First Match)`
+    t =    42.90s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+TASK016_MEMORY50_AX count=50
+    t =    43.01s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    43.16s Requesting snapshot of accessibility hierarchy for app with pid 41516
+TASK016_INCREASE_INITIAL count=50
+    t =    43.31s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    43.49s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    43.66s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    43.81s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    43.96s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    44.10s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    44.25s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    44.40s Requesting snapshot of accessibility hierarchy for app with pid 41516
+TASK016_INCREASE50_NAMES ["RRFixtureGroup00", "RRFixtureGroup01", "RRFixtureGroup02", "RRFixtureGroup03", "RRFixtureGroup04", "RRFixtureGroup05", "RRFixtureGroup06", "RRFixtureGroup07", "RRFixtureGroup08", "RRFixtureGroup09", "RRFixtureGroup10", "RRFixtureGroup11", "RRFixtureGroup12", "RRFixtureGroup13", "RRFixtureGroup14", "RRFixtureGroup15", "RRFixtureGroup16", "RRFixtureGroup17", "RRFixtureGroup18", "RRFixtureGroup19", "RRFixtureGroup20", "RRFixtureGroup21", "RRFixtureGroup22", "RRFixtureGroup23", "RRFixtureGroup24", "RRFixtureGroup25", "RRFixtureGroup26", "RRFixtureGroup27", "RRFixtureGroup28", "RRFixtureGroup29", "RRFixtureGroup30", "RRFixtureGroup31", "RRFixtureGroup32", "RRFixtureGroup33", "RRFixtureGroup34", "RRFixtureGroup35", "RRFixtureGroup36", "RRFixtureGroup37", "RRFixtureGroup38", "RRFixtureGroup39", "RRFixtureGroup40", "RRFixtureGroup41", "RRFixtureGroup42", "RRFixtureGroup43", "RRFixtureGroup44", "RRFixtureGroup45", "RRFixtureGroup46", "RRFixtureGroup47", "RRFixtureGroup48", "RRFixtureGroup49"]
+    t =    44.55s Type ',' key with modifiers '⌘' (0x10)
+    t =    44.55s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    44.60s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    44.68s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    44.68s     Synthesize event
+    t =    44.90s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    44.90s Waiting 3.0s for "ResourceRunnerSettingsWindow" Window to exist
+    t =    45.92s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunnerSettingsWindow" Window`
+    t =    45.92s         Checking existence of `"ResourceRunnerSettingsWindow" Window`
+    t =    46.00s Click "SettingsDetailListLimit" PopUpButton
+    t =    46.00s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    46.00s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    46.05s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    46.07s     Synthesize event
+    t =    46.42s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    46.43s Click "10개" MenuItem
+    t =    46.43s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    46.45s     Find the "10개" MenuItem
+    t =    46.51s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    46.51s     Synthesize event
+    t =    46.52s         Checking existence of `"menuAction:" MenuItem`
+    t =    46.56s         Hover menu item '10개'
+    t =    46.56s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    46.56s             Find the "menuAction:" MenuItem
+    t =    46.60s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    46.60s             Synthesize event
+    t =    46.82s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    46.82s         Find the "menuAction:" MenuItem
+    t =    47.57s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    47.57s Find the "SettingsDetailListLimit" PopUpButton
+    t =    47.63s Click "_XCUI:CloseWindow" Button
+    t =    47.63s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    47.63s     Find the "_XCUI:CloseWindow" Button
+    t =    47.69s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    47.70s     Synthesize event
+    t =    48.07s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.08s Checking existence of `"DashboardContainer" Any`
+    t =    48.10s Click "DashboardContainer" Any
+    t =    48.10s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.11s     Find the "DashboardContainer" Any
+    t =    48.14s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    48.16s     Synthesize event
+    t =    48.56s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.57s Type '1' key with modifiers '⌘' (0x10)
+    t =    48.57s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.58s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    48.63s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    48.63s     Synthesize event
+    t =    48.76s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.77s Type '2' key with modifiers '⌘' (0x10)
+    t =    48.77s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.77s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    48.81s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    48.81s     Synthesize event
+    t =    48.96s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    48.97s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    49.99s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    49.99s         Checking existence of `"DashboardDetail" Any`
+    t =    50.05s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    50.09s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    50.18s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    50.25s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    50.32s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    50.39s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =    50.40s Checking existence of `"AppRow-/tmp/RRFixtureGroup08.app" DisclosureTriangle`
+    t =    50.42s Checking existence of `"AppRow-/tmp/RRFixtureGroup09.app" DisclosureTriangle`
+    t =    50.45s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    50.48s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    50.57s Requesting snapshot of accessibility hierarchy for app with pid 41516
+TASK016_MEMORY_AX limit=10 usage=10 increase=["RRFixtureGroup00", "RRFixtureGroup01", "RRFixtureGroup02", "RRFixtureGroup03", "RRFixtureGroup04", "RRFixtureGroup05", "RRFixtureGroup06", "RRFixtureGroup07", "RRFixtureGroup08", "RRFixtureGroup09"]
+    t =    50.65s Type ',' key with modifiers '⌘' (0x10)
+    t =    50.65s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    50.65s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    50.68s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    50.68s     Synthesize event
+    t =    50.81s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    50.81s Waiting 3.0s for "ResourceRunnerSettingsWindow" Window to exist
+    t =    51.83s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunnerSettingsWindow" Window`
+    t =    51.83s         Checking existence of `"ResourceRunnerSettingsWindow" Window`
+    t =    51.91s Click "SettingsDetailListLimit" PopUpButton
+    t =    51.91s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    51.91s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    51.96s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    51.98s     Synthesize event
+    t =    52.34s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    52.35s Click "20개" MenuItem
+    t =    52.35s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    52.35s     Find the "20개" MenuItem
+    t =    52.42s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    52.42s     Synthesize event
+    t =    52.42s         Checking existence of `"menuAction:" MenuItem`
+    t =    52.47s         Hover menu item '20개'
+    t =    52.47s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    52.48s             Find the "menuAction:" MenuItem
+    t =    52.52s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    52.53s             Synthesize event
+    t =    52.74s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    52.74s         Find the "menuAction:" MenuItem
+    t =    53.49s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    53.49s Find the "SettingsDetailListLimit" PopUpButton
+    t =    53.55s Click "_XCUI:CloseWindow" Button
+    t =    53.55s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    53.56s     Find the "_XCUI:CloseWindow" Button
+    t =    53.61s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    53.62s     Synthesize event
+    t =    53.99s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    53.99s Checking existence of `"DashboardContainer" Any`
+    t =    54.02s Click "DashboardContainer" Any
+    t =    54.02s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    54.02s     Find the "DashboardContainer" Any
+    t =    54.04s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    54.06s     Synthesize event
+    t =    54.51s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    54.52s Type '1' key with modifiers '⌘' (0x10)
+    t =    54.52s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    54.54s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    54.61s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    54.61s     Synthesize event
+    t =    54.75s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    54.76s Type '2' key with modifiers '⌘' (0x10)
+    t =    54.76s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    54.76s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    54.81s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    54.81s     Synthesize event
+    t =    54.97s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    54.97s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    55.99s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    55.99s         Checking existence of `"DashboardDetail" Any`
+    t =    56.06s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    56.11s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    56.22s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    56.31s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    56.40s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    56.49s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =    56.52s Checking existence of `"AppRow-/tmp/RRFixtureGroup18.app" DisclosureTriangle`
+    t =    56.54s Checking existence of `"AppRow-/tmp/RRFixtureGroup19.app" DisclosureTriangle`
+    t =    56.61s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    56.66s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    56.76s Requesting snapshot of accessibility hierarchy for app with pid 41516
+TASK016_MEMORY_AX limit=20 usage=20 increase=["RRFixtureGroup00", "RRFixtureGroup01", "RRFixtureGroup02", "RRFixtureGroup03", "RRFixtureGroup04", "RRFixtureGroup05", "RRFixtureGroup06", "RRFixtureGroup07", "RRFixtureGroup08", "RRFixtureGroup09", "RRFixtureGroup10", "RRFixtureGroup11", "RRFixtureGroup12", "RRFixtureGroup13", "RRFixtureGroup14", "RRFixtureGroup15", "RRFixtureGroup16", "RRFixtureGroup17", "RRFixtureGroup18", "RRFixtureGroup19"]
+    t =    56.85s Type ',' key with modifiers '⌘' (0x10)
+    t =    56.85s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    56.86s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    56.90s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    56.90s     Synthesize event
+    t =    57.05s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    57.06s Waiting 3.0s for "ResourceRunnerSettingsWindow" Window to exist
+    t =    58.07s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunnerSettingsWindow" Window`
+    t =    58.07s         Checking existence of `"ResourceRunnerSettingsWindow" Window`
+    t =    58.14s Click "SettingsDetailListLimit" PopUpButton
+    t =    58.14s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    58.15s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    58.20s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    58.21s     Synthesize event
+    t =    58.56s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    58.57s Click "50개" MenuItem
+    t =    58.57s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    58.57s     Find the "50개" MenuItem
+    t =    58.62s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    58.63s     Synthesize event
+    t =    58.63s         Checking existence of `"menuAction:" MenuItem`
+    t =    58.67s         Hover menu item '50개'
+    t =    58.67s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    58.67s             Find the "menuAction:" MenuItem
+    t =    58.72s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    58.72s             Synthesize event
+    t =    58.94s             Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    58.94s         Find the "menuAction:" MenuItem
+    t =    59.68s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    59.69s Find the "SettingsDetailListLimit" PopUpButton
+    t =    59.74s Click "_XCUI:CloseWindow" Button
+    t =    59.74s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    59.75s     Find the "_XCUI:CloseWindow" Button
+    t =    59.80s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =    59.81s     Synthesize event
+    t =    60.18s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    60.19s Checking existence of `"DashboardContainer" Any`
+    t =    60.21s Click "DashboardContainer" Any
+    t =    60.21s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    60.21s     Find the "DashboardContainer" Any
+    t =    60.24s     Check for interrupting elements affecting "DashboardContainer" Group
+    t =    60.26s     Synthesize event
+    t =    60.77s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    60.77s Type '1' key with modifiers '⌘' (0x10)
+    t =    60.77s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    60.77s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    60.90s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    60.90s     Synthesize event
+    t =    61.10s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    61.11s Type '2' key with modifiers '⌘' (0x10)
+    t =    61.11s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    61.12s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    61.31s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    61.31s     Synthesize event
+    t =    61.57s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    61.57s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    62.59s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    62.59s         Checking existence of `"DashboardDetail" Any`
+    t =    62.67s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    62.78s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    62.93s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    63.08s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    63.23s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    63.37s Checking existence of `"AppRow-/tmp/RRFixtureOtherOnly.app" DisclosureTriangle`
+    t =    63.39s Checking existence of `"AppRow-/tmp/RRFixtureGroup48.app" DisclosureTriangle`
+    t =    63.42s Checking existence of `"AppRow-/tmp/RRFixtureGroup49.app" DisclosureTriangle`
+    t =    63.49s Get number of matches for: Elements matching predicate 'identifier BEGINSWITH "AppRow-"'
+    t =    63.63s Requesting snapshot of accessibility hierarchy for app with pid 41516
+    t =    63.79s Requesting snapshot of accessibility hierarchy for app with pid 41516
+TASK016_MEMORY_AX limit=50 usage=50 increase=["RRFixtureGroup00", "RRFixtureGroup01", "RRFixtureGroup02", "RRFixtureGroup03", "RRFixtureGroup04", "RRFixtureGroup05", "RRFixtureGroup06", "RRFixtureGroup07", "RRFixtureGroup08", "RRFixtureGroup09", "RRFixtureGroup10", "RRFixtureGroup11", "RRFixtureGroup12", "RRFixtureGroup13", "RRFixtureGroup14", "RRFixtureGroup15", "RRFixtureGroup16", "RRFixtureGroup17", "RRFixtureGroup18", "RRFixtureGroup19", "RRFixtureGroup20", "RRFixtureGroup21", "RRFixtureGroup22", "RRFixtureGroup23", "RRFixtureGroup24", "RRFixtureGroup25", "RRFixtureGroup26", "RRFixtureGroup27", "RRFixtureGroup28", "RRFixtureGroup29", "RRFixtureGroup30", "RRFixtureGroup31", "RRFixtureGroup32", "RRFixtureGroup33", "RRFixtureGroup34", "RRFixtureGroup35", "RRFixtureGroup36", "RRFixtureGroup37", "RRFixtureGroup38", "RRFixtureGroup39", "RRFixtureGroup40", "RRFixtureGroup41", "RRFixtureGroup42", "RRFixtureGroup43", "RRFixtureGroup44", "RRFixtureGroup45", "RRFixtureGroup46", "RRFixtureGroup47", "RRFixtureGroup48", "RRFixtureGroup49"]
+    t =    63.94s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    64.41s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    64.44s Find the "DashboardDetail" ScrollView
+TASK016_GROUP_SCROLL step=0 row=(1264.5, 1388.0, 378.5, 16.0) viewport=(1263.0, 154.0, 400.0, 480.0)
+    t =    64.57s Type '⇟' key (XCUIKeyboardKeyPageDown) with no modifiers
+    t =    64.57s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    64.63s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    64.71s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    64.72s     Synthesize event
+    t =    64.78s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    64.79s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    64.88s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    64.91s Find the "DashboardDetail" ScrollView
+TASK016_GROUP_SCROLL step=1 row=(1264.5, 882.0, 378.5, 16.0) viewport=(1263.0, 154.0, 400.0, 480.0)
+    t =    65.01s Type '⇟' key (XCUIKeyboardKeyPageDown) with no modifiers
+    t =    65.01s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    65.02s     Find the Target Application 'com.zipkero.ResourceRunner.Task016'
+    t =    65.09s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    65.09s     Synthesize event
+    t =    65.11s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    65.12s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.16s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.20s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.24s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.27s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.31s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.35s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.38s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.41s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.44s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.47s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.59s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.61s Click "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =    65.61s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    65.61s     Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.64s     Check for interrupting elements affecting "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.67s     Synthesize event
+    t =    65.67s         Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    65.69s         Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    66.10s     Wait for com.zipkero.ResourceRunner.Task016 to idle
+    t =    66.10s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+    t =    66.13s Get all elements bound by index for: Elements matching predicate '"AppRow-/tmp/RRFixtureGroup00.app" IN identifiers'
+    t =    66.25s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    66.36s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    66.46s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    66.57s Find the "AppRow-/tmp/RRFixtureGroup00.app" StaticText
+    t =    66.70s Find the "AppRow-/tmp/RRFixtureGroup00.app" DisclosureTriangle
+TASK016_MIXED_MEMORY_CHILD_AX childrenMB=[626.0, 576.0] groupGB=Optional(1.2)
+    t =    66.78s Tear Down
+Test Case '-[ResourceRunnerUITests.ExpandedPreferencesIntegrationUITests testRenderedFiftyGroupsAndMixedUIDUseProductionRankingPath]' passed (67.354 seconds).
+Test Suite 'ExpandedPreferencesIntegrationUITests' passed at 2026-10-09 15:12:21.619.
+	 Executed 1 test, with 0 failures (0 unexpected) in 67.354 (67.356) seconds
+Test Suite 'ResourceRunnerUITests.xctest' passed at 2026-10-09 15:12:21.620.
+	 Executed 1 test, with 0 failures (0 unexpected) in 67.354 (67.357) seconds
+Test Suite 'Selected tests' passed at 2026-10-09 15:12:21.621.
+	 Executed 1 test, with 0 failures (0 unexpected) in 67.354 (67.358) seconds
+2026-10-09 15:12:21.951 xcodebuild[41464:57720107] [MT] IDETestOperationsObserverDebug: 68.208 elapsed -- Testing started completed.
+2026-10-09 15:12:21.951 xcodebuild[41464:57720107] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-09 15:12:21.951 xcodebuild[41464:57720107] [MT] IDETestOperationsObserverDebug: 68.208 sec, +68.208 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/rr-m4-016-ui-final-boundary.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
+Test suite 'Selected tests' started on 'My Mac - ResourceRunnerUITests-Runner (41489)'
+Test suite 'ResourceRunnerUITests.xctest' started on 'My Mac - ResourceRunnerUITests-Runner (41489)'
+Test suite 'ExpandedPreferencesIntegrationUITests' started on 'My Mac - ResourceRunnerUITests-Runner (41489)'
+Test case 'ExpandedPreferencesIntegrationUITests.testRenderedFiftyGroupsAndMixedUIDUseProductionRankingPath()' passed on 'My Mac - ResourceRunnerUITests-Runner (41489)' (67.354 seconds)

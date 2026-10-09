@@ -1,0 +1,27 @@
+2026-10-09T10:21:23.165682+09:00
+command: ['/usr/bin/pgrep', '-x', 'ResourceRunner']
+exit: 1
+
+
+command: ['/usr/bin/codesign', '--verify', '--deep', '--strict', '/Users/zipkero/Applications/ResourceRunner.app']
+exit: 0
+
+
+command: ['/usr/bin/shasum', '-a', '256', '/Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner']
+exit: 0
+4b1bbb1da9e36cc5f7f217eb93b8e7c5a06b2bf9b20e101581b849fa41acc0de  /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+
+
+command: ['/usr/bin/who']
+exit: 0
+zipkero          console      Aug 29 08:16 
+zipkero          ttys001      Oct  9 09:10 
+zipkero          ttys002      Oct  9 09:19 
+zipkero          ttys003      Oct  9 10:04 
+zipkero          ttys004      Oct  7 21:14 
+
+
+command: ['/usr/bin/stat', '-f', '%Su %u', '/dev/console']
+exit: 0
+zipkero 501
+

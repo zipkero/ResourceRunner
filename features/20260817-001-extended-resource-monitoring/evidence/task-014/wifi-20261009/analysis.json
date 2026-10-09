@@ -1,0 +1,25 @@
+{
+  "window": "2026-10-09T01:51:04Z..01:51:30Z",
+  "activity_samples": 14,
+  "baseline_only_samples": 5,
+  "partial_samples": 9,
+  "disconnected_samples": 0,
+  "revision_first_last": [
+    544,
+    975
+  ],
+  "segment_first_last": [
+    72,
+    85
+  ],
+  "known_rate_count": 4,
+  "known_rate_max_rx_bytes_per_second": 49589.839836425126,
+  "known_rate_max_tx_bytes_per_second": 128038.16806312437,
+  "known_rate_negative_count": 0,
+  "history_count_min_max": [
+    0,
+    0
+  ],
+  "ax_network_card_samples": 59,
+  "ax_network_card_speed_absent_while_off": 10
+}

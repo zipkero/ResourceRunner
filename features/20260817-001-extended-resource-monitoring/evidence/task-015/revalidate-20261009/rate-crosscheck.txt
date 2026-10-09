@@ -1,0 +1,27 @@
+lock epoch 2
+  disk raw:
+    TASK015 wall=2026-10-09T04:05:51Z disk-raw epoch=2 readAt=Instant(_value: 3559880.905663541 seconds) rev=1 counters=[4294969732:names=["disk0"]:read=Optional(1296014163968):write=Optional(6348104523776)]
+    TASK015 wall=2026-10-09T04:05:53Z disk-raw epoch=2 readAt=Instant(_value: 3559882.90549675 seconds) rev=1 counters=[4294969732:names=["disk0"]:read=Optional(1296014495744):write=Optional(6348104740864)]
+   deltaSeconds 1.9998332089744508 deltaCounters [331776, 217088] computedRates [165901.83546863915, 108553.05283750463]
+  network raw:
+    TASK015 wall=2026-10-09T04:05:51Z network-raw epoch=2 readAt=Instant(_value: 3559880.9058741657 seconds) rev=228 counters=[gif0:rx=0:tx=0|stf0:rx=0:tx=0|anpi1:rx=0:tx=0|anpi2:rx=0:tx=0|anpi0:rx=0:tx=0|en4:rx=0:tx=0|en5:rx=0:tx=0|en6:rx=0:tx=0|en1:rx=0:tx=0|en2:rx=0:tx=0|en3:rx=0:tx=0|bridge0:rx=0:tx=0|ap1:rx=0:tx=0|en0:rx=3987148800:tx=3981969408|awdl0:rx=97
+    TASK015 wall=2026-10-09T04:05:53Z network-raw epoch=2 readAt=Instant(_value: 3559882.905795375 seconds) rev=228 counters=[gif0:rx=0:tx=0|stf0:rx=0:tx=0|anpi1:rx=0:tx=0|anpi2:rx=0:tx=0|anpi0:rx=0:tx=0|en4:rx=0:tx=0|en5:rx=0:tx=0|en6:rx=0:tx=0|en1:rx=0:tx=0|en2:rx=0:tx=0|en3:rx=0:tx=0|bridge0:rx=0:tx=0|ap1:rx=0:tx=0|en0:rx=3987241984:tx=3981990912|awdl0:rx=978
+   deltaSeconds 1.999921209178865 deltaCounters [93184, 21504] computedRates [46593.83558328272, 10752.423596142165]
+display epoch 4
+  disk raw:
+    TASK015 wall=2026-10-09T04:09:29Z disk-raw epoch=4 readAt=Instant(_value: 3560099.376422541 seconds) rev=1 counters=[4294969732:names=["disk0"]:read=Optional(1296210722816):write=Optional(6350249197568)]
+    TASK015 wall=2026-10-09T04:09:31Z disk-raw epoch=4 readAt=Instant(_value: 3560101.401758 seconds) rev=1 counters=[4294969732:names=["disk0"]:read=Optional(1296211410944):write=Optional(6350249250816)]
+   deltaSeconds 2.025335458572954 deltaCounters [688128, 53248] computedRates [339760.0121437923, 26290.953320650595]
+  network raw:
+    TASK015 wall=2026-10-09T04:09:29Z network-raw epoch=4 readAt=Instant(_value: 3560099.37656125 seconds) rev=330 counters=[gif0:rx=0:tx=0|stf0:rx=0:tx=0|anpi1:rx=0:tx=0|anpi2:rx=0:tx=0|anpi0:rx=0:tx=0|en4:rx=0:tx=0|en5:rx=0:tx=0|en6:rx=0:tx=0|en1:rx=0:tx=0|en2:rx=0:tx=0|en3:rx=0:tx=0|bridge0:rx=0:tx=0|ap1:rx=0:tx=0|en0:rx=3995626496:tx=3990345728|awdl0:rx=9789
+    TASK015 wall=2026-10-09T04:09:31Z network-raw epoch=4 readAt=Instant(_value: 3560101.402070541 seconds) rev=330 counters=[gif0:rx=0:tx=0|stf0:rx=0:tx=0|anpi1:rx=0:tx=0|anpi2:rx=0:tx=0|anpi0:rx=0:tx=0|en4:rx=0:tx=0|en5:rx=0:tx=0|en6:rx=0:tx=0|en1:rx=0:tx=0|en2:rx=0:tx=0|en3:rx=0:tx=0|bridge0:rx=0:tx=0|ap1:rx=0:tx=0|en0:rx=3995699200:tx=3990359040|awdl0:rx=978
+   deltaSeconds 2.0255092908628285 deltaCounters [72704, 13312] computedRates [35894.18243005416, 6572.174247756396]
+system epoch 6
+  disk raw:
+    TASK015 wall=2026-10-09T04:11:57Z disk-raw epoch=6 readAt=Instant(_value: 3560247.022248083 seconds) rev=1 counters=[4294969732:names=["disk0"]:read=Optional(1296241901568):write=Optional(6350362607616)]
+    TASK015 wall=2026-10-09T04:11:59Z disk-raw epoch=6 readAt=Instant(_value: 3560248.998428416 seconds) rev=1 counters=[4294969732:names=["disk0"]:read=Optional(1296242790400):write=Optional(6350376173568)]
+   deltaSeconds 1.9761803331784904 deltaCounters [888832, 13565952] computedRates [449772.7181458191, 6864733.836400704]
+  network raw:
+    TASK015 wall=2026-10-09T04:11:57Z network-raw epoch=6 readAt=Instant(_value: 3560247.02243225 seconds) rev=590 counters=[gif0:rx=0:tx=0|stf0:rx=0:tx=0|anpi1:rx=0:tx=0|anpi2:rx=0:tx=0|anpi0:rx=0:tx=0|en4:rx=0:tx=0|en5:rx=0:tx=0|en6:rx=0:tx=0|en1:rx=0:tx=0|en2:rx=0:tx=0|en3:rx=0:tx=0|bridge0:rx=0:tx=0|ap1:rx=0:tx=0|en0:rx=4000920576:tx=3996124160|awdl0:rx=9789
+    TASK015 wall=2026-10-09T04:11:59Z network-raw epoch=6 readAt=Instant(_value: 3560248.998516833 seconds) rev=590 counters=[gif0:rx=0:tx=0|stf0:rx=0:tx=0|anpi1:rx=0:tx=0|anpi2:rx=0:tx=0|anpi0:rx=0:tx=0|en4:rx=0:tx=0|en5:rx=0:tx=0|en6:rx=0:tx=0|en1:rx=0:tx=0|en2:rx=0:tx=0|en3:rx=0:tx=0|bridge0:rx=0:tx=0|ap1:rx=0:tx=0|en0:rx=4000941056:tx=3996145664|awdl0:rx=979
+   deltaSeconds 1.9760845829732716 deltaCounters [20480, 21504] computedRates [10363.928840123444, 10882.125282129617]

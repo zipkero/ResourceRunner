@@ -18,25 +18,35 @@ final class CollectionDeliveryStore {
 /// 프로세스 순위 계산은 시스템 tick 소비와 독립적으로 진행합니다. 메뉴바 판정은 이 캐시를 기다리지 않습니다.
 @MainActor
 final class ProcessRankingDeliveryCache {
-    private(set) var ranking: ApplicationRankingSample?
-    private(set) var groups: [ApplicationProcessGroup] = []
+    private(set) var materials: ProcessRankingMaterials?
+    var ranking: ApplicationRankingSample? { materials?.currentUser.ranking }
+    var groups: [ApplicationProcessGroup] { materials?.currentUser.groups ?? [] }
     private(set) var surveyFailed = false
     private(set) var timestamp: ContinuousClock.Instant?
     private(set) var collectionEpoch: Int?
+    private(set) var deliverySequence: UInt64 = 0
 
-    func update(ranking: ApplicationRankingSample?, groups: [ApplicationProcessGroup],
+    @discardableResult
+    func update(materials: ProcessRankingMaterials,
                 surveyFailed: Bool, timestamp: ContinuousClock.Instant,
-                collectionEpoch: Int?) {
-        self.ranking = ranking
-        self.groups = groups
+                collectionEpoch: Int?, deliverySequence: UInt64) -> Bool {
+        if let collectionEpoch, let previousEpoch = self.collectionEpoch,
+           collectionEpoch < previousEpoch { return false }
+        if collectionEpoch == self.collectionEpoch, self.timestamp != nil {
+            guard timestamp >= self.timestamp!, deliverySequence > self.deliverySequence else { return false }
+        }
+        self.materials = materials
         self.surveyFailed = surveyFailed
         self.timestamp = timestamp
         self.collectionEpoch = collectionEpoch
+        self.deliverySequence = deliverySequence
+        return true
     }
 
-    func snapshot(for epoch: Int?) -> (ranking: ApplicationRankingSample?,
-                                       groups: [ApplicationProcessGroup], surveyFailed: Bool) {
-        guard let epoch, epoch == collectionEpoch else { return (nil, [], false) }
-        return (ranking, groups, surveyFailed)
+    func snapshot(for epoch: Int?, includesSystemProcesses: Bool = false) -> (ranking: ApplicationRankingSample?,
+                                       groups: [ApplicationProcessGroup], surveyFailed: Bool, excludedCount: Int) {
+        guard let epoch, epoch == collectionEpoch else { return (nil, [], false, 0) }
+        let selected = includesSystemProcesses ? materials?.allReadable : materials?.currentUser
+        return (selected?.ranking, selected?.groups ?? [], surveyFailed, selected?.excludedCount ?? 0)
     }
 }

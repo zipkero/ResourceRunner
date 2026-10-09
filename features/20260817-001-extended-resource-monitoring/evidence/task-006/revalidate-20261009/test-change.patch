@@ -1,0 +1,55 @@
+diff --git a/ResourceRunnerTests/StorageMetadataTests.swift b/ResourceRunnerTests/StorageMetadataTests.swift
+index dad0fe3..10c373f 100644
+--- a/ResourceRunnerTests/StorageMetadataTests.swift
++++ b/ResourceRunnerTests/StorageMetadataTests.swift
+@@ -240,6 +240,50 @@ struct StorageMetadataTests {
+         #expect(await store.relationship(for: current).volumes.count == 2)
+     }
+ 
++    @Test func capacityRefreshFailureAndVolumeReplacementPreserveCacheLifetime() async throws {
++        let topology = DiskTopologyTracker()
++        let initial = storageVolume("volume-a", paths: ["/"], drivers: [1], available: 400)
++        let refreshed = storageVolume("volume-a", paths: ["/"], drivers: [1], available: 450)
++        let replacement = storageVolume("volume-b", paths: ["/"], drivers: [1], available: 300)
++        let script = StorageNativeScript { call in
++            let volume = call == 1 ? initial : (call == 2 ? refreshed : replacement)
++            return storageNative(drivers: [storageDriver(1)], volumes: [volume])
++        }
++        let reader = SystemStorageMetadataReader(topology: topology, nativeRead: { script.read() })
++        let store = StorageMetadataStore(topology: topology)
++
++        let first = try reader.read()
++        await store.append(TimestampedSample(timestamp: first.readAt, value: .available(first)))
++        let second = try reader.read()
++        #expect(second.topologyRevision == first.topologyRevision)
++        #expect(second.readAt >= first.readAt)
++        #expect(second.systemVolume.identity == "volume-a")
++        #expect(second.systemVolume.availableBytes == 450)
++        #expect(second.systemVolume.usedBytes == 550)
++        await store.append(TimestampedSample(timestamp: second.readAt, value: .available(second)))
++
++        let failedSource = StorageMetadataSource(reader: SystemStorageMetadataReader(
++            topology: topology, nativeRead: { throw DiskNativeError.invalid("important usage unavailable") }))
++        let failure = try #require(await failedSource.sample(collectionEpoch: 0))
++        await store.append(TimestampedSample(timestamp: second.readAt + .seconds(1), value: failure))
++        let failedStatus = await store.status()
++        if case .failure(_, let revision) = failedStatus.latest?.value {
++            #expect(revision == second.topologyRevision)
++        } else { Issue.record("용량 조회 실패가 현재 상태여야 합니다") }
++        #expect(failedStatus.lastKnown?.systemVolume.availableBytes == 450)
++        #expect(failedStatus.lastKnown?.readAt == second.readAt)
++
++        let third = try reader.read()
++        #expect(third.topologyRevision == second.topologyRevision + 1)
++        let current = DiskCounterSnapshot(readAt: origin, devices: [storageCounter(1)],
++            topologyRevision: third.topologyRevision)
++        #expect(await store.relationship(for: current).systemVolume == nil)
++        await store.append(TimestampedSample(timestamp: third.readAt, value: .available(third)))
++        let currentVolume = await store.relationship(for: current).systemVolume
++        #expect(currentVolume?.identity == "volume-b")
++        #expect(currentVolume?.availableBytes == 300)
++    }
++
+     @Test func slowStorageSuspensionDoesNotBlockFastDiskSamples() async throws {
+         let hold = BlockingStorageReader()
+         let slow = StorageMetadataSource(reader: hold)

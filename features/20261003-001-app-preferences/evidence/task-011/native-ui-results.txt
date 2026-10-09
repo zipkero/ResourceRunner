@@ -1,0 +1,26 @@
+initial_read_only (/tmp/rr-task011-initial-clean.log)
+2026-10-09 10:06:50.648376+0900 ResourceRunnerUITests-Runner[38364:56593221] RR_NATIVE_INITIAL status=로그인 항목 서비스를 찾을 수 없습니다. 다시 확인하거나 등록을 시도하세요.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testNativeLoginInitialReadOnly]' passed (7.287 seconds).
+** TEST EXECUTE SUCCEEDED **
+
+native_register (/tmp/rr-task011-register.log)
+2026-10-09 10:07:11.956055+0900 ResourceRunnerUITests-Runner[38807:56594720] RR_NATIVE_REGISTER status=등록되어 있으며 macOS에서 허용되었습니다. result=켜기가 확인되었습니다.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testNativeLoginRegister]' passed (8.784 seconds).
+** TEST EXECUTE SUCCEEDED **
+
+unregister_and_restore (/tmp/rr-task011-cycle.log)
+2026-10-09 10:07:51.362854+0900 ResourceRunnerUITests-Runner[39781:56598514] RR_NATIVE_UNREGISTER status=등록되지 않았습니다. result=해제가 확인되었습니다.
+2026-10-09 10:07:55.921886+0900 ResourceRunnerUITests-Runner[39781:56598514] RR_NATIVE_RESTORE status=등록되지 않았습니다. login=로그인 항목: 해제가 확인되었습니다.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testNativeLoginUnregisterAndRestore]' passed (13.035 seconds).
+** TEST EXECUTE SUCCEEDED **
+
+system_settings_removal (/tmp/rr-task011-external-removal-final.log)
+2026-10-09 10:12:30.013410+0900 ResourceRunnerUITests-Runner[46315:56641579] RR_NATIVE_EXTERNAL_REMOVAL status=로그인 항목 서비스를 찾을 수 없습니다. 다시 확인하거나 등록을 시도하세요.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testNativeSystemSettingsRemovalRefreshesAppStatus]' passed (12.400 seconds).
+** TEST EXECUTE SUCCEEDED **
+
+next_login_preparation (/tmp/rr-task011-prepare-after-removal.log)
+2026-10-09 10:12:52.474432+0900 ResourceRunnerUITests-Runner[46870:56643466] RR_NATIVE_PREPARE status=등록되어 있으며 macOS에서 허용되었습니다. result=켜기가 확인되었습니다.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testNativeLoginPrepareNextLogin]' passed (8.968 seconds).
+** TEST EXECUTE SUCCEEDED **
+

@@ -106,8 +106,14 @@ nonisolated enum ApplicationRankingSampling {
     /// 정원 숫자에 맞춘 "시스템 프로세스는 TOP N에 포함되지 않습니다" 상세 안내 문구를 만드는 순수 함수.
     /// 상세 목록마다 정원이 달라질 수 있으므로, 정원 숫자를 문구 문자열에 직접 박아 넣으면
     /// 정원이 바뀌어도 문구가 그 자리를 따라오지 못합니다.
-    static func topApplicationsCaption(count: Int) -> String {
-        "시스템 프로세스는 TOP \(count)에 포함되지 않습니다"
+    static func topApplicationsCaption(count: Int, includesSystemProcesses: Bool = false,
+                                       excludedCount: Int = 0, unreadableCount: Int = 0) -> String {
+        let scope = includesSystemProcesses
+            ? "읽기 가능한 시스템 프로세스를 포함한 TOP \(count)"
+            : "시스템 프로세스는 TOP \(count)에 포함되지 않습니다"
+        let excluded = excludedCount > 0 ? " · 소속 기준 제외 \(excludedCount)개" : ""
+        let unreadable = unreadableCount > 0 ? " · 읽기 실패 \(unreadableCount)개" : ""
+        return scope + excluded + unreadable
     }
 
     /// 카드 순위 목록의 화면 머리글. 목록의 이름표만 담고 정원 숫자도 제외 규칙도 담지 않습니다.
@@ -116,8 +122,12 @@ nonisolated enum ApplicationRankingSampling {
     /// 카드 순위 목록의 접근성용 문구를 만드는 순수 함수. 카드는 하위 요소를 무시해 접근성 이름이
     /// 순위 목록에 닿는 유일한 경로이므로, 화면 머리글과 달리 정원과 제외 사실을 그대로 담습니다.
     /// 화면 머리글과 같은 문자열을 나눠 쓰면 한쪽을 줄일 때 다른 쪽 정보도 함께 사라집니다.
-    static func cardTopApplicationsAccessibilityText(count: Int) -> String {
-        "앱 TOP \(count) · 시스템 프로세스 제외"
+    static func cardTopApplicationsAccessibilityText(count: Int, includesSystemProcesses: Bool = false,
+                                                     excludedCount: Int = 0, unreadableCount: Int = 0) -> String {
+        let scope = includesSystemProcesses ? "읽기 가능한 시스템 프로세스 포함" : "시스템 프로세스 제외"
+        let excluded = excludedCount > 0 ? " · 소속 기준 제외 \(excludedCount)개" : ""
+        let unreadable = unreadableCount > 0 ? " · 읽기 실패 \(unreadableCount)개" : ""
+        return "앱 TOP \(count) · " + scope + excluded + unreadable
     }
 
     /// 상세 앱 목록 머리글을 만드는 순수 함수. 어떤 지표의 순위이고 정원이 얼마인지 한 문구에 담아,
@@ -135,8 +145,7 @@ nonisolated struct ApplicationRankingEntry: Sendable, Equatable {
     let value: Double
 }
 
-/// 앱 집계와 순위 계산 결과. 정원은 `ApplicationRankingSampling.detailCount`이며,
-/// 그중 앞 `cardDisplayCount`개만 카드에 표시됩니다.
+/// 앱 집계와 순위 계산 결과. 수집 경계에서는 전체를 보관하고 표시 경계에서 정원을 적용합니다.
 /// 현재 사용량과 최근 증가량이 서로 다른 목록으로 담기고, 읽지 못한 프로세스 수가 함께 전달됩니다.
 nonisolated struct ApplicationRankingSample: Sendable, Equatable {
     /// CPU 사용량 순위. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
@@ -150,9 +159,45 @@ nonisolated struct ApplicationRankingSample: Sendable, Equatable {
     let unreadableCount: Int
 }
 
+/// 같은 조사에서 만든 현재 사용자 전용/읽기 성공 전체 자료입니다.
+nonisolated struct ProcessRankingMaterial: Sendable {
+    let ranking: ApplicationRankingSample
+    let groups: [ApplicationProcessGroup]
+    let excludedCount: Int
+}
+
+nonisolated struct ProcessRankingMaterials: Sendable {
+    let currentUser: ProcessRankingMaterial
+    let allReadable: ProcessRankingMaterial
+}
+
 /// 조사 결과와 정체성별 이력에서 앱 단위 순위를 계산하는 순수 함수.
 /// 상태를 갖지 않으며, 앱 키 유도 캐시(`ApplicationIdentityResolver`)만 호출자가 이어서 넘겨받습니다.
 nonisolated enum ApplicationRanking {
+    /// 소속을 먼저 선별하므로 같은 앱의 다른 UID 자식은 기본 합계와 하위 목록에 들어오지 않습니다.
+    static func materials(
+        snapshots: [ProcessHistorySnapshot],
+        currentTimestamp: ContinuousClock.Instant,
+        unreadableCount: Int,
+        currentUserUnreadableCount: Int? = nil,
+        resolver: ApplicationIdentityResolver
+    ) -> (materials: ProcessRankingMaterials, resolver: ApplicationIdentityResolver) {
+        let current = snapshots.filter { $0.ownership == .currentUser }
+        let readable = snapshots.filter { $0.ownership != .unknown }
+        let currentRanking = compute(snapshots: current, currentTimestamp: currentTimestamp,
+                                     unreadableCount: currentUserUnreadableCount ?? unreadableCount, resolver: resolver)
+        let currentGroups = groupByApplication(snapshots: current, resolver: currentRanking.resolver)
+        let allRanking = compute(snapshots: readable, currentTimestamp: currentTimestamp,
+                                 unreadableCount: unreadableCount, resolver: currentGroups.resolver)
+        let allGroups = groupByApplication(snapshots: readable, resolver: allRanking.resolver)
+        return (ProcessRankingMaterials(
+            currentUser: ProcessRankingMaterial(ranking: currentRanking.sample, groups: currentGroups.groups,
+                                                excludedCount: snapshots.count - current.count),
+            allReadable: ProcessRankingMaterial(ranking: allRanking.sample, groups: allGroups.groups,
+                                                excludedCount: snapshots.count - readable.count)
+        ), allGroups.resolver)
+    }
+
     /// - Parameters:
     ///   - snapshots: `ProcessHistoryStore.snapshot()`이 돌려준 정체성별 이력.
     ///   - currentTimestamp: 이번 조사 시각. 10분 창의 오른쪽 끝으로 씁니다.
@@ -218,7 +263,7 @@ nonisolated enum ApplicationRanking {
         let sorted = entries.sorted { lhs, rhs in
             lhs.value != rhs.value ? lhs.value > rhs.value : lhs.key.value < rhs.key.value
         }
-        return Array(sorted.prefix(ApplicationRankingSampling.detailCount))
+        return sorted
     }
 
     /// 정체성 하나의 순간값을 평활화한 값. `compute(_:)`의 순위 집계와 `groupByApplication(_:)`의 상세 표시가
@@ -255,6 +300,9 @@ nonisolated struct ApplicationProcessDetail: Sendable, Equatable {
     /// `ApplicationRanking.smoothedRecentValues(for:)`가 계산한 최근 값 평균입니다.
     let residentBytes: UInt64
     let isTranslated: Bool
+    /// 조사 당시 UID. 소속이 다른 자식 행도 원래 UID를 잃지 않습니다.
+    var uid: uid_t? = nil
+    var ownership: ProcessOwnership = .unknown
 }
 
 extension ApplicationProcessDetail {
@@ -311,6 +359,15 @@ nonisolated enum ApplicationProcessGroupOrdering {
     ///   그 사이 사라진 앱은 빠지고 새로 나타난 앱은 뒤에 붙은 목록을 만든 뒤, 두 경우 모두 `cap`개로 자른 결과.
     ///   순서 고정보다 자르기를 먼저 적용하면 고정된 순서 뒤쪽에 있던 앱이 최신 정렬에서 앞으로 와도
     ///   자르기에서 먼저 잘려나가 고정된 순서와 어긋나므로, 반드시 순서를 고정한 뒤에 자릅니다.
+    static func visibleExpandedKeys(
+        groups: [ApplicationProcessGroup], stableOrder: [ApplicationKey],
+        expandedKeys: Set<ApplicationKey>, cap: Int
+    ) -> Set<ApplicationKey> {
+        let visible = displayedGroups(groups: groups, stableOrder: stableOrder,
+            hasExpandedRow: !expandedKeys.isEmpty, cap: cap)
+        return expandedKeys.intersection(Set(visible.map(\.key)))
+    }
+
     static func displayedGroups(
         groups: [ApplicationProcessGroup],
         stableOrder: [ApplicationKey],
@@ -378,7 +435,9 @@ extension ApplicationRanking {
                     executableName: ApplicationIdentityResolver.executableName(from: snapshot.executablePath),
                     cpuUsagePercent: smoothed.cpuUsagePercent,
                     residentBytes: UInt64(smoothed.residentBytes.rounded()),
-                    isTranslated: snapshot.isTranslated
+                    isTranslated: snapshot.isTranslated,
+                    uid: snapshot.uid,
+                    ownership: snapshot.ownership
                 )
             )
         }

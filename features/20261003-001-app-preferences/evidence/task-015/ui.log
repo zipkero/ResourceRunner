@@ -1,0 +1,396 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -xctestrun /tmp/rr-m4-015-unique-dd/Build/Products/ResourceRunner_ResourceRunner_macosx26.5-arm64.xctestrun -destination platform=macOS,arch=arm64 -parallel-testing-enabled NO -resultBundlePath /tmp/rr-m4-015-unique-ui.xcresult "-only-testing:ResourceRunnerUITests/SettingsWindowUITests/testAutomaticPopoverCloseToggleSupportsKeyboardAndAccessibility" "-only-testing:ResourceRunnerUITests/SettingsWindowUITests/testAutomaticCloseOffKeepsExplicitBodyAndDetailEscape" CODE_SIGNING_ALLOWED=YES
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-09 14:22:59.869 xcodebuild[81191:57300512] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Writing result bundle at path:
+	/tmp/rr-m4-015-unique-ui.xcresult
+
+2026-10-09 14:22:59.870 xcodebuild[81191:57300512] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00006034-000811520144001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00006034-000811520144001C, name:My Mac }
+2026-10-09 14:23:00.112 xcodebuild[81191:57300512] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+2026-10-09 14:23:01.047643+0900 ResourceRunnerUITests-Runner[81206:57300734] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-09 14:23:01.074.
+Test Suite 'ResourceRunnerUITests.xctest' started at 2026-10-09 14:23:01.074.
+Test Suite 'SettingsWindowUITests' started at 2026-10-09 14:23:01.075.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testAutomaticCloseOffKeepsExplicitBodyAndDetailEscape]' started.
+    t =     0.00s Start Test at 2026-10-09 14:23:01.075
+    t =     0.06s Set Up
+    t =     0.06s Open com.zipkero.ResourceRunner.Task015
+    t =     0.06s     Launch com.zipkero.ResourceRunner.Task015
+2026-10-09 14:23:01.177 xcodebuild[81191:57300512] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:23:01.177 xcodebuild[81191:57300512] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     0.99s         Wait for accessibility to load
+    t =     1.06s         Setting up automation session
+    t =     1.07s         Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     1.08s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.11s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.11s         Checking existence of `StatusItem (First Match)`
+    t =     2.13s Right click StatusItem (First Match)
+    t =     2.13s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.14s     Find the StatusItem (First Match)
+    t =     2.15s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.15s     Open com.zipkero.ResourceRunner.Task015
+    t =     2.15s         Activate com.zipkero.ResourceRunner.Task015
+    t =     2.16s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.16s     Synthesize event
+    t =     2.59s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.60s Waiting 3.0s for "openSettingsFromMenu:" MenuItem to exist
+    t =     3.63s     Checking `Expect predicate `existsNoRetry == 1` for object "openSettingsFromMenu:" MenuItem`
+    t =     3.63s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     3.69s Click "openSettingsFromMenu:" MenuItem
+    t =     3.69s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     3.69s     Find the "openSettingsFromMenu:" MenuItem
+    t =     3.82s     Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     3.82s     Synthesize event
+    t =     3.83s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     3.84s         Hover menu item '설정…'
+    t =     3.84s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     3.85s             Find the "openSettingsFromMenu:" MenuItem
+    t =     3.87s             Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     3.87s             Synthesize event
+    t =     4.09s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     4.10s         Find the "openSettingsFromMenu:" MenuItem
+    t =     4.89s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     4.93s Waiting 3.0s for "ResourceRunner 설정" Window to exist
+    t =     5.95s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunner 설정" Window`
+    t =     5.95s         Checking existence of `"ResourceRunner 설정" Window`
+    t =     6.04s Waiting 3.0s for "SettingsAutomaticallyClosesPopover" Switch to exist
+    t =     7.07s     Checking `Expect predicate `existsNoRetry == 1` for object "SettingsAutomaticallyClosesPopover" Switch`
+    t =     7.07s         Checking existence of `"SettingsAutomaticallyClosesPopover" Switch`
+    t =     7.15s Click "SettingsAutomaticallyClosesPopover" Switch
+    t =     7.15s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     7.15s     Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =     7.20s     Check for interrupting elements affecting "SettingsAutomaticallyClosesPopover" Switch
+    t =     7.22s     Synthesize event
+    t =     7.26s         Scroll element to visible
+    t =     7.26s             Scroll ScrollView (Identity Binding) by dx: -157.00, dy: -585.00
+    t =     7.26s                 Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     7.27s                 Find the ScrollView (Identity Binding)
+    t =     7.30s                 Check for interrupting elements affecting ScrollView
+    t =     7.31s                 Synthesize event
+    t =     7.65s                 Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     7.66s         Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =     8.11s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.11s Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =     8.17s Click "_XCUI:CloseWindow" Button
+    t =     8.17s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.18s     Find the "_XCUI:CloseWindow" Button
+    t =     8.23s     Check for interrupting elements affecting "_XCUI:CloseWindow" Button
+    t =     8.24s     Synthesize event
+    t =     8.61s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.62s Click StatusItem (First Match)
+    t =     8.62s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.62s     Find the StatusItem (First Match)
+    t =     8.63s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     8.63s     Synthesize event
+    t =     9.07s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.09s Waiting 3.0s for "DashboardContainer" Any to exist
+    t =    10.13s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardContainer" Any`
+    t =    10.13s         Checking existence of `"DashboardContainer" Any`
+    t =    10.16s Type '1' key with modifiers '⌘' (0x10)
+    t =    10.16s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.16s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    10.20s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    10.20s     Synthesize event
+    t =    10.34s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.34s Waiting 3.0s for "DashboardDetail" Any to exist
+    t =    11.38s     Checking `Expect predicate `existsNoRetry == 1` for object "DashboardDetail" Any`
+    t =    11.38s         Checking existence of `"DashboardDetail" Any`
+    t =    11.44s Type '⇟' key (XCUIKeyboardKeyPageDown) with no modifiers
+    t =    11.44s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.44s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.48s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.48s     Synthesize event
+    t =    11.50s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.51s Type '⇞' key (XCUIKeyboardKeyPageUp) with no modifiers
+    t =    11.51s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.51s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.56s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.56s     Synthesize event
+    t =    11.59s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.64s Type '⎋' key (XCUIKeyboardKeyEscape) with no modifiers
+    t =    11.64s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.65s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.86s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.87s     Synthesize event
+    t =    11.93s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.94s Checking existence of `"DashboardDetail" Any`
+    t =    11.98s Checking existence of `"DashboardContainer" Any`
+    t =    12.00s Type '⎋' key (XCUIKeyboardKeyEscape) with no modifiers
+    t =    12.00s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.00s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    12.03s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.03s     Synthesize event
+    t =    12.07s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.08s Checking existence of `"DashboardContainer" Any`
+    t =    12.13s Tear Down
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testAutomaticCloseOffKeepsExplicitBodyAndDetailEscape]' passed (12.474 seconds).
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testAutomaticPopoverCloseToggleSupportsKeyboardAndAccessibility]' started.
+    t =     0.00s Start Test at 2026-10-09 14:23:13.551
+    t =     0.09s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner.Task015
+    t =     0.09s     Launch com.zipkero.ResourceRunner.Task015
+    t =     0.09s         Terminate com.zipkero.ResourceRunner.Task015:81237
+2026-10-09 14:23:14.739 xcodebuild[81191:57300512] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:23:14.739 xcodebuild[81191:57300512] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.46s         Wait for accessibility to load
+    t =     1.63s         Setting up automation session
+    t =     1.64s         Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     1.64s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.65s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.65s         Checking existence of `StatusItem (First Match)`
+    t =     2.67s Right click StatusItem (First Match)
+    t =     2.67s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.67s     Find the StatusItem (First Match)
+    t =     2.69s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.69s     Open com.zipkero.ResourceRunner.Task015
+    t =     2.69s         Activate com.zipkero.ResourceRunner.Task015
+    t =     2.70s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     2.70s     Synthesize event
+    t =     3.08s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     3.09s Waiting 3.0s for "openSettingsFromMenu:" MenuItem to exist
+    t =     4.11s     Checking `Expect predicate `existsNoRetry == 1` for object "openSettingsFromMenu:" MenuItem`
+    t =     4.12s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     4.18s Click "openSettingsFromMenu:" MenuItem
+    t =     4.18s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     4.18s     Find the "openSettingsFromMenu:" MenuItem
+    t =     4.21s     Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     4.21s     Synthesize event
+    t =     4.21s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     4.23s         Hover menu item '설정…'
+    t =     4.23s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     4.23s             Find the "openSettingsFromMenu:" MenuItem
+    t =     4.26s             Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     4.26s             Synthesize event
+    t =     4.48s             Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     4.48s         Find the "openSettingsFromMenu:" MenuItem
+    t =     5.24s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     5.29s Waiting 3.0s for "ResourceRunner 설정" Window to exist
+    t =     6.32s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunner 설정" Window`
+    t =     6.32s         Checking existence of `"ResourceRunner 설정" Window`
+    t =     6.42s Waiting 3.0s for "SettingsAutomaticallyClosesPopover" Switch to exist
+    t =     7.44s     Checking `Expect predicate `existsNoRetry == 1` for object "SettingsAutomaticallyClosesPopover" Switch`
+    t =     7.44s         Checking existence of `"SettingsAutomaticallyClosesPopover" Switch`
+    t =     7.52s Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =     7.56s Find the "SettingsAutomaticallyClosesPopover" Switch
+    t =     7.61s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     7.68s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     7.76s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     7.76s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     7.76s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     7.79s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     7.79s     Synthesize event
+    t =     7.84s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     7.84s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     7.93s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.00s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     8.00s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.00s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     8.04s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     8.04s     Synthesize event
+    t =     8.08s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.08s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.16s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.23s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     8.23s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.23s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     8.27s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     8.27s     Synthesize event
+    t =     8.32s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.32s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.41s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.48s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     8.48s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.48s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     8.52s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     8.52s     Synthesize event
+    t =     8.57s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.57s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.66s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.73s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     8.73s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.73s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     8.76s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     8.76s     Synthesize event
+    t =     8.81s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.81s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.90s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     8.96s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     8.97s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     8.97s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     9.00s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.00s     Synthesize event
+    t =     9.04s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.04s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.12s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.19s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     9.19s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.20s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     9.23s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.23s     Synthesize event
+    t =     9.27s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.28s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.36s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.43s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     9.43s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.43s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     9.46s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.46s     Synthesize event
+    t =     9.50s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.51s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.60s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.67s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     9.67s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.68s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     9.71s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.71s     Synthesize event
+    t =     9.76s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.76s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.85s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =     9.92s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =     9.92s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =     9.92s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =     9.96s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     9.96s     Synthesize event
+    t =    10.01s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.01s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.08s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.16s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    10.16s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.17s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    10.20s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    10.20s     Synthesize event
+    t =    10.24s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.24s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.31s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.39s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    10.39s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.39s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    10.43s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    10.43s     Synthesize event
+    t =    10.47s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.48s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.55s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.63s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    10.63s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.63s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    10.67s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    10.67s     Synthesize event
+    t =    10.71s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.71s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.79s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    10.86s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    10.86s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.86s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    10.89s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    10.90s     Synthesize event
+    t =    10.95s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    10.95s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.03s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.10s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    11.10s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.10s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.14s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.14s     Synthesize event
+    t =    11.20s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.21s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.29s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.36s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    11.36s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.36s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.40s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.40s     Synthesize event
+    t =    11.43s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.44s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.52s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.59s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    11.59s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.59s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.63s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.63s     Synthesize event
+    t =    11.68s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.68s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.76s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    11.83s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    11.83s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.84s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    11.87s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    11.87s     Synthesize event
+    t =    11.93s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    11.93s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.01s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.08s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    12.08s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.09s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    12.12s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.12s     Synthesize event
+    t =    12.15s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.15s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.23s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.29s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    12.29s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.30s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    12.34s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.34s     Synthesize event
+    t =    12.38s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.38s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.47s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.54s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    12.54s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.54s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    12.57s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.57s     Synthesize event
+    t =    12.62s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.63s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.73s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.79s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    12.80s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.80s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    12.83s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.83s     Synthesize event
+    t =    12.87s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    12.87s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    12.95s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    13.03s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    13.03s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    13.03s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    13.06s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    13.06s     Synthesize event
+    t =    13.10s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    13.10s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    13.19s Requesting snapshot of accessibility hierarchy for app with pid 81515
+    t =    13.26s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    13.26s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+    t =    13.27s     Find the Target Application 'com.zipkero.ResourceRunner.Task015'
+    t =    13.30s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    13.30s     Synthesize event
+    t =    13.36s     Wait for com.zipkero.ResourceRunner.Task015 to idle
+/tmp/rr-m4-015-isolated/ResourceRunnerUITests/SettingsWindowUITests.swift:128: error: -[ResourceRunnerUITests.SettingsWindowUITests testAutomaticPopoverCloseToggleSupportsKeyboardAndAccessibility] : XCTAssertTrue failed
+    t =    13.43s Tear Down
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testAutomaticPopoverCloseToggleSupportsKeyboardAndAccessibility]' failed (13.792 seconds).
+Test Suite 'SettingsWindowUITests' failed at 2026-10-09 14:23:27.343.
+	 Executed 2 tests, with 1 failure (0 unexpected) in 26.266 (26.269) seconds
+Test Suite 'ResourceRunnerUITests.xctest' failed at 2026-10-09 14:23:27.344.
+	 Executed 2 tests, with 1 failure (0 unexpected) in 26.266 (26.269) seconds
+Test Suite 'Selected tests' failed at 2026-10-09 14:23:27.344.
+	 Executed 2 tests, with 1 failure (0 unexpected) in 26.266 (26.270) seconds
+2026-10-09 14:23:31.654 xcodebuild[81191:57300512] [MT] IDETestOperationsObserverDebug: 31.540 elapsed -- Testing started completed.
+2026-10-09 14:23:31.654 xcodebuild[81191:57300512] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-09 14:23:31.654 xcodebuild[81191:57300512] [MT] IDETestOperationsObserverDebug: 31.540 sec, +31.540 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/rr-m4-015-unique-ui.xcresult
+
+Failing tests:
+	SettingsWindowUITests.testAutomaticPopoverCloseToggleSupportsKeyboardAndAccessibility()
+
+** TEST EXECUTE FAILED **
+
+Testing started

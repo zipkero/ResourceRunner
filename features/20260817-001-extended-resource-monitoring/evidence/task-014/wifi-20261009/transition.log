@@ -1,0 +1,151 @@
+preflight wall=2026-10-09T01:50:13Z
+94560 Ss   00:15
+/tmp/rr-task014-probe/run-transition.sh:8: no such file or directory: /bin/grep
+preflight wall=2026-10-09T01:50:17Z
+94980 Ss   00:00
+64258 /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+92795 /tmp/rr-task014-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Wi-Fi Power (en0): On
+/tmp/rr-task014-probe/run-transition.sh:14: no such file or directory: /usr/usr/bin/grep
+preflight wall=2026-10-09T01:50:20Z
+94980 Ss   00:03
+64258 /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+92795 /tmp/rr-task014-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Wi-Fi Power (en0): On
+preflight-set-on-rc=0
+preflight-ok wall=2026-10-09T01:50:20Z watchdog=94980
+OFF-BEGIN wall=2026-10-09T01:50:20Z
+off-rc=0 wall=2026-10-09T01:50:20Z
+OFF-SAMPLE n=1 wall=2026-10-09T01:50:24Z
+Wi-Fi Power (en0): On
+IPv4 network interface information
+   No IPv4 states found
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+en0        1500  <Link#14>   76:df:fc:78:41:62 92984978     0 89504634424 27860193     0 12458991082     0
+OFF-SAMPLE n=2 wall=2026-10-09T01:50:28Z
+Wi-Fi Power (en0): On
+
+   REACH : flags 0x00000002 (Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+Network interfaces: en0
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+en0        1500  <Link#14>   76:df:fc:78:41:62 92985407     0 89504838665 27860687     0 12459326541     0
+en0        1500  zipkeroui-m fe80:e::14e6:9bab 92985407     - 89504838665 27860687     - 12459326541     -
+en0        1500  192.168.45    192.168.45.238  92985407     - 89504838665 27860687     - 12459326541     -
+OFF-SAMPLE n=3 wall=2026-10-09T01:50:32Z
+Wi-Fi Power (en0): On
+
+   REACH : flags 0x00000002 (Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+Network interfaces: en0
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+en0        1500  <Link#14>   76:df:fc:78:41:62 92985492     0 89504881531 27860764     0 12459347784     0
+en0        1500  zipkeroui-m fe80:e::14e6:9bab 92985492     - 89504881531 27860764     - 12459347784     -
+en0        1500  192.168.45    192.168.45.238  92985492     - 89504881531 27860764     - 12459347784     -
+ON-BEGIN wall=2026-10-09T01:50:32Z
+on-rc=0 wall=2026-10-09T01:50:32Z
+Wi-Fi Power (en0): On
+IPv4 network interface information
+     en0 : flags      : 0x5 (IPv4,DNS)
+           address    : 192.168.45.238
+           reach      : 0x00000002 (Reachable)
+
+   REACH : flags 0x00000002 (Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+Network interfaces: en0
+trap-restore wall=2026-10-09T01:50:32Z
+trap-restore-rc=0
+preflight wall=2026-10-09T01:51:05Z
+96088 Rs   00:00
+64258 /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+92795 /tmp/rr-task014-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Wi-Fi Power (en0): On
+preflight-set-on-rc=0
+preflight-ok wall=2026-10-09T01:51:05Z watchdog=96088
+OFF-BEGIN wall=2026-10-09T01:51:05Z
+off-rc=0 wall=2026-10-09T01:51:05Z
+OFF-SAMPLE n=1 wall=2026-10-09T01:51:09Z
+Wi-Fi Power (en0): Off
+IPv4 network interface information
+   No IPv4 states found
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+en0        1500  <Link#14>   76:df:fc:78:41:62 92986674     0 89505619333 27861790     0 12459821880     0
+OFF-SAMPLE n=2 wall=2026-10-09T01:51:13Z
+Wi-Fi Power (en0): Off
+IPv4 network interface information
+   No IPv4 states found
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+en0        1500  <Link#14>   76:df:fc:78:41:62 92986674     0 89505619333 27861790     0 12459821880     0
+OFF-SAMPLE n=3 wall=2026-10-09T01:51:17Z
+Wi-Fi Power (en0): Off
+IPv4 network interface information
+   No IPv4 states found
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+en0        1500  <Link#14>   76:df:fc:78:41:62 92986674     0 89505619333 27861790     0 12459821880     0
+ON-BEGIN wall=2026-10-09T01:51:17Z
+on-rc=0 wall=2026-10-09T01:51:17Z
+Wi-Fi Power (en0): On
+Network information
+
+IPv4 network interface information
+   No IPv4 states found
+
+   REACH : flags 0x00000000 (Not Reachable)
+
+IPv6 network interface information
+   No IPv6 states found
+
+
+   REACH : flags 0x00000000 (Not Reachable)
+trap-restore wall=2026-10-09T01:51:17Z
+trap-restore-rc=0

@@ -1,0 +1,21 @@
+$ /bin/ps -p 30218,64258 -o pid=,lstart=,command=
+exit=0
+30218 Fri Oct  9 13:27:50 2026     /private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner
+64258 Fri Oct  9 10:31:02 2026     /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+
+$ /usr/bin/sw_vers
+exit=0
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+
+$ /usr/bin/codesign --verify --deep --strict /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+exit=0
+
+
+$ /usr/bin/lipo -archs /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner
+exit=0
+arm64
+
+sha256 75da366919e20526ade4038161421dd0d7885039fa9e1f89a5706b3c53e989d8  /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner
+sha256 687bf199a16f1ac5c531d476e1ffe4af894b414ae61c7dc5b2eac2a0487cd368  /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/Resources/PrivacyInfo.xcprivacy

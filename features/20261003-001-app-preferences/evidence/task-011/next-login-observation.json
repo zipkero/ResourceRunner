@@ -1,0 +1,54 @@
+{
+  "applications" : [
+    {
+      "activationPolicy" : 1,
+      "AXResult" : 0,
+      "AXTrusted" : true,
+      "AXWindowCount" : 0,
+      "AXWindowTitles" : [
+
+      ],
+      "bundleURL" : "\/Users\/zipkero\/Applications\/ResourceRunner.app",
+      "CGWindows" : [
+        {
+          "kCGWindowAlpha" : 1,
+          "kCGWindowBounds" : {
+            "Height" : 694,
+            "Width" : 306,
+            "X" : 1176,
+            "Y" : 41
+          },
+          "kCGWindowLayer" : 25,
+          "kCGWindowMemoryUsage" : 2368,
+          "kCGWindowName" : "",
+          "kCGWindowNumber" : 49295,
+          "kCGWindowOwnerName" : "ResourceRunner",
+          "kCGWindowOwnerPID" : 64258,
+          "kCGWindowSharingState" : 1,
+          "kCGWindowStoreType" : 1
+        },
+        {
+          "kCGWindowAlpha" : 1,
+          "kCGWindowBounds" : {
+            "Height" : 542,
+            "Width" : 410,
+            "X" : 863,
+            "Y" : -214
+          },
+          "kCGWindowLayer" : 0,
+          "kCGWindowMemoryUsage" : 2368,
+          "kCGWindowName" : "ResourceRunner 설정",
+          "kCGWindowNumber" : 49272,
+          "kCGWindowOwnerName" : "ResourceRunner",
+          "kCGWindowOwnerPID" : 64258,
+          "kCGWindowSharingState" : 1,
+          "kCGWindowStoreType" : 1
+        }
+      ],
+      "executableURL" : "\/Users\/zipkero\/Applications\/ResourceRunner.app\/Contents\/MacOS\/ResourceRunner",
+      "launchDate" : "2026-10-09T01:31:02Z",
+      "pid" : 64258
+    }
+  ],
+  "observedAt" : "2026-10-09T01:32:12Z"
+}

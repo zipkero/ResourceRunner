@@ -1,0 +1,1037 @@
+diff --git a/ResourceRunner/AppDelegate.swift b/ResourceRunner/AppDelegate.swift
+index 5120e50..891794d 100644
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -19,7 +19,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
+     func applicationDidFinishLaunching(_ notification: Notification) {
+ #if DEBUG
+         let preferences: PreferencesStore
+-        if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
++        if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-ui-test"),
++           let suite = ProcessInfo.processInfo.environment["RR_PREFERENCES_TEST_SUITE"],
++           suite.hasPrefix("ResourceRunnerUITest."),
++           let defaults = UserDefaults(suiteName: suite) {
++            // 재실행 UI 검증은 테스트별 격리 domain을 사용해 실제 사용자 설정을 건드리지 않습니다.
++            if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-cleanup") {
++                defaults.removePersistentDomain(forName: suite)
++            }
++            if ProcessInfo.processInfo.arguments.contains("--preferences-persistence-seed-schema1"),
++               defaults.object(forKey: UserDefaultsPreferencesStorage.key) == nil {
++                // 과거 payload의 기존 선택은 유지하고 새 세 필드만 기본값으로 해독하는 경로를 검증합니다.
++                defaults.set(["schemaVersion": 1, "showsCPUCard": false,
++                              "showsMemoryCard": true, "showsNetworkCard": true,
++                              "showsDiskCard": true, "showsCPUTopApplications": false,
++                              "showsMemoryTopApplications": true,
++                              "graphTimeRange": "fiveMinutes", "refreshProfile": "energySaving"],
++                             forKey: UserDefaultsPreferencesStorage.key)
++            }
++            preferences = PreferencesStore(storage: UserDefaultsPreferencesStorage(defaults: defaults))
++        } else if ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test") {
+             let environment = ProcessInfo.processInfo.environment
+             let cardMask = Int(environment["RR_DASHBOARD_CARD_MASK"] ?? "15") ?? 15
+             let topMask = Int(environment["RR_DASHBOARD_TOP_MASK"] ?? "3") ?? 3
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 6fc2e64..75022ee 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -21,14 +21,16 @@ private final class SettingsOpenRouter {
+ final class PreferencesPipelineBinding {
+     private let store: PreferencesStore
+     private let dashboard: DashboardPresentationStore
++    private let statusBar: StatusBarController?
+     private let lifecycle: MonitoringLifecycleStore
+     private var forwardedProfile: RefreshProfile
+     private var initialApplied = false
+ 
+     init(store: PreferencesStore, dashboard: DashboardPresentationStore,
+-         lifecycle: MonitoringLifecycleStore) {
++         lifecycle: MonitoringLifecycleStore, statusBar: StatusBarController? = nil) {
+         self.store = store
+         self.dashboard = dashboard
++        self.statusBar = statusBar
+         self.lifecycle = lifecycle
+         forwardedProfile = store.current.preferences.refreshProfile
+         store.onChange = { [weak self] snapshot in self?.apply(snapshot) }
+@@ -41,6 +43,8 @@ final class PreferencesPipelineBinding {
+ 
+     private func apply(_ snapshot: PreferencesSnapshot) {
+         dashboard.applyPreferences(snapshot)
++        // 늦은 callback이 도착해도 behavior는 현재 저장 snapshot에서만 유도합니다.
++        statusBar?.applyAutomaticallyClosesPopover(store.current.preferences.automaticallyClosesPopover)
+         guard initialApplied else { return }
+         forwardCurrentProfileIfChanged()
+     }
+@@ -117,7 +121,8 @@ final class ApplicationCoordinator {
+         statusBarController = StatusBarController(
+             popoverContent: DashboardView(store: dashboard, viewport: viewport,
+                 iconProvider: ApplicationIconCache(),
+-                onOpenSettings: { [weak settingsRouter] in settingsRouter?.open() }), viewport: viewport
++                onOpenSettings: { [weak settingsRouter] in settingsRouter?.open() }), viewport: viewport,
++            automaticallyClosesPopover: initialPreferences.preferences.automaticallyClosesPopover
+         )
+         statusBarController.keyboardDismiss = { [weak dashboard] in
+             guard let dashboard, dashboard.selection != .none else { return false }
+@@ -132,6 +137,12 @@ final class ApplicationCoordinator {
+         let admission = CollectionAdmission()
+         let networkTopology = NetworkTopologyTracker()
+         let diskTopology = DiskTopologyTracker()
++#if DEBUG
++        let processReader = UITestProcessSurveyReader(usesFixture:
++            ProcessInfo.processInfo.arguments.contains("--process-ranking-ui-fixture"))
++#else
++        let processReader = HostProcessSurveyReader()
++#endif
+         let pipelines = CollectionPipelines.make(clock: clock, admission: admission,
+             networkTopology: networkTopology, diskTopology: diskTopology,
+             systemSource: SystemMetricsSampleSource(
+@@ -139,7 +150,7 @@ final class ApplicationCoordinator {
+                 memoryCollector: MemorySystemMetricsCollector(),
+                 clock: clock, admission: admission),
+             processSource: ProcessSurveySampleSource(
+-                collector: ProcessSurveyCollector(reader: HostProcessSurveyReader()),
++                collector: ProcessSurveyCollector(reader: processReader),
+                 admission: admission),
+             networkSource: { metadata in NetworkActivitySource(
+                 reader: SystemNetworkCounterReader(topology: networkTopology),
+@@ -154,8 +165,9 @@ final class ApplicationCoordinator {
+         collectionPipelines = pipelines
+         collectionDeliveryStore = CollectionDeliveryStore()
+         processRankingCache = ProcessRankingDeliveryCache()
++        dashboard.attachRankingCache(processRankingCache)
+         preferencesBinding = PreferencesPipelineBinding(store: preferencesStore,
+-            dashboard: dashboard, lifecycle: pipelines.lifecycle)
++            dashboard: dashboard, lifecycle: pipelines.lifecycle, statusBar: statusBarController)
+         topologyObserver = ResourceTopologyObserver(networkTopology: networkTopology,
+             diskTopology: diskTopology, lifecycle: pipelines.lifecycle)
+         systemLifecycleObserver = SystemLifecycleObserver.makeMacOSAdapter()
+@@ -196,13 +208,18 @@ final class ApplicationCoordinator {
+                 }
+             }
+         }
++        if ProcessInfo.processInfo.arguments.contains("--popover-behavior-ui-test") {
++            statusBarController.debugAutoCloseInjector = { [preferencesStore] in
++                preferencesStore.update { $0.automaticallyClosesPopover.toggle() }
++            }
++        }
+ #endif
+ 
+         let sink: CharacterPresentationSink = statusBarController
+         characterStateTask = Self.consume(characterStateSource, into: sink)
+ 
+         processRankingTask = Self.consumeProcessRanking(pipelines.processStore,
+-            into: processRankingCache, admission: admission)
++            into: processRankingCache, dashboard: dashboard, admission: admission)
+         cpuActivityTask = Self.consumeSystemMetrics(
+             pipelines.systemStore,
+             into: characterStateSource,
+@@ -281,28 +298,28 @@ final class ApplicationCoordinator {
+                 var processGroups: [ApplicationProcessGroup] = []
+                 var nextResolver: ApplicationIdentityResolver?
+                 var surveyFailed = false
++                var excludedCount = 0
+                 if let rankingCache {
+-                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch)
++                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch,
++                        includesSystemProcesses: dashboard.preferencesSnapshot.preferences.includesSystemProcesses)
+                     ranking = current.ranking
+                     processGroups = current.groups
+                     surveyFailed = current.surveyFailed
++                    excludedCount = current.excludedCount
+                 } else if let processHistory {
+                     let input = await processHistory.rankingInput()
+                     surveyFailed = input.surveyFailed
+-                    let computed = ApplicationRanking.compute(
++                    let computed = ApplicationRanking.materials(
+                         snapshots: input.snapshots,
+                         currentTimestamp: now,
+                         unreadableCount: input.unreadableCount,
++                        currentUserUnreadableCount: input.currentUserUnreadableCount,
+                         resolver: resolver
+                     )
+-                    // 두 계산이 같은 resolver를 이어받아야 앱 키 유도가 서로 다른 결과를 내지 않습니다.
+-                    let grouped = ApplicationRanking.groupByApplication(
+-                        snapshots: input.snapshots,
+-                        resolver: computed.resolver
+-                    )
+-                    nextResolver = grouped.resolver
+-                    ranking = computed.sample
+-                    processGroups = grouped.groups
++                    nextResolver = computed.resolver
++                    ranking = computed.materials.currentUser.ranking
++                    processGroups = computed.materials.currentUser.groups
++                    excludedCount = computed.materials.currentUser.excludedCount
+                 }
+ 
+                 @MainActor func updateDisplay() {
+@@ -312,6 +329,7 @@ final class ApplicationCoordinator {
+                         topApplications: ranking?.cpuUsage ?? [],
+                         topApplicationsFailed: surveyFailed,
+                         processGroups: processGroups,
++                        excludedCount: excludedCount, unreadableCount: ranking?.unreadableCount ?? 0,
+                         currentTimestamp: now
+                     )
+                     dashboard.updateMemoryCard(
+@@ -320,6 +338,7 @@ final class ApplicationCoordinator {
+                         topApplicationsFailed: surveyFailed,
+                         memoryIncrease: ranking?.memoryIncrease ?? [],
+                         processGroups: processGroups,
++                        excludedCount: excludedCount, unreadableCount: ranking?.unreadableCount ?? 0,
+                         currentTimestamp: now
+                     )
+                     guard let latest = displayValue.latest,
+@@ -362,6 +381,7 @@ final class ApplicationCoordinator {
+     /// 프로세스 순위의 actor 조회·집계를 시스템 tick에서 분리해 CPU·Memory와 메뉴바 소비를 기다리게 하지 않습니다.
+     static func consumeProcessRanking(_ store: ProcessHistoryStore,
+                                       into cache: ProcessRankingDeliveryCache,
++                                      dashboard: DashboardPresentationStore? = nil,
+                                       admission: CollectionAdmission? = nil,
+                                       beforeRankingCompute: (@Sendable () async -> Void)? = nil) -> Task<Void, Never> {
+         let updates = store.rankingUpdates
+@@ -369,30 +389,31 @@ final class ApplicationCoordinator {
+             var resolver = ApplicationIdentityResolver()
+             for await input in updates {
+                 if let beforeRankingCompute { await beforeRankingCompute() }
+-                let computed = ApplicationRanking.compute(snapshots: input.snapshots,
++                let computed = ApplicationRanking.materials(snapshots: input.snapshots,
+                     currentTimestamp: input.timestamp, unreadableCount: input.unreadableCount,
++                    currentUserUnreadableCount: input.currentUserUnreadableCount,
+                     resolver: resolver)
+-                let grouped = ApplicationRanking.groupByApplication(snapshots: input.snapshots,
+-                    resolver: computed.resolver)
+                 let accepted = await MainActor.run { () -> Bool in
+                     if let context = input.context, let admission {
+-                        return admission.admitDisplay(context, timestamp: input.timestamp) {
+-                            cache.update(ranking: computed.sample, groups: grouped.groups,
++                        return admission.admitDisplayOptional(context, timestamp: input.timestamp) {
++                            let updated = cache.update(materials: computed.materials,
+                                 surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+-                                collectionEpoch: context.epoch)
++                                collectionEpoch: context.epoch, deliverySequence: input.deliverySequence)
+ #if DEBUG
+-                            debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)")
++                            if updated { debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)") }
+ #endif
+-                            return true
++                            return updated ? true : nil
+                         } ?? false
+                     } else {
+-                        cache.update(ranking: computed.sample, groups: grouped.groups,
++                        return cache.update(materials: computed.materials,
+                             surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+-                            collectionEpoch: input.context?.epoch)
+-                        return true
++                            collectionEpoch: input.context?.epoch, deliverySequence: input.deliverySequence)
+                     }
+                 }
+-                if accepted { resolver = grouped.resolver }
++                if accepted {
++                    resolver = computed.resolver
++                    await MainActor.run { dashboard?.refreshProcessRanking() }
++                }
+             }
+         }
+     }
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index bd67867..cb75059 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -1138,7 +1138,7 @@ nonisolated enum CardRankingRowLayout {
+ }
+ 
+ /// 앱 단위 순위 목록. 상세 팝업(`MemoryDetailView`)의 최근 증가량 순위 한 자리에서만 쓰이며, 정원보다 적으면
+-/// 있는 만큼만 나열하고 시스템 프로세스 제외 안내(호출부가 넘기는 정원에 맞춘 문구)를 항상 함께 둡니다.
++/// 있는 만큼만 나열하고 현재 포함 범위와 상세 정원(10/20/50)에 맞춘 안내 문구를 함께 둡니다.
+ /// 현재 사용량 순위는 `ApplicationProcessGroupListView`(펼침이 있는 앱 목록)가 겸하므로 이 뷰를 쓰지 않습니다(ANALYSIS §5 DP1).
+ /// 카드 쪽 순위 자리는 높이가 고정되어야 하므로 이 뷰 대신 `CardRankingSlotView`를 씁니다(task-015).
+ /// 값 단위가 카드마다 다르므로(CPU는 `%`, Memory는 바이트) 값 표시 문자열은 호출부가 `valueText`로 넘깁니다.
+@@ -1355,6 +1355,8 @@ struct CPUDetailView: View {
+                 case .applicationGroups:
+                     ApplicationProcessGroupListView(
+                         groups: presentation.detail.applications,
++                        limit: presentation.detail.applicationsLimit,
++                        includesSystemProcesses: presentation.includesSystemProcesses,
+                         sortDescription: presentation.detail.applicationsHeading,
+                         exclusionNote: presentation.detail.applicationsExclusionNote,
+                         // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
+@@ -1588,7 +1590,7 @@ struct MemoryDetailView: View {
+                     .dashboardTypography(DashboardStyle.Section.headingRole)
+                 // 증가량은 음수일 수 있으므로 `TopApplicationsView`가 기본 카드에 쓰는 `UInt64` 변환 경로를
+                 // 그대로 재사용하지 않고, 부호를 보존하는 별도 포맷을 씁니다.
+-                // 이 목록만 상세 정원(20)까지 받으므로 카드 정원 문구와 다른 문구가 필요합니다 — 정원을
++                // 이 목록은 설정한 상세 정원(10/20/50)을 따르므로 카드 정원 문구와 다른 문구가 필요합니다 — 정원을
+                 // 뷰가 고르지 않도록, 조립 시점에 이미 만들어진 문구(`detail.recentIncreaseRankingCaption`)를 그대로 씁니다.
+                 TopApplicationsView(
+                     entries: detail.recentIncreaseRanking,
+@@ -1600,6 +1602,8 @@ struct MemoryDetailView: View {
+ 
+             ApplicationProcessGroupListView(
+                 groups: detail.applications,
++                limit: detail.applicationsLimit,
++                includesSystemProcesses: presentation.includesSystemProcesses,
+                 sortDescription: detail.applicationsHeading,
+                 exclusionNote: detail.applicationsExclusionNote,
+                 // Memory는 항상 값이 있지만(SPEC §5.6과 달리 기준점이 필요 없음), nil 안전 경로는
+@@ -1721,9 +1725,11 @@ struct MemoryCompositionDonutView: View {
+ // 마지막 하위 행과 다음 앱 행 사이 간격에 이 목록의 행 간격이 더해집니다.
+ struct ApplicationProcessGroupListView: View {
+     let groups: [ApplicationProcessGroup]
++    var limit: Int = ApplicationRankingSampling.detailCount
++    var includesSystemProcesses = false
+     /// 목록이 어떤 값으로, 어떤 방향으로 정렬됐는지 알리는 머리글.
+     let sortDescription: String
+-    /// 머리글 바로 아래 줄에 붙는 안내. 시스템 프로세스가 순위에서 빠진다는 사실을 두 상세 모두에서 알립니다.
++    /// 머리글 바로 아래 줄에 붙는 현재 소속 선택·읽기 실패 안내입니다.
+     let exclusionNote: String
+     /// 앱 행에 표시할 그룹 합계 값의 서식. `nil`(값을 만들지 못한 그룹)을 0으로 지어내지 않습니다(SPEC §5.6).
+     let groupValue: (Double?) -> DashboardValueColumn.Value
+@@ -1744,7 +1750,8 @@ struct ApplicationProcessGroupListView: View {
+         ApplicationProcessGroupOrdering.displayedGroups(
+             groups: groups,
+             stableOrder: stableOrder,
+-            hasExpandedRow: !expandedKeys.isEmpty
++            hasExpandedRow: !expandedKeys.isEmpty,
++            cap: limit
+         )
+     }
+ 
+@@ -1783,10 +1790,16 @@ struct ApplicationProcessGroupListView: View {
+         // 펼친 행이 없을 때만 최신 순서를 따라잡습니다 — 펼친 행이 있는 동안 들어오는 새 정렬 결과는
+         // `stableOrder`에 반영하지 않고 미뤄 둡니다.
+         .onChange(of: groups.map(\.key)) { _, newOrder in
+-            if expandedKeys.isEmpty {
+-                stableOrder = newOrder
+-            }
++            if expandedKeys.isEmpty { stableOrder = newOrder }
+         }
++        .onChange(of: limit) { _, _ in reconcileExpandedRows() }
++        .onChange(of: includesSystemProcesses) { _, _ in reconcileExpandedRows() }
++    }
++
++    private func reconcileExpandedRows() {
++        expandedKeys = ApplicationProcessGroupOrdering.visibleExpandedKeys(
++            groups: groups, stableOrder: stableOrder, expandedKeys: expandedKeys, cap: limit)
++        if expandedKeys.isEmpty { stableOrder = groups.map(\.key) }
+     }
+ }
+ 
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index ea95832..d0e3a72 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -18,7 +18,7 @@ protocol StatusBarControllerOutput: AnyObject {
+ /// `NSStatusItem`, `NSPopover`와 팝오버 delegate를 소유하는 AppKit 경계.
+ /// 메뉴바 항목은 고정 폭(`NSStatusItem.squareLength`)이고 버튼 이미지는 구성 시점에 한 번만 설정합니다.
+ /// 상태가 바뀌어도 갱신되는 것은 버튼의 접근성 이름 하나뿐입니다.
+-/// 팝오버는 `.transient` behavior로 외부 상호작용에서 스스로 닫히고,
++/// 팝오버 behavior는 현재 일반 설정을 따르고,
+ /// delegate가 보고하는 실제 표시 상태를 단일 소스로 삼아 클릭 토글과 어긋나지 않게 합니다.
+ /// 우클릭은 설정 메뉴를 열고 Debug에서는 상태 주입 항목도 별도 구역에 둡니다.
+ @MainActor
+@@ -44,13 +44,15 @@ final class StatusBarController: NSObject {
+     var debugStateInjector: ((CharacterActivityState) -> Void)?
+     var debugCardVisibilityInjector: ((DashboardSelection) -> Void)?
+     var debugSettingsFocusRace: (() -> Void)?
++    var debugAutoCloseInjector: (() -> Void)?
+ #endif
+ 
+-    init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
++    init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil,
++                        automaticallyClosesPopover: Bool = true) {
+         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+         popover = NSPopover()
+         self.viewport = viewport
+-        popover.behavior = .transient
++        popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
+         popover.contentViewController = NSHostingController(rootView: popoverContent)
+ 
+         super.init()
+@@ -67,7 +69,10 @@ final class StatusBarController: NSObject {
+             return true
+         }
+         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+-            MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
++            MainActor.assumeIsolated {
++                guard let self else { return event }
++                return self.handleOwnedKey(event)
++            }
+         }
+         screenObserver = NotificationCenter.default.addObserver(
+             forName: NSApplication.didChangeScreenParametersNotification,
+@@ -100,6 +105,13 @@ final class StatusBarController: NSObject {
+             || (body.childWindows?.contains(keyWindow) ?? false)
+     }
+ 
++    /// 열린 상태에서도 같은 팝오버의 외부 상호작용 정책만 갱신합니다.
++    func applyAutomaticallyClosesPopover(_ enabled: Bool) {
++        let behavior: NSPopover.Behavior = enabled ? .transient : .applicationDefined
++        guard popover.behavior != behavior else { return }
++        popover.behavior = behavior
++    }
++
+     /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
+     private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
+         guard let window = event.window,
+@@ -107,6 +119,11 @@ final class StatusBarController: NSObject {
+                 || window === viewport?.detailWindow else { return event }
+         let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+ #if DEBUG
++        // 고유 UI 앱에서 열린 본체의 실제 behavior 갱신을 검증할 때만 사용합니다.
++        if debugAutoCloseInjector != nil, modifiers == [.command, .shift], event.keyCode == 27 {
++            debugAutoCloseInjector?()
++            return nil
++        }
+         // UI fixture만 팝오버를 닫지 않은 채 카드 제거·포커스 복귀를 시험합니다.
+         if debugCardVisibilityInjector != nil,
+            modifiers == [.command, .shift] {
+@@ -128,7 +145,10 @@ final class StatusBarController: NSObject {
+         }
+ #endif
+         guard modifiers.isEmpty else { return event }
+-        if event.keyCode == 53, keyboardDismiss?() == true { return nil }
++        if event.keyCode == 53 {
++            if keyboardDismiss?() != true { popover.performClose(nil) }
++            return nil
++        }
+         if event.keyCode == 116 || event.keyCode == 121,
+            let detail = viewport?.detailWindow, detail.isVisible,
+            let content = detail.contentView,
+@@ -230,7 +250,7 @@ final class StatusBarController: NSObject {
+     }
+ 
+     /// 설정 접근 메뉴를 띄웁니다. Debug 주입 항목은 아래쪽 별도 구역입니다.
+-    /// 이 메뉴를 여는 동작은 메뉴바 항목 클릭이라 `NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다.
++    /// 메뉴바 항목 우클릭과 본체의 외부 클릭 처리 결과는 현재 `NSPopover.behavior`를 따릅니다.
+     private func showContextMenu(relativeTo button: NSStatusBarButton) {
+         let menu = NSMenu()
+         let settings = NSMenuItem(title: "설정…", action: #selector(openSettingsFromMenu(_:)), keyEquivalent: "")
+diff --git a/ResourceRunnerUITests/SettingsWindowUITests.swift b/ResourceRunnerUITests/SettingsWindowUITests.swift
+index b01f60e..b1ef07a 100644
+--- a/ResourceRunnerUITests/SettingsWindowUITests.swift
++++ b/ResourceRunnerUITests/SettingsWindowUITests.swift
+@@ -15,6 +15,15 @@ final class SettingsWindowUITests: XCTestCase {
+         return app
+     }
+ 
++    private func persistentApp(suite: String) -> XCUIApplication {
++        let app = XCUIApplication()
++        app.launchArguments += ["--preferences-persistence-ui-test", "--settings-ui-test"]
++        app.launchEnvironment["RR_PREFERENCES_TEST_SUITE"] = suite
++        app.launchEnvironment["RR_LOGIN_STATUS"] = "enabled"
++        app.launchEnvironment["RR_LOGIN_UNREGISTER_OUTCOME"] = "failure"
++        return app
++    }
++
+     private func settingsWindow(_ app: XCUIApplication) -> XCUIElement {
+         app.windows["ResourceRunner 설정"]
+     }
+@@ -78,6 +87,98 @@ final class SettingsWindowUITests: XCTestCase {
+         XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
+     }
+ 
++    @MainActor
++    func testProcessScopeAndDetailLimitControlsApplyInCurrentWindow() {
++        let app = launch()
++        openFromStatusMenu(app)
++        let window = settingsWindow(app)
++        let scope = app.switches["SettingsIncludeSystemProcesses"]
++        XCTAssertTrue(scope.waitForExistence(timeout: 3))
++        XCTAssertEqual(switchValue(scope), 0)
++        app.typeKey("0", modifierFlags: [.command, .option])
++        XCTAssertEqual(switchValue(scope), 1)
++
++        let limit = app.popUpButtons["SettingsDetailListLimit"]
++        XCTAssertTrue(limit.waitForExistence(timeout: 3))
++        XCTAssertTrue(textValue(limit).contains("20"))
++        limit.click()
++        app.menuItems["50개"].click()
++        XCTAssertTrue(textValue(limit).contains("50"))
++        limit.click()
++        app.menuItems["10개"].click()
++        XCTAssertTrue(textValue(limit).contains("10"))
++        XCTAssertTrue(focusByTab("SettingsNextDetailListLimit", in: app))
++        app.typeKey(.space, modifierFlags: [])
++        XCTAssertTrue(textValue(limit).contains("20"))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(textValue(limit).contains("50"))
++        XCTAssertTrue(window.exists)
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunnerSettingsWindow").count, 1)
++    }
++
++    @MainActor
++    func testAutomaticPopoverCloseToggleSupportsKeyboardAndAccessibility() {
++        let app = launch()
++        openFromStatusMenu(app)
++        let window = settingsWindow(app)
++        let toggle = app.switches["SettingsAutomaticallyClosesPopover"]
++        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
++        XCTAssertEqual(toggle.label, "팝오버 자동 닫기")
++        XCTAssertEqual(switchValue(toggle), 1)
++        app.typeKey("-", modifierFlags: [.command, .option])
++        XCTAssertEqual(switchValue(toggle), 0)
++        app.typeKey("-", modifierFlags: [.command, .option])
++        XCTAssertEqual(switchValue(toggle), 1)
++        toggle.click()
++        XCTAssertEqual(switchValue(toggle), 0)
++        XCTAssertTrue(window.exists)
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunnerSettingsWindow").count, 1)
++    }
++
++    @MainActor
++    func testAutomaticCloseOffKeepsExplicitBodyAndDetailEscape() {
++        let app = launch()
++        openFromStatusMenu(app)
++        let toggle = app.switches["SettingsAutomaticallyClosesPopover"]
++        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
++        toggle.click()
++        XCTAssertEqual(switchValue(toggle), 0)
++        closeSettings(app)
++
++        let status = app.statusItems.firstMatch
++        status.click()
++        let body = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
++        XCTAssertTrue(body.waitForExistence(timeout: 3))
++        app.typeKey("1", modifierFlags: .command)
++        let detail = app.descendants(matching: .any).matching(identifier: "DashboardDetail").firstMatch
++        XCTAssertTrue(detail.waitForExistence(timeout: 3))
++        app.typeKey(.pageDown, modifierFlags: [])
++        app.typeKey(.pageUp, modifierFlags: [])
++        app.typeKey(.escape, modifierFlags: [])
++        XCTAssertFalse(detail.exists)
++        XCTAssertTrue(body.exists)
++        app.typeKey(.escape, modifierFlags: [])
++        XCTAssertFalse(body.exists)
++    }
++
++    @MainActor
++    func testSettingsEscapeDoesNotDismissOwnedPopoverWhenAutomaticCloseIsOff() {
++        let app = launch()
++        openFromStatusMenu(app)
++        let toggle = app.switches["SettingsAutomaticallyClosesPopover"]
++        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
++        toggle.click()
++        closeSettings(app)
++
++        app.statusItems.firstMatch.click()
++        let body = app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch
++        XCTAssertTrue(body.waitForExistence(timeout: 3))
++        app.typeKey(",", modifierFlags: .command)
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        app.typeKey(.escape, modifierFlags: [])
++        XCTAssertTrue(body.exists)
++    }
++
+     /// Release 구성에서도 실행되는 읽기 전용 진입 검증입니다.
+     @MainActor
+     func testReadOnlyStatusMenuSettingsAccess() {
+@@ -101,6 +202,159 @@ final class SettingsWindowUITests: XCTestCase {
+         XCTAssertFalse(settingsWindow(app).exists)
+         openFromStatusMenu(app)
+         XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
++        let include = app.switches["SettingsIncludeSystemProcesses"]
++        let limit = app.popUpButtons["SettingsDetailListLimit"]
++        let autoClose = app.switches["SettingsAutomaticallyClosesPopover"]
++        XCTAssertTrue(include.exists && limit.exists && autoClose.exists)
++        print("TASK016_RELEASE_CURRENT include=\(switchValue(include)) limit=\(textValue(limit)) auto=\(switchValue(autoClose))")
++        if ProcessInfo.processInfo.environment["RR_EXPECT_DEFAULT_PREFERENCES"] == "1" {
++            XCTAssertEqual(switchValue(include), 0)
++            XCTAssertTrue(textValue(limit).contains("20"))
++            XCTAssertEqual(switchValue(autoClose), 1)
++        }
++        if ProcessInfo.processInfo.environment["RR_EXPECT_SAVED_PREFERENCES"] == "1" {
++            XCTAssertEqual(switchValue(include), 1)
++            XCTAssertTrue(textValue(limit).contains("50"))
++            XCTAssertEqual(switchValue(autoClose), 1)
++        }
++        if ProcessInfo.processInfo.environment["RR_EXPECT_NATIVE_LOGIN_ENABLED"] == "1" {
++            XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 1)
++            XCTAssertTrue(textValue(app.staticTexts["SettingsLoginStatus"]).contains("허용"))
++        }
++        closeSettings(app)
++    }
++
++    // 안정 경로의 Release 앱에서만 실행하며, 각 단계의 실제 OS 상태는 외부에서 대조합니다.
++    private func nativeReleaseApp() throws -> XCUIApplication {
++        guard let path = ProcessInfo.processInfo.environment["RR_NATIVE_RELEASE_APP_PATH"] else {
++            throw XCTSkip("실제 로그인 검증용 Release 앱 경로가 필요합니다.")
++        }
++        return XCUIApplication(url: URL(fileURLWithPath: path))
++    }
++
++    @MainActor
++    func testNativeLoginInitialReadOnly() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch.exists)
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let firstStatus = textValue(status)
++        NSLog("RR_NATIVE_INITIAL status=%@", firstStatus)
++        XCTAssertTrue(firstStatus.contains("등록되지") || firstStatus.contains("찾을 수 없"), firstStatus)
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertEqual(textValue(status), firstStatus)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginRegister() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let firstStatus = textValue(status)
++        XCTAssertTrue(firstStatus.contains("등록되지") || firstStatus.contains("찾을 수 없"), firstStatus)
++        app.switches["SettingsLoginToggle"].click()
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        let statusText = textValue(status)
++        let resultText = textValue(result)
++        NSLog("RR_NATIVE_REGISTER status=%@ result=%@", statusText, resultText)
++        XCTAssertFalse(resultText.contains("실패"), resultText)
++        XCTAssertTrue(statusText.contains("허용") || statusText.contains("승인"), statusText)
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertTrue(textValue(status).contains("허용") || textValue(status).contains("승인"))
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginUnregisterAndRestore() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let initialStatus = textValue(status)
++        XCTAssertTrue(initialStatus.contains("허용") || initialStatus.contains("승인"), initialStatus)
++        if initialStatus.contains("승인") {
++            app.buttons["SettingsUnregisterLoginItem"].click()
++        } else {
++            app.switches["SettingsLoginToggle"].click()
++        }
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        NSLog("RR_NATIVE_UNREGISTER status=%@ result=%@", textValue(status), textValue(result))
++        XCTAssertTrue(textValue(status).contains("등록되지"), textValue(status))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
++
++        app.switches["SettingsLoginToggle"].click()
++        let registered = NSPredicate(format: "value CONTAINS %@ OR value CONTAINS %@", "허용", "승인")
++        expectation(for: registered, evaluatedWith: status)
++        waitForExpectations(timeout: 10)
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        XCTAssertTrue(loginRestore.waitForExistence(timeout: 10))
++        let restored = NSPredicate(format: "value CONTAINS %@", "해제가 확인")
++        expectation(for: restored, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 10)
++        XCTAssertTrue(textValue(status).contains("등록되지"), textValue(status))
++        NSLog("RR_NATIVE_RESTORE status=%@ login=%@", textValue(status), textValue(loginRestore))
++        XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginPrepareNextLogin() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let initialStatus = textValue(status)
++        XCTAssertTrue(initialStatus.contains("등록되지") || initialStatus.contains("찾을 수 없"), initialStatus)
++        app.switches["SettingsLoginToggle"].click()
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        NSLog("RR_NATIVE_PREPARE status=%@ result=%@", textValue(status), textValue(result))
++        XCTAssertTrue(textValue(status).contains("허용"), textValue(status))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 1)
++        closeSettings(app)
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch.exists)
++    }
++
++    @MainActor
++    func testNativeSystemSettingsRemovalRefreshesAppStatus() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        XCTAssertTrue(textValue(status).contains("허용"), textValue(status))
++        let systemSettings = XCUIApplication(bundleIdentifier: "com.apple.systempreferences")
++        systemSettings.activate()
++        let loginItem = systemSettings.staticTexts["open-at-login-item-ResourceRunner.app-icon"]
++        XCTAssertTrue(loginItem.waitForExistence(timeout: 5))
++        XCTAssertEqual((loginItem.value as? String) ?? loginItem.label, "ResourceRunner.app")
++        loginItem.click()
++        let remove = systemSettings.buttons["제거"]
++        XCTAssertTrue(remove.isEnabled)
++        remove.click()
++        let itemGone = NSPredicate(format: "exists == false")
++        expectation(for: itemGone, evaluatedWith: loginItem)
++        waitForExpectations(timeout: 10)
++        app.activate()
++        app.buttons["SettingsLoginRefresh"].click()
++        let refreshed = textValue(status)
++        NSLog("RR_NATIVE_EXTERNAL_REMOVAL status=%@", refreshed)
++        XCTAssertTrue(refreshed.contains("등록되지") || refreshed.contains("찾을 수 없"), refreshed)
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertFalse(app.staticTexts["SettingsLoginResult"].exists)
++        systemSettings.terminate()
+         closeSettings(app)
+     }
+ 
+@@ -161,6 +415,123 @@ final class SettingsWindowUITests: XCTestCase {
+         XCTAssertTrue((profile.value as? String ?? "").contains("기본"))
+     }
+ 
++    @MainActor
++    func testChangedSettingsSurviveRelaunchThenRestoreSeparatelyFromLoginFailure() {
++        let suite = "ResourceRunnerUITest.\(UUID().uuidString)"
++        let app = persistentApp(suite: suite)
++        addTeardownBlock {
++            if app.state != .notRunning { app.terminate() }
++            app.launchArguments.append("--preferences-persistence-cleanup")
++            app.launch()
++            app.terminate()
++        }
++        app.launch()
++        openFromStatusMenu(app)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            app.switches[id].click()
++            XCTAssertEqual(switchValue(app.switches[id]), 0, id)
++        }
++        let graph = app.popUpButtons["SettingsGraphRange"]
++        graph.click()
++        app.menuItems["최근 1분"].click()
++        let profile = app.popUpButtons["SettingsRefreshProfile"]
++        profile.click()
++        app.menuItems["매우 절전"].click()
++        app.switches["SettingsIncludeSystemProcesses"].click()
++        let limit = app.popUpButtons["SettingsDetailListLimit"]
++        limit.click()
++        app.menuItems["50개"].click()
++        app.switches["SettingsAutomaticallyClosesPopover"].click()
++        app.terminate()
++
++        // 같은 격리 domain에서 새 프로세스를 띄워 저장값의 최초 표시를 확인합니다.
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        XCTAssertTrue(app.buttons["DashboardOpenSettings"].waitForExistence(timeout: 3))
++        for id in ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard"] {
++            XCTAssertFalse(app.buttons[id].exists, id)
++        }
++        app.buttons["DashboardOpenSettings"].click()
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 0, id)
++        }
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 1분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("매우 절전"))
++        XCTAssertEqual(switchValue(app.switches["SettingsIncludeSystemProcesses"]), 1)
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsDetailListLimit"]).contains("50"))
++        XCTAssertEqual(switchValue(app.switches["SettingsAutomaticallyClosesPopover"]), 0)
++
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        let failure = NSPredicate(format: "value CONTAINS %@", "테스트 해제 실패")
++        expectation(for: failure, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 3)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 1, id)
++        }
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 10분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("기본"))
++        XCTAssertEqual(switchValue(app.switches["SettingsIncludeSystemProcesses"]), 0)
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsDetailListLimit"]).contains("20"))
++        XCTAssertEqual(switchValue(app.switches["SettingsAutomaticallyClosesPopover"]), 1)
++        app.terminate()
++
++        app.launch()
++        openFromStatusMenu(app)
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 1)
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 10분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("기본"))
++        XCTAssertEqual(switchValue(app.switches["SettingsIncludeSystemProcesses"]), 0)
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsDetailListLimit"]).contains("20"))
++        XCTAssertEqual(switchValue(app.switches["SettingsAutomaticallyClosesPopover"]), 1)
++    }
++
++    @MainActor
++    func testSchemaOneOldPayloadKeepsOldValuesAndDefaultsNewFields() {
++        let suite = "ResourceRunnerUITest.\(UUID().uuidString)"
++        let app = persistentApp(suite: suite)
++        app.launchArguments.append("--preferences-persistence-seed-schema1")
++        addTeardownBlock {
++            if app.state != .notRunning { app.terminate() }
++            app.launchArguments = ["--preferences-persistence-ui-test", "--preferences-persistence-cleanup", "--settings-ui-test"]
++            app.launch()
++            app.terminate()
++        }
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "DashboardContainer").firstMatch.exists)
++        openFromStatusMenu(app)
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 0)
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUTop5"]), 0)
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsGraphRange"]).contains("최근 5분"))
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsRefreshProfile"]).contains("절전"))
++        XCTAssertEqual(switchValue(app.switches["SettingsIncludeSystemProcesses"]), 0)
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsDetailListLimit"]).contains("20"))
++        XCTAssertEqual(switchValue(app.switches["SettingsAutomaticallyClosesPopover"]), 1)
++        app.terminate()
++        app.launchArguments.removeAll(where: { $0 == "--preferences-persistence-seed-schema1" })
++        app.launch()
++        openFromStatusMenu(app)
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 0)
++        XCTAssertEqual(switchValue(app.switches["SettingsIncludeSystemProcesses"]), 0)
++        XCTAssertTrue(textValue(app.popUpButtons["SettingsDetailListLimit"]).contains("20"))
++        XCTAssertEqual(switchValue(app.switches["SettingsAutomaticallyClosesPopover"]), 1)
++    }
++
+     @MainActor
+     func testLoginSuccessFailureApprovalRefreshAndExplicitSystemSettings() {
+         let app = launch(login: "notRegistered", register: "approval")
+@@ -312,6 +683,8 @@ final class SettingsWindowUITests: XCTestCase {
+         app.typeKey("9", modifierFlags: [.command, .shift])
+         XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
+         Thread.sleep(forTimeInterval: 0.7)
++        // 설정창이 key여도 초기 AX 자식 포커스가 비어 있을 수 있어 첫 Tab 뒤 소유 창을 확인합니다.
++        app.typeKey(.tab, modifierFlags: [])
+         XCTAssertTrue(settingsOwnsKeyboardFocus(app))
+         XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 0)
+         XCTAssertTrue(app.switches["SettingsMemoryCard"].isHittable)
+diff --git a/docs/design.md b/docs/design.md
+index 967b57c..d53337d 100644
+--- a/docs/design.md
++++ b/docs/design.md
+@@ -13,14 +13,18 @@
+ 
+ ### 현재 확인된 구현
+ 
+-M1 기반과 CPU·Memory 모니터링, M3의 Network·Disk 수집·표시가 반영된 상태입니다.
+-M3의 실제 연결 전환과 잠금·절전 복귀 검증은 보류 중이며 전체 완료를 뜻하지 않습니다.
++M1 기반과 CPU·Memory 모니터링, M3의 Network·Disk 수집·표시, M4의 설정창·저장·즉시 적용이 반영된 상태입니다.
++M3의 용량 기준 변경에 따른 여섯 Task 재검증, 실제 잠금·절전·디스플레이 복귀와 task-018 최종 통합 검증을 독립 승인하여 해당 feature의 IMPLEMENT를 완료했습니다.
++M4 첫 범위의 실제 로그인 실행은 확인됐고, 시스템 프로세스 포함·상세 정원·팝오버 자동 닫기의
++설정 화면과 실시간 적용 경로도 구현됐습니다.
+ 
+ - 앱 진입점은 `Settings { EmptyView() }`와 `@NSApplicationDelegateAdaptor`로 구성하고,
+   생성 Info.plist의 `LSUIElement`로 Dock 아이콘 없이 실행합니다.
++  Settings Scene은 껍질로 유지하며 설정 명령·메뉴바 우클릭·전체 숨김 버튼은
++  `ApplicationCoordinator.openSettings()`와 단일 `SettingsWindowController`로 연결합니다.
+ - `ApplicationCoordinator`가 메뉴바 항목·팝오버, 상태 표시 경로, 생명주기 관찰과 수집 기반을
+   각각 한 번씩 만들어 종료까지 보유합니다.
+-- 메뉴바 항목은 `NSStatusItem.squareLength`와 `.transient` `NSPopover`를 사용하고,
++- 메뉴바 항목은 `NSStatusItem.squareLength`와 설정에 따른 `.transient`/`.applicationDefined` `NSPopover`를 사용하고,
+   주입한 다섯 상태를 메뉴바 항목의 접근성 이름으로 구분합니다.
+ - `CollectionPipelines`는 시스템 지표·프로세스·Network 활동·Disk 활동·Network 보조 정보·저장 공간의
+   여섯 축을 별도 일정으로 수집합니다. 공개 native API를 사용하는 실제 Collector와 메모리 이력,
+@@ -28,7 +32,18 @@ M3의 실제 연결 전환과 잠금·절전 복귀 검증은 보류 중이며 
+ - 네 요약 카드는 지원 화면에서 본체 스크롤 없이 표시하며 각 카드에 앵커한 상세에서 추가 정보를 봅니다.
+   CPU·Memory TOP 5, CPU 그래프·Memory 구성 표시와 Disk 미니 그래프가 있고 Network 요약에는 그래프가 없습니다.
+   물리 대상 일부만 확인되면 Network·Disk는 완전한 대표값 대신 부분 합계임을 표시합니다.
+-- 메뉴바 상태는 실제 CPU 지표로 전환하며 캐릭터 애니메이션과 사용자 설정은 후속 마일스톤 작업입니다.
++- `PreferencesStore`는 일반 설정을 하나의 snapshot으로 저장·게시합니다. 저장 설정은 최초 대시보드와
++  수집 프로필 구성부터 적용하며 표시 변경은 즉시, 프로필 변경은 다음 유효 일정에 반영합니다.
++  네 카드·두 TOP 5 표시, CPU·Disk 공통1/5/10분 범위와 갱신4단계를 제공합니다.
++  시스템 프로세스 포함은 한 조사에서 확보한 현재 UID/읽기 가능한 전체 자료 중 표시 원본을 즉시 선택합니다.
++  상세 정원10/20/50은 CPU·Memory 사용량과 Memory 증가량에 공통 적용하고 카드 TOP 5는 고정합니다.
++  자동 닫기는 같은 `NSPopover`의 behavior만 바꾸며 실제 delegate 출력이 lifecycle에 전달됩니다.
++- `LoginItemService`는 공개 `SMAppService.mainApp` adapter이며 `LoginItemController`가 실제 상태·요청·결과를
++  구분합니다. 조회는 등록 상태를 바꾸지 않고 일반 설정 복원과 로그인 해제 결과를 분리합니다.
++  실제 등록·해제와 다음 로그인 자동 실행은 M4 task-011에서 확인됐습니다.
++- Disk 저장 공간은1000 기반이며 사용 가능에 macOS가 보고한 회수 가능한 공간을 포함합니다.
++  Read/Write 속도·누적량과 다른 자원 단위는 유지합니다. 상세 정의는 [M4 DESIGN §3.6](../features/20261003-001-app-preferences/design.md#36-사용자-승인-예외--disk-저장-공간-기준)을 따릅니다.
++- 메뉴바 상태는 실제 CPU 지표로 전환하며 캐릭터 애니메이션은 후속 마일스톤 작업입니다.
+ - ResourceRunnerTests와 ResourceRunnerUITests 대상이 존재합니다.
+ - 세 대상 모두 macOS deployment target은 26.5, Swift language version 설정은 5.0이고,
+   앱 실행 파일은 arm64 단일 슬라이스입니다. App Sandbox가 활성화돼 있습니다.
+@@ -95,9 +110,9 @@ Memory 구성 비율·실제 앱 아이콘·5개 순위·전체 값을 유지합
+ Disk는 수치 옆42pt 미니 판이며 Network에는 그래프가 없습니다. TOP 5 아래3pt 여백을 둡니다.
+ Network·Disk 하단 측정/보조 안내는 제거하고 상세/AX에 정보를 유지합니다.
+ 
+-본체에는 ScrollView를 두지 않고 실제 지원 화면에서 네 카드 전체와 마지막 Disk 하단이 함께 보이는지 확인합니다.
+-전체 배치를 완료하기 전 중간 앱을 띄우지 않습니다. 요약 축소는 상세의 원래 글꼴과 스크롤에 전파하지 않습니다.
+-추가 화면/chrome 검증은 M3의 후속 viewport Task에 남깁니다.
++본체에는 ScrollView를 두지 않으며 실제 지원 화면에서 네 카드 전체와 마지막 Disk 하단이 함께 보이는 것을 확인했습니다.
++요약 축소는 상세의 원래 글꼴과 스크롤에 전파하지 않습니다.
++M3 task-012·013에서 실제 지원 화면과 작은 화면의 창 여유·카드 앵커·키보드·AX 검증을 완료했습니다.
+ 
+ #### 균등 분할 폭 잔차
+ 
+@@ -248,14 +263,17 @@ TOP 5·앱 집계·전체 상태 계산
+ | 절전 | 2초 | 4초 | 5초 |
+ | 매우 절전 | 5초 | 5초 | 10초 |
+ 
+-기본값은 기본입니다. 이 수치는 성능 검증 결과에 따라 app-preferences feature에서 조정할 수 있습니다.
++기본값은 기본입니다. 현재 값은 승인된 [app-preferences 설계](../features/20261003-001-app-preferences/design.md#22-프로필과-생명주기의-정확한-병합)를 따릅니다.
++닫힌 상태의 TOP 5 주기는 빠름·기본·절전·매우 절전 순서로5·5·8·10초입니다.
++Network·저장 공간 보조 수집은 열림30초·닫힘60초이며 프로필 변경과 분리합니다.
+ 
+ ### 생명주기 반영
+ 
+ - 팝오버가 닫히면 전체 지표와 TOP 5 수집을 감속합니다.
+ - 선택한 프로세스 상세 수집은 상세 UI가 닫히면 중지합니다.
+-- 저전력 모드에서는 절전 프로필을 적용할 수 있습니다.
+-- 화면 잠금 상태에서는 수집을 중지하거나 최소화합니다.
++- 저전력 모드는 사용자 선택과 축별 하한의 최댓값으로 병합합니다.
++  빠른 지표의 열림/닫힘 하한은2/5초, TOP 5는4/10초, 보조 수집은60/120초입니다.
++- 화면 잠금·잠금 상태 확인 불가·디스플레이 슬립·세션 비활성·시스템 sleep에서는 여섯 축을 모두 중지합니다.
+ - 절전 복귀 후 첫 샘플은 변화량 계산에서 제외합니다.
+ - 설정 변경은 타이머 중복 없이 다음 일정에 즉시 반영되어야 합니다.
+ 
+@@ -272,40 +290,35 @@ TOP 5·앱 집계·전체 상태 계산
+ 
+ 중지한 구간은 최근 그래프에서 공백으로 남습니다. 그 구간을 채우거나 이어 붙이지 않습니다.
+ 
+-시스템 슬립은 성격이 다릅니다. 프로세스가 멈추므로 일정을 조절할 일이 없고,
+-복귀 첫 샘플의 경과 시간이 실제 수면 시간만큼 커지는 것이 문제입니다.
+-변화량으로 속도를 계산하는 Network와 Disk가 들어올 때 기준점 재설정이 필요하며,
+-`NSWorkspaceWillSleep`·`DidWake`로 복귀 시점을 알 수 있습니다.
++시스템 sleep은 `NSWorkspaceWillSleep`·`DidWake`로 전달하며 중지·복귀 때 collection epoch와 기준점을 갱신합니다.
++팝오버·저전력·잠금뿐 아니라 디스플레이 슬립·세션 활성·시스템 sleep도 현재 생명주기 입력에 연결돼 있습니다.
++실제 잠금·절전·디스플레이 복귀 관찰은 M3 task-015에서 완료하고 독립 승인했습니다. 세 중지 구간의 수집 정지, 복귀 첫 기준점과 다음 실제 속도, 새 이력 세그먼트를 확인했습니다.
+ 
+-M1이 구현한 생명주기 입력은 팝오버 열림·닫힘, 저전력 모드, 화면 잠금 셋입니다.
+-디스플레이 슬립과 빠른 사용자 전환은 core-resource-monitoring에서 함께 연결합니다.
++CPU·Network·Disk 차분은 실행권 발급 당시 유효 주기 P에 대해 `G(P) = max(10초, 2 × P)`를 허용 간격으로 사용합니다.
++계산 분모는 실제 샘플 시각 차이이며 중지·실패·대상 변경의 강제 단절을 G로 연결하지 않습니다.
++프로필 변경 시 이전 실행권의 반영을 차단하고 실제 조회 종료까지 새 조회와 중복 실행하지 않습니다.
+ 
+ ## 최근 데이터 순환 버퍼
+ 
+-최근 그래프 데이터는 설정한 시간 범위와 실제 수집 주기를 기준으로 고정 크기 순환 버퍼에 보관합니다.
++시스템·Network·Disk 활동 이력은 최대600초와 최단 지원 주기0.5초를 기준으로 각각1203개 링에 보관합니다.
++양 끝점과 시각 여유를 포함한 고정 용량이며 사용자 주기·표시 범위가 바뀌어도 줄이지 않습니다.
+ 
+ ~~~text
+-버퍼 용량 = 그래프 시간 범위 ÷ 실제 수집 주기
++양 끝점 포함 최소 용량 = ceil(600초 ÷ 0.5초) + 1 = 1201개
++현재 고정 용량 = 1203개
+ ~~~
+ 
+-| 그래프 범위 | 수집 주기 | 필요한 샘플 수 |
+-| ---: | ---: | ---: |
+-| 10분 | 0.5초 | 1,200개 |
+-| 10분 | 1초 | 600개 |
+-| 10분 | 2초 | 300개 |
+-| 10분 | 5초 | 120개 |
+-
+ ### 버퍼 규칙
+ 
+ - 새 샘플을 뒤에 추가합니다.
+ - 용량을 넘으면 가장 오래된 샘플을 제거합니다.
+ - 앱 시작 직후에는 실제로 수집된 구간만 제공합니다.
+-- 설정 변경 시 새 범위와 주기에 맞춰 용량을 다시 계산합니다.
++- 설정 변경으로 링 용량이나 최대 보관 이력을 줄이지 않습니다.
+ - 존재하지 않는 과거를 현재값으로 채우지 않습니다.
+-- 시간 범위를 줄이면 범위를 벗어난 오래된 데이터를 제거합니다.
++- 표시 범위를 줄이면 해당 범위 밖의 샘플은 그리지 않으며 최대 이력은 유지합니다.
+ - 시간 범위를 늘리더라도 존재하지 않는 과거 데이터는 생성하지 않습니다.
+ 
+-버퍼 인덱싱, 용량 재계산과 시간 범위 변경은 자동 테스트로 검증합니다.
++버퍼 인덱싱, 고정 용량·실제600초 범위와 표시 범위 변경은 자동 테스트로 검증합니다.
+ 
+ 용량 계산은 샘플이 수집 주기마다 균등하게 쌓인다고 가정합니다.
+ 수집이 중지되었다 재개되면 이 가정이 깨지고, 버퍼는 개수로만 축출하므로
+@@ -319,8 +332,10 @@ M1의 1시간 잠금 관찰에서 잠금 직전 146개가 해제 뒤에도 그
+ 최근 그래프는 샘플의 실제 시각을 기준으로 그리고, 수집하지 않은 구간은 비워 둡니다.
+ 샘플을 순번대로 이어 붙이면 중지 구간이 사라져 오래된 값이 방금 값 옆에 붙으므로 그렇게 하지 않습니다.
+ 표시 대상은 시간 범위 안에 든 샘플로 한정하며, 범위를 벗어난 샘플은 버퍼에 남아 있어도 그리지 않습니다.
+-용량 계산과 별개로 시간 기준 선별이 필요하다는 뜻이며,
+-구체적인 방식은 최근 그래프가 만들어지는 core-resource-monitoring에서 확정합니다.
++용량 계산과 별개로 시간 기준 선별이 필요하다는 뜻입니다.
++CPU·Disk 렌더는 같은 `GraphTimeRange`로 구간·축·진행·AX를 계산하고,
++뒤쪽 점의 당시 G와 epoch·연속성 표식으로 연결 여부를 판단합니다.
++Memory Swap·증가 순위의600초 계산 창은 표시 범위와 별개로 유지합니다.
+ 
+ ## 데이터 저장과 캐시
+ 
+@@ -694,10 +709,11 @@ menu-bar-foundation의 어댑터는 이 관찰을 전제로 합니다.
+ | 프로세스별 Physical Footprint | **차단** |
+ | 앱 번들 식별자·이름·아이콘 | 사용 가능 |
+ 
+-Sandbox와 무관한 제약도 함께 확인했습니다. root 소유 프로세스의 CPU 시간과 메모리는 Sandbox 여부와
+-관계없이 읽을 수 없으며, 전체 프로세스 중 약 40%가 여기 해당합니다. 관리자 권한과 별도 Helper를
+-두지 않는 1.0 정책에서는 TOP 5가 사실상 사용자 소유 프로세스로 한정됩니다. 시스템 프로세스 포함
+-설정의 표시 방식은 core-resource-monitoring에서 확정합니다.
++당시 조사에서는 root 소유 프로세스의 CPU 시간과 메모리를 읽지 못했고, 그 환경에서 전체 프로세스의
++약 40%가 해당했습니다. 현재 제품은 기본적으로 현재 UID만 순위에 두고, 시스템 프로세스 포함을 켜면
++같은 조사에서 **읽기에 성공한** 다른 UID 항목도 집계합니다. 읽지 못한 항목은 별도 안내로 구분하며,
++읽지 못한 UID의 수집 성공이나 root UID의 항상 실패를 일반화하지 않습니다. 관리자 권한·별도 Helper를
++추가하지 않는 정책은 유지합니다.
+ 
+ ## 미확정 기술 결정
+ 
+diff --git a/docs/product.md b/docs/product.md
+index c7287b0..3476ccc 100644
+--- a/docs/product.md
++++ b/docs/product.md
+@@ -201,8 +201,8 @@ CPU 카드에는 다음 정보를 바로 표시합니다.
+ - 앱으로 묶을 수 없는 명령행 또는 시스템 프로세스는 실행 파일 이름이나 확인 가능한 소유 관계를 기준으로 표시합니다.
+ - 종료된 프로세스, 접근할 수 없는 프로세스와 PID 재사용 때문에 잘못된 항목이 남아서는 안 됩니다.
+ - 카드의 순위 머리글은 승인된 축소 샘플처럼 `TOP 5`로 표시하고 제목 아래 작은 여백을 둡니다.
+-  시스템 프로세스가 순위에서 빠진다는 사실은 CPU와 Memory 두 상세의 앱 목록 안내 줄에서 확인합니다.
+-  카드의 접근성 이름에는 정원과 제외 사실이 그대로 남습니다 — 카드 안 목록을 훑어 정원을 세는 경로가 접근성에는 없기 때문입니다.
++  CPU와 Memory 두 상세의 앱 목록 안내 줄은 현재 설정의 시스템 프로세스 포함 범위를 설명합니다.
++  카드의 접근성 이름에도 정원과 현재 포함 범위를 남깁니다 — 카드 안 목록을 훑어 정원을 세는 경로가 접근성에는 없기 때문입니다.
+ 
+ CPU와 Memory 상세의 앱 목록에서 하위 프로세스를 펼치면 프로세스 이름과 값을 각각 이름 줄과 값 줄에 표시합니다.
+ 이름 줄은 부모 앱 이름과 같은 자리에서 시작하고 값 줄은 한 단 더 들어가며, 한 행 안·하위 행끼리·부모와 첫 하위 행 사이·마지막 하위 행과 다음 앱 사이의 간격을 서로 다르게 둡니다.
+@@ -302,6 +302,13 @@ Disk 정보는 저장 공간과 실시간 입출력을 구분해서 표시합니
+ 
+ 저장 공간은 초 단위로 바뀌지 않으므로 CPU, Network와 실시간 Disk I/O보다 느린 주기로 갱신합니다. 프로세스별 합계와 장치 전체 합계가 다를 수 있음을 오해 없이 표현해야 합니다.
+ 
++저장 공간의 전체·사용 가능·사용 중은 macOS 기준1000 기반 단위로 표시합니다.
++사용 가능은 OS가 보고한 회수 가능한 공간을 포함하며, 사용 중은 전체에서 사용 가능을 뺀 나머지입니다.
++실제 파일 점유량이나 APFS 볼륨별 독점 사용량으로 설명하지 않습니다.
++값을 확보하지 못하면 조회 실패로 구분하고, 요약·상세·접근성에 같은 정의를 적용합니다.
++Read/Write 속도·누적량·Network·Memory의 기존 단위는 유지합니다.
++승인된 정의는 [app-preferences DESIGN §3.6](../features/20261003-001-app-preferences/design.md#36-사용자-승인-예외--disk-저장-공간-기준)을 따릅니다.
++
+ ## 최근 그래프와 데이터 보관
+ 
+ | 항목 | 1.0 기본값 |
+@@ -330,9 +337,25 @@ Disk 정보는 저장 공간과 실시간 입출력을 구분해서 표시합니
+ 2026-10-03 사용자 선택에 따른 M4 첫 범위는 카드·TOP 5 표시, 그래프1/5/10분,
+ 갱신4단계, 로그인 자동 실행과 기본값 복원입니다.
+ [app-preferences SPEC](../features/20261003-001-app-preferences/spec.md)이 이번 범위를 정의하며,
+-아래의 시스템 프로세스 필터·상세 정원·팝오버 자동 닫기 옵션과 애니메이션 설정은 후속 범위입니다.
++시스템 프로세스 포함, 상세 정원10/20/50, 팝오버 자동 닫기도 현재 설정창에서 선택합니다.
++애니메이션 설정은 후속 범위입니다.
+ 업데이트 확인은 배포 정책 확정 뒤 결정합니다. 목표 항목의 존재를 현재 구현 완료로 간주하지 않습니다.
+ 
++현재 설정창은 메뉴바 우클릭·`⌘,`·전체 숨김 화면의 「설정 열기」에서 접근하며 같은 창을 재사용합니다.
++카드·TOP 5 표시와 CPU·Disk 그래프 범위는 즉시 반영되고 갱신 프로필은 다음 일정에 적용됩니다.
++숨긴 구역의 공간은 예약하지 않으며 모든 카드를 숨겨도 설명과 설정 복구 경로를 제공합니다.
++일반 설정은 재실행 첫 화면·최초 일정부터 복원하고 수집값·그래프·프로세스 목록은 빈 메모리로 시작합니다.
++저장값이 없거나 손상·미지원 값이면 해당 기본값을 사용합니다.
++
++기본값 복원은 네 카드·두 TOP 5 켜기, 최근10분과 기본 갱신 프로필,
++시스템 프로세스 제외·상세20개·팝오버 자동 닫기 켬을 한 snapshot으로 저장·적용합니다.
++시스템 프로세스 포함은 읽기에 성공한 다른 UID의 항목을 CPU·Memory 순위와 상세에 포함합니다.
++CPU·Memory 상세와 Memory 증가량 목록은 같은10/20/50 정원을 사용하며 카드 TOP 5는5개로 유지됩니다.
++자동 닫기 켬은 외부 클릭이나 다른 앱 활성화 시 본체를 닫고, 끔은 열린 본체를 유지합니다.
++시스템 프로세스 포함과 상세 정원 선택은 수집 지표와 일정을 바꾸지 않습니다.
++로그인 항목의 실제 상태·승인 대기·실패와 일반 설정 복원 결과를 따로 설명합니다.
++로그인 조회는 등록 상태를 바꾸지 않으며 실제 등록·해제·다음 로그인 실행은 M4 task-011에서 확인됐습니다.
++
+ ### 일반
+ 
+ - 로그인 시 자동 실행

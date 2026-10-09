@@ -1,0 +1,817 @@
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 6fc2e64..b490cb2 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -289,20 +289,16 @@ final class ApplicationCoordinator {
+                 } else if let processHistory {
+                     let input = await processHistory.rankingInput()
+                     surveyFailed = input.surveyFailed
+-                    let computed = ApplicationRanking.compute(
++                    let computed = ApplicationRanking.materials(
+                         snapshots: input.snapshots,
+                         currentTimestamp: now,
+                         unreadableCount: input.unreadableCount,
++                        currentUserUnreadableCount: input.currentUserUnreadableCount,
+                         resolver: resolver
+                     )
+-                    // 두 계산이 같은 resolver를 이어받아야 앱 키 유도가 서로 다른 결과를 내지 않습니다.
+-                    let grouped = ApplicationRanking.groupByApplication(
+-                        snapshots: input.snapshots,
+-                        resolver: computed.resolver
+-                    )
+-                    nextResolver = grouped.resolver
+-                    ranking = computed.sample
+-                    processGroups = grouped.groups
++                    nextResolver = computed.resolver
++                    ranking = computed.materials.currentUser.ranking
++                    processGroups = computed.materials.currentUser.groups
+                 }
+ 
+                 @MainActor func updateDisplay() {
+@@ -369,30 +365,28 @@ final class ApplicationCoordinator {
+             var resolver = ApplicationIdentityResolver()
+             for await input in updates {
+                 if let beforeRankingCompute { await beforeRankingCompute() }
+-                let computed = ApplicationRanking.compute(snapshots: input.snapshots,
++                let computed = ApplicationRanking.materials(snapshots: input.snapshots,
+                     currentTimestamp: input.timestamp, unreadableCount: input.unreadableCount,
++                    currentUserUnreadableCount: input.currentUserUnreadableCount,
+                     resolver: resolver)
+-                let grouped = ApplicationRanking.groupByApplication(snapshots: input.snapshots,
+-                    resolver: computed.resolver)
+                 let accepted = await MainActor.run { () -> Bool in
+                     if let context = input.context, let admission {
+-                        return admission.admitDisplay(context, timestamp: input.timestamp) {
+-                            cache.update(ranking: computed.sample, groups: grouped.groups,
++                        return admission.admitDisplayOptional(context, timestamp: input.timestamp) {
++                            let updated = cache.update(materials: computed.materials,
+                                 surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+-                                collectionEpoch: context.epoch)
++                                collectionEpoch: context.epoch, deliverySequence: input.deliverySequence)
+ #if DEBUG
+-                            debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)")
++                            if updated { debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)") }
+ #endif
+-                            return true
++                            return updated ? true : nil
+                         } ?? false
+                     } else {
+-                        cache.update(ranking: computed.sample, groups: grouped.groups,
++                        return cache.update(materials: computed.materials,
+                             surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+-                            collectionEpoch: input.context?.epoch)
+-                        return true
++                            collectionEpoch: input.context?.epoch, deliverySequence: input.deliverySequence)
+                     }
+                 }
+-                if accepted { resolver = grouped.resolver }
++                if accepted { resolver = computed.resolver }
+             }
+         }
+     }
+diff --git a/ResourceRunner/ApplicationRanking.swift b/ResourceRunner/ApplicationRanking.swift
+index 450abaa..348e9bf 100644
+--- a/ResourceRunner/ApplicationRanking.swift
++++ b/ResourceRunner/ApplicationRanking.swift
+@@ -135,8 +135,7 @@ nonisolated struct ApplicationRankingEntry: Sendable, Equatable {
+     let value: Double
+ }
+ 
+-/// 앱 집계와 순위 계산 결과. 정원은 `ApplicationRankingSampling.detailCount`이며,
+-/// 그중 앞 `cardDisplayCount`개만 카드에 표시됩니다.
++/// 앱 집계와 순위 계산 결과. 수집 경계에서는 전체를 보관하고 표시 경계에서 정원을 적용합니다.
+ /// 현재 사용량과 최근 증가량이 서로 다른 목록으로 담기고, 읽지 못한 프로세스 수가 함께 전달됩니다.
+ nonisolated struct ApplicationRankingSample: Sendable, Equatable {
+     /// CPU 사용량 순위. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
+@@ -150,9 +149,45 @@ nonisolated struct ApplicationRankingSample: Sendable, Equatable {
+     let unreadableCount: Int
+ }
+ 
++/// 같은 조사에서 만든 현재 사용자 전용/읽기 성공 전체 자료입니다.
++nonisolated struct ProcessRankingMaterial: Sendable {
++    let ranking: ApplicationRankingSample
++    let groups: [ApplicationProcessGroup]
++    let excludedCount: Int
++}
++
++nonisolated struct ProcessRankingMaterials: Sendable {
++    let currentUser: ProcessRankingMaterial
++    let allReadable: ProcessRankingMaterial
++}
++
+ /// 조사 결과와 정체성별 이력에서 앱 단위 순위를 계산하는 순수 함수.
+ /// 상태를 갖지 않으며, 앱 키 유도 캐시(`ApplicationIdentityResolver`)만 호출자가 이어서 넘겨받습니다.
+ nonisolated enum ApplicationRanking {
++    /// 소속을 먼저 선별하므로 같은 앱의 다른 UID 자식은 기본 합계와 하위 목록에 들어오지 않습니다.
++    static func materials(
++        snapshots: [ProcessHistorySnapshot],
++        currentTimestamp: ContinuousClock.Instant,
++        unreadableCount: Int,
++        currentUserUnreadableCount: Int? = nil,
++        resolver: ApplicationIdentityResolver
++    ) -> (materials: ProcessRankingMaterials, resolver: ApplicationIdentityResolver) {
++        let current = snapshots.filter { $0.ownership == .currentUser }
++        let readable = snapshots.filter { $0.ownership != .unknown }
++        let currentRanking = compute(snapshots: current, currentTimestamp: currentTimestamp,
++                                     unreadableCount: currentUserUnreadableCount ?? unreadableCount, resolver: resolver)
++        let currentGroups = groupByApplication(snapshots: current, resolver: currentRanking.resolver)
++        let allRanking = compute(snapshots: readable, currentTimestamp: currentTimestamp,
++                                 unreadableCount: unreadableCount, resolver: currentGroups.resolver)
++        let allGroups = groupByApplication(snapshots: readable, resolver: allRanking.resolver)
++        return (ProcessRankingMaterials(
++            currentUser: ProcessRankingMaterial(ranking: currentRanking.sample, groups: currentGroups.groups,
++                                                excludedCount: snapshots.count - current.count),
++            allReadable: ProcessRankingMaterial(ranking: allRanking.sample, groups: allGroups.groups,
++                                                excludedCount: snapshots.count - readable.count)
++        ), allGroups.resolver)
++    }
++
+     /// - Parameters:
+     ///   - snapshots: `ProcessHistoryStore.snapshot()`이 돌려준 정체성별 이력.
+     ///   - currentTimestamp: 이번 조사 시각. 10분 창의 오른쪽 끝으로 씁니다.
+@@ -218,7 +253,7 @@ nonisolated enum ApplicationRanking {
+         let sorted = entries.sorted { lhs, rhs in
+             lhs.value != rhs.value ? lhs.value > rhs.value : lhs.key.value < rhs.key.value
+         }
+-        return Array(sorted.prefix(ApplicationRankingSampling.detailCount))
++        return sorted
+     }
+ 
+     /// 정체성 하나의 순간값을 평활화한 값. `compute(_:)`의 순위 집계와 `groupByApplication(_:)`의 상세 표시가
+@@ -255,6 +290,9 @@ nonisolated struct ApplicationProcessDetail: Sendable, Equatable {
+     /// `ApplicationRanking.smoothedRecentValues(for:)`가 계산한 최근 값 평균입니다.
+     let residentBytes: UInt64
+     let isTranslated: Bool
++    /// 조사 당시 UID. 소속이 다른 자식 행도 원래 UID를 잃지 않습니다.
++    var uid: uid_t? = nil
++    var ownership: ProcessOwnership = .unknown
+ }
+ 
+ extension ApplicationProcessDetail {
+@@ -378,7 +416,9 @@ extension ApplicationRanking {
+                     executableName: ApplicationIdentityResolver.executableName(from: snapshot.executablePath),
+                     cpuUsagePercent: smoothed.cpuUsagePercent,
+                     residentBytes: UInt64(smoothed.residentBytes.rounded()),
+-                    isTranslated: snapshot.isTranslated
++                    isTranslated: snapshot.isTranslated,
++                    uid: snapshot.uid,
++                    ownership: snapshot.ownership
+                 )
+             )
+         }
+diff --git a/ResourceRunner/CollectionDeliveryStore.swift b/ResourceRunner/CollectionDeliveryStore.swift
+index f208138..3ed5ae7 100644
+--- a/ResourceRunner/CollectionDeliveryStore.swift
++++ b/ResourceRunner/CollectionDeliveryStore.swift
+@@ -18,25 +18,35 @@ final class CollectionDeliveryStore {
+ /// 프로세스 순위 계산은 시스템 tick 소비와 독립적으로 진행합니다. 메뉴바 판정은 이 캐시를 기다리지 않습니다.
+ @MainActor
+ final class ProcessRankingDeliveryCache {
+-    private(set) var ranking: ApplicationRankingSample?
+-    private(set) var groups: [ApplicationProcessGroup] = []
++    private(set) var materials: ProcessRankingMaterials?
++    var ranking: ApplicationRankingSample? { materials?.currentUser.ranking }
++    var groups: [ApplicationProcessGroup] { materials?.currentUser.groups ?? [] }
+     private(set) var surveyFailed = false
+     private(set) var timestamp: ContinuousClock.Instant?
+     private(set) var collectionEpoch: Int?
++    private(set) var deliverySequence: UInt64 = 0
+ 
+-    func update(ranking: ApplicationRankingSample?, groups: [ApplicationProcessGroup],
++    @discardableResult
++    func update(materials: ProcessRankingMaterials,
+                 surveyFailed: Bool, timestamp: ContinuousClock.Instant,
+-                collectionEpoch: Int?) {
+-        self.ranking = ranking
+-        self.groups = groups
++                collectionEpoch: Int?, deliverySequence: UInt64) -> Bool {
++        if let collectionEpoch, let previousEpoch = self.collectionEpoch,
++           collectionEpoch < previousEpoch { return false }
++        if collectionEpoch == self.collectionEpoch, self.timestamp != nil {
++            guard timestamp >= self.timestamp!, deliverySequence > self.deliverySequence else { return false }
++        }
++        self.materials = materials
+         self.surveyFailed = surveyFailed
+         self.timestamp = timestamp
+         self.collectionEpoch = collectionEpoch
++        self.deliverySequence = deliverySequence
++        return true
+     }
+ 
+-    func snapshot(for epoch: Int?) -> (ranking: ApplicationRankingSample?,
++    func snapshot(for epoch: Int?, includesSystemProcesses: Bool = false) -> (ranking: ApplicationRankingSample?,
+                                        groups: [ApplicationProcessGroup], surveyFailed: Bool) {
+         guard let epoch, epoch == collectionEpoch else { return (nil, [], false) }
+-        return (ranking, groups, surveyFailed)
++        let selected = includesSystemProcesses ? materials?.allReadable : materials?.currentUser
++        return (selected?.ranking, selected?.groups ?? [], surveyFailed)
+     }
+ }
+diff --git a/ResourceRunner/ProcessHistoryStore.swift b/ResourceRunner/ProcessHistoryStore.swift
+index ddd35d9..d3711d6 100644
+--- a/ResourceRunner/ProcessHistoryStore.swift
++++ b/ResourceRunner/ProcessHistoryStore.swift
+@@ -32,6 +32,8 @@ nonisolated struct ProcessMemoryBaselinePoint: Sendable, Equatable {
+ /// `ProcessHistoryStore` 밖으로는 `ProcessHistorySnapshot`으로만 노출됩니다.
+ private struct ProcessHistoryEntry {
+     var executablePath: String
++    var uid: uid_t?
++    var ownership: ProcessOwnership
+     /// 매 조사마다 이번 조사 값으로 갱신됩니다. 같은 정체성에서 실행 이미지가 바뀌면
+     /// 경로와 함께 이 값도 새 실행 이미지의 조사 결과를 따릅니다.
+     var isTranslated: Bool
+@@ -55,13 +57,19 @@ nonisolated struct ProcessHistorySnapshot: Sendable, Equatable {
+     /// 기본값이 합성 memberwise 초기화 매개변수에 반영되려면 `var`여야 하므로 `var`로 선언합니다.
+     /// 실제 값은 `ProcessHistoryStore.append(_:)`가 매 조사마다 채웁니다.
+     var isTranslated: Bool = false
++    /// 조사 당시 UID 소속. 이전 리터럴의 누락값은 사용자 소속으로 추정하지 않습니다.
++    var ownership: ProcessOwnership = .unknown
++    /// 열거 당시의 UID입니다. 합성 입력의 누락은 임의 UID로 보충하지 않습니다.
++    var uid: uid_t? = nil
+ }
+ 
+ nonisolated struct ProcessRankingInput: Sendable {
+     let timestamp: ContinuousClock.Instant
++    let deliverySequence: UInt64
+     let context: CollectionRunContext?
+     let snapshots: [ProcessHistorySnapshot]
+     let unreadableCount: Int
++    let currentUserUnreadableCount: Int
+     let surveyFailed: Bool
+ }
+ 
+@@ -115,11 +123,13 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+     /// 마지막 조사에서 읽지 못한 프로세스 수.
+     /// 순위 계산 입력의 일부이므로 정체성별 이력과 같은 시점의 값으로 함께 나가야 합니다.
+     private var latestUnreadableCount = 0
++    private var latestCurrentUserUnreadableCount = 0
+     /// 마지막 조사가 실패했는지. 다음 성공 조사까지 유지됩니다.
+     /// 시스템 지표 축이 더 빠르게 tick하며 순위를 다시 읽어 가므로, 이 값을 조사 축에서만 바꿔야
+     /// 실패 표시가 tick마다 켜졌다 꺼지지 않습니다.
+     private var latestSurveyFailed = false
+     private var lastCollectionEpoch: Int?
++    private var deliverySequence: UInt64 = 0
+ 
+     /// 한 번의 조사 결과를 반영합니다.
+     /// 이번 조사에서 관찰된 정체성만 남기고 나머지는 이 호출에서 바로 제거됩니다.
+@@ -143,6 +153,7 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+ 
+         latestSurveyFailed = false
+         latestUnreadableCount = report.unreadableCount
++        latestCurrentUserUnreadableCount = report.currentUserUnreadableCount ?? report.unreadableCount
+         var observed: Set<ProcessIdentity> = []
+         observed.reserveCapacity(report.samples.count)
+ 
+@@ -151,11 +162,16 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+ 
+             // 같은 정체성의 exec 이후에는 이전 실행 이미지의 CPU·순위·메모리 기준점을 잇지 않습니다.
+             var entry: ProcessHistoryEntry
+-            if let existing = entries[process.identity], existing.executablePath == process.executablePath {
++            if let existing = entries[process.identity],
++               existing.executablePath == process.executablePath,
++               existing.uid == process.uid,
++               existing.ownership == process.ownership {
+                 entry = existing
+             } else {
+                 entry = ProcessHistoryEntry(
+                     executablePath: process.executablePath,
++                    uid: process.uid,
++                    ownership: process.ownership,
+                     isTranslated: process.isTranslated,
+                     cpuBaseline: nil,
+                     recentValues: CircularBuffer(capacity: ProcessHistorySampling.recentValueCount),
+@@ -163,6 +179,8 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+                 )
+             }
+             entry.executablePath = process.executablePath
++            entry.uid = process.uid
++            entry.ownership = process.ownership
+             entry.isTranslated = process.isTranslated
+ 
+             let cpuUsagePercent = Self.cpuUsagePercent(process: process, timestamp: timestamp, entry: &entry)
+@@ -178,8 +196,11 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+     }
+ 
+     private func publishRankingInput(for sample: TimestampedSample<ProcessSurveySample>) {
++        deliverySequence &+= 1
+         rankingContinuation.yield(ProcessRankingInput(timestamp: sample.timestamp,
++            deliverySequence: deliverySequence,
+             context: sample.context, snapshots: snapshot(), unreadableCount: latestUnreadableCount,
++            currentUserUnreadableCount: latestCurrentUserUnreadableCount,
+             surveyFailed: latestSurveyFailed))
+     }
+ 
+@@ -199,7 +220,9 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+                 executablePath: entry.executablePath,
+                 recentValues: entry.recentValues.elements,
+                 memoryBaselines: entry.memoryBaselines.elements,
+-                isTranslated: entry.isTranslated
++                isTranslated: entry.isTranslated,
++                ownership: entry.ownership,
++                uid: entry.uid
+             )
+         }
+     }
+@@ -208,9 +231,10 @@ actor ProcessHistoryStore: MonitoringSampleSink {
+     /// 정체성별 이력과 읽지 못한 프로세스 수를 따로 읽으면 두 번의 actor 진입 사이에 조사가 끼어들어
+     /// 서로 다른 조사의 값이 섞일 수 있으므로 한 번의 호출로 함께 내보냅니다.
+     /// 마지막 조사의 실패 여부도 같은 이유로 함께 나갑니다.
+-    func rankingInput() async -> (snapshots: [ProcessHistorySnapshot], unreadableCount: Int, surveyFailed: Bool) {
++    func rankingInput() async -> (snapshots: [ProcessHistorySnapshot], unreadableCount: Int,
++                                  currentUserUnreadableCount: Int, surveyFailed: Bool) {
+         if let beforeRankingInput { await beforeRankingInput() }
+-        return (snapshot(), latestUnreadableCount, latestSurveyFailed)
++        return (snapshot(), latestUnreadableCount, latestCurrentUserUnreadableCount, latestSurveyFailed)
+     }
+ 
+     /// 관찰 중인 정체성 수. 종료된 프로세스 제거를 사전 크기로 단언하는 테스트가 씁니다.
+diff --git a/ResourceRunner/ProcessSurvey.swift b/ResourceRunner/ProcessSurvey.swift
+index 7786652..ecc9751 100644
+--- a/ResourceRunner/ProcessSurvey.swift
++++ b/ResourceRunner/ProcessSurvey.swift
+@@ -16,11 +16,18 @@ nonisolated struct ProcessIdentity: Sendable, Equatable, Hashable {
+     let startTime: TimeInterval
+ }
+ 
+-/// 사용자 소유 프로세스 한 개의 조사 결과.
++/// 조사 당시 유효 UID와의 관계. 누락된 소속을 현재 사용자로 추정하지 않습니다.
++nonisolated enum ProcessOwnership: Sendable, Equatable {
++    case currentUser
++    case otherUser
++    case unknown
++}
++
++/// 읽을 수 있는 프로세스 한 개의 조사 결과.
+ nonisolated struct ProcessSample: Sendable, Equatable {
+     let identity: ProcessIdentity
+     let executablePath: String
+-    let uid: uid_t
++    let uid: uid_t?
+     let parentPID: pid_t
+     /// 누적 User+System CPU 시간(나노초).
+     /// `proc_pidinfo(PROC_PIDTASKINFO)`의 원값은 mach absolute time이라 조사 경계에서 나노초로 변환된 값입니다.
+@@ -30,6 +37,8 @@ nonisolated struct ProcessSample: Sendable, Equatable {
+     /// `P_TRANSLATED` 플래그로 판정한 Rosetta 실행 여부.
+     /// 프로세스 열거 단계에서 이미 얻은 값이라 추가 시스템 호출 없이 채워집니다.
+     let isTranslated: Bool
++    /// 열거 시점 UID와 같은 조사의 유효 UID를 비교한 결과입니다.
++    var ownership: ProcessOwnership = .unknown
+ }
+ 
+ /// 성공한 한 번의 조사 결과 전체.
+@@ -37,6 +46,9 @@ nonisolated struct ProcessSample: Sendable, Equatable {
+ nonisolated struct ProcessSurveyReport: Sendable, Equatable {
+     let samples: [ProcessSample]
+     let unreadableCount: Int
++    /// 기본 현재 사용자 자료에 해당하는 실패 수. UID 미확인 실패도 보수적으로 포함합니다.
++    /// 기존 합성 입력의 누락은 종전 전체 실패 수로 해석합니다.
++    var currentUserUnreadableCount: Int? = nil
+ }
+ 
+ /// 한 tick의 프로세스 조사 결과.
+diff --git a/ResourceRunner/ProcessSurveyCollector.swift b/ResourceRunner/ProcessSurveyCollector.swift
+index e0db653..84b218a 100644
+--- a/ResourceRunner/ProcessSurveyCollector.swift
++++ b/ResourceRunner/ProcessSurveyCollector.swift
+@@ -11,7 +11,7 @@ import Foundation
+ /// `sysctl(KERN_PROC_ALL)` 열거에서 얻는, 조사 대상 판별에 필요한 프로세스 한 항목.
+ nonisolated struct ProcessListEntry: Sendable, Equatable {
+     let identity: ProcessIdentity
+-    let uid: uid_t
++    let uid: uid_t?
+     let parentPID: pid_t
+     let isTranslated: Bool
+ }
+@@ -24,13 +24,13 @@ nonisolated struct ProcessTaskInfo: Sendable, Equatable {
+ }
+ 
+ /// 프로세스 조사에 쓰는 시스템 호출 경계.
+-/// 이 경계를 분리해 두어야 uid 사전 판별·매 조사 경로 조회를 원본 주입으로 검증할 수 있습니다.
++/// 이 경계를 분리해 두어야 UID별 실제 읽기·매 조사 경로 조회를 원본 주입으로 검증할 수 있습니다.
+ nonisolated protocol ProcessSurveying: Sendable {
+     /// `sysctl(KERN_PROC_ALL)` 한 번으로 전체 프로세스를 열거합니다.
+     func listProcesses() throws(CollectorFailure) -> [ProcessListEntry]
+-    /// 현재 유효 uid와 같은 프로세스에 대해서만 호출됩니다.
++    /// 열거된 모든 프로세스에 대해 호출을 시도합니다.
+     func taskInfo(pid: pid_t) throws(CollectorFailure) -> ProcessTaskInfo
+-    /// 현재 유효 uid의 값을 읽은 프로세스마다 매 조사 호출됩니다.
++    /// task-info를 읽은 프로세스마다 매 조사 호출됩니다.
+     func executablePath(pid: pid_t) throws(CollectorFailure) -> String
+ }
+ 
+@@ -125,12 +125,12 @@ nonisolated struct HostProcessSurveyReader: ProcessSurveying {
+     }
+ }
+ 
+-/// 한 번의 조사로 사용자 소유 프로세스 조사 결과를 만드는 계약.
++/// 한 번의 조사로 읽을 수 있는 프로세스 조사 결과를 만드는 계약.
+ nonisolated protocol ProcessSurveyCollecting: Sendable {
+     mutating func survey() throws(CollectorFailure) -> ProcessSurveyReport
+ }
+ 
+-/// `ProcessSurveying` 경계를 소유하고 uid 사전 판별과 현재 실행 경로 조회를 적용하는 Collector.
++/// `ProcessSurveying` 경계를 소유하고 UID별 실제 읽기와 현재 실행 경로 조회를 적용하는 Collector.
+ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurveyCollecting {
+     private let reader: Reader
+     private let effectiveUID: @Sendable () -> uid_t
+@@ -147,23 +147,20 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
+         var samples: [ProcessSample] = []
+         samples.reserveCapacity(entries.count)
+         var unreadableCount = 0
++        var currentUserUnreadableCount = 0
+ 
+         for entry in entries {
+-            // uid가 다른 프로세스는 proc_pidinfo를 호출하지 않고 곧바로 읽지 못한 수에 더합니다.
+-            guard entry.uid == currentUID else {
+-                unreadableCount += 1
+-                continue
+-            }
+-
+             guard let taskInfo = try? reader.taskInfo(pid: entry.identity.pid) else {
+                 // 호출이 실패한 프로세스(조사 사이의 종료 등)는 값을 추정해 채우지 않고 읽지 못한 수에 더합니다.
+                 unreadableCount += 1
++                if entry.uid == nil || entry.uid == currentUID { currentUserUnreadableCount += 1 }
+                 continue
+             }
+ 
+             // 같은 정체성이 exec할 수 있으므로 CPU·메모리를 읽은 tick마다 현재 경로를 확인합니다.
+             guard let path = try? reader.executablePath(pid: entry.identity.pid) else {
+                 unreadableCount += 1
++                if entry.uid == nil || entry.uid == currentUID { currentUserUnreadableCount += 1 }
+                 continue
+             }
+ 
+@@ -175,11 +172,13 @@ nonisolated struct ProcessSurveyCollector<Reader: ProcessSurveying>: ProcessSurv
+                     parentPID: entry.parentPID,
+                     cpuTimeNanoseconds: taskInfo.cpuTimeNanoseconds,
+                     residentBytes: taskInfo.residentBytes,
+-                    isTranslated: entry.isTranslated
++                    isTranslated: entry.isTranslated,
++                    ownership: entry.uid.map { $0 == currentUID ? .currentUser : .otherUser } ?? .unknown
+                 )
+             )
+         }
+ 
+-        return ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount)
++        return ProcessSurveyReport(samples: samples, unreadableCount: unreadableCount,
++                                   currentUserUnreadableCount: currentUserUnreadableCount)
+     }
+ }
+diff --git a/ResourceRunnerTests/ApplicationCoordinatorTests.swift b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+index 43c6225..2d274b7 100644
+--- a/ResourceRunnerTests/ApplicationCoordinatorTests.swift
++++ b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+@@ -38,6 +38,31 @@ private actor PreferenceScheduleTarget: CollectionScheduleTarget {
+ @MainActor
+ struct ApplicationCoordinatorTests {
+ 
++    @Test func rankingCacheRejectsOlderSameEpochAndOldEpochDeliveries() {
++        let cache = ProcessRankingDeliveryCache()
++        let now = ContinuousClock().now
++        let empty = ApplicationRankingSample(cpuUsage: [], memoryUsage: [], memoryIncrease: [], unreadableCount: 0)
++        let material = ProcessRankingMaterial(ranking: empty, groups: [], excludedCount: 0)
++        let materials = ProcessRankingMaterials(currentUser: material, allReadable: material)
++        #expect(cache.update(materials: materials, surveyFailed: false,
++            timestamp: now, collectionEpoch: 10, deliverySequence: 2))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now - .seconds(1), collectionEpoch: 10, deliverySequence: 3))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now, collectionEpoch: 10, deliverySequence: 1))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now + .seconds(1), collectionEpoch: 10, deliverySequence: 1))
++        #expect(cache.update(materials: materials, surveyFailed: true,
++            timestamp: now, collectionEpoch: 10, deliverySequence: 3))
++        #expect(cache.update(materials: materials, surveyFailed: false,
++            timestamp: now + .seconds(1), collectionEpoch: 11, deliverySequence: 4))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now + .seconds(2), collectionEpoch: 10, deliverySequence: 5))
++        #expect(cache.collectionEpoch == 11)
++        #expect(cache.snapshot(for: 11).surveyFailed == false)
++        #expect(cache.snapshot(for: 10).ranking == nil)
++    }
++
+     @Test func persistedChoicesReloadWithoutRestoringCollectionOrProcessHistory() async {
+         let storage = SavedPreferencesStorage(nil)
+         let previous = PreferencesStore(storage: storage)
+@@ -492,7 +517,8 @@ private func processSurveySample(
+                             parentPID: 1,
+                             cpuTimeNanoseconds: process.cpuTimeNanoseconds,
+                             residentBytes: process.residentBytes,
+-                            isTranslated: false
++                            isTranslated: false,
++                            ownership: .currentUser
+                         )
+                     },
+                     unreadableCount: 0
+diff --git a/ResourceRunnerTests/ApplicationRankingTests.swift b/ResourceRunnerTests/ApplicationRankingTests.swift
+index 56ceabb..a239f32 100644
+--- a/ResourceRunnerTests/ApplicationRankingTests.swift
++++ b/ResourceRunnerTests/ApplicationRankingTests.swift
+@@ -100,13 +100,15 @@ private func snapshot(
+     pid: pid_t,
+     executablePath: String,
+     recentValues: [ProcessRankingSample],
+-    memoryBaselines: [ProcessMemoryBaselinePoint] = []
++    memoryBaselines: [ProcessMemoryBaselinePoint] = [],
++    ownership: ProcessOwnership = .unknown
+ ) -> ProcessHistorySnapshot {
+     ProcessHistorySnapshot(
+         identity: ProcessIdentity(pid: pid, startTime: 0),
+         executablePath: executablePath,
+         recentValues: recentValues,
+-        memoryBaselines: memoryBaselines
++        memoryBaselines: memoryBaselines,
++        ownership: ownership
+     )
+ }
+ 
+@@ -369,11 +371,10 @@ struct ApplicationRankingUnreadableCountTests {
+ 
+ // MARK: - task-001: 순위 계산 정원과 카드 표시 정원 분리
+ 
+-/// task-001 검증 조건: 앱이 상세 표시 정원(20)보다 많은 입력에서 `compute`가 20개까지 돌려줍니다.
+-/// 계산 정원을 카드 정원(5)으로 되돌리면 이 테스트가 실패해야 합니다.
++/// 표시 전에 자르지 않아야 필터와 상세 정원 변경에서 뒤쪽 항목이 살아납니다.
+ struct ApplicationRankingComputationGantryTests {
+ 
+-    @Test func computeReturnsUpToDetailCountFromLargerInput() {
++    @Test func computeKeepsEveryGroupBeforeDisplayLimit() {
+         var snapshots: [ProcessHistorySnapshot] = []
+         for index in 0..<25 {
+             let value: Double = Double(25 - index)
+@@ -388,8 +389,59 @@ struct ApplicationRankingComputationGantryTests {
+             resolver: ApplicationIdentityResolver()
+         )
+ 
+-        #expect(sample.cpuUsage.count == ApplicationRankingSampling.detailCount)
+-        #expect(sample.memoryUsage.count == ApplicationRankingSampling.detailCount)
++        #expect(sample.cpuUsage.count == 25)
++        #expect(sample.memoryUsage.count == 25)
++    }
++}
++
++struct ProcessRankingMaterialsTests {
++    @Test func filtersBeforeRankingAndKeepsGroupsBeyondTwenty() {
++        let system: [ProcessHistorySnapshot] = (0..<50).map { index in
++            snapshot(pid: pid_t(index + 1), executablePath: "/Applications/System\(index).app/bin/s",
++                recentValues: [rankingSample(cpuUsagePercent: Double(100 - index), residentBytes: 1_000)],
++                ownership: .otherUser)
++        }
++        let user = snapshot(pid: 100, executablePath: "/Applications/User.app/bin/u",
++            recentValues: [rankingSample(cpuUsagePercent: 1, residentBytes: 2_000)],
++            ownership: .currentUser)
++        let mixedUser = snapshot(pid: 101, executablePath: "/Applications/Shared.app/bin/u",
++            recentValues: [rankingSample(cpuUsagePercent: 4, residentBytes: 3_000)],
++            ownership: .currentUser)
++        let mixedSystem = snapshot(pid: 102, executablePath: "/Applications/Shared.app/bin/s",
++            recentValues: [rankingSample(cpuUsagePercent: 8, residentBytes: 5_000)],
++            ownership: .otherUser)
++        let computed = ApplicationRanking.materials(snapshots: system + [user, mixedUser, mixedSystem],
++            currentTimestamp: baseInstant, unreadableCount: 7, resolver: ApplicationIdentityResolver())
++        let current = computed.materials.currentUser
++        let all = computed.materials.allReadable
++        #expect(current.ranking.cpuUsage.count == 2)
++        #expect(current.ranking.cpuUsage.first?.key.value == "/Applications/Shared.app")
++        #expect(current.ranking.cpuUsage.first?.value == 4)
++        #expect(current.groups.first { $0.key.value == "/Applications/Shared.app" }?.processes.map(\.pid) == [101])
++        #expect(current.excludedCount == 51)
++        #expect(current.ranking.unreadableCount == 7)
++        #expect(all.ranking.cpuUsage.count == 52)
++        #expect(all.groups.count == 52)
++        #expect(all.ranking.cpuUsage.first { $0.key.value == "/Applications/Shared.app" }?.value == 12)
++        #expect(all.groups.first { $0.key.value == "/Applications/Shared.app" }?.processes.count == 2)
++        #expect(all.ranking.cpuUsage.last?.key.value == "/Applications/User.app")
++        #expect(all.excludedCount == 0)
++    }
++
++    @Test func currentUIDApplePathStaysVisibleAndUnknownOwnershipIsExcluded() {
++        let apple = snapshot(pid: 1, executablePath: "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder",
++            recentValues: [rankingSample(cpuUsagePercent: nil, residentBytes: 900)],
++            ownership: .currentUser)
++        let unknown = snapshot(pid: 2, executablePath: "/Applications/Unknown.app/bin/u",
++            recentValues: [rankingSample(cpuUsagePercent: 90, residentBytes: 10_000)])
++        let result = ApplicationRanking.materials(snapshots: [apple, unknown],
++            currentTimestamp: baseInstant, unreadableCount: 2, resolver: ApplicationIdentityResolver()).materials
++        #expect(result.currentUser.ranking.memoryUsage.map(\.displayName) == ["Finder"])
++        #expect(result.currentUser.ranking.cpuUsage.isEmpty)
++        #expect(result.currentUser.excludedCount == 1)
++        #expect(result.allReadable.ranking.memoryUsage.map(\.displayName) == ["Finder"])
++        #expect(result.allReadable.excludedCount == 1)
++        #expect(result.currentUser.ranking.unreadableCount == 2)
+     }
+ }
+ 
+@@ -549,17 +601,11 @@ struct ApplicationRankingCardDetailConsistencyTests {
+             Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+                 == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+         )
+-        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
+-        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함하므로,
+-        // 한쪽만 다른 개수로 자르면(정원 앞뒤로 어긋나면) 배열 길이나 값이 달라져 실패합니다.
+-        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
+-        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
+-        try #require(cardNames.count == cap)
+-        #expect(cardNames == Array(detailNames.prefix(cap)))
+-        // 경계 직후(21번째) 항목은 상세 전체 목록에는 있지만 카드 목록에는 없어야 합니다 —
+-        // 위 전체 비교와 달리 상세 목록의 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
+-        try #require(detailNames.count > cap)
+-        #expect(!cardNames.contains(detailNames[cap]))
++        // 계산 자료는 전체 순위를 보관하고 표시 경계에서만 기본20개를 자릅니다.
++        #expect(cardNames == detailNames)
++        try #require(cardNames.count > cap)
++        #expect(Array(cardNames.prefix(cap)) == Array(detailNames.prefix(cap)))
++        #expect(!Array(cardNames.prefix(cap)).contains(detailNames[cap]))
+     }
+ 
+     /// `groupByApplication(_:)`이 `compute(_:)`와 같은 평활화 값을 만듭니다.
+@@ -679,16 +725,10 @@ struct ApplicationRankingCardTopEntriesTieBreakTests {
+             Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+                 == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+         )
+-        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
+-        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함합니다.
+-        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
+-        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
+-        try #require(cardNames.count == cap)
+-        #expect(cardNames == Array(detailNames.prefix(cap)))
+-        // 경계 직후(21번째) 항목은 카드 목록에 없어야 합니다 — 위 전체 비교와 달리 상세 목록의
+-        // 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
+-        try #require(detailNames.count > cap)
+-        #expect(!cardNames.contains(detailNames[cap]))
++        #expect(cardNames == detailNames)
++        try #require(cardNames.count > cap)
++        #expect(Array(cardNames.prefix(cap)) == Array(detailNames.prefix(cap)))
++        #expect(!Array(cardNames.prefix(cap)).contains(detailNames[cap]))
+     }
+ }
+ 
+diff --git a/ResourceRunnerTests/ProcessHistoryStoreTests.swift b/ResourceRunnerTests/ProcessHistoryStoreTests.swift
+index cad5685..72b6eb9 100644
+--- a/ResourceRunnerTests/ProcessHistoryStoreTests.swift
++++ b/ResourceRunnerTests/ProcessHistoryStoreTests.swift
+@@ -53,6 +53,27 @@ private let baseInstant = ContinuousClock().now
+ /// 키를 PID만으로 되돌리면 재사용된 PID가 이전 누적 CPU 시간과 차분되어 이 테스트가 실패해야 합니다.
+ struct ProcessHistoryIdentityBoundaryTests {
+ 
++    @Test func ownershipChangeRestartsCPUAndMemoryHistory() async throws {
++        let store = ProcessHistoryStore()
++        let first = ProcessSample(identity: ProcessIdentity(pid: 501, startTime: 1),
++            executablePath: "/Applications/Shared.app/Contents/MacOS/Shared", uid: 501,
++            parentPID: 1, cpuTimeNanoseconds: 0, residentBytes: 100,
++            isTranslated: false, ownership: .currentUser)
++        let second = ProcessSample(identity: first.identity, executablePath: first.executablePath,
++            uid: 502, parentPID: 1, cpuTimeNanoseconds: 1_000_000_000,
++            residentBytes: 200, isTranslated: false, ownership: .otherUser)
++        // 조사 소속은 같은 PID·경로라도 새 실행 이미지와 같은 이력 경계입니다.
++        await store.append(TimestampedSample(timestamp: baseInstant, value: survey([first])))
++        await store.append(TimestampedSample(timestamp: baseInstant + .seconds(1), value: survey([first])))
++        await store.append(TimestampedSample(timestamp: baseInstant + .seconds(2), value: survey([second])))
++        let after = try #require(await store.snapshot().first)
++        #expect(after.ownership == .otherUser)
++        #expect(after.uid == 502)
++        #expect(after.recentValues.count == 1)
++        #expect(after.recentValues.first?.cpuUsagePercent == nil)
++        #expect(after.memoryBaselines.count == 1)
++    }
++
+     @Test func firstSurveyOfIdentityProducesNoRateAndSingleMemoryBaseline() async throws {
+         let store = ProcessHistoryStore()
+         let sample = processSample(cpuTimeNanoseconds: 5_000_000_000, residentBytes: 10_000)
+diff --git a/ResourceRunnerTests/ProcessSurveyCollectorTests.swift b/ResourceRunnerTests/ProcessSurveyCollectorTests.swift
+index bba6816..3705e53 100644
+--- a/ResourceRunnerTests/ProcessSurveyCollectorTests.swift
++++ b/ResourceRunnerTests/ProcessSurveyCollectorTests.swift
+@@ -13,7 +13,7 @@ import Testing
+ // MARK: - 테스트용 프로세스 조사 원본 공급자
+ 
+ /// 미리 준비한 원본을 돌려주는 `ProcessSurveying`.
+-/// pid별 호출 횟수를 세어 uid 사전 판별과 매 조사 경로 조회를 확인합니다.
++/// pid별 호출 횟수를 세어 UID별 조회 시도와 매 조사 경로 조회를 확인합니다.
+ private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendable {
+     static let missingTaskInfoFailure = CollectorFailure(metric: .process, cause: .systemCall(name: "stub.taskInfo", code: -1))
+     static let missingPathFailure = CollectorFailure(metric: .process, cause: .systemCall(name: "stub.executablePath", code: -1))
+@@ -106,7 +106,7 @@ private final class StubProcessSurveyReader: ProcessSurveying, @unchecked Sendab
+ private func entry(
+     pid: pid_t,
+     startTime: TimeInterval = 0,
+-    uid: uid_t,
++    uid: uid_t?,
+     parentPID: pid_t = 1,
+     isTranslated: Bool = false
+ ) -> ProcessListEntry {
+@@ -118,13 +118,51 @@ private func entry(
+     )
+ }
+ 
+-// MARK: - uid 사전 판별과 읽지 못한 프로세스
++// MARK: - UID별 실제 읽기와 읽지 못한 프로세스
+ 
+-/// task-004 검증 조건: uid가 다른 프로세스는 목록에서 빠지고 `proc_pidinfo`가 호출되지 않으며,
+-/// 실패한 프로세스의 값이 추정값으로 채워지지 않고, 결과 목록과 읽지 못한 수의 합이 전체 열거 수와 같습니다.
++/// UID에 관계없이 실제 읽기를 시도하고 소속과 실패를 구분합니다.
+ struct ProcessSurveyCollectorTests {
+ 
+-    @Test func effectiveUIDFiltersProcessesWhenRealUIDDiffers() throws {
++    @Test func currentOtherAndMissingUIDFailuresStayInTheirDisplayScopes() async throws {
++        let currentUID = geteuid()
++        let otherUID = currentUID + 1
++        let entries = [
++            entry(pid: 101, uid: currentUID),
++            entry(pid: 102, uid: currentUID),
++            entry(pid: 201, uid: otherUID),
++            entry(pid: 202, uid: otherUID),
++            entry(pid: 301, uid: nil),
++        ]
++        let reader = StubProcessSurveyReader(listOutcomes: [.success(entries)],
++            taskInfoOutcomes: [
++                101: .success(ProcessTaskInfo(cpuTimeNanoseconds: 0, residentBytes: 100)),
++                201: .success(ProcessTaskInfo(cpuTimeNanoseconds: 0, residentBytes: 200)),
++            ],
++            pathOutcomes: [101: .success("/System/Library/CoreServices/Finder.app/bin/Finder"),
++                           201: .success("/Applications/Other.app/bin/Other")])
++        var collector = ProcessSurveyCollector(reader: reader, effectiveUID: { currentUID })
++        let report = try collector.survey()
++        #expect(report.samples.map(\.identity.pid) == [101, 201])
++        #expect(report.unreadableCount == 3)
++        // 현재 UID 실패와 UID 자체를 알 수 없는 실패는 기본에 남고, 알려진 다른 UID 실패만 빠집니다.
++        #expect(report.currentUserUnreadableCount == 2)
++        let history = ProcessHistoryStore()
++        let now = ContinuousClock().now
++        await history.append(TimestampedSample(timestamp: now,
++            value: ProcessSurveySample(result: .success(report))))
++        let input = await history.rankingInput()
++        let variants = ApplicationRanking.materials(snapshots: input.snapshots,
++            currentTimestamp: now, unreadableCount: input.unreadableCount,
++            currentUserUnreadableCount: input.currentUserUnreadableCount,
++            resolver: ApplicationIdentityResolver()).materials
++        #expect(variants.currentUser.ranking.unreadableCount == 2)
++        #expect(variants.allReadable.ranking.unreadableCount == 3)
++        #expect(variants.currentUser.excludedCount == 1)
++        #expect(variants.currentUser.ranking.memoryUsage.map(\.displayName) == ["Finder"])
++        #expect(variants.allReadable.ranking.memoryUsage.map(\.displayName) == ["Other", "Finder"])
++    }
++
++    @Test func effectiveUIDLabelsReadableProcessesWhenRealUIDDiffers() throws {
+         let realUID = getuid()
+         let effectiveUID = realUID + 1
+         let entries = [
+@@ -143,16 +181,16 @@ struct ProcessSurveyCollectorTests {
+ 
+         let survey = try collector.survey()
+ 
+-        #expect(survey.samples.map(\.identity.pid) == [200])
+-        #expect(survey.samples.first?.uid == effectiveUID)
+-        #expect(survey.unreadableCount == 1)
+-        #expect(reader.taskInfoCallCount(for: 100) == 0)
++        #expect(survey.samples.map(\.identity.pid) == [100, 200])
++        #expect(survey.samples.map(\.ownership) == [.otherUser, .currentUser])
++        #expect(survey.unreadableCount == 0)
++        #expect(reader.taskInfoCallCount(for: 100) == 1)
+         #expect(reader.taskInfoCallCount(for: 200) == 1)
+-        #expect(reader.pathCallCount(for: 100) == 0)
++        #expect(reader.pathCallCount(for: 100) == 1)
+         #expect(reader.pathCallCount(for: 200) == 1)
+     }
+ 
+-    @Test func nonMatchingUIDProcessesAreExcludedWithoutTaskInfoCall() throws {
++    @Test func nonMatchingUIDReadFailuresAreCountedWithoutInventingValues() throws {
+         let currentUID = geteuid()
+         let otherUID = currentUID + 1
+         let entries = [
+@@ -171,10 +209,9 @@ struct ProcessSurveyCollectorTests {
+ 
+         #expect(survey.samples.map(\.identity.pid) == [100])
+         #expect(survey.unreadableCount == 2)
+-        // uid가 다른 200·300에는 proc_pidinfo가 한 번도 호출되지 않습니다.
+-        #expect(reader.taskInfoCallCount == 1)
+-        #expect(reader.taskInfoCallCount(for: 200) == 0)
+-        #expect(reader.taskInfoCallCount(for: 300) == 0)
++        #expect(reader.taskInfoCallCount == 3)
++        #expect(reader.taskInfoCallCount(for: 200) == 1)
++        #expect(reader.taskInfoCallCount(for: 300) == 1)
+     }
+ 
+     /// 이 단언이 고정하는 것은 "읽지 못한 프로세스를 값으로 채우지 않는다"입니다.
+@@ -429,7 +466,7 @@ private final class CallCountingProcessSurveyReader: ProcessSurveying, @unchecke
+ /// `taskInfoCallCount`가 uid가 같은 프로세스 수를 넘어서 이 테스트가 실패해야 합니다.
+ struct ProcessSurveyRealDevicePathTests {
+ 
+-    @Test func realSurveyExcludesOtherUIDsAndRefreshesOwnPath() throws {
++    @Test func realSurveyAttemptsEveryUIDAndRefreshesOwnPath() throws {
+         let decorator = CallCountingProcessSurveyReader(underlying: HostProcessSurveyReader())
+         var collector = ProcessSurveyCollector(reader: decorator)
+ 
+@@ -443,10 +480,9 @@ struct ProcessSurveyRealDevicePathTests {
+ 
+         // 결과 목록 크기와 읽지 못한 수의 합이 열거된 전체 프로세스 수와 같습니다.
+         #expect(survey.samples.count + survey.unreadableCount == entries.count)
+-        // root를 비롯한 다른 uid 소유 프로세스가 실기기에는 상당수 있어 읽지 못한 수가 0보다 큽니다.
+-        #expect(survey.unreadableCount > 0)
+-        // uid가 다른 프로세스에는 proc_pidinfo가 호출되지 않으므로 총 호출 수가 uid가 같은 프로세스 수와 같습니다.
+-        #expect(decorator.taskInfoCallCount == matchingUIDCount)
++        // 다른 UID에도 조회를 시도하지만 읽기에 실패할 수 있습니다.
++        #expect(decorator.taskInfoCallCount == entries.count)
++        #expect(survey.samples.filter { $0.ownership == .currentUser }.count <= matchingUIDCount)
+ 
+         let selfPID = getpid()
+         let selfSample = try #require(survey.samples.first { $0.identity.pid == selfPID })

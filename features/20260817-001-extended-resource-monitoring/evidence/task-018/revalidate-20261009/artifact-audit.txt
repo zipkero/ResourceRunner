@@ -1,0 +1,95 @@
+[Debug] /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app
+executable exists: True
+executable sha256: 36b88ecb928793e2d533704fe09e29ca95fe72920c82d6d83e6c408c8d925bb6
+$ /usr/bin/codesign --verify --deep --strict --verbose=2 /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app
+exit=0
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/libXCTestBundleInject.dylib
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/libXCTestBundleInject.dylib
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCUnit.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTestSupport.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCUnit.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTestSupport.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTest.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/libXCTestSwiftSupport.dylib
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTAutomationSupport.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTest.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/libXCTestSwiftSupport.dylib
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTAutomationSupport.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTestCore.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCUIAutomation.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCTestCore.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/XCUIAutomation.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/Testing.framework/Versions/Current/.
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks/Testing.framework/Versions/Current/.
+--prepared:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest
+--validated:/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns/ResourceRunnerTests.xctest
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app: valid on disk
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app: satisfies its Designated Requirement
+$ /usr/bin/codesign -d --entitlements - /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app
+exit=0
+Executable=/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+[Dict]
+	[Key] com.apple.security.app-sandbox
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.files.user-selected.read-only
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.get-task-allow
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.temporary-exception.files.absolute-path.read-only
+	[Value]
+		[Array]
+			[String] /
+	[Key] com.apple.security.temporary-exception.mach-lookup.global-name
+	[Value]
+		[Array]
+			[String] com.apple.testmanagerd
+			[String] com.apple.dt.testmanagerd.runner
+			[String] com.apple.coresymbolicationd
+$ /usr/bin/lipo -archs /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+exit=0
+arm64
+CFBundleIdentifier=com.zipkero.ResourceRunner.Task018Revalidate
+LSMinimumSystemVersion=26.5
+LSUIElement=True
+bundled PrivacyInfo.xcprivacy: True
+privacy sha256: 687bf199a16f1ac5c531d476e1ffe4af894b414ae61c7dc5b2eac2a0487cd368
+nested appex/xpc/helpers: []
+[Release] /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+executable exists: True
+executable sha256: 75da366919e20526ade4038161421dd0d7885039fa9e1f89a5706b3c53e989d8
+$ /usr/bin/codesign --verify --deep --strict --verbose=2 /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+exit=0
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app: valid on disk
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app: satisfies its Designated Requirement
+$ /usr/bin/codesign -d --entitlements - /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app
+exit=0
+Executable=/private/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner
+[Dict]
+	[Key] com.apple.security.app-sandbox
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.files.user-selected.read-only
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.get-task-allow
+	[Value]
+		[Bool] true
+$ /usr/bin/lipo -archs /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner
+exit=0
+arm64
+CFBundleIdentifier=com.zipkero.ResourceRunner.Task018Revalidate
+LSMinimumSystemVersion=26.5
+LSUIElement=True
+bundled PrivacyInfo.xcprivacy: True
+privacy sha256: 687bf199a16f1ac5c531d476e1ffe4af894b414ae61c7dc5b2eac2a0487cd368
+nested appex/xpc/helpers: []
+[project]
+native target count=3 (ResourceRunner, ResourceRunnerTests, ResourceRunnerUITests)
+packageProductDependencies arrays empty in project.pbxproj

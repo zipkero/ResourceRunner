@@ -18,7 +18,7 @@ protocol StatusBarControllerOutput: AnyObject {
 /// `NSStatusItem`, `NSPopover`와 팝오버 delegate를 소유하는 AppKit 경계.
 /// 메뉴바 항목은 고정 폭(`NSStatusItem.squareLength`)이고 버튼 이미지는 구성 시점에 한 번만 설정합니다.
 /// 상태가 바뀌어도 갱신되는 것은 버튼의 접근성 이름 하나뿐입니다.
-/// 팝오버는 `.transient` behavior로 외부 상호작용에서 스스로 닫히고,
+/// 팝오버 behavior는 현재 일반 설정을 따르고,
 /// delegate가 보고하는 실제 표시 상태를 단일 소스로 삼아 클릭 토글과 어긋나지 않게 합니다.
 /// 우클릭은 설정 메뉴를 열고 Debug에서는 상태 주입 항목도 별도 구역에 둡니다.
 @MainActor
@@ -44,13 +44,15 @@ final class StatusBarController: NSObject {
     var debugStateInjector: ((CharacterActivityState) -> Void)?
     var debugCardVisibilityInjector: ((DashboardSelection) -> Void)?
     var debugSettingsFocusRace: (() -> Void)?
+    var debugAutoCloseInjector: (() -> Void)?
 #endif
 
-    init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil) {
+    init<Content: View>(popoverContent: Content, viewport: DashboardViewport? = nil,
+                        automaticallyClosesPopover: Bool = true) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         popover = NSPopover()
         self.viewport = viewport
-        popover.behavior = .transient
+        popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
         popover.contentViewController = NSHostingController(rootView: popoverContent)
 
         super.init()
@@ -67,7 +69,10 @@ final class StatusBarController: NSObject {
             return true
         }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            MainActor.assumeIsolated { self?.handleOwnedKey(event) ?? event }
+            MainActor.assumeIsolated {
+                guard let self else { return event }
+                return self.handleOwnedKey(event)
+            }
         }
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -100,6 +105,13 @@ final class StatusBarController: NSObject {
             || (body.childWindows?.contains(keyWindow) ?? false)
     }
 
+    /// 열린 상태에서도 같은 팝오버의 외부 상호작용 정책만 갱신합니다.
+    func applyAutomaticallyClosesPopover(_ enabled: Bool) {
+        let behavior: NSPopover.Behavior = enabled ? .transient : .applicationDefined
+        guard popover.behavior != behavior else { return }
+        popover.behavior = behavior
+    }
+
     /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
     private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
         guard let window = event.window,
@@ -107,6 +119,11 @@ final class StatusBarController: NSObject {
                 || window === viewport?.detailWindow else { return event }
         let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
 #if DEBUG
+        // 고유 UI 앱에서 열린 본체의 실제 behavior 갱신을 검증할 때만 사용합니다.
+        if debugAutoCloseInjector != nil, modifiers == [.command, .shift], event.keyCode == 27 {
+            debugAutoCloseInjector?()
+            return nil
+        }
         // UI fixture만 팝오버를 닫지 않은 채 카드 제거·포커스 복귀를 시험합니다.
         if debugCardVisibilityInjector != nil,
            modifiers == [.command, .shift] {
@@ -128,7 +145,10 @@ final class StatusBarController: NSObject {
         }
 #endif
         guard modifiers.isEmpty else { return event }
-        if event.keyCode == 53, keyboardDismiss?() == true { return nil }
+        if event.keyCode == 53 {
+            if keyboardDismiss?() != true { popover.performClose(nil) }
+            return nil
+        }
         if event.keyCode == 116 || event.keyCode == 121,
            let detail = viewport?.detailWindow, detail.isVisible,
            let content = detail.contentView,
@@ -230,7 +250,7 @@ final class StatusBarController: NSObject {
     }
 
     /// 설정 접근 메뉴를 띄웁니다. Debug 주입 항목은 아래쪽 별도 구역입니다.
-    /// 이 메뉴를 여는 동작은 메뉴바 항목 클릭이라 `NSPopover`가 외부 클릭으로 판정해 열려 있던 팝오버를 닫습니다.
+    /// 메뉴바 항목 우클릭과 본체의 외부 클릭 처리 결과는 현재 `NSPopover.behavior`를 따릅니다.
     private func showContextMenu(relativeTo button: NSStatusBarButton) {
         let menu = NSMenu()
         let settings = NSMenuItem(title: "설정…", action: #selector(openSettingsFromMenu(_:)), keyEquivalent: "")

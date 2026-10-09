@@ -1,6 +1,11 @@
 # Network·Disk 확장 리소스 모니터링
 
-- 2026-10-03 현재: 스크롤 없는 네 요약 카드와 Memory 여백 수정, 실제 화면·키보드·접근성, Network·Disk 시스템 도구 변화 방향 비교, 임시 관찰 코드 정리와 통합 검증(task-018)을 완료했습니다. task-014의 VPN·외장 디스크와 task-015의 잠금·절전 복귀는 사용자 지시로 보류했으며 Ethernet 전환 장비도 확보되지 않았습니다. IMPLEMENT는 미완료입니다.
+현재 상태: Disk 기준 변경의 여섯 Task 재검증과 실제 Wi-Fi 끊김·복귀, 잠금·절전·디스플레이 복귀 및 최종 통합 검증을 독립 승인했습니다. 철회 task009/§5.17을 제외한 모든 적용 Task와 완료 조건이 성립하여 IMPLEMENT를 완료했습니다. 다른 계정·VPN·외장·유선 LAN 전환 실시험은 사용자 제외 범위입니다. 아래 날짜별 문단의 과거 보류·미승인 설명은 이력입니다.
+
+- 2026-10-09: 사용자 요청으로 Disk 기준 변경 Task와 task015 검증을 재개했습니다. task002는 현재 소스SHA/개정 용량 단위48·UI1 근거와 새 Sandbox 원자료를 독립 verify해 승인 복구했습니다. 구현 재시도0·근거 재검증0, 제품 변경·suite 재실행 없음. 나머지006/008/011/013/018과015는 아직 미승인입니다. 사용자 선택으로 다른 계정 전환 실제 시험을 제외하며 잠금·절전·디스플레이 중지/복귀는 실행 범위에 포함했습니다. 기존 SPEC/DESIGN 및 영향 없는 승인은 유지합니다.
+- 2026-10-09 현재: task-014의 실제 Wi-Fi 끊김·복귀 검증을 완료했습니다. Off 상세 AX 보완과 원본 계약 재검토 후 독립 verifier의 approved를 main이 확정했습니다. 마지막 매핑이 끝난 SPEC §5.5도 성립합니다. 구현 재시도0·근거 재검증1. 최초 evidence reject는 이력으로 보존하며 현재 해소됐습니다. 원문에 없던 전체 disconnected 출력·대표 유효점 존재 요구는 정정했고 승인 기준은 바꾸지 않았습니다. 제품 코드 변경·suite 재실행 없이 실제 카드·상세·baseline/lifetime/segment·복귀 속도와 현재 소스에 대응하는 M4 단위86 통과 근거를 대조했습니다. task-014 [x], IMPLEMENT [ ]; Disk 재검증6개·task-015 보류·M4 완료는 유지합니다. Wi-Fi는 원래 연결로 복구됐고 임시 진단 앱·watchdog은 종료했습니다. [최종 보완 근거](./evidence/task-014/wifi-offdetail-20261009/README.md).
+
+- 2026-10-03 현재: 스크롤 없는 네 요약 카드와 Memory 여백 수정, 실제 화면·키보드·접근성, Network·Disk 시스템 도구 변화 방향 비교, 임시 관찰 코드 정리와 통합 검증(task-018)을 완료했습니다. 2026-10-09 사용자 지시로 task-014의 실제 VPN·외장 디스크 시험을 제외했습니다. 유선 LAN 시험도 제외했으며 Wi-Fi 끊김/복귀는 아래 실제 시험과 evidence reject 상태, task-015 잠금·절전 복귀 사용자 보류는 유지합니다. IMPLEMENT는 미완료입니다.
 
 ## 개요
 
@@ -12,7 +17,7 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 
 - [x] SPEC
 - [x] DESIGN
-- [ ] IMPLEMENT
+- [x] IMPLEMENT
 
 ## 문서
 
@@ -21,6 +26,18 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 - [implement.md](./implement.md)
 
 ## 이력
+
+- 2026-10-09: task018 독립 approved를 main이 확정해 Disk 영향 여섯 Task의 승인 복구를 완료했습니다. 현재127파일SHA·전체단위674/674·Debug/Release, 전체UI48/54·실패0·skip6과 Release접근 별도1/1·기존native로그인5/5 인수의 구분, 정상Release 한세션 네카드/네상세/실제CPU 메뉴바 상승·회복 및 production 구성을 확인했습니다. 구현 재시도0·근거 재검증0. 마지막 매핑 조건이 모두 성립하여 IMPLEMENT[x]로 전환했습니다. 기존 제외·철회 이력 유지, 이후 M4 확장 변경은 해당 Task에서 영향 검증합니다.
+
+- 2026-10-09: task015 실제잠금·디스플레이·systemsleep/wake를독립approved/main확정했습니다. 같은세션6축중지반영0·첫기준점/둘째실초속도·epoch/segment·CPU/Disk공백·현재674단위결정적회귀와sourceSHA충족, SPEC §5.9 성립. 다른계정실시험제외·Network대표nil/부분속도경계유지·Memory구성/Swap실측을정확히구별합니다. user직접unlock완료·임시진단cleanup·설정/안정앱보존. task018최종통합만남아 IMPLEMENT[ ].
+
+- 2026-10-09: task013 독립 approved를main이확정해승인복구했습니다.20파일SHA·현재M4키보드/viewport/UI17·18과새DiskUI3 근거인수범위를대조했습니다. 추가runnerstartup정체의0case는성공으로계산하지않았습니다. Disk재검증5/6완료·018잔여,015실제잠금중지확보/사용자unlock대기. 기존승인유지·IMPLEMENT[ ].
+
+- 2026-10-09: task011 독립 재판정 approved를 main이 확정해 승인복구했습니다. 최초 evidence reject의 잘못된 suite선택자는 실제8suite42/42로 보완, 기존26/26·signedUI3/3·현재18SHA·Debug/Release·정상light/dark/실제PNG와 함께충족됐습니다. 구현재시도0·근거재검증1. Disk002/006/008/011 완료,013/018과실제015가남습니다.
+
+- 2026-10-09: task008 독립 approved를 main이 확정해 승인을 복구했습니다. 현재 집중36/36·CPU/Memory24/24·소스별SHA와 native/cache/AX 인수 경계가 충족됐고 마지막 매핑 SPEC §5.7이 성립합니다. task002/006/008 완료, Disk011/013/018과 실제015가 남습니다. 제품코드 무변경, 재시도0·근거재검증0.
+
+- 2026-10-09: task006 독립 approved를 main이 확정해 승인을 복구했습니다. 집중31/31·동일 핵심 소스·signed Sandbox 용량 캐시/실제 차분 근거를 대조했습니다. task002/006 완료, Disk 재검증008/011/013/018이 남았습니다. 사용자 최신 지시로 task015 실제 잠금·절전·디스플레이 복귀를 재개하고 다른 계정 전환 실시험만 SPEC/DESIGN/Task에서 제외했습니다. 기존 승인과 세션 비활성 결정적 계약 유지, SPEC/DESIGN [x], IMPLEMENT [ ].
 
 - 2026-10-03: task018 독립 FINAL approved를 main이 확정했습니다. 임시 DEBUG probe 제거 후 unit614/614·Debug/Release 통과, 서명 UI 전체29/30 뒤 실제 AXValue를 검사하도록 단언만 보완한 해당1/1 통과를 인수했습니다. 정상 Sandbox 앱 한 세션의 네 카드·상세·끝 페이지·실제 CPU 부하 메뉴바 반응과 최종 해시·production 구성을 확인했습니다. SPEC §5.1·§5.2·§5.10·§5.12·§5.14·§5.16을 충족하지만 보류014/015와 IMPLEMENT는 미완료입니다. 사용자 승인대로 main에 스테이징·커밋·푸시합니다.
 
@@ -99,3 +116,9 @@ CPU·Memory와 함께 네 카드를 지원 화면에서 일관되게 사용할 �
 - 2026-10-01: task-005 독립 verify approved를 확정했습니다. Network fast/slow reader·source·store, topology 수명/revision, 차분·이력과 불완전 물리 합계를 구현했습니다. reader/source의 늦은 tracker 반영과 metadata await 사이 topology 변경을 보완해 실제 반영 시점에서 차단합니다. 집중24/24·전체unit552/552·Release/서명Debug빌드와 실제Sandbox baseline/부분속도 관찰이 통과했습니다. task-005만 `[x]`로 전환하고 SPEC·DESIGN·기존 Task 승인을 유지합니다. 나머지 Task와 IMPLEMENT는 `[ ]`이며 의미 변경·승인 취소는 없습니다. 커밋 후 task-006을 진행합니다.
 
 - 2026-10-04: 사용자 「macOS 기준으로 맞추기 — 회수 가능한 공간 포함」 선택을 spec-init/읽기 전용 analyzer 후보의 design-init으로 반영했습니다. Disk 저장 공간만1000 기반·important-usage available로 변경하며 다른 지표 단위는 유지합니다. 누락/실패는 기존 보조 실패, privacy reason85F4.1을 선택했습니다. SPEC/DESIGN [x], IMPLEMENT [ ]. 직접002/008·의존006/011/013/018 승인을 취소하고 이전 근거를 보존했습니다. 그 외 승인·014/015 보류는 유지합니다. 새 용량 렌더/geometry가 달라지면012 및 관련M4승인 영향을 추가 산정합니다. 제품 수정/새 용량 검증은 아직 수행하지 않았습니다.
+
+- 2026-10-09: 사용자 지시로 실제 VPN 연결/해제·외장 디스크 연결/제거 시험을 SPEC §4·§5.5/7에서 제외했습니다. analyzer의 design-init/implement-init 후보를 main이 원본과 대조해 DESIGN §4.3·DP3 및 task014/후속 시험 지시를 적용했습니다. 제품 기능·수집·표시·결정적 검증은 유지합니다. SPEC/DESIGN [x], IMPLEMENT [ ]이며 task014는 남은 Wi-Fi↔Ethernet·끊김/복귀 근거 대기입니다. 새 승인 취소 없이 기존 승인과 Disk 용량 재검증6개·task015 보류·M4 완료를 유지합니다. 네트워크 조작·코드 변경·시험 실행은 수행하지 않았습니다.
+
+- 2026-10-09: 사용자 「랜케이블은 제외 / 네트워크 끊김 복귀는 자동복구 준비하고 진행」 지시로 실제 Wi-Fi↔Ethernet 전환 시험도 제외했습니다. SPEC §4/5.7과 analyzer 후보의 DESIGN §4.3·task014를 main이 확정했습니다. 기존 분류·제품 동작·결정적 검증 및 승인 유지, SPEC/DESIGN [x]·IMPLEMENT [ ]입니다. task014는 Wi-Fi 끊김·복귀의 독립 자동복구 준비와 실기기 검증으로 좁혀 실행합니다.
+
+- 2026-10-09: 독립 자동복구를 준비한 실제 Wi-Fi12초 끊김/복귀와 원래 연결 복원을 완료했습니다. 같은 전체 소스의 별도 서명 Sandbox 진단 앱과 등록 Release 앱 AX를 구분해 원시값·baseline·다음 부분 속도·앱 생존을 확인했습니다. worker 결과 인수 후 독립 verifier의 evidence reject를 main이 확정했습니다. 전체 연결 없음(가상/미확인 인터페이스 잔존), Off 상세, 대표 이력 유효점 분리는 미확인이라 task014/IMPLEMENT [ ] 유지, 새 SPEC 완료 없음. 구현 재시도0·근거 재검증0, 제품 수정·suite 재실행 없음. 독립 watchdog/진단 앱은 종료했고 Release64258 유지·Wi-FiOn/en0Reachable 복구. 기존 승인·Disk재검증6개/task015보류/M4완료 유지. [이번 근거](./evidence/task-014/wifi-20261009/README.md).

@@ -1,0 +1,103 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild build -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -derivedDataPath /tmp/rr-task018-revalidate-20261009/DerivedData CODE_SIGNING_ALLOWED=YES
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-09 13:07:42.115 xcodebuild[5444:57050075] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'ResourceRunner' in project 'ResourceRunner' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: acd1c98ffaaef7506e20d30178536c98
+Build description path: /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/XCBuildData/acd1c98ffaaef7506e20d30178536c98.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+    cd /tmp/rr-task018-revalidate-20261009/ResourceRunner.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk -o /tmp/rr-task018-revalidate-20261009/DerivedData/SDKStatCaches.noindex/macosx26.5-25F70-e082c4a02f00227109f4ed75e425c832.sdkstatcache
+
+ProcessProductPackaging "" /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+    Entitlements:
+    
+    {
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.get-task-allow" = 1;
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent
+
+ProcessProductPackagingDER /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent.der (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /usr/bin/derq query -f xml -i /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent.der --raw
+
+ProcessInfoPlistFile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-infoPlistUtility /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/empty-ResourceRunner.plist -producttype com.apple.product-type.application -genpkginfo /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/assetcatalog_generated_info.plist -o /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist
+
+CopySwiftLibs /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Library/SystemExtensions --scan-folder /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+CodeSign /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib: replacing existing signature
+
+CodeSign /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib: replacing existing signature
+
+CodeSign /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Intermediates.noindex/ResourceRunner.build/Debug/ResourceRunner.build/ResourceRunner.app.xcent --timestamp\=none --generate-entitlement-der /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app
+/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app: replacing existing signature
+
+Validate /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    builtin-validationUtility /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+RegisterWithLaunchServices /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app (in target 'ResourceRunner' from project 'ResourceRunner')
+    cd /tmp/rr-task018-revalidate-20261009
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app
+
+note: Removed stale file '/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Frameworks'
+
+note: Removed stale file '/tmp/rr-task018-revalidate-20261009/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/PlugIns'
+
+** BUILD SUCCEEDED **
+

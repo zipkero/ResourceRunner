@@ -1,0 +1,60 @@
+--- clone/AppPreferences.swift
++++ current/AppPreferences.swift
+@@ -21,6 +21,20 @@
+     case maximumEnergySaving
+ }
+ 
++nonisolated enum DetailListLimit: String, CaseIterable, Sendable {
++    case ten
++    case twenty
++    case fifty
++
++    var count: Int {
++        switch self {
++        case .ten: 10
++        case .twenty: 20
++        case .fifty: 50
++        }
++    }
++}
++
+ nonisolated struct AppPreferences: Equatable, Sendable {
+     var showsCPUCard = true
+     var showsMemoryCard = true
+@@ -30,6 +44,9 @@
+     var showsMemoryTopApplications = true
+     var graphTimeRange: GraphTimeRange = .tenMinutes
+     var refreshProfile: RefreshProfile = .standard
++    var includesSystemProcesses = false
++    var detailListLimit: DetailListLimit = .twenty
++    var automaticallyClosesPopover = true
+ 
+     static let defaults = AppPreferences()
+ }
+--- clone/PreferencesStore.swift
++++ current/PreferencesStore.swift
+@@ -92,6 +92,12 @@
+            let profile = RefreshProfile(rawValue: rawProfile) {
+             preferences.refreshProfile = profile
+         }
++        preferences.includesSystemProcesses = boolean(dictionary["includesSystemProcesses"]) ?? preferences.includesSystemProcesses
++        if let rawLimit = dictionary["detailListLimit"] as? String,
++           let limit = DetailListLimit(rawValue: rawLimit) {
++            preferences.detailListLimit = limit
++        }
++        preferences.automaticallyClosesPopover = boolean(dictionary["automaticallyClosesPopover"]) ?? preferences.automaticallyClosesPopover
+         return preferences
+     }
+ 
+@@ -111,7 +117,10 @@
+             "showsCPUTopApplications": preferences.showsCPUTopApplications,
+             "showsMemoryTopApplications": preferences.showsMemoryTopApplications,
+             "graphTimeRange": preferences.graphTimeRange.rawValue,
+-            "refreshProfile": preferences.refreshProfile.rawValue
++            "refreshProfile": preferences.refreshProfile.rawValue,
++            "includesSystemProcesses": preferences.includesSystemProcesses,
++            "detailListLimit": preferences.detailListLimit.rawValue,
++            "automaticallyClosesPopover": preferences.automaticallyClosesPopover
+         ]
+     }
+ }

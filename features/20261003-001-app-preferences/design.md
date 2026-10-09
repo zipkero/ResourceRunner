@@ -2,6 +2,9 @@
 
 ## 근거
 
+- 2026-10-09 확장은 승인 SPEC §5.14~§5.16을 적용합니다. main이 analyzer 후보 DP10~DP13을 현재 원본에 대조해 채택했습니다. 기존 §5.1~§5.13과 DP1~DP9의 기본값 계약·승인은 유지합니다. 아래 최초 조사 내용은 당시 이력입니다.
+- 확장 조사 기준은 HEAD `5435c7dfdaf91d86c41827a6a521aa31b18dbbf9`의 작업 트리입니다. 설정·로그인은 이미 구현됐고 Collector의 UID 사전 제외, ranking 상세20개 선절단, 고정 문구, 본체 `.transient`가 확장의 직접 영향입니다.
+
 - 승인된 [SPEC](./spec.md)의 §5.1~§5.13과 [기능 상태](./README.md)의 SPEC `[x]`를 기준으로 합니다.
   이번 요청은 DESIGN까지이며 제품 구현과 IMPLEMENT 계획 작성은 다음 단계입니다.
 - [ROADMAP](../../ROADMAP.md)의 M4 범위와 M3 보류 관문 예외,
@@ -81,11 +84,14 @@ SwiftUI Settings·SettingsLink·openSettings도 공개 API입니다.
 | `showsMemoryTopApplications` | Bool | true |
 | `graphTimeRange` | `oneMinute`, `fiveMinutes`, `tenMinutes` | `tenMinutes` |
 | `refreshProfile` | `fast`, `standard`, `energySaving`, `maximumEnergySaving` | `standard` |
+| `includesSystemProcesses` | Bool | false |
+| `detailListLimit` | `ten`, `twenty`, `fifty` | `twenty` |
+| `automaticallyClosesPopover` | Bool | true |
 
 시간 범위에서 60·300·600초를, 프로필에서 §2.2의 지원 일정만 유도합니다.
 임의 Duration이나 축별 interval은 저장하지 않습니다.
 앱의 `UserDefaults.standard`에서 소유 키 `preferences.v1`의 property-list dictionary 하나를 사용합니다.
-내용은 `schemaVersion = 1`, 여섯 Bool과 두 enum의 안정된 문자열 raw value뿐입니다.
+내용은 `schemaVersion = 1`, 기존 여섯 Bool·두 enum과 새 Bool2개·`detailListLimit` 문자열 `ten`/`twenty`/`fifty`입니다. 기존 키·raw value·저장소를 유지하며 새 키 누락은 새 필드만 기본값으로 복구합니다. 새 Bool은 실제 Boolean만, enum은 정확한 허용 문자열만 읽습니다. 숫자·문자열 Bool, 숫자형 상세 개수·미지원 값은 해당 필드 기본값입니다. 초기 읽기만으로 재저장·로그인 mutation을 하지 않습니다. 세 설정 변경·복원은 기존 전체 snapshot 한 번 저장·게시 계약입니다. (`SPEC §5.14~§5.16`)
 
 - dictionary 누락·형식 오류·미지원 schemaVersion이면 전체 기본값을 사용합니다.
 - 지원 dictionary 안의 누락·잘못된 필드는 해당 필드만 기본값으로 복구합니다.
@@ -112,7 +118,7 @@ SwiftUI Settings·SettingsLink·openSettings도 공개 API입니다.
 - 모든 카드가 숨겨진 본체의 「설정 열기」 버튼.
 
 Debug 상태 주입 메뉴는 구분된 Debug 구역으로 유지할 수 있습니다.
-좌클릭 대시보드 토글·transient 동작은 보존합니다.
+좌클릭 대시보드 토글을 보존합니다. 자동 닫기 켬의 `.transient`와 끔의 `.applicationDefined` 전환은 §3.7을 따릅니다.
 현재 `EmptyView` Settings·기본 설정 명령은 별도 빈 설정창을 여는 중복 경로가 되지 않도록 정리합니다.
 Scene 요구를 충족하는 껍질이 필요해도 두 번째 제품 설정창을 호스팅하지 않습니다.
 기본 대시보드에 footer·추가 높이를 넣지 않습니다.
@@ -275,6 +281,18 @@ mutation은 한 번에 하나이며 진행 중 중복 요청을 막고 복원 �
 일반 설정 복원 성공과 로그인 실제 결과·실패를 구분해 설명합니다.
 (`SPEC §5.9`, `SPEC §5.10`, `SPEC §5.11`)
 
+### 2.7 읽기 가능한 전체 조사와 즉시 표시 선택
+
+시스템 제외 기본값은 조사 당시 현재 유효 UID 범위입니다. 포함은 다른 UID에서도 기존 공개 API로 실제 읽은 항목을 포함하며 Apple 실행 경로라는 이유로 현재 UID 항목을 새로 제외하지 않습니다. Collector의 UID 사전 제외를 제거하고 같은 task-info·실행 경로 조회를 적용합니다. 항목별 조회 실패·종료·경로 실패는 격리하고 추정하지 않으며 열거 실패는 전체 실패입니다. 표시 선택과 무관하게 기존 processSurvey 일정으로만 조사합니다.
+
+ProcessSample의 UID와 조사 당시 현재 UID에서 얻은 소속을 정체성별 이력·snapshot·그룹에 전달합니다. production에서 소속 없는 항목을 사용자로 추정하지 않습니다. PID+시작 시각·exec·종료 제거·실패 보존은 유지하고 소속 변경도 실행 경로 변경처럼 CPU 평활화·Memory 기준점을 새 분류에 이어 붙이지 않습니다.
+
+독립 processSurvey 소비 경계에서 최신 조사 하나로 제외/포함 두 자료를 만듭니다. 소속 선별 후 앱 키 집계·합산·정렬하며 혼합 UID 그룹의 제외 합계·하위 목록에 다른 UID를 섞지 않습니다. 현재 CPU/Memory 최대3개 평균, 조사 시각 기준 Memory600초 창의 가장 오래된 기준점을 유지합니다. 설정 시 벽시계로 증가량을 재계산하거나 새 샘플을 만들지 않습니다. 접근 실패 수와 의도적 제외 수를 구별합니다.
+
+캐시는 상세20개로 미리 자르지 않은 두 순위·그룹 자료와 상태·시각·epoch의 최신 조사 하나만 보관합니다. resolver512개·정체성별3개/Memory21개 링·종료 제거를 시스템 항목에도 적용합니다. 설정은 캐시와 현재 snapshot으로 즉시 다시 유도하며 다음 tick·추가 source 호출·일정 변경이 없습니다. 대표값·상태·원본 시각·그래프는 유지합니다. 필터/정원으로 사라진 펼친 앱·포커스만 정리하고 남은 하위 목록·상세 선택·복귀는 보존합니다.
+
+기존 context·epoch·plan/boundary admission을 유지하고 동일 epoch의 역순 조사도 시각/전달 순서로 거릅니다. 반영 시점 현재 설정으로 자료·정원을 선택하여 시작 당시 설정이 현재 화면을 덮지 못하게 합니다. 중지/새 epoch의 과거 자료를 최신 성공으로 부활시키지 않으며 last-known을 현재 선택으로 유도할 때 과거 상태·원본 시각을 보존합니다. 시스템 지표·메뉴바는 독립 순위 계산을 기다리지 않습니다. (`SPEC §5.6`, `§5.13~§5.15`)
+
 ## 3. 인터페이스
 
 ### 3.1 설정 화면
@@ -286,6 +304,10 @@ mutation은 한 번에 하나이며 진행 중 중복 요청을 막고 복원 �
 | 갱신 | 빠름·기본·절전·매우 절전 Picker |
 | 로그인 시 실행 | 실제 상태·명시적 변경·시스템 설정 버튼·실패 설명 |
 | 기본값 복원 | 복원 Button·일반 설정/로그인 결과 |
+| 프로세스 표시 | 시스템 프로세스 포함 Toggle, 상세10·20·50개 Picker |
+| 팝오버 | 자동 닫기 Toggle |
+
+시스템 포함은 읽기 가능한 항목만 포함하며 추가 권한을 요청하지 않음을 설명합니다. 상세 개수는 CPU·Memory·증가량 공통, TOP 5는5개입니다. 자동 닫기는 외부 클릭·다른 앱 활성화이며 시간 경과 닫기가 아닙니다. 새 컨트롤을 키보드/AX로 조작하고 현재값을 읽을 수 있게 합니다. 기존 단축키를 재배정하지 않으며 실제 설정 콘텐츠 높이에 맞추고 필요시 설정창 내부 스크롤을 사용합니다. 본체 무스크롤 계약은 유지합니다.
 
 카드를 숨겨도 대응 TOP 5 설정을 변경하지 않으며 다시 켤 때 저장 선택을 사용합니다.
 그래프는 CPU·Disk에 적용됨을, 갱신은 닫힘·저전력·화면 중지 시 자동 조절됨을 설명합니다.
@@ -401,6 +423,16 @@ Sandbox 실제 접근과 기존 속도/누적량 formatter 불변을 확인합�
 OS 추정·조회 시각 차이로 다른 시각의 스크린샷 숫자 완전 일치는 완료 조건으로 삼지 않습니다.
 (`SPEC §5.13`; M3 `SPEC §5.2`, `§5.4`, `§5.10`~`§5.14`)
 
+### 3.7 상세 정원과 본체 자동 닫기
+
+상세 개수는 CPU·Memory 상위 앱 그룹과 최근 Memory 증가량 항목에 공통10/20/50개, 기본20개입니다. 소속 선별 → 앱 집계 → 지표별 정렬 → 기존 펼친 행 순서 안정화 → 정원 적용 순서입니다. 안정화에는 현재 선별된 그룹만 사용합니다. 펼친 하위 프로세스는 다시 자르지 않고 TOP 5는 같은 자료의 상위5개를 유지합니다. 증가량의 값 내림차순·앱 키 동률 순서를 유지하며 항목이 부족하면 있는 만큼 표시합니다.
+
+머리글·포함/제외 안내·AX를 현재 설정에서 유도하고 읽지 못한 프로세스를0/추정값으로 설명하지 않습니다. 상세 최대400×480pt·앵커·내부 스크롤·최근10분 증가량 정의를 유지합니다.
+
+`StatusBarController`는 최초 저장 snapshot으로 본체 behavior를 구성합니다. 켬은 `.transient`, 끔은 `.applicationDefined`; 열린 본체에도 behavior만 즉시 적용하고 재생성·강제 재개폐·선택 제거·synthetic delegate 이벤트를 만들지 않습니다. 설정창에서 켬으로 바꾸는 행위 자체는 강제 닫기나 포커스 탈취를 하지 않으며 이후 실제 외부 상호작용에 현재 behavior를 적용합니다. 끔에서는 외부 클릭·다른 앱 활성화만으로 닫히지 않습니다.
+
+메뉴바 토글·명시적 닫기는 `performClose`를 사용합니다. Escape는 상세 복귀를 먼저, 상세가 없으면 본체 닫기를 수행하며 `.applicationDefined`에서도 소유 창의 로컬 키 처리로 동작합니다. 다른 앱·설정창 입력을 가로채지 않습니다. 상세 generation·복귀·Page Up/Down·key 설정창 보호·지연 포커스 거부·viewport를 유지합니다. 실제 delegate 개폐 출력만 lifecycle의 `popoverPresented`를 바꾸며 잠금·sleep·디스플레이 sleep·세션 비활성 중지는 자동 닫기 끔에서도 우선합니다. 상세 고정 설정으로 확대하지 않습니다. (`SPEC §5.12`, `§5.14~§5.16`)
+
 ## 4. 영향 범위
 
 ### 4.1 변경 경계
@@ -422,7 +454,8 @@ OS 추정·조회 시각 차이로 다른 시각의 스크린샷 숫자 완전 �
 | 관련 단위·렌더·UI 검증 | 새 불변식·기본 회귀 |
 
 상위 기술 설계의 현재 구현 설명은 실제 구현 완료 후 갱신합니다.
-기존 계산식·identity/집계·순위 정원·메뉴바 판정·Network 물리/부분 합계·Disk 물리/볼륨 관계·보조 의미는 유지합니다.
+확장의 직접 영향은 `AppPreferences.swift`, `PreferencesStore.swift`, `ProcessSurvey.swift`, `ProcessSurveyCollector.swift`, `ProcessHistoryStore.swift`, `ApplicationRanking.swift`, `CollectionDeliveryStore.swift`, `ApplicationCoordinator.swift`, `DashboardPresentationStore.swift`, `DashboardPresentation.swift`, `DashboardView.swift`, `PreferencesView.swift`, `SettingsWindowController.swift`, `StatusBarController.swift`입니다. 새 설정·소속·제한 전 자료·현재 선택·문구/AX·behavior/Escape를 연결합니다. UID 사전 제외·상세20개·시스템 제외 문구를 전역 불변으로 다루던 테스트는 기본값/선택별로 구별합니다. 일정표·대표값·메뉴바·Memory600초·로그인 adapter·Disk 정의의 의미는 유지합니다.
+기존 계산식·identity/집계·TOP 5 정원·기본 상세20개·메뉴바 판정·Network 물리/부분 합계·Disk 물리/볼륨 관계·보조 의미는 유지합니다.
 긴 주기 G만 §2.4의 내부 정책으로 확장합니다.
 macOS 26.5·arm64·Sandbox·LSUIElement·단일 메인 앱·추가 Helper/package 없음·수집 영속화 없음은 유지합니다.
 (`SPEC §5.6`, `SPEC §5.7`, `SPEC §5.10`, `SPEC §5.13`)
@@ -453,6 +486,8 @@ macOS 26.5·arm64·Sandbox·LSUIElement·단일 메인 앱·추가 Helper/packag
 (`SPEC §5.1`~`SPEC §5.9`, `SPEC §5.12`, `SPEC §5.13`)
 
 ### 4.3 실제 로그인 실행
+
+2026-10-09 확장 검증은 다음을 추가합니다. 저장: 이전 schema1 비기본 선택+새 키 누락·각 필드 타입 오류·미지원 raw value·round-trip·첫 화면/behavior·복원 저장/게시1회·로그인 결과 분리와 초기 mutation0회. 소속/정원: 혼합 UID 그룹·조회 실패·PID재사용/exec/소속 변경·20개 밖 사용자 앱의 필터 후 순위·실제50개·10→50→20·TOP5·그룹 정원/하위 보존·동률/nil. 즉시성/수명: tick을 막은 변경·추가 호출/일정 변경0·대표값/시각/600초 불변·역순/늦은 조사·epoch·실패/중지 last-known·bounded cache. 실제 팝오버: 켬/끔 외부 클릭/다른 앱 활성화·열린 상태 양방향 변경·메뉴 토글·Escape 본체/상세·Page Up/Down·key 설정창/지연 포커스·재실행/복원·실제 개폐와 lifecycle·중지 우선. behavior enum만으로 실제 상호작용을 대신하지 않습니다. 기본 표시·geometry·AX·수집·Network/Disk decimal 용량·로그인 회귀를 확인하며 M5 장기 성능 완료는 주장하지 않습니다. (`SPEC §5.12~§5.16`)
 
 `SPEC §5.10`의 다음 로그인 실행은 mock·status 조회·수동 실행만으로 완료 처리하지 않습니다.
 같은 bundle identifier·서명·entitlement의 메인 앱을 안정된 경로에 두고 실제 adapter로 확인합니다.
@@ -491,6 +526,9 @@ M4의 관문·단위 회귀는 M3 task014/015 보류를 재개하거나 완료�
 | SPEC §5.11 | §2.6, §3.5, §4.3 |
 | SPEC §5.12 | §1.3, §3.1~§3.3, §3.5, §4.2 |
 | SPEC §5.13 | §1.2~§1.4, §2.2~§2.5, §3.2~§3.4, §3.6, §4.1~§4.3 |
+| SPEC §5.14 | §1.2, §2.7, §3.1, §3.7, §4.2 |
+| SPEC §5.15 | §1.2, §2.7, §3.1, §3.7, §4.2 |
+| SPEC §5.16 | §1.2, §3.1, §3.7, §4.2 |
 
 ## 5. Decision Points
 
@@ -511,3 +549,11 @@ M4의 관문·단위 회귀는 M3 task014/015 보류를 재개하거나 완료�
 구현 중 승인된 사용자 관찰 결과·완료 조건의 의미 변경이 필요하면 근거·영향·수정 소유 단계를 main에 반환합니다.
 
 DP9: Disk 저장 공간만1000 기반·important-usage available을 사용합니다. 값 미확보는 기존 보조 실패이며 raw fallback은 없습니다. native 조회·전용 formatter·상세/AX·privacy manifest·task-010 회귀에 영향을 줍니다(SPEC §5.13).
+
+DP10: schema1·기존 키를 보존하고 새 Bool2개·상세 enum을 additive 저장합니다. 누락/잘못된 새 필드는 해당 기본값, 복원은 한 snapshot이며 일반/로그인 결과를 분리합니다. (`SPEC §5.14~§5.16`)
+
+DP11: 시스템 포함은 조사 시점 현재 UID 밖의 읽기 가능한 항목까지 포함하는 표시 선택입니다. 같은 조사에서 두 소속 자료를 확보하여 새 조사 없이 즉시 선택하며 실패값을 추정하지 않습니다. Collector·소속 메타데이터·이력·독립 소비·최신 캐시에 영향을 줍니다. (`SPEC §5.14`)
+
+DP12: 상세 정원은 앱 그룹·증가량 공통10/20/50, 기본20입니다. 선별·집계·정렬/안정화 뒤 자르고 TOP5·하위 목록을 유지합니다. 제한 전 자료·즉시 유도·AX에 영향을 줍니다. (`SPEC §5.15`)
+
+DP13: 본체 켬 `.transient`, 끔 `.applicationDefined`입니다. 열린 상태 behavior만 바꾸고 Escape·토글·상세 복귀·설정창 포커스·실제 delegate 출력·중지 우선을 유지합니다. (`SPEC §5.16`)

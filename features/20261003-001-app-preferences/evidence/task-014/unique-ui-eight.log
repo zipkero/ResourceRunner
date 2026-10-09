@@ -1,0 +1,679 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -project ResourceRunner.xcodeproj -scheme ResourceRunner -configuration Debug -destination platform=macOS,arch=arm64 -parallel-testing-enabled NO -derivedDataPath /tmp/rr-m4-014-unique-dd -resultBundlePath /tmp/rr-m4-014-unique-ui.xcresult "-only-testing:ResourceRunnerUITests/SettingsWindowUITests/testProcessScopeAndDetailLimitControlsApplyInCurrentWindow" "-only-testing:ResourceRunnerUITests/DashboardDetailExpansionUITests" "-only-testing:ResourceRunnerUITests/DashboardProcessListDisplayUITests" CODE_SIGNING_ALLOWED=YES
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-09 14:11:33.051 xcodebuild[67076:57251543] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Writing result bundle at path:
+	/tmp/rr-m4-014-unique-ui.xcresult
+
+2026-10-09 14:11:34.171492+0900 ResourceRunnerUITests-Runner[67111:57251739] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-09 14:11:34.198.
+Test Suite 'ResourceRunnerUITests.xctest' started at 2026-10-09 14:11:34.198.
+Test Suite 'DashboardDetailExpansionUITests' started at 2026-10-09 14:11:34.198.
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testExpansionPersistsWhenRowDisappearsAndReturnsOnListRefresh]' started.
+    t =     0.00s Start Test at 2026-10-09 14:11:34.199
+    t =     0.07s Set Up
+    t =     0.07s Open com.zipkero.ResourceRunner.Task014
+    t =     0.07s     Launch com.zipkero.ResourceRunner.Task014
+2026-10-09 14:11:34.312 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:11:34.312 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.22s         Setting up automation session
+    t =     1.23s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.23s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.27s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.27s         Checking existence of `StatusItem (First Match)`
+    t =     2.29s Click StatusItem (First Match)
+    t =     2.29s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.29s     Find the StatusItem (First Match)
+    t =     2.31s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.31s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.31s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.32s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.33s     Synthesize event
+    t =     2.79s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.79s Waiting 5.0s for "CPUCard" Any to exist
+    t =     3.83s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     3.83s         Checking existence of `"CPUCard" Any`
+    t =     3.90s Find the "CPUCard" Any
+    t =     4.03s Find the "CPUCard" Button
+    t =     4.18s Find the "CPUCard" Button
+    t =     4.33s Find the "CPUCard" Button
+    t =     4.48s Find the "CPUCard" Button
+    t =     4.62s Find the "CPUCard" Button
+    t =     4.76s Find the "CPUCard" Button
+    t =     4.91s Find the "CPUCard" Button
+    t =     5.07s Find the "CPUCard" Button
+    t =     5.21s Find the "CPUCard" Button
+    t =     5.36s Find the "CPUCard" Button
+    t =     5.41s Type '1' key with modifiers '⌘' (0x10)
+    t =     5.41s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.42s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     5.44s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     5.44s     Synthesize event
+    t =     5.57s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.58s Waiting 2.0s for StaticText (First Match) to exist
+    t =     6.59s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     6.59s         Checking existence of `StaticText (First Match)`
+    t =     6.62s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.76s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.90s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.05s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.20s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.34s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.48s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.49s Find the DisclosureTriangle (First Match)
+    t =     7.55s Click "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     7.55s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.55s     Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =     7.56s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =     7.58s     Synthesize event
+    t =     7.58s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =     7.59s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =     8.00s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.01s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.02s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =     8.10s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.22s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.34s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.45s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.57s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.70s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.82s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     8.94s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.06s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.19s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.30s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.43s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.47s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.60s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.75s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =     9.90s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.05s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.20s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.35s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.49s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.63s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.78s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    10.93s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    11.08s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    11.22s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    11.37s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    11.52s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle`
+    t =    11.53s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =    11.59s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =    11.60s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerExpansionFixture/expansion-fixture-3a4a932a-1717-44c4-9b04-2ceb23e8cf42" DisclosureTriangle
+    t =    11.68s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testExpansionPersistsWhenRowDisappearsAndReturnsOnListRefresh]' passed (12.001 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testLeftEdgeClickDoesNotDismissPopover]' started.
+    t =     0.00s Start Test at 2026-10-09 14:11:46.202
+    t =     0.07s Set Up
+    t =     0.08s Open com.zipkero.ResourceRunner.Task014
+    t =     0.08s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.08s         Terminate com.zipkero.ResourceRunner.Task014:67123
+2026-10-09 14:11:47.352 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:11:47.352 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.42s         Wait for accessibility to load
+    t =     1.59s         Setting up automation session
+    t =     1.60s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.60s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.67s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.67s         Checking existence of `StatusItem (First Match)`
+    t =     2.69s Click StatusItem (First Match)
+    t =     2.69s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.69s     Find the StatusItem (First Match)
+    t =     2.70s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.70s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.70s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.71s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.71s     Synthesize event
+    t =     3.16s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.16s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.19s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.19s         Checking existence of `"CPUCard" Any`
+    t =     4.28s Find the "CPUCard" Any
+    t =     4.41s Find the "CPUCard" Button
+    t =     4.55s Find the "CPUCard" Button
+    t =     4.70s Find the "CPUCard" Button
+    t =     4.74s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.74s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.74s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     4.76s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.76s     Synthesize event
+    t =     4.82s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.82s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.86s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.86s         Checking existence of `StaticText (First Match)`
+    t =     5.88s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.02s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.16s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.31s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.45s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.61s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.76s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.90s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.04s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.19s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.34s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.48s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.63s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.78s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.84s Find the DisclosureTriangle (First Match)
+    t =     7.90s Get number of matches for: Descendants matching type Popover
+    t =     7.93s Click "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.00, 0.50] -> (2.0, 0.0)
+    t =     7.93s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.93s     Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.94s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.96s     Synthesize event
+    t =     7.96s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.98s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.32s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.32s Get number of matches for: Descendants matching type Popover
+    t =     8.37s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testLeftEdgeClickDoesNotDismissPopover]' passed (8.707 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickExpandsAndPersistsAcrossRerenders]' started.
+    t =     0.00s Start Test at 2026-10-09 14:11:54.909
+    t =     0.08s Set Up
+    t =     0.08s Open com.zipkero.ResourceRunner.Task014
+    t =     0.08s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.08s         Terminate com.zipkero.ResourceRunner.Task014:67391
+2026-10-09 14:11:56.050 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:11:56.050 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.41s         Wait for accessibility to load
+    t =     1.59s         Setting up automation session
+    t =     1.59s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.60s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.60s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.60s         Checking existence of `StatusItem (First Match)`
+    t =     2.62s Click StatusItem (First Match)
+    t =     2.62s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.62s     Find the StatusItem (First Match)
+    t =     2.64s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.64s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.64s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.65s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.65s     Synthesize event
+    t =     3.11s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.12s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.15s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.15s         Checking existence of `"CPUCard" Any`
+    t =     4.23s Find the "CPUCard" Any
+    t =     4.37s Find the "CPUCard" Button
+    t =     4.51s Find the "CPUCard" Button
+    t =     4.65s Find the "CPUCard" Button
+    t =     4.80s Find the "CPUCard" Button
+    t =     4.84s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.84s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.85s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     4.87s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.87s     Synthesize event
+    t =     4.93s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.94s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.96s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.96s         Checking existence of `StaticText (First Match)`
+    t =     6.00s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.14s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.28s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.43s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.58s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.72s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.86s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.00s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.15s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.29s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.44s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.59s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.74s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.75s Find the DisclosureTriangle (First Match)
+    t =     7.81s Click "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     7.81s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.81s     Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.82s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.84s     Synthesize event
+    t =     7.84s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.85s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.20s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.21s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     8.23s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.24s Waiting 2.0s for StaticText (First Match) to exist
+    t =     9.27s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     9.27s         Checking existence of `StaticText (First Match)`
+    t =    11.81s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =    11.82s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =    11.83s Checking existence of `StaticText (First Match)`
+    t =    11.84s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickExpandsAndPersistsAcrossRerenders]' passed (12.140 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickTogglesClosedOnSecondClick]' started.
+    t =     0.00s Start Test at 2026-10-09 14:12:07.051
+    t =     0.08s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner.Task014
+    t =     0.09s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.09s         Terminate com.zipkero.ResourceRunner.Task014:67513
+2026-10-09 14:12:08.194 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:12:08.194 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.41s         Wait for accessibility to load
+    t =     1.42s         Setting up automation session
+    t =     1.43s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.43s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.49s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.49s         Checking existence of `StatusItem (First Match)`
+    t =     2.51s Click StatusItem (First Match)
+    t =     2.51s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.51s     Find the StatusItem (First Match)
+    t =     2.53s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.53s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.53s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.55s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.57s     Synthesize event
+    t =     3.01s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.01s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.04s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.05s         Checking existence of `"CPUCard" Any`
+    t =     4.12s Find the "CPUCard" Any
+    t =     4.26s Find the "CPUCard" Button
+    t =     4.40s Find the "CPUCard" Button
+    t =     4.54s Find the "CPUCard" Button
+    t =     4.69s Find the "CPUCard" Button
+    t =     4.83s Find the "CPUCard" Button
+    t =     4.98s Find the "CPUCard" Button
+    t =     5.12s Find the "CPUCard" Button
+    t =     5.28s Find the "CPUCard" Button
+    t =     5.42s Find the "CPUCard" Button
+    t =     5.57s Find the "CPUCard" Button
+    t =     5.62s Type '1' key with modifiers '⌘' (0x10)
+    t =     5.62s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.65s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     5.67s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     5.67s     Synthesize event
+    t =     5.77s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.77s Waiting 2.0s for StaticText (First Match) to exist
+    t =     6.78s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     6.78s         Checking existence of `StaticText (First Match)`
+    t =     6.81s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.95s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.09s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.24s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.37s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.52s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.67s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.68s Find the DisclosureTriangle (First Match)
+    t =     7.74s Click "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     7.74s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.75s     Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.76s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.77s     Synthesize event
+    t =     7.77s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.78s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.14s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.15s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     8.16s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.18s Click "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     8.18s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.18s     Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.20s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.22s     Synthesize event
+    t =     8.22s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.24s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.61s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.62s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     8.63s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.64s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardDetailExpansionUITests testRowCenterClickTogglesClosedOnSecondClick]' passed (8.963 seconds).
+Test Suite 'DashboardDetailExpansionUITests' passed at 2026-10-09 14:12:16.013.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 41.810 (41.815) seconds
+Test Suite 'DashboardProcessListDisplayUITests' started at 2026-10-09 14:12:16.015.
+Test Case '-[ResourceRunnerUITests.DashboardProcessListDisplayUITests testChildProcessRowShowsExecutableNameAlongsidePID]' started.
+    t =     0.00s Start Test at 2026-10-09 14:12:16.016
+    t =     0.07s Set Up
+    t =     0.08s Open com.zipkero.ResourceRunner.Task014
+    t =     0.08s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.08s         Terminate com.zipkero.ResourceRunner.Task014:67705
+2026-10-09 14:12:17.149 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:12:17.149 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.41s         Wait for accessibility to load
+    t =     1.58s         Setting up automation session
+    t =     1.59s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.59s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.60s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.60s         Checking existence of `StatusItem (First Match)`
+    t =     2.63s Click StatusItem (First Match)
+    t =     2.63s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.63s     Find the StatusItem (First Match)
+    t =     2.65s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.65s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.65s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.66s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.66s     Synthesize event
+    t =     3.11s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.12s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.15s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.15s         Checking existence of `"CPUCard" Any`
+    t =     4.23s Find the "CPUCard" Any
+    t =     4.37s Find the "CPUCard" Button
+    t =     4.51s Find the "CPUCard" Button
+    t =     4.65s Find the "CPUCard" Button
+    t =     4.80s Find the "CPUCard" Button
+    t =     4.84s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.84s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.85s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     4.87s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.87s     Synthesize event
+    t =     4.92s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.92s Waiting 2.0s for StaticText (First Match) to exist
+    t =     5.94s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.94s         Checking existence of `StaticText (First Match)`
+    t =     5.97s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.11s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.25s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.40s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.55s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.69s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.84s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.98s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.12s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.27s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.41s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.55s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.70s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.84s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.86s Find the DisclosureTriangle (First Match)
+    t =     7.91s Click "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle[0.50, 0.00] -> (0.0, 8.0)
+    t =     7.91s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.92s     Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.93s     Check for interrupting elements affecting "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.94s     Synthesize event
+    t =     7.94s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     7.96s         Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.32s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.33s Checking existence of `"AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle`
+    t =     8.34s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.35s Waiting 2.0s for StaticText (First Match) to exist
+    t =     9.37s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     9.37s         Checking existence of `StaticText (First Match)`
+    t =     9.39s Find the StaticText (First Match)
+    t =     9.41s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     9.42s Get number of matches for: Elements matching predicate 'identifier == "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app"'
+    t =     9.46s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardProcessListDisplayUITests testChildProcessRowShowsExecutableNameAlongsidePID]' passed (9.786 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardProcessListDisplayUITests testCPUProcessListShowsSortHeaderAndAppRowValue]' started.
+    t =     0.00s Start Test at 2026-10-09 14:12:25.802
+    t =     0.08s Set Up
+    t =     0.09s Open com.zipkero.ResourceRunner.Task014
+    t =     0.09s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.09s         Terminate com.zipkero.ResourceRunner.Task014:67842
+2026-10-09 14:12:26.953 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:12:26.953 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.42s         Wait for accessibility to load
+    t =     1.59s         Setting up automation session
+    t =     1.59s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.60s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.62s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.62s         Checking existence of `StatusItem (First Match)`
+    t =     2.64s Click StatusItem (First Match)
+    t =     2.64s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.64s     Find the StatusItem (First Match)
+    t =     2.65s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.66s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.66s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.67s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.67s     Synthesize event
+    t =     3.22s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.22s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.24s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.24s         Checking existence of `"CPUCard" Any`
+    t =     4.32s Find the "CPUCard" Any
+    t =     4.46s Find the "CPUCard" Button
+    t =     4.60s Find the "CPUCard" Button
+    t =     4.75s Find the "CPUCard" Button
+    t =     4.90s Find the "CPUCard" Button
+    t =     4.94s Type '1' key with modifiers '⌘' (0x10)
+    t =     4.94s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.95s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     4.96s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     4.97s     Synthesize event
+    t =     5.03s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.04s Waiting 2.0s for StaticText (First Match) to exist
+    t =     6.05s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     6.05s         Checking existence of `StaticText (First Match)`
+    t =     6.08s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.23s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.37s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.51s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.66s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.81s Checking existence of `DisclosureTriangle (First Match)`
+    t =     6.95s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.09s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.24s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.38s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.52s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.67s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.81s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.95s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.96s Find the DisclosureTriangle (First Match)
+    t =     8.02s Checking existence of `StaticText (First Match)`
+    t =     8.03s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.04s Find the "AppRow-/private/tmp/rr-m4-014-unique-dd/Build/Products/Debug/ResourceRunnerUITests-Runner.app" DisclosureTriangle
+    t =     8.06s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardProcessListDisplayUITests testCPUProcessListShowsSortHeaderAndAppRowValue]' passed (8.343 seconds).
+Test Case '-[ResourceRunnerUITests.DashboardProcessListDisplayUITests testMemoryProcessListAppRowValuesUseByteUnitsNotRawNumbers]' started.
+    t =     0.00s Start Test at 2026-10-09 14:12:34.146
+    t =     0.08s Set Up
+    t =     0.08s Open com.zipkero.ResourceRunner.Task014
+    t =     0.08s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.08s         Terminate com.zipkero.ResourceRunner.Task014:67976
+2026-10-09 14:12:35.278 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:12:35.278 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.42s         Wait for accessibility to load
+    t =     1.43s         Setting up automation session
+    t =     1.44s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.44s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.50s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.50s         Checking existence of `StatusItem (First Match)`
+    t =     2.52s Click StatusItem (First Match)
+    t =     2.52s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.52s     Find the StatusItem (First Match)
+    t =     2.54s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.54s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.54s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.55s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.55s     Synthesize event
+    t =     2.99s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.00s Waiting 5.0s for "CPUCard" Any to exist
+    t =     4.02s     Checking `Expect predicate `existsNoRetry == 1` for object "CPUCard" Any`
+    t =     4.02s         Checking existence of `"CPUCard" Any`
+    t =     4.10s Find the "CPUCard" Any
+    t =     4.24s Find the "CPUCard" Button
+    t =     4.39s Find the "CPUCard" Button
+    t =     4.53s Find the "CPUCard" Button
+    t =     4.67s Find the "CPUCard" Button
+    t =     4.82s Find the "CPUCard" Button
+    t =     4.97s Find the "CPUCard" Button
+    t =     5.12s Find the "CPUCard" Button
+    t =     5.27s Find the "CPUCard" Button
+    t =     5.42s Find the "CPUCard" Button
+    t =     5.57s Find the "CPUCard" Button
+    t =     5.61s Type '1' key with modifiers '⌘' (0x10)
+    t =     5.61s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.62s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     5.75s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     5.75s     Synthesize event
+    t =     5.86s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.86s Waiting 2.0s for StaticText (First Match) to exist
+    t =     6.88s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     6.88s         Checking existence of `StaticText (First Match)`
+    t =     6.92s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.06s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.20s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.33s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.49s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.63s Checking existence of `DisclosureTriangle (First Match)`
+    t =     7.66s Find the DisclosureTriangle (First Match)
+    t =     7.72s Type '2' key with modifiers '⌘' (0x10)
+    t =     7.72s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.73s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     7.76s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     7.76s     Synthesize event
+    t =     7.88s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.88s Waiting 2.0s for StaticText (First Match) to exist
+    t =     8.89s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     8.89s         Checking existence of `StaticText (First Match)`
+    t =     8.94s Checking existence of `StaticText (First Match)`
+    t =     8.96s Waiting 5.0s for DisclosureTriangle (Element at index 0) to exist
+    t =     9.97s     Checking `Expect predicate `existsNoRetry == 1` for object DisclosureTriangle (Element at index 0)`
+    t =     9.97s         Checking existence of `DisclosureTriangle (Element at index 0)`
+    t =    10.04s Checking existence of `DisclosureTriangle (Element at index 0)`
+    t =    10.08s Find the DisclosureTriangle (Element at index 0)
+    t =    10.12s Checking existence of `DisclosureTriangle (Element at index 1)`
+    t =    10.16s Find the DisclosureTriangle (Element at index 1)
+    t =    10.20s Checking existence of `DisclosureTriangle (Element at index 2)`
+    t =    10.24s Find the DisclosureTriangle (Element at index 2)
+    t =    10.29s Tear Down
+Test Case '-[ResourceRunnerUITests.DashboardProcessListDisplayUITests testMemoryProcessListAppRowValuesUseByteUnitsNotRawNumbers]' passed (10.610 seconds).
+Test Suite 'DashboardProcessListDisplayUITests' passed at 2026-10-09 14:12:44.756.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 28.739 (28.742) seconds
+Test Suite 'SettingsWindowUITests' started at 2026-10-09 14:12:44.757.
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testProcessScopeAndDetailLimitControlsApplyInCurrentWindow]' started.
+    t =     0.00s Start Test at 2026-10-09 14:12:44.758
+    t =     0.07s Set Up
+    t =     0.07s Open com.zipkero.ResourceRunner.Task014
+    t =     0.07s     Launch com.zipkero.ResourceRunner.Task014
+    t =     0.07s         Terminate com.zipkero.ResourceRunner.Task014:68104
+2026-10-09 14:12:45.862 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-09 14:12:45.862 xcodebuild[67076:57251543] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.37s         Wait for accessibility to load
+    t =     1.54s         Setting up automation session
+    t =     1.55s         Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     1.55s Waiting 5.0s for StatusItem (First Match) to exist
+    t =     2.59s     Checking `Expect predicate `existsNoRetry == 1` for object StatusItem (First Match)`
+    t =     2.60s         Checking existence of `StatusItem (First Match)`
+    t =     2.61s Right click StatusItem (First Match)
+    t =     2.61s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.61s     Find the StatusItem (First Match)
+    t =     2.64s     Check for interrupting elements affecting "ResourceRunner, 낮음" StatusItem
+    t =     2.64s     Open com.zipkero.ResourceRunner.Task014
+    t =     2.64s         Activate com.zipkero.ResourceRunner.Task014
+    t =     2.65s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     2.68s     Synthesize event
+    t =     3.06s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     3.06s Waiting 3.0s for "openSettingsFromMenu:" MenuItem to exist
+    t =     4.08s     Checking `Expect predicate `existsNoRetry == 1` for object "openSettingsFromMenu:" MenuItem`
+    t =     4.08s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     4.14s Click "openSettingsFromMenu:" MenuItem
+    t =     4.14s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.15s     Find the "openSettingsFromMenu:" MenuItem
+    t =     4.17s     Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     4.17s     Synthesize event
+    t =     4.17s         Checking existence of `"openSettingsFromMenu:" MenuItem`
+    t =     4.19s         Hover menu item '설정…'
+    t =     4.19s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.19s             Find the "openSettingsFromMenu:" MenuItem
+    t =     4.21s             Check for interrupting elements affecting "openSettingsFromMenu:" MenuItem
+    t =     4.22s             Synthesize event
+    t =     4.44s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     4.44s         Find the "openSettingsFromMenu:" MenuItem
+    t =     5.19s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     5.23s Waiting 3.0s for "ResourceRunner 설정" Window to exist
+    t =     6.25s     Checking `Expect predicate `existsNoRetry == 1` for object "ResourceRunner 설정" Window`
+    t =     6.25s         Checking existence of `"ResourceRunner 설정" Window`
+    t =     6.35s Waiting 3.0s for "SettingsIncludeSystemProcesses" Switch to exist
+    t =     7.37s     Checking `Expect predicate `existsNoRetry == 1` for object "SettingsIncludeSystemProcesses" Switch`
+    t =     7.37s         Checking existence of `"SettingsIncludeSystemProcesses" Switch`
+    t =     7.44s Find the "SettingsIncludeSystemProcesses" Switch
+    t =     7.49s Type '0' key with modifiers '⌘⌥' (0x18)
+    t =     7.49s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.49s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =     7.53s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =     7.53s     Synthesize event
+    t =     7.57s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     7.58s Find the "SettingsIncludeSystemProcesses" Switch
+    t =     7.63s Waiting 3.0s for "SettingsDetailListLimit" PopUpButton to exist
+    t =     8.65s     Checking `Expect predicate `existsNoRetry == 1` for object "SettingsDetailListLimit" PopUpButton`
+    t =     8.65s         Checking existence of `"SettingsDetailListLimit" PopUpButton`
+    t =     8.71s Find the "SettingsDetailListLimit" PopUpButton
+    t =     8.76s Click "SettingsDetailListLimit" PopUpButton
+    t =     8.76s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     8.76s     Find the "SettingsDetailListLimit" PopUpButton
+    t =     8.80s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =     8.82s     Synthesize event
+    t =     9.18s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     9.19s Click "50개" MenuItem
+    t =     9.19s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     9.19s     Find the "50개" MenuItem
+    t =     9.26s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =     9.26s     Synthesize event
+    t =     9.26s         Checking existence of `"menuAction:" MenuItem`
+    t =     9.30s         Hover menu item '50개'
+    t =     9.30s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     9.31s             Find the "menuAction:" MenuItem
+    t =     9.35s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =     9.35s             Synthesize event
+    t =     9.56s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =     9.57s         Find the "menuAction:" MenuItem
+    t =    10.34s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    10.36s Find the "SettingsDetailListLimit" PopUpButton
+    t =    10.42s Click "SettingsDetailListLimit" PopUpButton
+    t =    10.42s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    10.42s     Find the "SettingsDetailListLimit" PopUpButton
+    t =    10.47s     Check for interrupting elements affecting "SettingsDetailListLimit" PopUpButton
+    t =    10.49s     Synthesize event
+    t =    10.84s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    10.85s Click "10개" MenuItem
+    t =    10.85s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    10.85s     Find the "10개" MenuItem
+    t =    10.92s     Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    10.92s     Synthesize event
+    t =    10.92s         Checking existence of `"menuAction:" MenuItem`
+    t =    10.96s         Hover menu item '10개'
+    t =    10.96s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    10.97s             Find the "menuAction:" MenuItem
+    t =    11.01s             Check for interrupting elements affecting "menuAction:" MenuItem
+    t =    11.01s             Synthesize event
+    t =    11.23s             Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    11.23s         Find the "menuAction:" MenuItem
+    t =    11.99s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.01s Find the "SettingsDetailListLimit" PopUpButton
+    t =    12.08s Requesting snapshot of accessibility hierarchy for app with pid 68299
+    t =    12.16s Requesting snapshot of accessibility hierarchy for app with pid 68299
+    t =    12.23s Type '⇥' key (XCUIKeyboardKeyTab) with no modifiers
+    t =    12.23s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.23s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =    12.26s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.26s     Synthesize event
+    t =    12.29s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.30s Requesting snapshot of accessibility hierarchy for app with pid 68299
+    t =    12.38s Requesting snapshot of accessibility hierarchy for app with pid 68299
+    t =    12.45s Type ' ' key (XCUIKeyboardKeySpace) with no modifiers
+    t =    12.45s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.45s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =    12.48s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.48s     Synthesize event
+    t =    12.51s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.51s Find the "SettingsDetailListLimit" PopUpButton
+    t =    12.56s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    12.56s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.56s     Find the Target Application 'com.zipkero.ResourceRunner.Task014'
+    t =    12.60s     Check for interrupting elements affecting "ResourceRunner" Application
+    t =    12.60s     Synthesize event
+    t =    12.62s     Wait for com.zipkero.ResourceRunner.Task014 to idle
+    t =    12.62s Find the "SettingsDetailListLimit" PopUpButton
+    t =    12.67s Checking existence of `"ResourceRunner 설정" Window`
+    t =    12.71s Get number of matches for: Elements matching predicate '"ResourceRunnerSettingsWindow" IN identifiers'
+    t =    12.76s Tear Down
+Test Case '-[ResourceRunnerUITests.SettingsWindowUITests testProcessScopeAndDetailLimitControlsApplyInCurrentWindow]' passed (13.065 seconds).
+Test Suite 'SettingsWindowUITests' passed at 2026-10-09 14:12:57.824.
+	 Executed 1 test, with 0 failures (0 unexpected) in 13.065 (13.067) seconds
+Test Suite 'ResourceRunnerUITests.xctest' passed at 2026-10-09 14:12:57.825.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 83.614 (83.627) seconds
+Test Suite 'Selected tests' passed at 2026-10-09 14:12:57.826.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 83.614 (83.628) seconds
+2026-10-09 14:12:58.133 xcodebuild[67076:57251543] [MT] IDETestOperationsObserverDebug: 84.822 elapsed -- Testing started completed.
+2026-10-09 14:12:58.133 xcodebuild[67076:57251543] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-09 14:12:58.133 xcodebuild[67076:57251543] [MT] IDETestOperationsObserverDebug: 84.822 sec, +84.822 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/rr-m4-014-unique-ui.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

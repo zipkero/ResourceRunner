@@ -53,6 +53,27 @@ private let baseInstant = ContinuousClock().now
 /// 키를 PID만으로 되돌리면 재사용된 PID가 이전 누적 CPU 시간과 차분되어 이 테스트가 실패해야 합니다.
 struct ProcessHistoryIdentityBoundaryTests {
 
+    @Test func ownershipChangeRestartsCPUAndMemoryHistory() async throws {
+        let store = ProcessHistoryStore()
+        let first = ProcessSample(identity: ProcessIdentity(pid: 501, startTime: 1),
+            executablePath: "/Applications/Shared.app/Contents/MacOS/Shared", uid: 501,
+            parentPID: 1, cpuTimeNanoseconds: 0, residentBytes: 100,
+            isTranslated: false, ownership: .currentUser)
+        let second = ProcessSample(identity: first.identity, executablePath: first.executablePath,
+            uid: 502, parentPID: 1, cpuTimeNanoseconds: 1_000_000_000,
+            residentBytes: 200, isTranslated: false, ownership: .otherUser)
+        // 조사 소속은 같은 PID·경로라도 새 실행 이미지와 같은 이력 경계입니다.
+        await store.append(TimestampedSample(timestamp: baseInstant, value: survey([first])))
+        await store.append(TimestampedSample(timestamp: baseInstant + .seconds(1), value: survey([first])))
+        await store.append(TimestampedSample(timestamp: baseInstant + .seconds(2), value: survey([second])))
+        let after = try #require(await store.snapshot().first)
+        #expect(after.ownership == .otherUser)
+        #expect(after.uid == 502)
+        #expect(after.recentValues.count == 1)
+        #expect(after.recentValues.first?.cpuUsagePercent == nil)
+        #expect(after.memoryBaselines.count == 1)
+    }
+
     @Test func firstSurveyOfIdentityProducesNoRateAndSingleMemoryBaseline() async throws {
         let store = ProcessHistoryStore()
         let sample = processSample(cpuTimeNanoseconds: 5_000_000_000, residentBytes: 10_000)

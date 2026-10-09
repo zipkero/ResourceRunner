@@ -1,0 +1,36 @@
+wall=2026-10-09T03:52:40Z
+62528 Ss      14:59 /tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+64228 S    02:21:38 /Applications/Amphetamine.app/Contents/MacOS/Amphetamine
+64258 S    02:21:38 /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Sleep Count:3877
+Dark Wake Count:3699
+User Wake Count:238
+Scheduled power events:
+ [0]  wake at 10/09/2026 18:44:02 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'
+ [1]  wake at 10/10/2026 08:51:51 by 'com.apple.alarm.user-invisible-com.apple.osanalytics.hardhighengagementtimer'
+2026-10-09 12:52:40 +0900 
+Assertion status system-wide:
+   BackgroundTask                 0
+   ApplePushServiceTask           0
+   UserIsActive                   1
+   PreventUserIdleDisplaySleep    0
+   SoftwareUpdateTask             0
+   PreventSystemSleep             0
+   ExternalMedia                  0
+   InternalPreventDisplaySleep    1
+   PreventUserIdleSystemSleep     1
+   NetworkClientActive            0
+Listed by owning process:
+   pid 64228(Amphetamine): [0x00113d5200018add] 00:55:23 PreventUserIdleSystemSleep named: "Amphetamine (Single-Use - System)"  
+   pid 836(mds_stores): [0x00114a4c000b8dee] 00:00:01 BackgroundTask named: "com.apple.metadata.mds_stores.power"  
+   pid 597(WindowServer): [0x00113d3200098aae] 00:05:36 UserIsActive named: "com.apple.iohideventsystem.queue.tickle serviceID:100000d26 service:AppleMultitouchDevice product:Apple Internal Keyboard / Trackpad eventType:11"  
+	Timeout will fire in 264 secs Action=TimeoutActionRelease
+   pid 536(powerd): [0x00113d3200018ab0] 00:55:55 PreventUserIdleSystemSleep named: "Powerd - Prevent sleep while display is on"  
+   pid 536(powerd): [0x00114a1a00108308] 00:00:51 InternalPreventDisplaySleep named: "com.apple.powermanagement.delayDisplayOff"  
+	Timeout will fire in 249 secs Action=TimeoutActionTurnOff
+Kernel Assertions: 0x100=MAGICWAKE
+   id=582  level=255 0x100=MAGICWAKE creat=  mod= description=en0 owner=IOSkywalkNetworkBSDClient
+    4214 /tmp/rr-task015-probe/probe.log
+     568 /tmp/rr-task015-probe/ax.log
+    4782 total
+/tmp/rr-task015-probe/mark-stage.sh:17: no such file or directory: /usr/bin/rg

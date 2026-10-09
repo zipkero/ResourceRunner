@@ -1,0 +1,33 @@
+5435c7dfdaf91d86c41827a6a521aa31b18dbbf9
+ M ResourceRunner/AppDelegate.swift
+ M ResourceRunner/AppPreferences.swift
+ M ResourceRunner/PreferencesStore.swift
+ M ResourceRunnerTests/ApplicationCoordinatorTests.swift
+ M ResourceRunnerTests/PreferencesStoreTests.swift
+ M ResourceRunnerTests/StorageMetadataTests.swift
+Xcode 26.6
+Build version 17F113
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+/tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app: valid on disk
+/tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app: satisfies its Designated Requirement
+Identifier=com.zipkero.ResourceRunner.Task015Probe
+Signature=adhoc
+TeamIdentifier=not set
+[Dict]
+	[Key] com.apple.security.app-sandbox
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.files.user-selected.read-only
+	[Value]
+		[Bool] true
+	[Key] com.apple.security.get-task-allow
+	[Value]
+		[Bool] true
+04058857ca0d46ebef234ad7921e494e3270e72d99133cfbc097180e3d46459f  /tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+5ee5de488b22a5b9f27cbe271143b65dfdff1b8754371fdce0518d187a37ed34  /tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+** BUILD SUCCEEDED **
+62528 Ss   /tmp/rr-task015-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+64228 S    /Applications/Amphetamine.app/Contents/MacOS/Amphetamine
+64258 S    /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner

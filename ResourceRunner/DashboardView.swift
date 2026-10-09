@@ -1138,7 +1138,7 @@ nonisolated enum CardRankingRowLayout {
 }
 
 /// 앱 단위 순위 목록. 상세 팝업(`MemoryDetailView`)의 최근 증가량 순위 한 자리에서만 쓰이며, 정원보다 적으면
-/// 있는 만큼만 나열하고 시스템 프로세스 제외 안내(호출부가 넘기는 정원에 맞춘 문구)를 항상 함께 둡니다.
+/// 있는 만큼만 나열하고 현재 포함 범위와 상세 정원(10/20/50)에 맞춘 안내 문구를 함께 둡니다.
 /// 현재 사용량 순위는 `ApplicationProcessGroupListView`(펼침이 있는 앱 목록)가 겸하므로 이 뷰를 쓰지 않습니다(ANALYSIS §5 DP1).
 /// 카드 쪽 순위 자리는 높이가 고정되어야 하므로 이 뷰 대신 `CardRankingSlotView`를 씁니다(task-015).
 /// 값 단위가 카드마다 다르므로(CPU는 `%`, Memory는 바이트) 값 표시 문자열은 호출부가 `valueText`로 넘깁니다.
@@ -1355,6 +1355,8 @@ struct CPUDetailView: View {
                 case .applicationGroups:
                     ApplicationProcessGroupListView(
                         groups: presentation.detail.applications,
+                        limit: presentation.detail.applicationsLimit,
+                        includesSystemProcesses: presentation.includesSystemProcesses,
                         sortDescription: presentation.detail.applicationsHeading,
                         exclusionNote: presentation.detail.applicationsExclusionNote,
                         // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
@@ -1588,7 +1590,7 @@ struct MemoryDetailView: View {
                     .dashboardTypography(DashboardStyle.Section.headingRole)
                 // 증가량은 음수일 수 있으므로 `TopApplicationsView`가 기본 카드에 쓰는 `UInt64` 변환 경로를
                 // 그대로 재사용하지 않고, 부호를 보존하는 별도 포맷을 씁니다.
-                // 이 목록만 상세 정원(20)까지 받으므로 카드 정원 문구와 다른 문구가 필요합니다 — 정원을
+                // 이 목록은 설정한 상세 정원(10/20/50)을 따르므로 카드 정원 문구와 다른 문구가 필요합니다 — 정원을
                 // 뷰가 고르지 않도록, 조립 시점에 이미 만들어진 문구(`detail.recentIncreaseRankingCaption`)를 그대로 씁니다.
                 TopApplicationsView(
                     entries: detail.recentIncreaseRanking,
@@ -1600,6 +1602,8 @@ struct MemoryDetailView: View {
 
             ApplicationProcessGroupListView(
                 groups: detail.applications,
+                limit: detail.applicationsLimit,
+                includesSystemProcesses: presentation.includesSystemProcesses,
                 sortDescription: detail.applicationsHeading,
                 exclusionNote: detail.applicationsExclusionNote,
                 // Memory는 항상 값이 있지만(SPEC §5.6과 달리 기준점이 필요 없음), nil 안전 경로는
@@ -1721,9 +1725,11 @@ struct MemoryCompositionDonutView: View {
 // 마지막 하위 행과 다음 앱 행 사이 간격에 이 목록의 행 간격이 더해집니다.
 struct ApplicationProcessGroupListView: View {
     let groups: [ApplicationProcessGroup]
+    var limit: Int = ApplicationRankingSampling.detailCount
+    var includesSystemProcesses = false
     /// 목록이 어떤 값으로, 어떤 방향으로 정렬됐는지 알리는 머리글.
     let sortDescription: String
-    /// 머리글 바로 아래 줄에 붙는 안내. 시스템 프로세스가 순위에서 빠진다는 사실을 두 상세 모두에서 알립니다.
+    /// 머리글 바로 아래 줄에 붙는 현재 소속 선택·읽기 실패 안내입니다.
     let exclusionNote: String
     /// 앱 행에 표시할 그룹 합계 값의 서식. `nil`(값을 만들지 못한 그룹)을 0으로 지어내지 않습니다(SPEC §5.6).
     let groupValue: (Double?) -> DashboardValueColumn.Value
@@ -1744,7 +1750,8 @@ struct ApplicationProcessGroupListView: View {
         ApplicationProcessGroupOrdering.displayedGroups(
             groups: groups,
             stableOrder: stableOrder,
-            hasExpandedRow: !expandedKeys.isEmpty
+            hasExpandedRow: !expandedKeys.isEmpty,
+            cap: limit
         )
     }
 
@@ -1783,10 +1790,16 @@ struct ApplicationProcessGroupListView: View {
         // 펼친 행이 없을 때만 최신 순서를 따라잡습니다 — 펼친 행이 있는 동안 들어오는 새 정렬 결과는
         // `stableOrder`에 반영하지 않고 미뤄 둡니다.
         .onChange(of: groups.map(\.key)) { _, newOrder in
-            if expandedKeys.isEmpty {
-                stableOrder = newOrder
-            }
+            if expandedKeys.isEmpty { stableOrder = newOrder }
         }
+        .onChange(of: limit) { _, _ in reconcileExpandedRows() }
+        .onChange(of: includesSystemProcesses) { _, _ in reconcileExpandedRows() }
+    }
+
+    private func reconcileExpandedRows() {
+        expandedKeys = ApplicationProcessGroupOrdering.visibleExpandedKeys(
+            groups: groups, stableOrder: stableOrder, expandedKeys: expandedKeys, cap: limit)
+        if expandedKeys.isEmpty { stableOrder = groups.map(\.key) }
     }
 }
 

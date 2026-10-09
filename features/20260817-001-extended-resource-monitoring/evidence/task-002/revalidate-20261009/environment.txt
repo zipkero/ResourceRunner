@@ -1,0 +1,60 @@
+HEAD: 5435c7dfdaf91d86c41827a6a521aa31b18dbbf9
+
+$ sw_vers
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+
+$ uname -m
+arm64
+
+$ xcodebuild -version
+Xcode 26.6
+Build version 17F113
+
+$ codesign -dv /tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app
+Executable=/private/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+Identifier=com.zipkero.ResourceRunner.Task002Probe
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=448 flags=0x2(adhoc) hashes=3+7 location=embedded
+Signature=adhoc
+Info.plist entries=20
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=4
+Internal requirements count=0 size=12
+
+$ codesign -d --entitlements :- /tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app
+Executable=/private/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+warning: Specifying ':' in the path is deprecated and will not work in a future release
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>com.apple.security.app-sandbox</key><true/><key>com.apple.security.files.user-selected.read-only</key><true/><key>com.apple.security.get-task-allow</key><true/></dict></plist>
+
+$ plutil -p /tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Resources/PrivacyInfo.xcprivacy
+{
+  "NSPrivacyAccessedAPITypes" => [
+    0 => {
+      "NSPrivacyAccessedAPIType" => "NSPrivacyAccessedAPICategoryDiskSpace"
+      "NSPrivacyAccessedAPITypeReasons" => [
+        0 => "85F4.1"
+      ]
+    }
+    1 => {
+      "NSPrivacyAccessedAPIType" => "NSPrivacyAccessedAPICategoryUserDefaults"
+      "NSPrivacyAccessedAPITypeReasons" => [
+        0 => "CA92.1"
+      ]
+    }
+  ]
+  "NSPrivacyCollectedDataTypes" => [
+  ]
+  "NSPrivacyTracking" => false
+}
+
+$ find /tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents -type f
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/_CodeSignature/CodeResources
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/__preview.dylib
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Resources/Assets.car
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Resources/PrivacyInfo.xcprivacy
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/Info.plist
+/tmp/rr-task002-probe/DerivedData/Build/Products/Debug/ResourceRunner.app/Contents/PkgInfo

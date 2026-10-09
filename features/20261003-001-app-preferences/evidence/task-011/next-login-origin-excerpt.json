@@ -1,0 +1,546 @@
+[
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | enter, safeboot = %d",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 146488,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.474241+0900",
+    "machTimestamp": 85214209808361,
+    "eventMessage": "-[LoginItemsLauncher main] | enter, safeboot = 0",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4882433023541252,
+    "processID": 63961,
+    "senderProgramCounter": 146488,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s |      Got managed login items to launch",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 146772,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.474356+0900",
+    "machTimestamp": 85214209811137,
+    "eventMessage": "-[LoginItemsLauncher main] |      Got managed login items to launch",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4882544692690948,
+    "processID": 63961,
+    "senderProgramCounter": 146772,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s |      allowUserLoginItemsLaunch = %d",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 146900,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.476317+0900",
+    "machTimestamp": 85214209858193,
+    "eventMessage": "-[LoginItemsLauncher main] |      allowUserLoginItemsLaunch = 1",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4882733671251972,
+    "processID": 63961,
+    "senderProgramCounter": 146900,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s |      Got global login items to launch",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 147036,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.476364+0900",
+    "machTimestamp": 85214209859312,
+    "eventMessage": "-[LoginItemsLauncher main] |      Got global login items to launch",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4882909764911108,
+    "processID": 63961,
+    "senderProgramCounter": 147036,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s |      Got local login items to launch",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 147192,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.477451+0900",
+    "machTimestamp": 85214209885408,
+    "eventMessage": "-[LoginItemsLauncher main] |      Got local login items to launch",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4883094448504836,
+    "processID": 63961,
+    "senderProgramCounter": 147192,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s |                 performAutolaunch, launching: %@, shouldHide: %d",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 148364,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.665648+0900",
+    "machTimestamp": 85214214402129,
+    "eventMessage": "LaunchItemsInSharedFileListRef |                 performAutolaunch, launching: /Users/zipkero/Applications/ResourceRunner.app, shouldHide: 0",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4883871837585412,
+    "processID": 63961,
+    "senderProgramCounter": 148364,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | entered, url = %@, hide = %d",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 148524,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.665649+0900",
+    "machTimestamp": 85214214402155,
+    "eventMessage": "OpenItemAtURL | entered, url = /Users/zipkero/Applications/ResourceRunner.app, hide = 0",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4884851090128900,
+    "processID": 63961,
+    "senderProgramCounter": 148524,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s |      launching: %@",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 148796,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.667636+0900",
+    "machTimestamp": 85214214449839,
+    "eventMessage": "OpenItemAtURL |      launching: /Users/zipkero/Applications/ResourceRunner.app",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4884997119016964,
+    "processID": 63961,
+    "senderProgramCounter": 148796,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | Got App URL: %@",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56680194,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 409836,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.699194+0900",
+    "machTimestamp": 85214215207254,
+    "eventMessage": "-[Application _updateInformationInternal] | Got App URL: file:///Users/zipkero/Applications/ResourceRunner.app/",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4933860961943556,
+    "processID": 63961,
+    "senderProgramCounter": 409836,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | enter: %@ state %d",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56680194,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 128972,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.699325+0900",
+    "machTimestamp": 85214215210386,
+    "eventMessage": "-[Application setState:] | enter: <Application: 0xb72ce9180: ResourceRunner> state 2",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4933388515540996,
+    "processID": 63961,
+    "senderProgramCounter": 128972,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | ApplicationManager: Checked in app : %@",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56680194,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 126652,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.699328+0900",
+    "machTimestamp": 85214215210453,
+    "eventMessage": "-[ApplicationManager checkInAppContext:eventData:] | ApplicationManager: Checked in app : ResourceRunner",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4954837582217220,
+    "processID": 63961,
+    "senderProgramCounter": 126652,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "LAUNCH: 0x%{public}x-0x%{public}x %{public}@ starting stopped process.",
+    "userID": 501,
+    "activityIdentifier": 69991504,
+    "subsystem": "com.apple.processmanager",
+    "category": "front-35286506",
+    "threadID": 56684152,
+    "senderImageUUID": "01579E0C-9D85-3521-8916-4DDC990CD064",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 1467980,
+          "imageUUID": "01579E0C-9D85-3521-8916-4DDC990CD064"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/CoreServicesUIAgent.app/Contents/MacOS/CoreServicesUIAgent",
+    "senderImagePath": "/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/LaunchServices",
+    "timestamp": "2026-10-09 10:31:02.766418+0900",
+    "machTimestamp": 85214216820622,
+    "eventMessage": "LAUNCH: 0x0-0x2caecac com.zipkero.ResourceRunner starting stopped process.",
+    "processImageUUID": "80BFC281-C14A-3F32-BD99-B8F352BEA92D",
+    "traceID": 59362044406988804,
+    "processID": 64148,
+    "senderProgramCounter": 1467980,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | Got App URL: %@",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56680194,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 409836,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.942404+0900",
+    "machTimestamp": 85214221044284,
+    "eventMessage": "-[Application _updateInformationInternal] | Got App URL: file:///Users/zipkero/Applications/ResourceRunner.app/",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4933860961943556,
+    "processID": 63961,
+    "senderProgramCounter": 409836,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | ApplicationManager: Checked in app : %@",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56680194,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 126652,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:02.942660+0900",
+    "machTimestamp": 85214221050431,
+    "eventMessage": "-[ApplicationManager checkInAppContext:eventData:] | ApplicationManager: Checked in app : ResourceRunner",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4954837582217220,
+    "processID": 63961,
+    "senderProgramCounter": 126652,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | Got App URL: %@",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56680194,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 409836,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:03.002528+0900",
+    "machTimestamp": 85214222487261,
+    "eventMessage": "-[Application _updateInformationInternal] | Got App URL: file:///Users/zipkero/Applications/ResourceRunner.app/",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4933860961943556,
+    "processID": 63961,
+    "senderProgramCounter": 409836,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "effectiveItemDisposition: appURL=%{public}@, type=%{public}@, url=%{public}@, config=%{public}@",
+    "userID": 0,
+    "activityIdentifier": 69989337,
+    "subsystem": "com.apple.backgroundtaskmanagement",
+    "category": "main",
+    "threadID": 56646445,
+    "senderImageUUID": "78DC3374-7945-354E-B0CF-7AF34BF2642F",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 62260,
+          "imageUUID": "78DC3374-7945-354E-B0CF-7AF34BF2642F"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Versions/A/Resources/backgroundtaskmanagementd",
+    "senderImagePath": "/System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Versions/A/Resources/backgroundtaskmanagementd",
+    "timestamp": "2026-10-09 10:31:03.047373+0900",
+    "machTimestamp": 85214223563540,
+    "eventMessage": "effectiveItemDisposition: appURL=file:///Users/zipkero/Applications/ResourceRunner.app/, type=app, url=(null), config=(null)",
+    "processImageUUID": "78DC3374-7945-354E-B0CF-7AF34BF2642F",
+    "traceID": 1051558351667204,
+    "processID": 680,
+    "senderProgramCounter": 62260,
+    "parentActivityIdentifier": 0
+  },
+  {
+    "timezoneName": "",
+    "messageType": "Default",
+    "eventType": "logEvent",
+    "source": null,
+    "formatString": "%s | exiting",
+    "userID": 0,
+    "activityIdentifier": 0,
+    "subsystem": "com.apple.loginwindow.logging",
+    "category": "Standard",
+    "threadID": 56683731,
+    "senderImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "backtrace": {
+      "frames": [
+        {
+          "imageOffset": 147324,
+          "imageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33"
+        }
+      ]
+    },
+    "bootUUID": "0ACFF505-D127-48C5-9C4A-BC4767663FF2",
+    "processImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "senderImagePath": "/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow",
+    "timestamp": "2026-10-09 10:31:03.167384+0900",
+    "machTimestamp": 85214226443792,
+    "eventMessage": "-[LoginItemsLauncher main] | exiting",
+    "processImageUUID": "E5AB539D-79DF-36DD-92AA-CAD855F91B33",
+    "traceID": 4856487126106116,
+    "processID": 63961,
+    "senderProgramCounter": 147324,
+    "parentActivityIdentifier": 0
+  }
+]

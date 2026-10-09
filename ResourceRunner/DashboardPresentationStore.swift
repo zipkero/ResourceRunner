@@ -31,6 +31,9 @@ final class DashboardPresentationStore: ObservableObject {
     @Published private(set) var networkCard: NetworkCardPresentation = .collecting
     @Published private(set) var diskCard: DiskCardPresentation = .collecting
     private var lastCollectionBoundarySequence = 0
+    private var rankingCache: ProcessRankingDeliveryCache?
+    private var latestCPUInput: (SystemMetricsDisplayValue, ContinuousClock.Instant)?
+    private var latestMemoryInput: (SystemMetricsDisplayValue, ContinuousClock.Instant)?
 
     init(preferencesSnapshot: PreferencesSnapshot = PreferencesSnapshot(
         preferences: .defaults, revision: 0
@@ -44,8 +47,57 @@ final class DashboardPresentationStore: ObservableObject {
             selection = .none
             selectionGeneration &+= 1
         }
-        // 카드 모델은 최대 이력과 전체 상세를 보유하고, 표시 선택은 현재 snapshot으로 유도합니다.
+        let rankingSelectionChanged = snapshot.preferences.includesSystemProcesses != preferencesSnapshot.preferences.includesSystemProcesses
+            || snapshot.preferences.detailListLimit != preferencesSnapshot.preferences.detailListLimit
         preferencesSnapshot = snapshot
+        if rankingSelectionChanged { refreshProcessRanking() }
+    }
+
+    func attachRankingCache(_ cache: ProcessRankingDeliveryCache) {
+        rankingCache = cache
+    }
+
+    /// 설정과 새 조사 전달 모두 현재 선택으로 마지막 성공 표시만 다시 유도합니다.
+    /// 실패·중지 단계와 원본 시각은 그대로 둡니다.
+    func refreshProcessRanking() {
+        guard let rankingCache else { return }
+        let limit = preferencesSnapshot.preferences.detailListLimit.count
+        let includes = preferencesSnapshot.preferences.includesSystemProcesses
+        if let (display, now) = latestCPUInput,
+           let latest = display.latest, case .success(let cpu?) = latest.value.cpu {
+            let selected = rankingCache.snapshot(for: rankingCache.collectionEpoch,
+                includesSystemProcesses: includes)
+            let current = rankingCache.collectionEpoch.map { $0 >= latest.collectionEpoch } ?? false
+            let ranking = current ? selected.ranking : nil
+            let groups = current ? selected.groups : []
+            let failed = current ? selected.surveyFailed : false
+            let excluded = current ? selected.excludedCount : 0
+            let replacement = CPUCardPresentation.assemble(cpu: cpu, history: display.recentHistory,
+                topApplications: ranking?.cpuUsage ?? [],
+                topApplicationsFailed: failed, processGroups: groups,
+                detailListLimit: limit, includesSystemProcesses: includes,
+                excludedCount: excluded,
+                unreadableCount: ranking?.unreadableCount ?? 0, currentTimestamp: now)
+            cpuCard = cpuCard.replacingPresentation(with: replacement)
+        }
+        if let (display, now) = latestMemoryInput,
+           let latest = display.latest, case .success(let memory) = latest.value.memory {
+            let selected = rankingCache.snapshot(for: rankingCache.collectionEpoch,
+                includesSystemProcesses: includes)
+            let current = rankingCache.collectionEpoch.map { $0 >= latest.collectionEpoch } ?? false
+            let ranking = current ? selected.ranking : nil
+            let groups = current ? selected.groups : []
+            let failed = current ? selected.surveyFailed : false
+            let excluded = current ? selected.excludedCount : 0
+            let replacement = MemoryCardPresentation.assemble(memory: memory, history: display.recentHistory,
+                topApplications: ranking?.memoryUsage ?? [],
+                topApplicationsFailed: failed,
+                memoryIncrease: ranking?.memoryIncrease ?? [], processGroups: groups,
+                detailListLimit: limit, includesSystemProcesses: includes,
+                excludedCount: excluded,
+                unreadableCount: ranking?.unreadableCount ?? 0, currentTimestamp: now)
+            memoryCard = memoryCard.replacingPresentation(with: replacement)
+        }
     }
 
     func isCardVisible(_ card: DashboardSelection) -> Bool {
@@ -129,12 +181,14 @@ final class DashboardPresentationStore: ObservableObject {
         topApplications: [ApplicationRankingEntry],
         topApplicationsFailed: Bool = false,
         processGroups: [ApplicationProcessGroup] = [],
+        excludedCount: Int = 0, unreadableCount: Int = 0,
         currentTimestamp: ContinuousClock.Instant
     ) {
         guard let latest = displayValue.latest else { return }
 
         switch latest.value.cpu {
         case .success(let cpu?):
+            latestCPUInput = (displayValue, currentTimestamp)
             cpuCard = .normal(
                 CPUCardPresentation.assemble(
                     cpu: cpu,
@@ -142,6 +196,9 @@ final class DashboardPresentationStore: ObservableObject {
                     topApplications: topApplications,
                     topApplicationsFailed: topApplicationsFailed,
                     processGroups: processGroups,
+                    detailListLimit: preferencesSnapshot.preferences.detailListLimit.count,
+                    includesSystemProcesses: preferencesSnapshot.preferences.includesSystemProcesses,
+                    excludedCount: excludedCount, unreadableCount: unreadableCount,
                     currentTimestamp: currentTimestamp
                 ),
                 timestamp: latest.timestamp
@@ -172,12 +229,14 @@ final class DashboardPresentationStore: ObservableObject {
         topApplicationsFailed: Bool = false,
         memoryIncrease: [ApplicationRankingEntry] = [],
         processGroups: [ApplicationProcessGroup] = [],
+        excludedCount: Int = 0, unreadableCount: Int = 0,
         currentTimestamp: ContinuousClock.Instant
     ) {
         guard let latest = displayValue.latest else { return }
 
         switch latest.value.memory {
         case .success(let memory):
+            latestMemoryInput = (displayValue, currentTimestamp)
             memoryCard = .normal(
                 MemoryCardPresentation.assemble(
                     memory: memory,
@@ -186,6 +245,9 @@ final class DashboardPresentationStore: ObservableObject {
                     topApplicationsFailed: topApplicationsFailed,
                     memoryIncrease: memoryIncrease,
                     processGroups: processGroups,
+                    detailListLimit: preferencesSnapshot.preferences.detailListLimit.count,
+                    includesSystemProcesses: preferencesSnapshot.preferences.includesSystemProcesses,
+                    excludedCount: excludedCount, unreadableCount: unreadableCount,
                     currentTimestamp: currentTimestamp
                 ),
                 timestamp: latest.timestamp
@@ -224,5 +286,20 @@ final class DashboardPresentationStore: ObservableObject {
         memoryCard = .stopped(lastKnown: memoryCard.lastKnownValue)
         networkCard = networkCard.stopping()
         diskCard = diskCard.stopping()
+    }
+}
+
+private extension ResourceCardState {
+    func replacingPresentation(with presentation: Presentation) -> Self {
+        switch self {
+        case .collecting: .collecting
+        case .normal(_, let timestamp): .normal(presentation, timestamp: timestamp)
+        case .failure(let lastKnown): .failure(lastKnown: lastKnown.map {
+            LastKnownCardValue(presentation: presentation, timestamp: $0.timestamp)
+        })
+        case .stopped(let lastKnown): .stopped(lastKnown: lastKnown.map {
+            LastKnownCardValue(presentation: presentation, timestamp: $0.timestamp)
+        })
+        }
     }
 }

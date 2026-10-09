@@ -92,6 +92,12 @@ final class PreferencesStore {
            let profile = RefreshProfile(rawValue: rawProfile) {
             preferences.refreshProfile = profile
         }
+        preferences.includesSystemProcesses = boolean(dictionary["includesSystemProcesses"]) ?? preferences.includesSystemProcesses
+        if let rawLimit = dictionary["detailListLimit"] as? String,
+           let limit = DetailListLimit(rawValue: rawLimit) {
+            preferences.detailListLimit = limit
+        }
+        preferences.automaticallyClosesPopover = boolean(dictionary["automaticallyClosesPopover"]) ?? preferences.automaticallyClosesPopover
         return preferences
     }
 
@@ -111,7 +117,10 @@ final class PreferencesStore {
             "showsCPUTopApplications": preferences.showsCPUTopApplications,
             "showsMemoryTopApplications": preferences.showsMemoryTopApplications,
             "graphTimeRange": preferences.graphTimeRange.rawValue,
-            "refreshProfile": preferences.refreshProfile.rawValue
+            "refreshProfile": preferences.refreshProfile.rawValue,
+            "includesSystemProcesses": preferences.includesSystemProcesses,
+            "detailListLimit": preferences.detailListLimit.rawValue,
+            "automaticallyClosesPopover": preferences.automaticallyClosesPopover
         ]
     }
 }

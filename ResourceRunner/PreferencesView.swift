@@ -8,7 +8,7 @@ struct PreferencesView: View {
     @State private var ordinaryRestoreMessage: String?
 
     private enum SettingsFocus: Hashable {
-        case cpu, memory, network, disk, cpuTop, memoryTop, login
+        case cpu, memory, network, disk, cpuTop, memoryTop, systemProcesses, autoClose, login
 
         var shortcut: KeyEquivalent {
             switch self {
@@ -18,6 +18,8 @@ struct PreferencesView: View {
             case .disk: "4"
             case .cpuTop: "5"
             case .memoryTop: "6"
+            case .systemProcesses: "0"
+            case .autoClose: "-"
             case .login: "9"
             }
         }
@@ -30,6 +32,8 @@ struct PreferencesView: View {
             case .disk: "4"
             case .cpuTop: "5"
             case .memoryTop: "6"
+            case .systemProcesses: "0"
+            case .autoClose: "-"
             case .login: "9"
             }
         }
@@ -44,6 +48,33 @@ struct PreferencesView: View {
                 toggle("디스크", key: "SettingsDiskCard", value: \.showsDiskCard, focus: .disk)
                 toggle("CPU TOP 5 앱", key: "SettingsCPUTop5", value: \.showsCPUTopApplications, focus: .cpuTop)
                 toggle("메모리 TOP 5 앱", key: "SettingsMemoryTop5", value: \.showsMemoryTopApplications, focus: .memoryTop)
+            }
+
+            Section("프로세스 목록") {
+                toggle("읽기 가능한 시스템 프로세스 포함", key: "SettingsIncludeSystemProcesses",
+                    value: \.includesSystemProcesses, focus: .systemProcesses)
+                Text("읽을 수 없는 프로세스는 순위에 포함되지 않습니다.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Picker("상세 목록 개수", selection: preferenceBinding(\.detailListLimit)) {
+                        Text("10개").tag(DetailListLimit.ten)
+                        Text("20개").tag(DetailListLimit.twenty)
+                        Text("50개").tag(DetailListLimit.fifty)
+                    }
+                    .accessibilityIdentifier("SettingsDetailListLimit")
+                    .accessibilityLabel("상세 목록 개수")
+                    .focusable()
+                    Button("다음 개수", action: cycleDetailListLimit)
+                        .accessibilityIdentifier("SettingsNextDetailListLimit")
+                        .focusable()
+                        .onKeyPress(keys: [.space, .return]) { press in
+                            guard press.modifiers.isEmpty else { return .ignored }
+                            cycleDetailListLimit()
+                            return .handled
+                        }
+                }
+                Text("CPU·메모리 앱 목록과 최근 10분 메모리 증가량에 적용됩니다. TOP 5는 그대로 유지됩니다.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("그래프") {
@@ -92,6 +123,13 @@ struct PreferencesView: View {
                         }
                 }
                 Text("대시보드를 닫거나 저전력 상태 또는 화면 중지 중에는 자동 조절됩니다.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section("팝오버") {
+                toggle("팝오버 자동 닫기", key: "SettingsAutomaticallyClosesPopover",
+                    value: \.automaticallyClosesPopover, focus: .autoClose)
+                Text("외부 클릭 또는 다른 앱 활성화 시 대시보드를 닫습니다. 시간 경과로 닫히지는 않습니다.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -198,6 +236,12 @@ struct PreferencesView: View {
     private func refreshLogin() { loginController.refresh() }
     private func openSystemLoginSettings() { loginController.openSystemSettingsLoginItems() }
     private func unregisterLoginItem() { loginController.requestEnabled(false) }
+
+    private func cycleDetailListLimit() {
+        let limits: [DetailListLimit] = [.ten, .twenty, .fifty]
+        guard let index = limits.firstIndex(of: preferencesStore.current.preferences.detailListLimit) else { return }
+        preferencesStore.update { $0.detailListLimit = limits[(index + 1) % limits.count] }
+    }
 
     private func cycleGraphRange() {
         let ranges: [GraphTimeRange] = [.oneMinute, .fiveMinutes, .tenMinutes]

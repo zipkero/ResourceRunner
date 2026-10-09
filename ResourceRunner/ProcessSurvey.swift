@@ -16,11 +16,18 @@ nonisolated struct ProcessIdentity: Sendable, Equatable, Hashable {
     let startTime: TimeInterval
 }
 
-/// 사용자 소유 프로세스 한 개의 조사 결과.
+/// 조사 당시 유효 UID와의 관계. 누락된 소속을 현재 사용자로 추정하지 않습니다.
+nonisolated enum ProcessOwnership: Sendable, Equatable {
+    case currentUser
+    case otherUser
+    case unknown
+}
+
+/// 읽을 수 있는 프로세스 한 개의 조사 결과.
 nonisolated struct ProcessSample: Sendable, Equatable {
     let identity: ProcessIdentity
     let executablePath: String
-    let uid: uid_t
+    let uid: uid_t?
     let parentPID: pid_t
     /// 누적 User+System CPU 시간(나노초).
     /// `proc_pidinfo(PROC_PIDTASKINFO)`의 원값은 mach absolute time이라 조사 경계에서 나노초로 변환된 값입니다.
@@ -30,6 +37,8 @@ nonisolated struct ProcessSample: Sendable, Equatable {
     /// `P_TRANSLATED` 플래그로 판정한 Rosetta 실행 여부.
     /// 프로세스 열거 단계에서 이미 얻은 값이라 추가 시스템 호출 없이 채워집니다.
     let isTranslated: Bool
+    /// 열거 시점 UID와 같은 조사의 유효 UID를 비교한 결과입니다.
+    var ownership: ProcessOwnership = .unknown
 }
 
 /// 성공한 한 번의 조사 결과 전체.
@@ -37,6 +46,9 @@ nonisolated struct ProcessSample: Sendable, Equatable {
 nonisolated struct ProcessSurveyReport: Sendable, Equatable {
     let samples: [ProcessSample]
     let unreadableCount: Int
+    /// 기본 현재 사용자 자료에 해당하는 실패 수. UID 미확인 실패도 보수적으로 포함합니다.
+    /// 기존 합성 입력의 누락은 종전 전체 실패 수로 해석합니다.
+    var currentUserUnreadableCount: Int? = nil
 }
 
 /// 한 tick의 프로세스 조사 결과.

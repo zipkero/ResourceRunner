@@ -1,0 +1,237 @@
+--- a/ResourceRunner/AppDelegate.swift
++++ b/ResourceRunner/AppDelegate.swift
+@@ -61,6 +61,13 @@
+         loginItemController = login
+         coordinator = ApplicationCoordinator(preferencesStore: preferences,
+             loginItemController: login)
++#if DEBUG
++        if ProcessInfo.processInfo.arguments.contains("--task015-probe") {
++            Task015Probe.emit("probe-ready pid=\(getpid())")
++            coordinator?.statusBarController.togglePopover()
++            Task015Probe.emit("popover-shown=\(coordinator?.statusBarController.popover.isShown ?? false)")
++        }
++#endif
+     }
+ 
+     func applicationDidBecomeActive(_ notification: Notification) {
+--- a/ResourceRunner/MonitoringLifecycle.swift
++++ b/ResourceRunner/MonitoringLifecycle.swift
+@@ -346,6 +346,9 @@
+         let plan = CollectionSchedulePolicy.plan(for: lifecycle,
+             definition: profile.map(CollectionScheduleDefinition.profile) ?? definition)
+         let previousPlan = lastAppliedPlan
++#if DEBUG
++        Task015Probe.emit("lifecycle-plan snapshot=\(lifecycle) plan=\(plan) previous=\(String(describing: previousPlan))")
++#endif
+         let stopped = plan.systemMetrics == .paused
+         let changedStop = previousPlan != nil && stopped != lastBoundary.stopped
+         let snapshotSequence: Int
+@@ -360,6 +363,9 @@
+             lastBoundary = boundary
+             // 취소나 target의 await보다 먼저 모든 축의 실행권을 끊습니다.
+             admission.transition(boundary)
++#if DEBUG
++            Task015Probe.emit("boundary value=\(boundary) plan=\(plan)")
++#endif
+             collectionBoundaryContinuation.yield(boundary)
+         } else if previousPlan == nil {
+             let boundary = CollectionBoundary(revision: revision, sequence: sequence,
+@@ -371,6 +377,9 @@
+         guard plan != previousPlan || boundaryChanged else { return }
+         lastAppliedPlan = plan
+         planRevision += 1
++#if DEBUG
++        Task015Probe.emit("applied-plan revision=\(planRevision) boundary=\(lastBoundary) plan=\(plan)")
++#endif
+         let revisionForTargets = planRevision
+         let applySystem = plan.systemMetrics != previousPlan?.systemMetrics || boundaryChanged
+         let applyProcess = plan.processSurvey != previousPlan?.processSurvey || boundaryChanged
+--- a/ResourceRunner/SystemLifecycleObserver.swift
++++ b/ResourceRunner/SystemLifecycleObserver.swift
+@@ -84,6 +84,9 @@
+ 
+     /// 이벤트 하나를 현재 snapshot에 병합합니다. 값이 바뀔 때만 revision을 올리고 stream에 내보냅니다.
+     func apply(_ change: SystemLifecycleFieldChange) {
++#if DEBUG
++        Task015Probe.emit("lifecycle-change event=\(change)")
++#endif
+         // 현재 snapshot 전체를 복사해 두고 이벤트가 가리키는 필드 하나만 교체합니다.
+         // 그래야 필드가 늘어나도 한 필드의 갱신이 다른 필드의 최신값을 되돌리는 경로가 생기지 않습니다.
+         var lowPowerMode = currentSnapshot.lowPowerMode
+@@ -133,6 +136,9 @@
+             boundarySequence: boundarySequence
+         )
+         currentSnapshot = updated
++#if DEBUG
++        Task015Probe.emit("lifecycle-snapshot value=\(updated)")
++#endif
+         continuation.yield(updated)
+     }
+ }
+@@ -346,6 +352,7 @@
+         }
+ 
+         registerScreenLockObserver { state in
++            Task015Probe.emit("native-screen-lock state=\(state)")
+             rawContinuation.yield(.screenLock(state))
+         }
+ 
+@@ -359,6 +366,7 @@
+             (NSWorkspace.didWakeNotification, .didWake),
+         ].map { name, change in
+             workspaceNotificationCenter.addObserver(forName: name, object: nil, queue: nil) { _ in
++                Task015Probe.emit("native-workspace-notification name=\(name.rawValue) event=\(change)")
+                 rawContinuation.yield(change)
+             }
+         }
+--- a/ResourceRunner/NetworkActivity.swift
++++ b/ResourceRunner/NetworkActivity.swift
+@@ -104,6 +104,10 @@
+                 rateSegment: next.segment)
+             return commit(sample, next: next, context: context, topologyRevision: nil)
+         }
++#if DEBUG
++        let raw = snapshot.interfaces.map { "\($0.key.name):rx=\($0.raw.receivedBytes):tx=\($0.raw.sentBytes)" }.joined(separator: "|")
++        Task015Probe.emit("network-raw epoch=\(collectionEpoch) readAt=\(snapshot.readAt) rev=\(snapshot.topologyRevision) counters=[\(raw)]")
++#endif
+         let view = if let metadata { await metadata.classifications(for: snapshot) }
+             else { NetworkClassificationView(records: [:], complete: false) }
+         if let context, admission?.isCurrent(context) != true { return nil }
+@@ -301,6 +305,9 @@
+     }
+ 
+     func append(_ sample: TimestampedSample<NetworkActivitySample>) {
++#if DEBUG
++        Task015Probe.accepted("networkActivity", epoch: sample.collectionEpoch)
++#endif
+         latest = sample
+         if let rate = sample.value.representative {
+             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+@@ -309,6 +316,9 @@
+                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
+                 maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
+         }
++#if DEBUG
++        Task015Probe.emit("network-store readAt=\(sample.value.readAt) status=\(sample.value.status) rate=\(String(describing: sample.value.representative)) known=\(String(describing: sample.value.knownPhysicalRates)) targets=\(sample.value.interfaces.map { "\($0.key.name):\(String(describing: $0.rate))" }) segment=\(sample.value.rateSegment) historyCount=\(history.count) historyLast=\(String(describing: history.elements.last))")
++#endif
+         continuation.yield(snapshot(at: sample.value.readAt))
+     }
+ 
+--- a/ResourceRunner/DiskActivity.swift
++++ b/ResourceRunner/DiskActivity.swift
+@@ -110,6 +110,10 @@
+             if let beforeCommit { await beforeCommit() }
+             return commit(sample, next: next, context: context, expectedTopologyRevision: startRevision)
+         }
++#if DEBUG
++        let raw = snapshot.devices.map { "\($0.registryID):names=\($0.bsdNames.sorted()):read=\(String(describing: $0.readBytes)):write=\(String(describing: $0.writtenBytes))" }.joined(separator: "|")
++        Task015Probe.emit("disk-raw epoch=\(epoch) readAt=\(snapshot.readAt) rev=\(snapshot.topologyRevision) counters=[\(raw)]")
++#endif
+         let (sample, next) = calculate(snapshot, epoch: epoch,
+             maximumGap: SystemMetricsSampling.maximumTickGap(for: context?.interval ?? .seconds(1)))
+         if let beforeCommit { await beforeCommit() }
+@@ -292,6 +296,9 @@
+     }
+ 
+     func append(_ sample: TimestampedSample<DiskActivitySample>) {
++#if DEBUG
++        Task015Probe.accepted("diskActivity", epoch: sample.collectionEpoch)
++#endif
+         latest = sample
+         if let rate = sample.value.representative {
+             if firstHistoryPointAt == nil { firstHistoryPointAt = sample.value.readAt }
+@@ -300,6 +307,9 @@
+                 collectionEpoch: sample.collectionEpoch, rateSegment: sample.value.rateSegment,
+                 maximumConnectedGap: SystemMetricsSampling.maximumTickGap(for: sample.context?.interval ?? .seconds(1))))
+         }
++#if DEBUG
++        Task015Probe.emit("disk-store readAt=\(sample.value.readAt) status=\(sample.value.status) rate=\(String(describing: sample.value.representative)) segment=\(sample.value.rateSegment) historyCount=\(history.count) historyLast=\(String(describing: history.elements.last))")
++#endif
+         continuation.yield(snapshot(at: sample.value.readAt))
+     }
+ 
+--- a/ResourceRunner/MonitoringSampleStore.swift
++++ b/ResourceRunner/MonitoringSampleStore.swift
+@@ -185,6 +185,9 @@
+     /// 최신 스냅샷은 매 tick 교체되고, 이력 링에는 전체 CPU 사용률과 Swap 값이 모두 있는 tick만 추가됩니다.
+     /// 값을 만들지 못한 tick(`.success(nil)`)과 실패한 tick은 링에 들어가지 않으므로 그 시각이 이력에서 비어 있게 됩니다.
+     func append(_ sample: TimestampedSample<SystemMetricsSample>) {
++#if DEBUG
++        Task015Probe.accepted("systemMetrics", epoch: sample.collectionEpoch)
++#endif
+         latest = sample
+         if case .success(.some) = sample.value.cpu {} else { cpuRateSegment &+= 1 }
+         if let point = Self.historyPoint(from: sample, rateSegment: cpuRateSegment) {
+@@ -202,6 +205,7 @@
+         }
+         continuation.yield(snapshot())
+ #if DEBUG
++        Task015Probe.emit("system-store epoch=\(sample.collectionEpoch) cpu=\(sample.value.cpu) memory=\(sample.value.memory) historyCount=\(history.count) historyLast=\(String(describing: history.elements.last))")
+         // 로그 자체는 실기기 관찰에만 필요하고 이 actor의 임계 구간에 영향을 주면 안 되므로,
+         // `notice` 호출을 별도 Task로 분리합니다. 여기서 직접(동기적으로) 호출하면 로깅 시스템
+         // 호출 지연이 그대로 이 actor 차례를 늦춰 `ManualMonotonicClock` 기반 타이밍 테스트의
+--- a/ResourceRunner/ProcessHistoryStore.swift
++++ b/ResourceRunner/ProcessHistoryStore.swift
+@@ -128,6 +128,9 @@
+     /// 관찰된 정체성이 없는 것으로 처리하면 아래 제거 단계가 이력 전체를 지워
+     /// 조사 한 번 실패에 그동안 쌓은 CPU 기준점과 메모리 기준점이 모두 사라집니다.
+     func append(_ sample: TimestampedSample<ProcessSurveySample>) {
++#if DEBUG
++        Task015Probe.accepted("processSurvey", epoch: sample.collectionEpoch)
++#endif
+         let timestamp = sample.timestamp
+ 
+         guard case .success(let report) = sample.value.result else {
+--- a/ResourceRunner/NetworkMetadata.swift
++++ b/ResourceRunner/NetworkMetadata.swift
+@@ -170,6 +170,9 @@
+     }
+ 
+     func append(_ sample: TimestampedSample<NetworkMetadataResult>) {
++#if DEBUG
++        Task015Probe.accepted("networkMetadata", epoch: sample.collectionEpoch)
++#endif
+         latest = sample
+         if case .available(let value) = sample.value { lastKnown = value }
+         continuation.yield(NetworkMetadataStatus(latest: latest, lastKnown: lastKnown))
+--- a/ResourceRunner/StorageMetadata.swift
++++ b/ResourceRunner/StorageMetadata.swift
+@@ -166,6 +166,9 @@
+     }
+ 
+     func append(_ sample: TimestampedSample<StorageMetadataResult>) {
++#if DEBUG
++        Task015Probe.accepted("storageMetadata", epoch: sample.collectionEpoch)
++#endif
+         latest = sample
+         if case .available(let snapshot) = sample.value { lastKnown = snapshot }
+         continuation.yield(status())
+--- a/ResourceRunner/Task015Probe.swift
++++ b/ResourceRunner/Task015Probe.swift
+@@ -0,0 +1,26 @@
++import Foundation
++
++// 임시 진단 복사본만 사용합니다. 수집 수락 수는 저장소 반영 시점에 센 값입니다.
++nonisolated enum Task015Probe {
++    private final class State: @unchecked Sendable {
++        let lock = NSLock()
++        var counts: [String: Int] = [:]
++    }
++    private static let state = State()
++
++    static func emit(_ event: String) {
++        guard ProcessInfo.processInfo.arguments.contains("--task015-probe") else { return }
++        let line = "TASK015 wall=\(Date().ISO8601Format()) \(event)\n"
++        FileHandle.standardOutput.write(Data(line.utf8))
++    }
++
++    static func accepted(_ axis: String, epoch: Int, detail: String = "") {
++        guard ProcessInfo.processInfo.arguments.contains("--task015-probe") else { return }
++        let count = state.lock.withLock { () -> Int in
++            let next = (state.counts[axis] ?? 0) + 1
++            state.counts[axis] = next
++            return next
++        }
++        emit("accepted axis=\(axis) count=\(count) epoch=\(epoch) \(detail)")
++    }
++}

@@ -1,0 +1,1390 @@
+diff --git a/ResourceRunner/ApplicationCoordinator.swift b/ResourceRunner/ApplicationCoordinator.swift
+index 6fc2e64..6a7f327 100644
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -154,6 +154,7 @@ final class ApplicationCoordinator {
+         collectionPipelines = pipelines
+         collectionDeliveryStore = CollectionDeliveryStore()
+         processRankingCache = ProcessRankingDeliveryCache()
++        dashboard.attachRankingCache(processRankingCache)
+         preferencesBinding = PreferencesPipelineBinding(store: preferencesStore,
+             dashboard: dashboard, lifecycle: pipelines.lifecycle)
+         topologyObserver = ResourceTopologyObserver(networkTopology: networkTopology,
+@@ -202,7 +203,7 @@ final class ApplicationCoordinator {
+         characterStateTask = Self.consume(characterStateSource, into: sink)
+ 
+         processRankingTask = Self.consumeProcessRanking(pipelines.processStore,
+-            into: processRankingCache, admission: admission)
++            into: processRankingCache, dashboard: dashboard, admission: admission)
+         cpuActivityTask = Self.consumeSystemMetrics(
+             pipelines.systemStore,
+             into: characterStateSource,
+@@ -281,28 +282,28 @@ final class ApplicationCoordinator {
+                 var processGroups: [ApplicationProcessGroup] = []
+                 var nextResolver: ApplicationIdentityResolver?
+                 var surveyFailed = false
++                var excludedCount = 0
+                 if let rankingCache {
+-                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch)
++                    let current = rankingCache.snapshot(for: displayValue.latest?.collectionEpoch,
++                        includesSystemProcesses: dashboard.preferencesSnapshot.preferences.includesSystemProcesses)
+                     ranking = current.ranking
+                     processGroups = current.groups
+                     surveyFailed = current.surveyFailed
++                    excludedCount = current.excludedCount
+                 } else if let processHistory {
+                     let input = await processHistory.rankingInput()
+                     surveyFailed = input.surveyFailed
+-                    let computed = ApplicationRanking.compute(
++                    let computed = ApplicationRanking.materials(
+                         snapshots: input.snapshots,
+                         currentTimestamp: now,
+                         unreadableCount: input.unreadableCount,
++                        currentUserUnreadableCount: input.currentUserUnreadableCount,
+                         resolver: resolver
+                     )
+-                    // 두 계산이 같은 resolver를 이어받아야 앱 키 유도가 서로 다른 결과를 내지 않습니다.
+-                    let grouped = ApplicationRanking.groupByApplication(
+-                        snapshots: input.snapshots,
+-                        resolver: computed.resolver
+-                    )
+-                    nextResolver = grouped.resolver
+-                    ranking = computed.sample
+-                    processGroups = grouped.groups
++                    nextResolver = computed.resolver
++                    ranking = computed.materials.currentUser.ranking
++                    processGroups = computed.materials.currentUser.groups
++                    excludedCount = computed.materials.currentUser.excludedCount
+                 }
+ 
+                 @MainActor func updateDisplay() {
+@@ -312,6 +313,7 @@ final class ApplicationCoordinator {
+                         topApplications: ranking?.cpuUsage ?? [],
+                         topApplicationsFailed: surveyFailed,
+                         processGroups: processGroups,
++                        excludedCount: excludedCount, unreadableCount: ranking?.unreadableCount ?? 0,
+                         currentTimestamp: now
+                     )
+                     dashboard.updateMemoryCard(
+@@ -320,6 +322,7 @@ final class ApplicationCoordinator {
+                         topApplicationsFailed: surveyFailed,
+                         memoryIncrease: ranking?.memoryIncrease ?? [],
+                         processGroups: processGroups,
++                        excludedCount: excludedCount, unreadableCount: ranking?.unreadableCount ?? 0,
+                         currentTimestamp: now
+                     )
+                     guard let latest = displayValue.latest,
+@@ -362,6 +365,7 @@ final class ApplicationCoordinator {
+     /// 프로세스 순위의 actor 조회·집계를 시스템 tick에서 분리해 CPU·Memory와 메뉴바 소비를 기다리게 하지 않습니다.
+     static func consumeProcessRanking(_ store: ProcessHistoryStore,
+                                       into cache: ProcessRankingDeliveryCache,
++                                      dashboard: DashboardPresentationStore? = nil,
+                                       admission: CollectionAdmission? = nil,
+                                       beforeRankingCompute: (@Sendable () async -> Void)? = nil) -> Task<Void, Never> {
+         let updates = store.rankingUpdates
+@@ -369,30 +373,31 @@ final class ApplicationCoordinator {
+             var resolver = ApplicationIdentityResolver()
+             for await input in updates {
+                 if let beforeRankingCompute { await beforeRankingCompute() }
+-                let computed = ApplicationRanking.compute(snapshots: input.snapshots,
++                let computed = ApplicationRanking.materials(snapshots: input.snapshots,
+                     currentTimestamp: input.timestamp, unreadableCount: input.unreadableCount,
++                    currentUserUnreadableCount: input.currentUserUnreadableCount,
+                     resolver: resolver)
+-                let grouped = ApplicationRanking.groupByApplication(snapshots: input.snapshots,
+-                    resolver: computed.resolver)
+                 let accepted = await MainActor.run { () -> Bool in
+                     if let context = input.context, let admission {
+-                        return admission.admitDisplay(context, timestamp: input.timestamp) {
+-                            cache.update(ranking: computed.sample, groups: grouped.groups,
++                        return admission.admitDisplayOptional(context, timestamp: input.timestamp) {
++                            let updated = cache.update(materials: computed.materials,
+                                 surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+-                                collectionEpoch: context.epoch)
++                                collectionEpoch: context.epoch, deliverySequence: input.deliverySequence)
+ #if DEBUG
+-                            debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)")
++                            if updated { debugPipelineLogger.notice("delivered axis=processSurvey epoch=\(context.epoch) failed=\(input.surveyFailed)") }
+ #endif
+-                            return true
++                            return updated ? true : nil
+                         } ?? false
+                     } else {
+-                        cache.update(ranking: computed.sample, groups: grouped.groups,
++                        return cache.update(materials: computed.materials,
+                             surveyFailed: input.surveyFailed, timestamp: input.timestamp,
+-                            collectionEpoch: input.context?.epoch)
+-                        return true
++                            collectionEpoch: input.context?.epoch, deliverySequence: input.deliverySequence)
+                     }
+                 }
+-                if accepted { resolver = grouped.resolver }
++                if accepted {
++                    resolver = computed.resolver
++                    await MainActor.run { dashboard?.refreshProcessRanking() }
++                }
+             }
+         }
+     }
+diff --git a/ResourceRunner/ApplicationRanking.swift b/ResourceRunner/ApplicationRanking.swift
+index 450abaa..9a946f4 100644
+--- a/ResourceRunner/ApplicationRanking.swift
++++ b/ResourceRunner/ApplicationRanking.swift
+@@ -106,8 +106,14 @@ nonisolated enum ApplicationRankingSampling {
+     /// 정원 숫자에 맞춘 "시스템 프로세스는 TOP N에 포함되지 않습니다" 상세 안내 문구를 만드는 순수 함수.
+     /// 상세 목록마다 정원이 달라질 수 있으므로, 정원 숫자를 문구 문자열에 직접 박아 넣으면
+     /// 정원이 바뀌어도 문구가 그 자리를 따라오지 못합니다.
+-    static func topApplicationsCaption(count: Int) -> String {
+-        "시스템 프로세스는 TOP \(count)에 포함되지 않습니다"
++    static func topApplicationsCaption(count: Int, includesSystemProcesses: Bool = false,
++                                       excludedCount: Int = 0, unreadableCount: Int = 0) -> String {
++        let scope = includesSystemProcesses
++            ? "읽기 가능한 시스템 프로세스를 포함한 TOP \(count)"
++            : "시스템 프로세스는 TOP \(count)에 포함되지 않습니다"
++        let excluded = excludedCount > 0 ? " · 소속 기준 제외 \(excludedCount)개" : ""
++        let unreadable = unreadableCount > 0 ? " · 읽기 실패 \(unreadableCount)개" : ""
++        return scope + excluded + unreadable
+     }
+ 
+     /// 카드 순위 목록의 화면 머리글. 목록의 이름표만 담고 정원 숫자도 제외 규칙도 담지 않습니다.
+@@ -116,8 +122,12 @@ nonisolated enum ApplicationRankingSampling {
+     /// 카드 순위 목록의 접근성용 문구를 만드는 순수 함수. 카드는 하위 요소를 무시해 접근성 이름이
+     /// 순위 목록에 닿는 유일한 경로이므로, 화면 머리글과 달리 정원과 제외 사실을 그대로 담습니다.
+     /// 화면 머리글과 같은 문자열을 나눠 쓰면 한쪽을 줄일 때 다른 쪽 정보도 함께 사라집니다.
+-    static func cardTopApplicationsAccessibilityText(count: Int) -> String {
+-        "앱 TOP \(count) · 시스템 프로세스 제외"
++    static func cardTopApplicationsAccessibilityText(count: Int, includesSystemProcesses: Bool = false,
++                                                     excludedCount: Int = 0, unreadableCount: Int = 0) -> String {
++        let scope = includesSystemProcesses ? "읽기 가능한 시스템 프로세스 포함" : "시스템 프로세스 제외"
++        let excluded = excludedCount > 0 ? " · 소속 기준 제외 \(excludedCount)개" : ""
++        let unreadable = unreadableCount > 0 ? " · 읽기 실패 \(unreadableCount)개" : ""
++        return "앱 TOP \(count) · " + scope + excluded + unreadable
+     }
+ 
+     /// 상세 앱 목록 머리글을 만드는 순수 함수. 어떤 지표의 순위이고 정원이 얼마인지 한 문구에 담아,
+@@ -135,8 +145,7 @@ nonisolated struct ApplicationRankingEntry: Sendable, Equatable {
+     let value: Double
+ }
+ 
+-/// 앱 집계와 순위 계산 결과. 정원은 `ApplicationRankingSampling.detailCount`이며,
+-/// 그중 앞 `cardDisplayCount`개만 카드에 표시됩니다.
++/// 앱 집계와 순위 계산 결과. 수집 경계에서는 전체를 보관하고 표시 경계에서 정원을 적용합니다.
+ /// 현재 사용량과 최근 증가량이 서로 다른 목록으로 담기고, 읽지 못한 프로세스 수가 함께 전달됩니다.
+ nonisolated struct ApplicationRankingSample: Sendable, Equatable {
+     /// CPU 사용량 순위. 정체성별 최근 세 개 값 평균을 앱 키로 합산한 값입니다.
+@@ -150,9 +159,45 @@ nonisolated struct ApplicationRankingSample: Sendable, Equatable {
+     let unreadableCount: Int
+ }
+ 
++/// 같은 조사에서 만든 현재 사용자 전용/읽기 성공 전체 자료입니다.
++nonisolated struct ProcessRankingMaterial: Sendable {
++    let ranking: ApplicationRankingSample
++    let groups: [ApplicationProcessGroup]
++    let excludedCount: Int
++}
++
++nonisolated struct ProcessRankingMaterials: Sendable {
++    let currentUser: ProcessRankingMaterial
++    let allReadable: ProcessRankingMaterial
++}
++
+ /// 조사 결과와 정체성별 이력에서 앱 단위 순위를 계산하는 순수 함수.
+ /// 상태를 갖지 않으며, 앱 키 유도 캐시(`ApplicationIdentityResolver`)만 호출자가 이어서 넘겨받습니다.
+ nonisolated enum ApplicationRanking {
++    /// 소속을 먼저 선별하므로 같은 앱의 다른 UID 자식은 기본 합계와 하위 목록에 들어오지 않습니다.
++    static func materials(
++        snapshots: [ProcessHistorySnapshot],
++        currentTimestamp: ContinuousClock.Instant,
++        unreadableCount: Int,
++        currentUserUnreadableCount: Int? = nil,
++        resolver: ApplicationIdentityResolver
++    ) -> (materials: ProcessRankingMaterials, resolver: ApplicationIdentityResolver) {
++        let current = snapshots.filter { $0.ownership == .currentUser }
++        let readable = snapshots.filter { $0.ownership != .unknown }
++        let currentRanking = compute(snapshots: current, currentTimestamp: currentTimestamp,
++                                     unreadableCount: currentUserUnreadableCount ?? unreadableCount, resolver: resolver)
++        let currentGroups = groupByApplication(snapshots: current, resolver: currentRanking.resolver)
++        let allRanking = compute(snapshots: readable, currentTimestamp: currentTimestamp,
++                                 unreadableCount: unreadableCount, resolver: currentGroups.resolver)
++        let allGroups = groupByApplication(snapshots: readable, resolver: allRanking.resolver)
++        return (ProcessRankingMaterials(
++            currentUser: ProcessRankingMaterial(ranking: currentRanking.sample, groups: currentGroups.groups,
++                                                excludedCount: snapshots.count - current.count),
++            allReadable: ProcessRankingMaterial(ranking: allRanking.sample, groups: allGroups.groups,
++                                                excludedCount: snapshots.count - readable.count)
++        ), allGroups.resolver)
++    }
++
+     /// - Parameters:
+     ///   - snapshots: `ProcessHistoryStore.snapshot()`이 돌려준 정체성별 이력.
+     ///   - currentTimestamp: 이번 조사 시각. 10분 창의 오른쪽 끝으로 씁니다.
+@@ -218,7 +263,7 @@ nonisolated enum ApplicationRanking {
+         let sorted = entries.sorted { lhs, rhs in
+             lhs.value != rhs.value ? lhs.value > rhs.value : lhs.key.value < rhs.key.value
+         }
+-        return Array(sorted.prefix(ApplicationRankingSampling.detailCount))
++        return sorted
+     }
+ 
+     /// 정체성 하나의 순간값을 평활화한 값. `compute(_:)`의 순위 집계와 `groupByApplication(_:)`의 상세 표시가
+@@ -255,6 +300,9 @@ nonisolated struct ApplicationProcessDetail: Sendable, Equatable {
+     /// `ApplicationRanking.smoothedRecentValues(for:)`가 계산한 최근 값 평균입니다.
+     let residentBytes: UInt64
+     let isTranslated: Bool
++    /// 조사 당시 UID. 소속이 다른 자식 행도 원래 UID를 잃지 않습니다.
++    var uid: uid_t? = nil
++    var ownership: ProcessOwnership = .unknown
+ }
+ 
+ extension ApplicationProcessDetail {
+@@ -311,6 +359,15 @@ nonisolated enum ApplicationProcessGroupOrdering {
+     ///   그 사이 사라진 앱은 빠지고 새로 나타난 앱은 뒤에 붙은 목록을 만든 뒤, 두 경우 모두 `cap`개로 자른 결과.
+     ///   순서 고정보다 자르기를 먼저 적용하면 고정된 순서 뒤쪽에 있던 앱이 최신 정렬에서 앞으로 와도
+     ///   자르기에서 먼저 잘려나가 고정된 순서와 어긋나므로, 반드시 순서를 고정한 뒤에 자릅니다.
++    static func visibleExpandedKeys(
++        groups: [ApplicationProcessGroup], stableOrder: [ApplicationKey],
++        expandedKeys: Set<ApplicationKey>, cap: Int
++    ) -> Set<ApplicationKey> {
++        let visible = displayedGroups(groups: groups, stableOrder: stableOrder,
++            hasExpandedRow: !expandedKeys.isEmpty, cap: cap)
++        return expandedKeys.intersection(Set(visible.map(\.key)))
++    }
++
+     static func displayedGroups(
+         groups: [ApplicationProcessGroup],
+         stableOrder: [ApplicationKey],
+@@ -378,7 +435,9 @@ extension ApplicationRanking {
+                     executableName: ApplicationIdentityResolver.executableName(from: snapshot.executablePath),
+                     cpuUsagePercent: smoothed.cpuUsagePercent,
+                     residentBytes: UInt64(smoothed.residentBytes.rounded()),
+-                    isTranslated: snapshot.isTranslated
++                    isTranslated: snapshot.isTranslated,
++                    uid: snapshot.uid,
++                    ownership: snapshot.ownership
+                 )
+             )
+         }
+diff --git a/ResourceRunner/CollectionDeliveryStore.swift b/ResourceRunner/CollectionDeliveryStore.swift
+index f208138..ffa97d4 100644
+--- a/ResourceRunner/CollectionDeliveryStore.swift
++++ b/ResourceRunner/CollectionDeliveryStore.swift
+@@ -18,25 +18,35 @@ final class CollectionDeliveryStore {
+ /// 프로세스 순위 계산은 시스템 tick 소비와 독립적으로 진행합니다. 메뉴바 판정은 이 캐시를 기다리지 않습니다.
+ @MainActor
+ final class ProcessRankingDeliveryCache {
+-    private(set) var ranking: ApplicationRankingSample?
+-    private(set) var groups: [ApplicationProcessGroup] = []
++    private(set) var materials: ProcessRankingMaterials?
++    var ranking: ApplicationRankingSample? { materials?.currentUser.ranking }
++    var groups: [ApplicationProcessGroup] { materials?.currentUser.groups ?? [] }
+     private(set) var surveyFailed = false
+     private(set) var timestamp: ContinuousClock.Instant?
+     private(set) var collectionEpoch: Int?
++    private(set) var deliverySequence: UInt64 = 0
+ 
+-    func update(ranking: ApplicationRankingSample?, groups: [ApplicationProcessGroup],
++    @discardableResult
++    func update(materials: ProcessRankingMaterials,
+                 surveyFailed: Bool, timestamp: ContinuousClock.Instant,
+-                collectionEpoch: Int?) {
+-        self.ranking = ranking
+-        self.groups = groups
++                collectionEpoch: Int?, deliverySequence: UInt64) -> Bool {
++        if let collectionEpoch, let previousEpoch = self.collectionEpoch,
++           collectionEpoch < previousEpoch { return false }
++        if collectionEpoch == self.collectionEpoch, self.timestamp != nil {
++            guard timestamp >= self.timestamp!, deliverySequence > self.deliverySequence else { return false }
++        }
++        self.materials = materials
+         self.surveyFailed = surveyFailed
+         self.timestamp = timestamp
+         self.collectionEpoch = collectionEpoch
++        self.deliverySequence = deliverySequence
++        return true
+     }
+ 
+-    func snapshot(for epoch: Int?) -> (ranking: ApplicationRankingSample?,
+-                                       groups: [ApplicationProcessGroup], surveyFailed: Bool) {
+-        guard let epoch, epoch == collectionEpoch else { return (nil, [], false) }
+-        return (ranking, groups, surveyFailed)
++    func snapshot(for epoch: Int?, includesSystemProcesses: Bool = false) -> (ranking: ApplicationRankingSample?,
++                                       groups: [ApplicationProcessGroup], surveyFailed: Bool, excludedCount: Int) {
++        guard let epoch, epoch == collectionEpoch else { return (nil, [], false, 0) }
++        let selected = includesSystemProcesses ? materials?.allReadable : materials?.currentUser
++        return (selected?.ranking, selected?.groups ?? [], surveyFailed, selected?.excludedCount ?? 0)
+     }
+ }
+diff --git a/ResourceRunner/DashboardPresentation.swift b/ResourceRunner/DashboardPresentation.swift
+index 2767475..f5fe3b0 100644
+--- a/ResourceRunner/DashboardPresentation.swift
++++ b/ResourceRunner/DashboardPresentation.swift
+@@ -246,6 +246,9 @@ nonisolated struct CPUCardPresentation: Sendable, Equatable {
+     /// 이 tick의 프로세스 조사가 실패했는지. 실패해도 시스템 지표 수치(전체 사용률 등)는 그대로 표시되고
+     /// TOP 5만 실패를 나타냅니다(task-011, ANALYSIS §2 「실패 경로」).
+     let topApplicationsFailed: Bool
++    let includesSystemProcesses: Bool
++    let excludedProcessCount: Int
++    let unreadableProcessCount: Int
+     /// 카드를 선택했을 때만 쓰이는 상세 지표(task-010, SPEC §5.2).
+     let detail: CPUCardDetail
+ }
+@@ -260,6 +263,7 @@ nonisolated struct CPUCardDetail: Sendable, Equatable {
+     /// 앱 단위로 묶은 하위 프로세스 목록. 앱 항목을 펼치면 이 목록이 나타납니다(ANALYSIS §2 「팝오버 열림과 카드 선택」).
+     /// CPU 사용량 순위 역할도 겸하므로 순위 전용 필드를 따로 두지 않습니다(ANALYSIS §5 DP1).
+     let applications: [ApplicationProcessGroup]
++    let applicationsLimit: Int
+     /// `applications` 목록의 머리글. 어떤 지표의 순위이고 정원이 얼마인지 알립니다(ANALYSIS §5 DP1, DP2).
+     let applicationsHeading: String
+     /// `applications` 목록 머리글 아래 안내 줄. 정원을 뷰가 고르지 않도록 조립 시점에 만들어 둡니다.
+@@ -307,6 +311,9 @@ extension CPUCardPresentation {
+         topApplications: [ApplicationRankingEntry],
+         topApplicationsFailed: Bool = false,
+         processGroups: [ApplicationProcessGroup] = [],
++        detailListLimit: Int = ApplicationRankingSampling.detailCount,
++        includesSystemProcesses: Bool = false,
++        excludedCount: Int = 0, unreadableCount: Int = 0,
+         currentTimestamp: ContinuousClock.Instant
+     ) -> CPUCardPresentation {
+         let windowStart = currentTimestamp - HistoryCapacity.defaultTimeRange
+@@ -330,17 +337,21 @@ extension CPUCardPresentation {
+             graphPoints: graphPoints,
+             topApplications: Array(topApplications.prefix(ApplicationRankingSampling.cardDisplayCount)),
+             topApplicationsFailed: topApplicationsFailed,
++            includesSystemProcesses: includesSystemProcesses,
++            excludedProcessCount: excludedCount, unreadableProcessCount: unreadableCount,
+             detail: CPUCardDetail(
+                 idleRatio: cpu.idleRatio,
+                 coreUsages: cpu.coreUsages,
+                 loadAverage: cpu.loadAverage,
+                 applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .cpuUsage),
++                applicationsLimit: detailListLimit,
+                 applicationsHeading: ApplicationRankingSampling.applicationListHeading(
+                     metricLabel: "CPU 사용량 순위, 합계 내림차순",
+-                    count: ApplicationRankingSampling.detailCount
++                    count: detailListLimit
+                 ),
+                 applicationsExclusionNote: ApplicationRankingSampling.topApplicationsCaption(
+-                    count: ApplicationRankingSampling.detailCount
++                    count: detailListLimit, includesSystemProcesses: includesSystemProcesses,
++                    excludedCount: excludedCount, unreadableCount: unreadableCount
+                 )
+             )
+         )
+@@ -1092,6 +1103,9 @@ nonisolated struct MemoryCardPresentation: Sendable, Equatable {
+     let topApplications: [ApplicationRankingEntry]
+     /// 이 tick의 프로세스 조사가 실패했는지. CPU 카드의 같은 필드와 같은 뜻입니다(task-011).
+     let topApplicationsFailed: Bool
++    let includesSystemProcesses: Bool
++    let excludedProcessCount: Int
++    let unreadableProcessCount: Int
+     /// 카드를 선택했을 때만 쓰이는 상세 지표(task-010, SPEC §5.2).
+     let detail: MemoryCardDetail
+ }
+@@ -1115,6 +1129,7 @@ nonisolated struct MemoryCardDetail: Sendable, Equatable {
+     /// 앱 단위로 묶은 하위 프로세스 목록. CPU 상세와 같은 그룹(`ApplicationRanking.groupByApplication(_:)`)을 공유하며,
+     /// 현재 메모리 사용량 순위 역할도 겸합니다(정체성별 최근 세 개 평균의 앱 단위 합산을 Resident Memory 기준 내림차순 정렬, ANALYSIS §5 DP1).
+     let applications: [ApplicationProcessGroup]
++    let applicationsLimit: Int
+     /// `applications` 목록의 머리글. 「현재 사용량」 순위임과 정원을 알립니다(ANALYSIS §5 DP1, DP2).
+     let applicationsHeading: String
+     /// `applications` 목록 머리글 아래 안내 줄. 정원을 뷰가 고르지 않도록 조립 시점에 만들어 둡니다.
+@@ -1212,6 +1227,9 @@ extension MemoryCardPresentation {
+         topApplicationsFailed: Bool = false,
+         memoryIncrease: [ApplicationRankingEntry] = [],
+         processGroups: [ApplicationProcessGroup] = [],
++        detailListLimit: Int = ApplicationRankingSampling.detailCount,
++        includesSystemProcesses: Bool = false,
++        excludedCount: Int = 0, unreadableCount: Int = 0,
+         currentTimestamp: ContinuousClock.Instant
+     ) -> MemoryCardPresentation {
+         let trimmedTopApplications = Array(topApplications.prefix(ApplicationRankingSampling.cardDisplayCount))
+@@ -1227,22 +1245,27 @@ extension MemoryCardPresentation {
+             ),
+             topApplications: trimmedTopApplications,
+             topApplicationsFailed: topApplicationsFailed,
++            includesSystemProcesses: includesSystemProcesses,
++            excludedProcessCount: excludedCount, unreadableProcessCount: unreadableCount,
+             detail: MemoryCardDetail(
+                 appBytes: memory.appBytes,
+                 wiredBytes: memory.wiredBytes,
+                 compressedBytes: memory.compressedBytes,
+                 cachedBytes: memory.cachedBytes,
+-                recentIncreaseRanking: Array(memoryIncrease.prefix(ApplicationRankingSampling.detailCount)),
++                recentIncreaseRanking: Array(memoryIncrease.prefix(detailListLimit)),
+                 recentIncreaseRankingCaption: ApplicationRankingSampling.topApplicationsCaption(
+-                    count: ApplicationRankingSampling.detailCount
++                    count: detailListLimit, includesSystemProcesses: includesSystemProcesses,
++                    excludedCount: excludedCount, unreadableCount: unreadableCount
+                 ),
+                 applications: ApplicationRanking.sortedForDisplay(groups: processGroups, by: .residentMemory),
++                applicationsLimit: detailListLimit,
+                 applicationsHeading: ApplicationRankingSampling.applicationListHeading(
+                     metricLabel: "현재 사용량 순위, Memory 사용량 합계 내림차순",
+-                    count: ApplicationRankingSampling.detailCount
++                    count: detailListLimit
+                 ),
+                 applicationsExclusionNote: ApplicationRankingSampling.topApplicationsCaption(
+-                    count: ApplicationRankingSampling.detailCount
++                    count: detailListLimit, includesSystemProcesses: includesSystemProcesses,
++                    excludedCount: excludedCount, unreadableCount: unreadableCount
+                 )
+             )
+         )
+diff --git a/ResourceRunner/DashboardPresentationStore.swift b/ResourceRunner/DashboardPresentationStore.swift
+index 55afd2c..5fedac2 100644
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -31,6 +31,9 @@ final class DashboardPresentationStore: ObservableObject {
+     @Published private(set) var networkCard: NetworkCardPresentation = .collecting
+     @Published private(set) var diskCard: DiskCardPresentation = .collecting
+     private var lastCollectionBoundarySequence = 0
++    private var rankingCache: ProcessRankingDeliveryCache?
++    private var latestCPUInput: (SystemMetricsDisplayValue, ContinuousClock.Instant)?
++    private var latestMemoryInput: (SystemMetricsDisplayValue, ContinuousClock.Instant)?
+ 
+     init(preferencesSnapshot: PreferencesSnapshot = PreferencesSnapshot(
+         preferences: .defaults, revision: 0
+@@ -44,8 +47,57 @@ final class DashboardPresentationStore: ObservableObject {
+             selection = .none
+             selectionGeneration &+= 1
+         }
+-        // 카드 모델은 최대 이력과 전체 상세를 보유하고, 표시 선택은 현재 snapshot으로 유도합니다.
++        let rankingSelectionChanged = snapshot.preferences.includesSystemProcesses != preferencesSnapshot.preferences.includesSystemProcesses
++            || snapshot.preferences.detailListLimit != preferencesSnapshot.preferences.detailListLimit
+         preferencesSnapshot = snapshot
++        if rankingSelectionChanged { refreshProcessRanking() }
++    }
++
++    func attachRankingCache(_ cache: ProcessRankingDeliveryCache) {
++        rankingCache = cache
++    }
++
++    /// 설정과 새 조사 전달 모두 현재 선택으로 마지막 성공 표시만 다시 유도합니다.
++    /// 실패·중지 단계와 원본 시각은 그대로 둡니다.
++    func refreshProcessRanking() {
++        guard let rankingCache else { return }
++        let limit = preferencesSnapshot.preferences.detailListLimit.count
++        let includes = preferencesSnapshot.preferences.includesSystemProcesses
++        if let (display, now) = latestCPUInput,
++           let latest = display.latest, case .success(let cpu?) = latest.value.cpu {
++            let selected = rankingCache.snapshot(for: rankingCache.collectionEpoch,
++                includesSystemProcesses: includes)
++            let current = rankingCache.collectionEpoch.map { $0 >= latest.collectionEpoch } ?? false
++            let ranking = current ? selected.ranking : nil
++            let groups = current ? selected.groups : []
++            let failed = current ? selected.surveyFailed : false
++            let excluded = current ? selected.excludedCount : 0
++            let replacement = CPUCardPresentation.assemble(cpu: cpu, history: display.recentHistory,
++                topApplications: ranking?.cpuUsage ?? [],
++                topApplicationsFailed: failed, processGroups: groups,
++                detailListLimit: limit, includesSystemProcesses: includes,
++                excludedCount: excluded,
++                unreadableCount: ranking?.unreadableCount ?? 0, currentTimestamp: now)
++            cpuCard = cpuCard.replacingPresentation(with: replacement)
++        }
++        if let (display, now) = latestMemoryInput,
++           let latest = display.latest, case .success(let memory) = latest.value.memory {
++            let selected = rankingCache.snapshot(for: rankingCache.collectionEpoch,
++                includesSystemProcesses: includes)
++            let current = rankingCache.collectionEpoch.map { $0 >= latest.collectionEpoch } ?? false
++            let ranking = current ? selected.ranking : nil
++            let groups = current ? selected.groups : []
++            let failed = current ? selected.surveyFailed : false
++            let excluded = current ? selected.excludedCount : 0
++            let replacement = MemoryCardPresentation.assemble(memory: memory, history: display.recentHistory,
++                topApplications: ranking?.memoryUsage ?? [],
++                topApplicationsFailed: failed,
++                memoryIncrease: ranking?.memoryIncrease ?? [], processGroups: groups,
++                detailListLimit: limit, includesSystemProcesses: includes,
++                excludedCount: excluded,
++                unreadableCount: ranking?.unreadableCount ?? 0, currentTimestamp: now)
++            memoryCard = memoryCard.replacingPresentation(with: replacement)
++        }
+     }
+ 
+     func isCardVisible(_ card: DashboardSelection) -> Bool {
+@@ -129,12 +181,14 @@ final class DashboardPresentationStore: ObservableObject {
+         topApplications: [ApplicationRankingEntry],
+         topApplicationsFailed: Bool = false,
+         processGroups: [ApplicationProcessGroup] = [],
++        excludedCount: Int = 0, unreadableCount: Int = 0,
+         currentTimestamp: ContinuousClock.Instant
+     ) {
+         guard let latest = displayValue.latest else { return }
+ 
+         switch latest.value.cpu {
+         case .success(let cpu?):
++            latestCPUInput = (displayValue, currentTimestamp)
+             cpuCard = .normal(
+                 CPUCardPresentation.assemble(
+                     cpu: cpu,
+@@ -142,6 +196,9 @@ final class DashboardPresentationStore: ObservableObject {
+                     topApplications: topApplications,
+                     topApplicationsFailed: topApplicationsFailed,
+                     processGroups: processGroups,
++                    detailListLimit: preferencesSnapshot.preferences.detailListLimit.count,
++                    includesSystemProcesses: preferencesSnapshot.preferences.includesSystemProcesses,
++                    excludedCount: excludedCount, unreadableCount: unreadableCount,
+                     currentTimestamp: currentTimestamp
+                 ),
+                 timestamp: latest.timestamp
+@@ -172,12 +229,14 @@ final class DashboardPresentationStore: ObservableObject {
+         topApplicationsFailed: Bool = false,
+         memoryIncrease: [ApplicationRankingEntry] = [],
+         processGroups: [ApplicationProcessGroup] = [],
++        excludedCount: Int = 0, unreadableCount: Int = 0,
+         currentTimestamp: ContinuousClock.Instant
+     ) {
+         guard let latest = displayValue.latest else { return }
+ 
+         switch latest.value.memory {
+         case .success(let memory):
++            latestMemoryInput = (displayValue, currentTimestamp)
+             memoryCard = .normal(
+                 MemoryCardPresentation.assemble(
+                     memory: memory,
+@@ -186,6 +245,9 @@ final class DashboardPresentationStore: ObservableObject {
+                     topApplicationsFailed: topApplicationsFailed,
+                     memoryIncrease: memoryIncrease,
+                     processGroups: processGroups,
++                    detailListLimit: preferencesSnapshot.preferences.detailListLimit.count,
++                    includesSystemProcesses: preferencesSnapshot.preferences.includesSystemProcesses,
++                    excludedCount: excludedCount, unreadableCount: unreadableCount,
+                     currentTimestamp: currentTimestamp
+                 ),
+                 timestamp: latest.timestamp
+@@ -226,3 +288,18 @@ final class DashboardPresentationStore: ObservableObject {
+         diskCard = diskCard.stopping()
+     }
+ }
++
++private extension ResourceCardState {
++    func replacingPresentation(with presentation: Presentation) -> Self {
++        switch self {
++        case .collecting: .collecting
++        case .normal(_, let timestamp): .normal(presentation, timestamp: timestamp)
++        case .failure(let lastKnown): .failure(lastKnown: lastKnown.map {
++            LastKnownCardValue(presentation: presentation, timestamp: $0.timestamp)
++        })
++        case .stopped(let lastKnown): .stopped(lastKnown: lastKnown.map {
++            LastKnownCardValue(presentation: presentation, timestamp: $0.timestamp)
++        })
++        }
++    }
++}
+diff --git a/ResourceRunner/DashboardView.swift b/ResourceRunner/DashboardView.swift
+index bd67867..b1336fc 100644
+--- a/ResourceRunner/DashboardView.swift
++++ b/ResourceRunner/DashboardView.swift
+@@ -1355,6 +1355,8 @@ struct CPUDetailView: View {
+                 case .applicationGroups:
+                     ApplicationProcessGroupListView(
+                         groups: presentation.detail.applications,
++                        limit: presentation.detail.applicationsLimit,
++                        includesSystemProcesses: presentation.includesSystemProcesses,
+                         sortDescription: presentation.detail.applicationsHeading,
+                         exclusionNote: presentation.detail.applicationsExclusionNote,
+                         // 값 서식은 `ApplicationProcessValueFormatting`(단위 테스트가 nil 안전성을 직접 확인합니다)을 그대로 씁니다.
+@@ -1600,6 +1602,8 @@ struct MemoryDetailView: View {
+ 
+             ApplicationProcessGroupListView(
+                 groups: detail.applications,
++                limit: detail.applicationsLimit,
++                includesSystemProcesses: presentation.includesSystemProcesses,
+                 sortDescription: detail.applicationsHeading,
+                 exclusionNote: detail.applicationsExclusionNote,
+                 // Memory는 항상 값이 있지만(SPEC §5.6과 달리 기준점이 필요 없음), nil 안전 경로는
+@@ -1721,9 +1725,11 @@ struct MemoryCompositionDonutView: View {
+ // 마지막 하위 행과 다음 앱 행 사이 간격에 이 목록의 행 간격이 더해집니다.
+ struct ApplicationProcessGroupListView: View {
+     let groups: [ApplicationProcessGroup]
++    var limit: Int = ApplicationRankingSampling.detailCount
++    var includesSystemProcesses = false
+     /// 목록이 어떤 값으로, 어떤 방향으로 정렬됐는지 알리는 머리글.
+     let sortDescription: String
+-    /// 머리글 바로 아래 줄에 붙는 안내. 시스템 프로세스가 순위에서 빠진다는 사실을 두 상세 모두에서 알립니다.
++    /// 머리글 바로 아래 줄에 붙는 현재 소속 선택·읽기 실패 안내입니다.
+     let exclusionNote: String
+     /// 앱 행에 표시할 그룹 합계 값의 서식. `nil`(값을 만들지 못한 그룹)을 0으로 지어내지 않습니다(SPEC §5.6).
+     let groupValue: (Double?) -> DashboardValueColumn.Value
+@@ -1744,7 +1750,8 @@ struct ApplicationProcessGroupListView: View {
+         ApplicationProcessGroupOrdering.displayedGroups(
+             groups: groups,
+             stableOrder: stableOrder,
+-            hasExpandedRow: !expandedKeys.isEmpty
++            hasExpandedRow: !expandedKeys.isEmpty,
++            cap: limit
+         )
+     }
+ 
+@@ -1783,10 +1790,16 @@ struct ApplicationProcessGroupListView: View {
+         // 펼친 행이 없을 때만 최신 순서를 따라잡습니다 — 펼친 행이 있는 동안 들어오는 새 정렬 결과는
+         // `stableOrder`에 반영하지 않고 미뤄 둡니다.
+         .onChange(of: groups.map(\.key)) { _, newOrder in
+-            if expandedKeys.isEmpty {
+-                stableOrder = newOrder
+-            }
++            if expandedKeys.isEmpty { stableOrder = newOrder }
+         }
++        .onChange(of: limit) { _, _ in reconcileExpandedRows() }
++        .onChange(of: includesSystemProcesses) { _, _ in reconcileExpandedRows() }
++    }
++
++    private func reconcileExpandedRows() {
++        expandedKeys = ApplicationProcessGroupOrdering.visibleExpandedKeys(
++            groups: groups, stableOrder: stableOrder, expandedKeys: expandedKeys, cap: limit)
++        if expandedKeys.isEmpty { stableOrder = groups.map(\.key) }
+     }
+ }
+ 
+diff --git a/ResourceRunner/PreferencesView.swift b/ResourceRunner/PreferencesView.swift
+index 09ce4ab..92a3916 100644
+--- a/ResourceRunner/PreferencesView.swift
++++ b/ResourceRunner/PreferencesView.swift
+@@ -8,7 +8,7 @@ struct PreferencesView: View {
+     @State private var ordinaryRestoreMessage: String?
+ 
+     private enum SettingsFocus: Hashable {
+-        case cpu, memory, network, disk, cpuTop, memoryTop, login
++        case cpu, memory, network, disk, cpuTop, memoryTop, systemProcesses, login
+ 
+         var shortcut: KeyEquivalent {
+             switch self {
+@@ -18,6 +18,7 @@ struct PreferencesView: View {
+             case .disk: "4"
+             case .cpuTop: "5"
+             case .memoryTop: "6"
++            case .systemProcesses: "0"
+             case .login: "9"
+             }
+         }
+@@ -30,6 +31,7 @@ struct PreferencesView: View {
+             case .disk: "4"
+             case .cpuTop: "5"
+             case .memoryTop: "6"
++            case .systemProcesses: "0"
+             case .login: "9"
+             }
+         }
+@@ -46,6 +48,33 @@ struct PreferencesView: View {
+                 toggle("메모리 TOP 5 앱", key: "SettingsMemoryTop5", value: \.showsMemoryTopApplications, focus: .memoryTop)
+             }
+ 
++            Section("프로세스 목록") {
++                toggle("읽기 가능한 시스템 프로세스 포함", key: "SettingsIncludeSystemProcesses",
++                    value: \.includesSystemProcesses, focus: .systemProcesses)
++                Text("읽을 수 없는 프로세스는 순위에 포함되지 않습니다.")
++                    .font(.caption).foregroundStyle(.secondary)
++                HStack {
++                    Picker("상세 목록 개수", selection: preferenceBinding(\.detailListLimit)) {
++                        Text("10개").tag(DetailListLimit.ten)
++                        Text("20개").tag(DetailListLimit.twenty)
++                        Text("50개").tag(DetailListLimit.fifty)
++                    }
++                    .accessibilityIdentifier("SettingsDetailListLimit")
++                    .accessibilityLabel("상세 목록 개수")
++                    .focusable()
++                    Button("다음 개수", action: cycleDetailListLimit)
++                        .accessibilityIdentifier("SettingsNextDetailListLimit")
++                        .focusable()
++                        .onKeyPress(keys: [.space, .return]) { press in
++                            guard press.modifiers.isEmpty else { return .ignored }
++                            cycleDetailListLimit()
++                            return .handled
++                        }
++                }
++                Text("CPU·메모리 앱 목록과 최근 10분 메모리 증가량에 적용됩니다. TOP 5는 그대로 유지됩니다.")
++                    .font(.caption).foregroundStyle(.secondary)
++            }
++
+             Section("그래프") {
+                 HStack {
+                     Picker("표시 시간", selection: preferenceBinding(\.graphTimeRange)) {
+@@ -199,6 +228,12 @@ struct PreferencesView: View {
+     private func openSystemLoginSettings() { loginController.openSystemSettingsLoginItems() }
+     private func unregisterLoginItem() { loginController.requestEnabled(false) }
+ 
++    private func cycleDetailListLimit() {
++        let limits: [DetailListLimit] = [.ten, .twenty, .fifty]
++        guard let index = limits.firstIndex(of: preferencesStore.current.preferences.detailListLimit) else { return }
++        preferencesStore.update { $0.detailListLimit = limits[(index + 1) % limits.count] }
++    }
++
+     private func cycleGraphRange() {
+         let ranges: [GraphTimeRange] = [.oneMinute, .fiveMinutes, .tenMinutes]
+         guard let index = ranges.firstIndex(of: preferencesStore.current.preferences.graphTimeRange) else { return }
+diff --git a/ResourceRunner/SettingsWindowController.swift b/ResourceRunner/SettingsWindowController.swift
+index a56a5b5..609c882 100644
+--- a/ResourceRunner/SettingsWindowController.swift
++++ b/ResourceRunner/SettingsWindowController.swift
+@@ -13,7 +13,7 @@ final class SettingsWindowController: NSWindowController {
+         self.activate = activate ?? { NSApp.activate() }
+         let content = PreferencesView(preferencesStore: preferencesStore,
+             loginController: loginController)
+-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 620),
++        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 670),
+             styleMask: [.titled, .closable, .miniaturizable, .resizable],
+             backing: .buffered, defer: false)
+         window.title = "ResourceRunner 설정"
+diff --git a/ResourceRunnerTests/ApplicationCoordinatorTests.swift b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+index 34d1561..5eee540 100644
+--- a/ResourceRunnerTests/ApplicationCoordinatorTests.swift
++++ b/ResourceRunnerTests/ApplicationCoordinatorTests.swift
+@@ -38,6 +38,50 @@ private actor PreferenceScheduleTarget: CollectionScheduleTarget {
+ @MainActor
+ struct ApplicationCoordinatorTests {
+ 
++    @Test func rankingCacheRejectsOlderSameEpochAndOldEpochDeliveries() {
++        let cache = ProcessRankingDeliveryCache()
++        let now = ContinuousClock().now
++        let empty = ApplicationRankingSample(cpuUsage: [], memoryUsage: [], memoryIncrease: [], unreadableCount: 0)
++        let material = ProcessRankingMaterial(ranking: empty, groups: [], excludedCount: 0)
++        let materials = ProcessRankingMaterials(currentUser: material, allReadable: material)
++        #expect(cache.update(materials: materials, surveyFailed: false,
++            timestamp: now, collectionEpoch: 10, deliverySequence: 2))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now - .seconds(1), collectionEpoch: 10, deliverySequence: 3))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now, collectionEpoch: 10, deliverySequence: 1))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now + .seconds(1), collectionEpoch: 10, deliverySequence: 1))
++        #expect(cache.update(materials: materials, surveyFailed: true,
++            timestamp: now, collectionEpoch: 10, deliverySequence: 3))
++        #expect(cache.update(materials: materials, surveyFailed: false,
++            timestamp: now + .seconds(1), collectionEpoch: 11, deliverySequence: 4))
++        #expect(!cache.update(materials: materials, surveyFailed: true,
++            timestamp: now + .seconds(2), collectionEpoch: 10, deliverySequence: 5))
++        #expect(cache.collectionEpoch == 11)
++        #expect(cache.snapshot(for: 11).surveyFailed == false)
++        #expect(cache.snapshot(for: 10).ranking == nil)
++    }
++
++    @Test func rankingDisplayPreferencesDoNotApplyCollectionSchedules() async {
++        let preferences = PreferencesStore(storage: SavedPreferencesStorage(nil))
++        let dashboard = DashboardPresentationStore(preferencesSnapshot: preferences.current)
++        let system = PreferenceScheduleTarget()
++        let process = PreferenceScheduleTarget()
++        let lifecycle = MonitoringLifecycleStore(definition: .m3,
++            systemMetricsTarget: system, processSurveyTarget: process,
++            initialProfile: preferences.current.preferences.refreshProfile)
++        let binding = PreferencesPipelineBinding(store: preferences, dashboard: dashboard,
++            lifecycle: lifecycle)
++        binding.initialMonitoringApplied()
++        preferences.update { $0.includesSystemProcesses = true }
++        preferences.update { $0.detailListLimit = .fifty }
++        preferences.update { $0.detailListLimit = .twenty }
++        #expect(dashboard.preferencesSnapshot.revision == 3)
++        #expect(await system.schedules.isEmpty)
++        #expect(await process.schedules.isEmpty)
++    }
++
+     @Test func persistedChoicesReloadWithoutRestoringCollectionOrProcessHistory() async {
+         let storage = SavedPreferencesStorage(nil)
+         let previous = PreferencesStore(storage: storage)
+@@ -93,11 +137,17 @@ struct ApplicationCoordinatorTests {
+         let task = ApplicationCoordinator.startMonitoring(lifecycleSource, into: lifecycle) {
+             binding.initialMonitoringApplied()
+         }
+-        await waitUntil { await system.schedules.count >= 2 }
++        await waitUntil {
++            let systemCount = await system.schedules.count
++            let processCount = await process.schedules.count
++            return systemCount >= 2 && processCount >= 2
++        }
+         let schedules = await system.schedules
++        let processSchedules = await process.schedules
+         #expect(schedules.first == .running(.seconds(10)))
+         #expect(schedules.last == .running(.seconds(5)))
+         #expect(!schedules.contains(.running(.seconds(2))))
++        #expect(processSchedules == [.running(.seconds(10)), .running(.seconds(8))])
+ 
+         dashboard.applyPreferences(first)
+         #expect(dashboard.preferencesSnapshot.revision == 2)
+@@ -105,6 +155,7 @@ struct ApplicationCoordinatorTests {
+         await waitUntil { dashboard.preferencesSnapshot.revision == 3 }
+         #expect(dashboard.preferencesSnapshot.preferences.refreshProfile == .energySaving)
+         #expect(await system.schedules.count == schedules.count)
++        #expect(await process.schedules.count == processSchedules.count)
+         task.cancel()
+     }
+ 
+@@ -485,7 +536,8 @@ private func processSurveySample(
+                             parentPID: 1,
+                             cpuTimeNanoseconds: process.cpuTimeNanoseconds,
+                             residentBytes: process.residentBytes,
+-                            isTranslated: false
++                            isTranslated: false,
++                            ownership: .currentUser
+                         )
+                     },
+                     unreadableCount: 0
+diff --git a/ResourceRunnerTests/ApplicationRankingTests.swift b/ResourceRunnerTests/ApplicationRankingTests.swift
+index 56ceabb..9d41964 100644
+--- a/ResourceRunnerTests/ApplicationRankingTests.swift
++++ b/ResourceRunnerTests/ApplicationRankingTests.swift
+@@ -100,13 +100,15 @@ private func snapshot(
+     pid: pid_t,
+     executablePath: String,
+     recentValues: [ProcessRankingSample],
+-    memoryBaselines: [ProcessMemoryBaselinePoint] = []
++    memoryBaselines: [ProcessMemoryBaselinePoint] = [],
++    ownership: ProcessOwnership = .unknown
+ ) -> ProcessHistorySnapshot {
+     ProcessHistorySnapshot(
+         identity: ProcessIdentity(pid: pid, startTime: 0),
+         executablePath: executablePath,
+         recentValues: recentValues,
+-        memoryBaselines: memoryBaselines
++        memoryBaselines: memoryBaselines,
++        ownership: ownership
+     )
+ }
+ 
+@@ -369,11 +371,10 @@ struct ApplicationRankingUnreadableCountTests {
+ 
+ // MARK: - task-001: 순위 계산 정원과 카드 표시 정원 분리
+ 
+-/// task-001 검증 조건: 앱이 상세 표시 정원(20)보다 많은 입력에서 `compute`가 20개까지 돌려줍니다.
+-/// 계산 정원을 카드 정원(5)으로 되돌리면 이 테스트가 실패해야 합니다.
++/// 표시 전에 자르지 않아야 필터와 상세 정원 변경에서 뒤쪽 항목이 살아납니다.
+ struct ApplicationRankingComputationGantryTests {
+ 
+-    @Test func computeReturnsUpToDetailCountFromLargerInput() {
++    @Test func computeKeepsEveryGroupBeforeDisplayLimit() {
+         var snapshots: [ProcessHistorySnapshot] = []
+         for index in 0..<25 {
+             let value: Double = Double(25 - index)
+@@ -388,8 +389,59 @@ struct ApplicationRankingComputationGantryTests {
+             resolver: ApplicationIdentityResolver()
+         )
+ 
+-        #expect(sample.cpuUsage.count == ApplicationRankingSampling.detailCount)
+-        #expect(sample.memoryUsage.count == ApplicationRankingSampling.detailCount)
++        #expect(sample.cpuUsage.count == 25)
++        #expect(sample.memoryUsage.count == 25)
++    }
++}
++
++struct ProcessRankingMaterialsTests {
++    @Test func filtersBeforeRankingAndKeepsGroupsBeyondTwenty() {
++        let system: [ProcessHistorySnapshot] = (0..<50).map { index in
++            snapshot(pid: pid_t(index + 1), executablePath: "/Applications/System\(index).app/bin/s",
++                recentValues: [rankingSample(cpuUsagePercent: Double(100 - index), residentBytes: 1_000)],
++                ownership: .otherUser)
++        }
++        let user = snapshot(pid: 100, executablePath: "/Applications/User.app/bin/u",
++            recentValues: [rankingSample(cpuUsagePercent: 1, residentBytes: 2_000)],
++            ownership: .currentUser)
++        let mixedUser = snapshot(pid: 101, executablePath: "/Applications/Shared.app/bin/u",
++            recentValues: [rankingSample(cpuUsagePercent: 4, residentBytes: 3_000)],
++            ownership: .currentUser)
++        let mixedSystem = snapshot(pid: 102, executablePath: "/Applications/Shared.app/bin/s",
++            recentValues: [rankingSample(cpuUsagePercent: 8, residentBytes: 5_000)],
++            ownership: .otherUser)
++        let computed = ApplicationRanking.materials(snapshots: system + [user, mixedUser, mixedSystem],
++            currentTimestamp: baseInstant, unreadableCount: 7, resolver: ApplicationIdentityResolver())
++        let current = computed.materials.currentUser
++        let all = computed.materials.allReadable
++        #expect(current.ranking.cpuUsage.count == 2)
++        #expect(current.ranking.cpuUsage.first?.key.value == "/Applications/Shared.app")
++        #expect(current.ranking.cpuUsage.first?.value == 4)
++        #expect(current.groups.first { $0.key.value == "/Applications/Shared.app" }?.processes.map(\.pid) == [101])
++        #expect(current.excludedCount == 51)
++        #expect(current.ranking.unreadableCount == 7)
++        #expect(all.ranking.cpuUsage.count == 52)
++        #expect(all.groups.count == 52)
++        #expect(all.ranking.cpuUsage.first { $0.key.value == "/Applications/Shared.app" }?.value == 12)
++        #expect(all.groups.first { $0.key.value == "/Applications/Shared.app" }?.processes.count == 2)
++        #expect(all.ranking.cpuUsage.last?.key.value == "/Applications/User.app")
++        #expect(all.excludedCount == 0)
++    }
++
++    @Test func currentUIDApplePathStaysVisibleAndUnknownOwnershipIsExcluded() {
++        let apple = snapshot(pid: 1, executablePath: "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder",
++            recentValues: [rankingSample(cpuUsagePercent: nil, residentBytes: 900)],
++            ownership: .currentUser)
++        let unknown = snapshot(pid: 2, executablePath: "/Applications/Unknown.app/bin/u",
++            recentValues: [rankingSample(cpuUsagePercent: 90, residentBytes: 10_000)])
++        let result = ApplicationRanking.materials(snapshots: [apple, unknown],
++            currentTimestamp: baseInstant, unreadableCount: 2, resolver: ApplicationIdentityResolver()).materials
++        #expect(result.currentUser.ranking.memoryUsage.map(\.displayName) == ["Finder"])
++        #expect(result.currentUser.ranking.cpuUsage.isEmpty)
++        #expect(result.currentUser.excludedCount == 1)
++        #expect(result.allReadable.ranking.memoryUsage.map(\.displayName) == ["Finder"])
++        #expect(result.allReadable.excludedCount == 1)
++        #expect(result.currentUser.ranking.unreadableCount == 2)
+     }
+ }
+ 
+@@ -549,17 +601,11 @@ struct ApplicationRankingCardDetailConsistencyTests {
+             Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+                 == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+         )
+-        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
+-        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함하므로,
+-        // 한쪽만 다른 개수로 자르면(정원 앞뒤로 어긋나면) 배열 길이나 값이 달라져 실패합니다.
+-        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
+-        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
+-        try #require(cardNames.count == cap)
+-        #expect(cardNames == Array(detailNames.prefix(cap)))
+-        // 경계 직후(21번째) 항목은 상세 전체 목록에는 있지만 카드 목록에는 없어야 합니다 —
+-        // 위 전체 비교와 달리 상세 목록의 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
+-        try #require(detailNames.count > cap)
+-        #expect(!cardNames.contains(detailNames[cap]))
++        // 계산 자료는 전체 순위를 보관하고 표시 경계에서만 기본20개를 자릅니다.
++        #expect(cardNames == detailNames)
++        try #require(cardNames.count > cap)
++        #expect(Array(cardNames.prefix(cap)) == Array(detailNames.prefix(cap)))
++        #expect(!Array(cardNames.prefix(cap)).contains(detailNames[cap]))
+     }
+ 
+     /// `groupByApplication(_:)`이 `compute(_:)`와 같은 평활화 값을 만듭니다.
+@@ -679,16 +725,10 @@ struct ApplicationRankingCardTopEntriesTieBreakTests {
+             Array(cardNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+                 == Array(detailNames.prefix(ApplicationRankingSampling.cardDisplayCount))
+         )
+-        // compute는 정원(20)까지만 돌려주므로, 상세 목록도 같은 정원으로 잘라야 전체가 같습니다.
+-        // 이 단언 하나가 상위 5개부터 정원 경계 직전·정각(19·20번째) 항목까지 통째로 포함합니다.
+-        // 인덱스로 별도 비교하지 않는 이유: mutation으로 배열 길이가 cap보다 짧아지면 인덱스 접근이 trap하므로,
+-        // 아래 #require로 길이를 먼저 보장한 뒤에만 인덱스에 접근합니다.
+-        try #require(cardNames.count == cap)
+-        #expect(cardNames == Array(detailNames.prefix(cap)))
+-        // 경계 직후(21번째) 항목은 카드 목록에 없어야 합니다 — 위 전체 비교와 달리 상세 목록의
+-        // 길이(cap을 넘는지)에 의존하는 고유한 성질이라 따로 확인합니다.
+-        try #require(detailNames.count > cap)
+-        #expect(!cardNames.contains(detailNames[cap]))
++        #expect(cardNames == detailNames)
++        try #require(cardNames.count > cap)
++        #expect(Array(cardNames.prefix(cap)) == Array(detailNames.prefix(cap)))
++        #expect(!Array(cardNames.prefix(cap)).contains(detailNames[cap]))
+     }
+ }
+ 
+@@ -1107,6 +1147,30 @@ struct ApplicationProcessGroupOrderingTests {
+     /// task-001 검증 조건: 펼친 행이 없어도 정원보다 많은 그룹을 받으면 정원만큼만 돌려주고,
+     /// 그 순서는 자르기 전 정렬 결과의 앞부분과 같습니다. 정원 인자를 무시하고 전체를 돌려주도록
+     /// 바꾸면 개수 단언이 실패해야 합니다.
++    @Test func scopeSelectionDropsExcludedExpandedRowsButKeepsVisibleRows() {
++        let user = group("/User", sortValue: 10)
++        let system = group("/System", sortValue: 20)
++        let expanded: Set<ApplicationKey> = [user.key, system.key]
++        let remaining = ApplicationProcessGroupOrdering.visibleExpandedKeys(
++            groups: [user], stableOrder: [system.key, user.key],
++            expandedKeys: expanded, cap: 20)
++        #expect(remaining == [user.key])
++    }
++
++    @Test func reducingLimitDropsOnlyExpandedRowsThatDisappear() {
++        let groups = (0..<50).map { group("/App\($0)", sortValue: Double(50 - $0)) }
++        let stableOrder = groups.map(\.key)
++        let expanded: Set<ApplicationKey> = [groups[5].key, groups[25].key]
++        let atFifty = ApplicationProcessGroupOrdering.visibleExpandedKeys(
++            groups: groups, stableOrder: stableOrder, expandedKeys: expanded, cap: 50)
++        let atTwenty = ApplicationProcessGroupOrdering.visibleExpandedKeys(
++            groups: groups, stableOrder: stableOrder, expandedKeys: atFifty, cap: 20)
++        #expect(atFifty == expanded)
++        #expect(atTwenty == [groups[5].key])
++        #expect(ApplicationProcessGroupOrdering.displayedGroups(
++            groups: groups, stableOrder: stableOrder, hasExpandedRow: !atTwenty.isEmpty, cap: 20).count == 20)
++    }
++
+     @Test func capLimitsResultToLeadingEntriesWhenNoRowIsExpanded() {
+         let groups = (0..<5).map { group("/App\($0)", sortValue: Double(5 - $0)) }
+ 
+diff --git a/ResourceRunnerTests/DashboardPresentationTests.swift b/ResourceRunnerTests/DashboardPresentationTests.swift
+index 5b2d2bb..a1b6f79 100644
+--- a/ResourceRunnerTests/DashboardPresentationTests.swift
++++ b/ResourceRunnerTests/DashboardPresentationTests.swift
+@@ -2365,3 +2365,117 @@ struct HistoryGraphGridlinePlaceholderDrawOrderTests {
+         #expect(HistoryGraphView.drawOrder.count == 5)
+     }
+ }
++
++@MainActor
++struct DashboardRankingSelectionTests {
++    @Test func emptyAndOlderRankingCacheStillRefreshCurrentCaptionsAndLimits() {
++        let dashboard = DashboardPresentationStore()
++        let cache = ProcessRankingDeliveryCache()
++        dashboard.attachRankingCache(cache)
++        let now = ContinuousClock().now
++        let display = SystemMetricsDisplayValue(latest: TimestampedSample(timestamp: now,
++            value: SystemMetricsSample(cpu: .success(cpuMetrics()), memory: .success(memoryMetricsForTests())),
++            collectionEpoch: 1), recentHistory: [])
++        dashboard.updateCPUCard(with: display, topApplications: [], currentTimestamp: now)
++        dashboard.updateMemoryCard(with: display, topApplications: [], currentTimestamp: now)
++        var choices = AppPreferences.defaults
++        choices.includesSystemProcesses = true
++        choices.detailListLimit = .fifty
++        dashboard.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 1))
++        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsLimit == 50)
++        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsExclusionNote.contains("시스템 프로세스") == true)
++        #expect(dashboard.memoryCard.lastKnownValue?.presentation.detail.recentIncreaseRanking.isEmpty == true)
++
++        let empty = ApplicationRankingSample(cpuUsage: [], memoryUsage: [], memoryIncrease: [], unreadableCount: 0)
++        let material = ProcessRankingMaterial(ranking: empty, groups: [], excludedCount: 0)
++        #expect(cache.update(materials: ProcessRankingMaterials(currentUser: material, allReadable: material),
++            surveyFailed: false, timestamp: now - .seconds(1), collectionEpoch: 0, deliverySequence: 1))
++        choices.includesSystemProcesses = false
++        choices.detailListLimit = .ten
++        dashboard.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 2))
++        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsLimit == 10)
++        #expect(dashboard.cpuCard.lastKnownValue?.presentation.detail.applicationsExclusionNote.contains("포함되지") == true)
++        #expect(dashboard.cpuCard.lastKnownValue?.presentation.topApplications.isEmpty == true)
++        if case .normal(_, let timestamp) = dashboard.cpuCard {
++            #expect(timestamp == now)
++        } else { Issue.record("설정 변경이 현재 시스템 표본 상태를 바꿨습니다") }
++    }
++    @Test func cachedMaterialsFollowCurrentSelectionImmediatelyAndPreserveStoppedTimestamp() {
++        let store = DashboardPresentationStore()
++        let cache = ProcessRankingDeliveryCache()
++        store.attachRankingCache(cache)
++        let now = ContinuousClock().now
++        let userEntries = (0..<30).map { index in
++            ApplicationRankingEntry(key: ApplicationKey(value: "user\(index)"),
++                displayName: "User \(index)", value: Double(30 - index))
++        }
++        let systemEntries = (0..<55).map { index in
++            ApplicationRankingEntry(key: ApplicationKey(value: "system\(index)"),
++                displayName: "System \(index)", value: Double(100 - index))
++        }
++        let user = ProcessRankingMaterial(ranking: ApplicationRankingSample(
++            cpuUsage: userEntries, memoryUsage: userEntries, memoryIncrease: userEntries,
++            unreadableCount: 2), groups: [], excludedCount: 55)
++        let all = ProcessRankingMaterial(ranking: ApplicationRankingSample(
++            cpuUsage: systemEntries + userEntries, memoryUsage: systemEntries + userEntries,
++            memoryIncrease: systemEntries + userEntries, unreadableCount: 2),
++            groups: [], excludedCount: 0)
++        #expect(cache.update(materials: ProcessRankingMaterials(currentUser: user, allReadable: all),
++            surveyFailed: false, timestamp: now, collectionEpoch: 0, deliverySequence: 1))
++        let display = SystemMetricsDisplayValue(latest: TimestampedSample(timestamp: now,
++            value: SystemMetricsSample(cpu: .success(cpuMetrics()),
++                memory: .success(memoryMetricsForTests())), collectionEpoch: 0),
++            recentHistory: [historyPoint(secondsFromBase: -30)])
++        store.updateCPUCard(with: display, topApplications: userEntries, currentTimestamp: now)
++        store.updateMemoryCard(with: display, topApplications: userEntries,
++            memoryIncrease: userEntries, currentTimestamp: now)
++        let originalGraph = store.cpuCard.lastKnownValue?.presentation.graphPoints
++        store.markCollectionStopped()
++        var choices = AppPreferences.defaults
++        choices.includesSystemProcesses = true
++        choices.detailListLimit = .fifty
++        store.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 1))
++        if case .stopped(let known) = store.cpuCard {
++            #expect(known?.timestamp == now)
++            #expect(known?.presentation.topApplications.first?.displayName == "System 0")
++            #expect(known?.presentation.detail.applicationsLimit == 50)
++            #expect(known?.presentation.detail.applicationsExclusionNote.contains("읽기 실패 2개") == true)
++            #expect(known?.presentation.graphPoints == originalGraph)
++        } else { Issue.record("중지 상태가 바뀌었습니다") }
++        if case .stopped(let known) = store.memoryCard {
++            #expect(known?.presentation.detail.recentIncreaseRanking.count == 50)
++            #expect(known?.presentation.detail.recentIncreaseRankingCaption.contains("시스템 프로세스") == true)
++        } else { Issue.record("중지 상태가 바뀌었습니다") }
++        #expect(cache.update(materials: ProcessRankingMaterials(currentUser: user, allReadable: all),
++            surveyFailed: true, timestamp: now + .seconds(1), collectionEpoch: 1, deliverySequence: 2))
++        store.refreshProcessRanking()
++        if case .stopped(let known) = store.cpuCard {
++            #expect(known?.timestamp == now)
++            #expect(known?.presentation.topApplicationsFailed == true)
++        } else { Issue.record("새 epoch의 조사가 중지 상태를 바꿨습니다") }
++        choices.includesSystemProcesses = false
++        choices.detailListLimit = .ten
++        store.applyPreferences(PreferencesSnapshot(preferences: choices, revision: 2))
++        #expect(store.cpuCard.lastKnownValue?.presentation.topApplications.first?.displayName == "User 0")
++        #expect(store.cpuCard.lastKnownValue?.presentation.detail.applicationsExclusionNote.contains("소속 기준 제외 55개") == true)
++        #expect(store.memoryCard.lastKnownValue?.presentation.detail.recentIncreaseRanking.count == 10)
++        let baseline = SystemMetricsDisplayValue(latest: TimestampedSample(
++            timestamp: now + .seconds(2),
++            value: SystemMetricsSample(cpu: .success(nil), memory: .success(memoryMetricsForTests())),
++            collectionEpoch: 1), recentHistory: [])
++        store.updateCPUCard(with: baseline, topApplications: [], currentTimestamp: now + .seconds(2))
++        if case .stopped = store.cpuCard {} else { Issue.record("새 epoch의 기준점만으로 정상 상태가 되었습니다") }
++        let next = SystemMetricsDisplayValue(latest: TimestampedSample(
++            timestamp: now + .seconds(3),
++            value: SystemMetricsSample(cpu: .success(cpuMetrics()), memory: .success(memoryMetricsForTests())),
++            collectionEpoch: 1), recentHistory: [])
++        let selected = cache.snapshot(for: 1, includesSystemProcesses: false)
++        store.updateCPUCard(with: next, topApplications: selected.ranking?.cpuUsage ?? [],
++            topApplicationsFailed: selected.surveyFailed, currentTimestamp: now + .seconds(3))
++        if case .normal(let current, let timestamp) = store.cpuCard {
++            #expect(timestamp == now + .seconds(3))
++            #expect(current.topApplications.first?.displayName == "User 0")
++            #expect(current.detail.applicationsLimit == 10)
++        } else { Issue.record("정상 tick을 표시하지 못했습니다") }
++    }
++}
+diff --git a/ResourceRunnerUITests/SettingsWindowUITests.swift b/ResourceRunnerUITests/SettingsWindowUITests.swift
+index b01f60e..2a5513f 100644
+--- a/ResourceRunnerUITests/SettingsWindowUITests.swift
++++ b/ResourceRunnerUITests/SettingsWindowUITests.swift
+@@ -15,6 +15,15 @@ final class SettingsWindowUITests: XCTestCase {
+         return app
+     }
+ 
++    private func persistentApp(suite: String) -> XCUIApplication {
++        let app = XCUIApplication()
++        app.launchArguments += ["--preferences-persistence-ui-test", "--settings-ui-test"]
++        app.launchEnvironment["RR_PREFERENCES_TEST_SUITE"] = suite
++        app.launchEnvironment["RR_LOGIN_STATUS"] = "enabled"
++        app.launchEnvironment["RR_LOGIN_UNREGISTER_OUTCOME"] = "failure"
++        return app
++    }
++
+     private func settingsWindow(_ app: XCUIApplication) -> XCUIElement {
+         app.windows["ResourceRunner 설정"]
+     }
+@@ -78,6 +87,35 @@ final class SettingsWindowUITests: XCTestCase {
+         XCTAssertEqual(app.windows.matching(identifier: "ResourceRunner 설정").count, 1)
+     }
+ 
++    @MainActor
++    func testProcessScopeAndDetailLimitControlsApplyInCurrentWindow() {
++        let app = launch()
++        openFromStatusMenu(app)
++        let window = settingsWindow(app)
++        let scope = app.switches["SettingsIncludeSystemProcesses"]
++        XCTAssertTrue(scope.waitForExistence(timeout: 3))
++        XCTAssertEqual(switchValue(scope), 0)
++        app.typeKey("0", modifierFlags: [.command, .option])
++        XCTAssertEqual(switchValue(scope), 1)
++
++        let limit = app.popUpButtons["SettingsDetailListLimit"]
++        XCTAssertTrue(limit.waitForExistence(timeout: 3))
++        XCTAssertTrue(textValue(limit).contains("20"))
++        limit.click()
++        app.menuItems["50개"].click()
++        XCTAssertTrue(textValue(limit).contains("50"))
++        limit.click()
++        app.menuItems["10개"].click()
++        XCTAssertTrue(textValue(limit).contains("10"))
++        XCTAssertTrue(focusByTab("SettingsNextDetailListLimit", in: app))
++        app.typeKey(.space, modifierFlags: [])
++        XCTAssertTrue(textValue(limit).contains("20"))
++        app.typeKey(.return, modifierFlags: [])
++        XCTAssertTrue(textValue(limit).contains("50"))
++        XCTAssertTrue(window.exists)
++        XCTAssertEqual(app.windows.matching(identifier: "ResourceRunnerSettingsWindow").count, 1)
++    }
++
+     /// Release 구성에서도 실행되는 읽기 전용 진입 검증입니다.
+     @MainActor
+     func testReadOnlyStatusMenuSettingsAccess() {
+@@ -104,6 +142,140 @@ final class SettingsWindowUITests: XCTestCase {
+         closeSettings(app)
+     }
+ 
++    // 안정 경로의 Release 앱에서만 실행하며, 각 단계의 실제 OS 상태는 외부에서 대조합니다.
++    private func nativeReleaseApp() throws -> XCUIApplication {
++        guard let path = ProcessInfo.processInfo.environment["RR_NATIVE_RELEASE_APP_PATH"] else {
++            throw XCTSkip("실제 로그인 검증용 Release 앱 경로가 필요합니다.")
++        }
++        return XCUIApplication(url: URL(fileURLWithPath: path))
++    }
++
++    @MainActor
++    func testNativeLoginInitialReadOnly() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch.exists)
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let firstStatus = textValue(status)
++        NSLog("RR_NATIVE_INITIAL status=%@", firstStatus)
++        XCTAssertTrue(firstStatus.contains("등록되지") || firstStatus.contains("찾을 수 없"), firstStatus)
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertEqual(textValue(status), firstStatus)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginRegister() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let firstStatus = textValue(status)
++        XCTAssertTrue(firstStatus.contains("등록되지") || firstStatus.contains("찾을 수 없"), firstStatus)
++        app.switches["SettingsLoginToggle"].click()
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        let statusText = textValue(status)
++        let resultText = textValue(result)
++        NSLog("RR_NATIVE_REGISTER status=%@ result=%@", statusText, resultText)
++        XCTAssertFalse(resultText.contains("실패"), resultText)
++        XCTAssertTrue(statusText.contains("허용") || statusText.contains("승인"), statusText)
++        app.buttons["SettingsLoginRefresh"].click()
++        XCTAssertTrue(textValue(status).contains("허용") || textValue(status).contains("승인"))
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginUnregisterAndRestore() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let initialStatus = textValue(status)
++        XCTAssertTrue(initialStatus.contains("허용") || initialStatus.contains("승인"), initialStatus)
++        if initialStatus.contains("승인") {
++            app.buttons["SettingsUnregisterLoginItem"].click()
++        } else {
++            app.switches["SettingsLoginToggle"].click()
++        }
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        NSLog("RR_NATIVE_UNREGISTER status=%@ result=%@", textValue(status), textValue(result))
++        XCTAssertTrue(textValue(status).contains("등록되지"), textValue(status))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
++
++        app.switches["SettingsLoginToggle"].click()
++        let registered = NSPredicate(format: "value CONTAINS %@ OR value CONTAINS %@", "허용", "승인")
++        expectation(for: registered, evaluatedWith: status)
++        waitForExpectations(timeout: 10)
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        XCTAssertTrue(loginRestore.waitForExistence(timeout: 10))
++        let restored = NSPredicate(format: "value CONTAINS %@", "해제가 확인")
++        expectation(for: restored, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 10)
++        XCTAssertTrue(textValue(status).contains("등록되지"), textValue(status))
++        NSLog("RR_NATIVE_RESTORE status=%@ login=%@", textValue(status), textValue(loginRestore))
++        XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground)
++        closeSettings(app)
++    }
++
++    @MainActor
++    func testNativeLoginPrepareNextLogin() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        let initialStatus = textValue(status)
++        XCTAssertTrue(initialStatus.contains("등록되지") || initialStatus.contains("찾을 수 없"), initialStatus)
++        app.switches["SettingsLoginToggle"].click()
++        let result = app.staticTexts["SettingsLoginResult"]
++        XCTAssertTrue(result.waitForExistence(timeout: 10))
++        NSLog("RR_NATIVE_PREPARE status=%@ result=%@", textValue(status), textValue(result))
++        XCTAssertTrue(textValue(status).contains("허용"), textValue(status))
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 1)
++        closeSettings(app)
++        XCTAssertFalse(settingsWindow(app).exists)
++        XCTAssertFalse(app.descendants(matching: .any)
++            .matching(identifier: "DashboardContainer").firstMatch.exists)
++    }
++
++    @MainActor
++    func testNativeSystemSettingsRemovalRefreshesAppStatus() throws {
++        let app = try nativeReleaseApp()
++        app.launch()
++        openFromStatusMenu(app)
++        let status = app.staticTexts["SettingsLoginStatus"]
++        XCTAssertTrue(textValue(status).contains("허용"), textValue(status))
++        let systemSettings = XCUIApplication(bundleIdentifier: "com.apple.systempreferences")
++        systemSettings.activate()
++        let loginItem = systemSettings.staticTexts["open-at-login-item-ResourceRunner.app-icon"]
++        XCTAssertTrue(loginItem.waitForExistence(timeout: 5))
++        XCTAssertEqual((loginItem.value as? String) ?? loginItem.label, "ResourceRunner.app")
++        loginItem.click()
++        let remove = systemSettings.buttons["제거"]
++        XCTAssertTrue(remove.isEnabled)
++        remove.click()
++        let itemGone = NSPredicate(format: "exists == false")
++        expectation(for: itemGone, evaluatedWith: loginItem)
++        waitForExpectations(timeout: 10)
++        app.activate()
++        app.buttons["SettingsLoginRefresh"].click()
++        let refreshed = textValue(status)
++        NSLog("RR_NATIVE_EXTERNAL_REMOVAL status=%@", refreshed)
++        XCTAssertTrue(refreshed.contains("등록되지") || refreshed.contains("찾을 수 없"), refreshed)
++        XCTAssertEqual(switchValue(app.switches["SettingsLoginToggle"]), 0)
++        XCTAssertFalse(app.staticTexts["SettingsLoginResult"].exists)
++        systemSettings.terminate()
++        closeSettings(app)
++    }
++
+     @MainActor
+     func testAllCardsOffOpensSettingsAndRestoresVisibleCard() {
+         let app = launch(cards: 0)
+@@ -161,6 +333,77 @@ final class SettingsWindowUITests: XCTestCase {
+         XCTAssertTrue((profile.value as? String ?? "").contains("기본"))
+     }
+ 
++    @MainActor
++    func testChangedSettingsSurviveRelaunchThenRestoreSeparatelyFromLoginFailure() {
++        let suite = "ResourceRunnerUITest.\(UUID().uuidString)"
++        let app = persistentApp(suite: suite)
++        addTeardownBlock {
++            if app.state != .notRunning { app.terminate() }
++            app.launchArguments.append("--preferences-persistence-cleanup")
++            app.launch()
++            app.terminate()
++        }
++        app.launch()
++        openFromStatusMenu(app)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            app.switches[id].click()
++            XCTAssertEqual(switchValue(app.switches[id]), 0, id)
++        }
++        let graph = app.popUpButtons["SettingsGraphRange"]
++        graph.click()
++        app.menuItems["최근 1분"].click()
++        let profile = app.popUpButtons["SettingsRefreshProfile"]
++        profile.click()
++        app.menuItems["매우 절전"].click()
++        app.terminate()
++
++        // 같은 격리 domain에서 새 프로세스를 띄워 저장값의 최초 표시를 확인합니다.
++        app.launch()
++        XCTAssertFalse(settingsWindow(app).exists)
++        let status = app.statusItems.firstMatch
++        XCTAssertTrue(status.waitForExistence(timeout: 5))
++        status.click()
++        XCTAssertTrue(app.buttons["DashboardOpenSettings"].waitForExistence(timeout: 3))
++        for id in ["CPUCard", "MemoryCard", "NetworkCard", "DiskCard"] {
++            XCTAssertFalse(app.buttons[id].exists, id)
++        }
++        app.buttons["DashboardOpenSettings"].click()
++        XCTAssertTrue(settingsWindow(app).waitForExistence(timeout: 3))
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 0, id)
++        }
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 1분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("매우 절전"))
++
++        app.buttons["SettingsRestoreDefaults"].click()
++        XCTAssertTrue(textValue(app.staticTexts["SettingsOrdinaryRestoreResult"]).contains("복원"))
++        let loginRestore = app.staticTexts["SettingsLoginRestoreResult"]
++        let failure = NSPredicate(format: "value CONTAINS %@", "테스트 해제 실패")
++        expectation(for: failure, evaluatedWith: loginRestore)
++        waitForExpectations(timeout: 3)
++        for id in ["SettingsCPUCard", "SettingsMemoryCard", "SettingsNetworkCard",
++                   "SettingsDiskCard", "SettingsCPUTop5", "SettingsMemoryTop5"] {
++            XCTAssertEqual(switchValue(app.switches[id]), 1, id)
++        }
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 10분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("기본"))
++        app.terminate()
++
++        app.launch()
++        openFromStatusMenu(app)
++        XCTAssertEqual(switchValue(app.switches["SettingsCPUCard"]), 1)
++        XCTAssertTrue((app.popUpButtons["SettingsGraphRange"].value as? String ?? "")
++            .contains("최근 10분"))
++        XCTAssertTrue((app.popUpButtons["SettingsRefreshProfile"].value as? String ?? "")
++            .contains("기본"))
++    }
++
+     @MainActor
+     func testLoginSuccessFailureApprovalRefreshAndExplicitSystemSettings() {
+         let app = launch(login: "notRegistered", register: "approval")

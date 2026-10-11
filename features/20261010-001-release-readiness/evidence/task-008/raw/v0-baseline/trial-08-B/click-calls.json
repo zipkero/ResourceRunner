@@ -1,0 +1,18 @@
+[
+  {
+    "endMach": 29563783585538,
+    "exitCode": 0,
+    "startMach": 29563774309423,
+    "stderr": "",
+    "stdout": "{\"body\":true,\"cardDescriptions\":{\"CPUCard\":\"CPU \uce74\ub4dc, \uc804\uccb4 \uc0ac\uc6a9\ub960 13%, User 8%, System 6%, User\uc640 System \ub450 \uacc4\uc5f4 \uc911\ucca9 \uadf8\ub798\ud504, \uae30\uc900\uc120 50%, \ucd5c\uadfc 10\ubd84 \uadf8\ub798\ud504, \ub370\uc774\ud130 \uc218\uc9d1 \uc911 \u00b7 01:40 \\/ 10:00, \uc571 TOP 5 \u00b7 \uc2dc\uc2a4\ud15c \ud504\ub85c\uc138\uc2a4 \uc81c\uc678 \u00b7 \uc77d\uae30 \uc2e4\ud328 13\uac1c, \ub2e8\ucd95\ud0a4 \u23181\",\"DiskCard\":\"Disk \uce74\ub4dc, \uc815\uc0c1 \uce21\uc815, \ud604\uc7ac Read 0.0 B\\/s, Write 460.3 KB\\/s, \ubcf4\uc870 \uc815\ubcf4 \ud655\uc778\ub428, \uc800\uc7a5 \uacf5\uac04 \uc804\uccb4 994.7 GB, \uc0ac\uc6a9 \uac00\ub2a5 811.1 GB, \uc0ac\uc6a9 \uac00\ub2a5\uc740 macOS \ud68c\uc218 \uac00\ub2a5\ud55c \uacf5\uac04 \ud3ec\ud568, \uc0ac\uc6a9 \uc911\uc740 \uc804\uccb4\uc5d0\uc11c \uc0ac\uc6a9 \uac00\ub2a5\uc744 \ube80 \uac12\uc774\uba70 \uc2e4\uc81c \ud30c\uc77c \uc810\uc720\ub7c9\uc774 \uc544\ub2d8, APFS \uacf5\uc720 \uacf5\uac04\uc774\uba70 \ubcfc\ub968\ubcc4 \ub3c5\uc810 \uc0ac\uc6a9\ub7c9\uc774 \uc544\ub2d8, Disk \ucd5c\uadfc 10\ubd84 \uadf8\ub798\ud504, Read \uc810\uc120, Write \uc2e4\uc120, \uc6d0\ubcf8 \ubc94\uc704 0\u20139.5 MB\\/s, \ud604\uc7ac \uce21\uc815, \uc218\uc9d1 \uacf5\ubc31\uc740 \uc774\uc5b4 \uadf8\ub9ac\uc9c0 \uc54a\uc74c, \ub370\uc774\ud130 \uc218\uc9d1 \uc911 \u00b7 01:40 \\/ 10:00, \ub2e8\ucd95\ud0a4 \u23184\",\"MemoryCard\":\"Memory \uce74\ub4dc, \uc0ac\uc6a9 \uc911 22.1 GB, \uc804\uccb4 \ubb3c\ub9ac \uba54\ubaa8\ub9ac 36.0 GB, Memory Pressure \uc815\uc0c1, Swap 0.0 KB, Swap \ucd5c\uadfc \ubcc0\ud654 +0.0 KB, App 16.3 GB, Wired 3.6 GB, Compressed 762.8 MB, Cached 13.3 GB, \uad6c\uc131 \ud569\uacc4 33.9 GB, \uc571 TOP 5 \u00b7 \uc2dc\uc2a4\ud15c \ud504\ub85c\uc138\uc2a4 \uc81c\uc678 \u00b7 \uc77d\uae30 \uc2e4\ud328 13\uac1c, \ub2e8\ucd95\ud0a4 \u23182\",\"NetworkCard\":\"Network \uce74\ub4dc, \uc77c\ubd80 \uc218\uc9d1 \uc2e4\ud328: \ubb3c\ub9ac \ub300\uc0c1\uc758 \uc2dd\ubcc4\u00b7\uc5f0\uacb0\u00b7\uc18d\ub3c4 \uc77c\ubd80\ub97c \ud655\uc778\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4, \ud655\uc778\ub41c \uc77c\ubd80 \ud569\uacc4 \ub2e4\uc6b4\ub85c\ub4dc 130.5 KB\\/s, \uc5c5\ub85c\ub4dc 4.2 KB\\/s, \uc77c\ubd80 \uc218\uc9d1 \uc2e4\ud328: \ub300\uc0c1 identity \ub610\ub294 \ubb3c\ub9ac \uc815\ubcf4 \uc77c\ubd80 \ubbf8\ud655\uc778, \ud65c\uc131 \ud655\uc778 4\uac1c \u00b7 \ub17c\ub9ac\u00b7Wi-Fi\u00b7\uac00\uc0c1 \u00b7 \uc0c1\ud0dc \ubbf8\ud655\uc778 8\uac1c, \ub2e8\ucd95\ud0a4 \u23183\"},\"cards\":[\"CPUCard\",\"MemoryCard\",\"NetworkCard\",\"DiskCard\"],\"detail\":false,\"detailHeadings\":[],\"focusedWindowIdentifier\":\"\",\"focusedWindowTitle\":\"\",\"settings\":{},\"state\":\"body\"}\n",
+    "step": "open"
+  },
+  {
+    "endMach": 29563828323493,
+    "exitCode": 0,
+    "startMach": 29563819706014,
+    "stderr": "",
+    "stdout": "{\"body\":false,\"cardDescriptions\":{},\"cards\":[],\"detail\":false,\"detailHeadings\":[],\"focusedWindowIdentifier\":\"\",\"focusedWindowTitle\":\"\",\"settings\":{},\"state\":\"closed\"}\n",
+    "step": "close"
+  }
+]

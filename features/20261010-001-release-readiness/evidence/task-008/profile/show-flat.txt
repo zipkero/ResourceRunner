@@ -1,0 +1,2266 @@
+main-thread samples 4716, samples under "showRelativeToRect": 554
+  554 100.0% -[NSPopover showRelativeToRect:ofView:preferredEdge:]
+    349  63.0% -[NSPopover _makePopoverWindowIfNeeded]
+      326  58.8% -[NSWindow setContentViewController:]
+        326  58.8% NSPerformVisuallyAtomicChange
+          326  58.8% -[NSWindow _contentViewControllerChanged]
+            318  57.4% -[_NSPopoverWindow setContentView:]
+              317  57.2% -[NSWindow setContentView:]
+                316  57.0% -[NSView addSubview:]
+                  316  57.0% -[NSView _setWindow:]
+                    315  56.9% @objc NSHostingView.viewDidMoveToWindow()
+                      315  56.9% NSHostingView.viewDidMoveToWindow()
+                        312  56.3% NSHostingView.updateRequiredBridges()
+       19   3.4% 0x193d437d4
+         17   3.1% -[_NSPopoverWindow setFrame:display:]
+           14   2.5% -[NSWindow _setFrameCommon:display:fromServer:]
+             14   2.5% -[NSWindow _oldPlaceWindow:fromServer:]
+               12   2.2% -[NSWindow(NSConstraintBasedLayoutInternal) _layoutViewTree]
+                 12   2.2% -[NSView layoutSubtreeIfNeeded]
+                   12   2.2% NSPerformVisuallyAtomicChange
+                     12   2.2% -[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]
+                       12   2.2% NSPerformVisuallyAtomicChange
+                         12   2.2% __56-[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]_block_invoke
+    117  21.1% -[NSWindow(NSConstraintBasedLayoutInternal) layoutIfNeeded]
+      115  20.8% -[NSWindow(NSConstraintBasedLayoutInternal) updateConstraintsIfNeeded]
+        115  20.8% -[NSView(NSConstraintBasedLayoutInternal) _withAutomaticEngineOptimizationDisabled:]
+          115  20.8% -[NSISEngine withBehaviors:performModifications:]
+            115  20.8% -[NSView updateConstraintsForSubtreeIfNeeded]
+              115  20.8% NSPerformVisuallyAtomicChange
+                115  20.8% __45-[NSView updateConstraintsForSubtreeIfNeeded]_block_invoke
+                  115  20.8% -[NSView(NSConstraintBasedLayoutInternal) _withAutomaticEngineOptimizationDisabled:]
+                    115  20.8% -[NSISEngine withBehaviors:performModifications:]
+                      115  20.8% __45-[NSView updateConstraintsForSubtreeIfNeeded]_block_invoke_2
+                        115  20.8% -[NSView _updateConstraintsForSubtreeIfNeededCollectingViewsWithInvalidBaselines:]
+     48   8.7% -[NSWindow addChildWindow:ordered:]
+       47   8.5% NSPerformVisuallyAtomicChange
+         47   8.5% -[NSWindow _rebuildOrderingGroup:]
+           47   8.5% _NSWindowWalkOrderingGroupInternal
+             47   8.5% -[NSWindow _doOrderWindow:]
+               47   8.5% NSPerformVisuallyAtomicChange
+                 44   7.9% __27-[NSWindow _doOrderWindow:]_block_invoke.750
+                   44   7.9% -[NSWindow _reallyDoOrderWindow:]
+                     44   7.9% -[NSWindow _reallyDoOrderWindowAboveOrBelow:]
+                       44   7.9% -[NSWindow _doWindowWillBeVisibleAsSheet:]
+                         31   5.6% -[NSWindow _setUpFirstResponderBeforeBecomingVisible]
+                         12   2.2% -[NSWindow _setUpFirstResponder]
+     30   5.4% _NSPopoverPositionOnScreen
+       30   5.4% -[_NSPopoverWindow setFrame:display:]
+         30   5.4% -[NSWindow _setFrameCommon:display:fromServer:]
+           30   5.4% -[NSWindow _oldPlaceWindow:fromServer:]
+             28   5.1% -[NSWindow(NSConstraintBasedLayoutInternal) _layoutViewTree]
+               28   5.1% -[NSView layoutSubtreeIfNeeded]
+                 28   5.1% NSPerformVisuallyAtomicChange
+                   28   5.1% -[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]
+                     28   5.1% NSPerformVisuallyAtomicChange
+                       28   5.1% __56-[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]_block_invoke
+                         23   4.2% -[NSView _layoutSubtreeWithOldSize:]
+
+TOP inclusive symbols under anchor:
+  554 100.0% -[NSPopover showRelativeToRect:ofView:preferredEdge:]
+  531  95.8% NSPerformVisuallyAtomicChange
+  432  78.0% AG::Graph::UpdateStack::update()
+  429  77.4% <deduplicated_symbol>
+  399  72.0% specialized implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+  381  68.8% AG::Graph::update_attribute(AG::data::ptr<AG::Node>, unsigned int)
+  362  65.3% AGGraphGetValue
+  361  65.2% AG::Graph::input_value_ref_slow(AG::data::ptr<AG::Node>, AG::AttributeID, unsigned int, unsigned int, AGSwiftMetadata const*, unsigned char&, long)
+  349  63.0% -[NSPopover _makePopoverWindowIfNeeded]
+  338  61.0% AGGraphGetWeakValue
+  338  61.0% AG::Graph::value_ref(AG::AttributeID, unsigned int, AGSwiftMetadata const*, unsigned char&)
+  326  58.8% -[NSWindow setContentViewController:]
+  326  58.8% -[NSWindow _contentViewControllerChanged]
+  325  58.7% -[NSView addSubview:]
+  322  58.1% implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+  318  57.4% -[NSView _setWindow:]
+  318  57.4% partial apply for implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+  318  57.4% -[_NSPopoverWindow setContentView:]
+  317  57.2% -[NSWindow setContentView:]
+  315  56.9% @objc NSHostingView.viewDidMoveToWindow()
+  315  56.9% NSHostingView.viewDidMoveToWindow()
+  314  56.7% DynamicPreferenceCombiner.value.getter
+  312  56.3% NSHostingView.updateRequiredBridges()
+  312  56.3% NSHostingView.didChangeRequiredBridges(from:to:)
+  311  56.1% NSHostingViewRootDelegate.hostingViewDidUpdateRequiredBridges<A>(_:added:removed:)
+  311  56.1% GraphHost.preferenceValues()
+  286  51.6% closure #1 in PairPreferenceCombiner.value.getter
+  286  51.6% PairPreferenceCombiner.value.getter
+  279  50.4% protocol witness for static PreferenceKey.reduce(value:nextValue:) in conformance HostPreferencesKey
+  278  50.2% HostPreferencesWriter.updateValue()
+  278  50.2% HostPreferencesTransform.updateValue()
+  183  33.0% -[_NSPopoverWindow setFrame:display:]
+  183  33.0% 0x193bfd4f0
+  183  33.0% 0x193bfd518
+  174  31.4% -[NSWindow _setFrameCommon:display:fromServer:]
+  170  30.7% -[NSWindow _oldPlaceWindow:fromServer:]
+  170  30.7% __56-[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]_block_invoke
+  170  30.7% -[NSView layoutSubtreeIfNeeded]
+  170  30.7% -[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]
+  170  30.7% -[NSWindow(NSConstraintBasedLayoutInternal) _layoutViewTree]
+  169  30.5% AnimatableFrameAttribute.updateValue()
+  165  29.8% LayoutEngineBox.sizeThatFits(_:)
+  160  28.9% 0x23c660830
+  160  28.9% UnaryLayoutEngine.sizeThatFits(_:)
+  160  28.9% _FrameLayout.sizeThatFits(in:context:child:)
+  160  28.9% LayoutProxy.size(in:)
+  159  28.7% StackLayout.UnmanagedImplementation.placeChildren(in:)
+  159  28.7% specialized StackLayout.UnmanagedImplementation.placeChildren1(in:minorProposalForChild:)
+  158  28.5% specialized StackLayout.UnmanagedImplementation.sizeChildrenGenerallyWithConcreteMajorProposal(in:minorProposalForChild:)
+  158  28.5% ViewLayoutEngine.sizeThatFits(_:)
+  158  28.5% closure #1 in ViewLayoutEngine.sizeThatFits(_:)
+  157  28.3% DynamicLayoutViewChildGeometry.updateValue()
+  156  28.2% -[NSView _layoutSubtreeWithOldSize:]
+  156  28.2% ___NSViewLayout_block_invoke
+  156  28.2% __36-[NSView _layoutSubtreeWithOldSize:]_block_invoke
+  156  28.2% _NSViewLayout
+  155  28.0% 0x193bc21ec
+  155  28.0% 0x193bc2dd0
+  155  28.0% KeyViewLoopSeedFilter.updateValue()
+  155  28.0% specialized UnaryChildGeometry.value.getter
+  153  27.6% LayoutEngine.lengthThatFits(_:in:)
+  153  27.6% StackLayout.UnmanagedImplementation.prioritize(_:proposedSize:)
+  153  27.6% LayoutEngineBox.lengthThatFits(_:in:)
+  152  27.4% _PaddingLayout.sizeThatFits(in:context:child:)
+  152  27.4% protocol witness for UnaryLayout.sizeThatFits(in:context:child:) in conformance _PaddingLayout
+  151  27.3% closure #1 in ViewGraphRootValueUpdater.render(interval:updateDisplayList:targetTimestamp:)
+  151  27.3% ViewGraphRootValueUpdater.render(interval:updateDisplayList:targetTimestamp:)
+  151  27.3% +[NSAnimationContext runAnimationGroup:]
+  148  26.7% -[NSWindow(NSConstraintBasedLayoutInternal) layoutIfNeeded]
+  147  26.5% _FlexFrameLayout.sizeThatFits(in:context:child:)
+  147  26.5% protocol witness for UnaryLayout.sizeThatFits(in:context:child:) in conformance _FlexFrameLayout
+  145  26.2% RootGeometry.value.getter
+  129  23.3% @objc NSHostingView.layout()
+  129  23.3% NSHostingView.layout()
+  127  22.9% closure #1 in NSHostingView.layout()
+  120  21.7% -[NSView(NSConstraintBasedLayoutInternal) _withAutomaticEngineOptimizationDisabled:]
+  119  21.5% NSHostingView.updateConstraints()
+  119  21.5% 0x193bc52b4
+  119  21.5% __82-[NSView _updateConstraintsForSubtreeIfNeededCollectingViewsWithInvalidBaselines:]_block_invoke
+  119  21.5% -[NSISEngine withBehaviors:performModifications:]
+  119  21.5% __45-[NSView updateConstraintsForSubtreeIfNeeded]_block_invoke
+  119  21.5% 0x193bc4670
+  119  21.5% __45-[NSView updateConstraintsForSubtreeIfNeeded]_block_invoke_2
+  119  21.5% -[NSView updateConstraintsForSubtreeIfNeeded]
+  119  21.5% @objc NSHostingView.updateConstraints()
+  119  21.5% NSHostingView.updateWindowContentSizeExtremaIfNecessary()
+  119  21.5% -[NSWindow(NSConstraintBasedLayoutInternal) updateConstraintsIfNeeded]
+  119  21.5% -[NSView _updateConstraintsForSubtreeIfNeededCollectingViewsWithInvalidBaselines:]
+  117  21.1% AGGraphGetInputValue
+  117  21.1% ResolvedTextFilter.updateValue()
+  115  20.8% specialized DynamicContainerInfo.updateValue()
+  113  20.4% specialized DynamicContainerInfo.updateItems(disableTransitions:)
+  108  19.5% ResolvedTextHelper.resolve(_:with:sizeFitting:)
+  102  18.4% Text.resolveAttributedStringAndProperties(in:includeDefaultAttributes:options:idiom:)
+   98  17.7% DynamicPreferenceCombiner.info.getter
+   97  17.5% specialized GraphHost.runTransaction(_:do:id:)
+   96  17.3% AG::Subgraph::update(unsigned int)
+   94  17.0% ViewGraph.updateOutputs(at:)
+   92  16.6% specialized Text.resolve<A>(into:in:with:)
+   81  14.6% withUnsafeMutablePointer<A, B, C>(to:_:)
+   80  14.4% PlatformItemListGenerator.updateValue()
+   80  14.4% BindKeyboardShortcutItems.updateValue()
+   77  13.9% ViewList.applySublists(from:list:to:)
+   75  13.5% PlatformItemListGenerator.itemList.getter
+   74  13.4% TextChildQuery.value.getter
+   69  12.5% protocol witness for static PreferenceKey.reduce(value:nextValue:) in conformance PlatformItemList.Key
+   66  11.9% LayoutProxy.dimensions(in:)
+   64  11.6% _ZStackLayout.sizeThatFits(proposal:subviews:cache:)
+   54   9.7% protocol witness for ViewList.applyNodes(from:style:list:transform:to:) in conformance ForEachList<A, B, C>
+   54   9.7% specialized ForEachList.applyNodes(from:style:list:transform:to:)
+   54   9.7% ForEachState.forEachItem(from:style:do:)
+   53   9.6% specialized DynamicLayoutComputer.updateValue()
+   50   9.0% __NSStringDrawingEngine
+   49   8.8% -[NSCoreTypesetter _stringDrawingCoreTextEngineWithOriginalString:rect:padding:graphicsContext:forceClipping:attributes:stringDrawingOptions:drawingContext:stri
+   49   8.8% specialized ShapeStyledDisplayList.updateValue()
+   48   8.7% LocalizedTextStorage.resolve<A>(into:in:with:)
+   48   8.7% LocalizedStringKey.resolve<A>(into:in:options:table:bundle:)
+   48   8.7% -[NSWindow addChildWindow:ordered:]
+   47   8.5% StackLayout.UnmanagedImplementation.resize(_:proposal:proxy:)
+   47   8.5% specialized _ShapeStyle_RenderedShape.renderItem(name:styles:layers:)
+   47   8.5% -[NSWindow _rebuildOrderingGroup:]
+   47   8.5% _NSWindowWalkOrderingGroupInternal
+   47   8.5% -[NSWindow _doOrderWindow:]
+   46   8.3% _ViewList_Node.applySublists(from:style:transform:to:)
+   46   8.3% BaseViewList.applyNodes(from:style:list:transform:to:)
+   46   8.3% partial apply for closure #1 in _ViewList_Node.applySublists(from:style:transform:to:)
+   46   8.3% specialized StatefulRule<>.updateLayoutComputer<A>(layout:environment:attributes:)
+   45   8.1% closure #1 in DynamicLayoutViewAdaptor.foreachItem(items:_:)
+   45   8.1% specialized closure #1 in DynamicContainerInfo.updateItems(disableTransitions:)
+   45   8.1% specialized ViewLayoutEngine.init(layout:context:children:)
+   45   8.1% StackLayout.makeChildren()
+   44   7.9% Text.Style.nsAttributes(content:environment:includeDefaultAttributes:with:properties:)
+   44   7.9% -[NSWindow _doWindowWillBeVisibleAsSheet:]
+   44   7.9% -[NSWindow _reallyDoOrderWindowAboveOrBelow:]
+   44   7.9% __27-[NSWindow _doOrderWindow:]_block_invoke.750
+   44   7.9% -[NSWindow _reallyDoOrderWindow:]
+   43   7.8% DynamicViewList.updateValue()
+   39   7.0% StyledTextLayoutEngine.sizeThatFits(_:)
+   39   7.0% specialized Sequence.reduce<A>(_:_:)
+   39   7.0% _ShapeStyle_RenderedShape.renderKeyedText(_:style:name:layers:)
+   38   6.9% NSAttributedString.MetricsCache.metrics(requestedSize:layoutMargins:wantsNumberOfLineFragments:context:)
+   38   6.9% Text.MakeRepresentableContext.value.getter
+   38   6.9% PlatformItemListTextRepresentable.PlatformRepresentation.value.getter
+   37   6.7% _ViewList_TemporarySublistTransform.withPushedItem<A, B>(_:do:)
+   37   6.7% ResolvedStyledText.StringDrawing.sizeThatFits(_:)
+   36   6.5% UnaryElements.makeElements(from:inputs:indirectMap:body:)
+   36   6.5% partial apply for closure #1 in _ViewList_TemporarySublistTransform.withPushedItem<A, B>(_:do:)
+   36   6.5% protocol witness for ViewList.applyNodes(from:style:list:transform:to:) in conformance _ViewList_Group
+   36   6.5% Text.Resolved.append(_:in:with:isUniqueSizeVariant:)
+   35   6.3% thunk for @callee_guaranteed (@in_guaranteed _ViewInputs, @guaranteed @escaping @callee_guaranteed (@in_guaranteed _ViewInputs) -> (@out _ViewOutputs)) -> (@out
+   35   6.3% closure #1 in closure #1 in _ViewList_Elements.makeAllElements(inputs:indirectMap:body:)
+   35   6.3% ConcatenatedTextStorage.resolve<A>(into:in:with:)
+   35   6.3% Text.Storage.resolve<A>(into:in:with:)
+   35   6.3% Text.resolve<A>(into:in:with:)
+   35   6.3% -[NSAttributedString enumerateAttributesInRange:options:usingBlock:]
+   35   6.3% thunk for @escaping @callee_guaranteed (@guaranteed [NSAttributedStringKey : Any], @unowned _NSRange, @unowned UnsafeMutablePointer<ObjCBool>) -> ()
+   34   6.1% closure #1 in ForEachState.applyNodes(from:style:list:transform:to:)
+   34   6.1% partial apply for closure #2 in DynamicLayoutViewAdaptor.makeItemLayout(item:uniqueId:inputs:containerInfo:containerInputs:)
+   34   6.1% closure #2 in DynamicLayoutViewAdaptor.makeItemLayout(item:uniqueId:inputs:containerInfo:containerInputs:)
+   33   6.0% partial apply for closure #1 in Text.Resolved.append(_:in:with:isUniqueSizeVariant:)
+   33   6.0% thunk for @callee_guaranteed (@guaranteed [NSAttributedStringKey : Any], @unowned _NSRange, @unowned UnsafeMutablePointer<ObjCBool>) -> ()
+   33   6.0% closure #1 in Text.Resolved.append(_:in:with:isUniqueSizeVariant:)
+   33   6.0% partial apply for closure #3 in _ZStackLayout.sizeThatFits(proposal:subviews:cache:)
+   32   5.8% DynamicViewList.WrappedList.applyNodes(from:style:list:transform:to:)
+   32   5.8% LayoutEngineBox.explicitAlignment(_:at:)
+   32   5.8% ViewDimensions.subscript.getter
+   32   5.8% ResolvedStyledText.layers(for:renderer:deviceScale:)
+   31   5.6% ViewGraphRenderDelegate.withMainThreadRender(wasAsync:_:)
+   31   5.6% ViewGraph.renderDisplayList(_:asynchronously:time:nextTime:targetTimestamp:version:maxVersion:)
+   31   5.6% protocol witness for ViewGraphRenderHost.renderDisplayList(_:asynchronously:time:nextTime:targetTimestamp:version:maxVersion:) in conformance ViewGraph
+   31   5.6% DisplayList.ViewUpdater.updateInheritedView(container:from:parentState:)
+   31   5.6% closure #1 in renderOnMainThread #1 () in ViewGraph.renderDisplayList(_:asynchronously:time:nextTime:targetTimestamp:version:maxVersion:)
+   31   5.6% DisplayList.ViewUpdater.render(rootView:from:time:version:maxVersion:environment:)
+   31   5.6% -[NSAttributedString(NSExtendedStringDrawing) boundingRectWithSize:options:context:]
+   31   5.6% specialized InterpolatedDisplayList.updateValue()
+   31   5.6% -[NSWindow _setUpFirstResponderBeforeBecomingVisible]
+   30   5.4% specialized ObjectCache.subscript.getter
+   30   5.4% _NSPopoverPositionOnScreen
+   29   5.2% DynamicBody.updateValue()
+   29   5.2% NSHostingView.windowDidLayout()
+   29   5.2% __CFNOTIFICATIONCENTER_IS_CALLING_OUT_TO_AN_OBSERVER__
+   29   5.2% _CFXRegistrationPost
+   29   5.2% ___CFXRegistrationPost_block_invoke
+   29   5.2% _CFXNotificationPost
+   29   5.2% @objc NSHostingView.windowDidLayout()
+   29   5.2% -[NSNotificationCenter postNotificationName:object:userInfo:]
+   28   5.1% DisplayList.ViewUpdater.updateItemView(container:from:localState:)
+   28   5.1% static ModifiedContent<>._makeView(view:inputs:)
+   28   5.1% CTLineCreateWithAttributedString
+   28   5.1% __NSCoreTypesetterCreateBaseLineFromAttributedString
+   28   5.1% TTypesetterAttrString::TTypesetterAttrString(__CFAttributedString const*, __CFDictionary const*, bool)
+   28   5.1% UnaryLayoutEngine.explicitAlignment(_:at:)
+   27   4.9% protocol witness for _ViewList_Elements.makeElements(from:inputs:indirectMap:body:) in conformance ModifiedElements
+   27   4.9% partial apply for closure #1 in closure #1 in ModifiedElements.makeElements(from:inputs:indirectMap:body:)
+   27   4.9% ModifiedViewList.applyNodes(from:style:list:transform:to:)
+   27   4.9% closure #1 in closure #1 in ModifiedElements.makeElements(from:inputs:indirectMap:body:)
+   27   4.9% partial apply for thunk for @callee_guaranteed (@in_guaranteed _ViewInputs, @guaranteed @escaping @callee_guaranteed (@in_guaranteed _ViewInputs) -> (@out _View
+   27   4.9% NSHostingView.updateAnimatedWindowSize(_:)
+   26   4.7% TTypesetterAttrString::Initialize(__CFAttributedString const*, bool)
+   25   4.5% ViewBodyAccessor.updateBody(of:changed:)
+   25   4.5% protocol witness for BodyAccessor.updateBody(of:changed:) in conformance ViewBodyAccessor<A>
+   25   4.5% TransitionBox.visitBase<A>(applying:)
+   25   4.5% DynamicLayoutViewAdaptor.MakeTransition.visit<A>(_:)
+   25   4.5% closure #2 in static ModifiedContent<>._makeView(view:inputs:)
+   25   4.5% static Transition.makeView(view:inputs:body:)
+   25   4.5% ResolvedStyledText.makeRBDisplayList(for:renderer:deviceScale:)
+   25   4.5% _swift_getGenericMetadata(swift::MetadataRequest, void const* const*, swift::TargetTypeContextDescriptor<swift::InProcess> const*)
+   25   4.5% __37-[_NSPopoverWindow setFrame:display:]_block_invoke
+   24   4.3% 0x193ab6660
+   24   4.3% 0x193ac351c
+   24   4.3% 0x193c88b14
+   24   4.3% 0x193ab66b4
+   24   4.3% 0x193ac612c
+   24   4.3% 0x193c88aec
+   24   4.3% closure #1 in ViewBodyAccessor.updateBody(of:changed:)
+   24   4.3% UnaryLayoutEngine.childPlacement(at:)
+   23   4.2% closure #1 in closure #1 in closure #1 in ModifiedElements.makeElements(from:inputs:indirectMap:body:)
+   23   4.2% closure #2 in closure #1 in ForEachState.applyNodes(from:style:list:transform:to:)
+   23   4.2% PreferenceCombiner.value.getter
+   23   4.2% ViewGraphRootValueUpdater._updateViewGraph<A>(body:)
+   22   4.0% closure #1 in DynamicBody.updateValue()
+   22   4.0% static OpacityRendererEffect._makeView(modifier:inputs:body:)
+   22   4.0% specialized project #1 <A>(_:) in closure #1 in closure #1 in closure #1 in ModifiedElements.makeElements(from:inputs:indirectMap:body:)
+   22   4.0% closure #1 in variable initialization expression of static Font.FontCache.shared
+   22   4.0% ResolvedStyledText.StringDrawing.draw(in:with:applyingMarginOffsets:containsResolvable:context:renderer:)
+   22   4.0% __swift_instantiateGenericMetadata
+   21   3.8% StaticBody.updateValue()
+   21   3.8% closure #1 in StaticBody.updateValue()
+   21   3.8% static PlaceholderContentView._makeView(view:inputs:)
+   21   3.8% static ViewModifierContentProvider.providerMakeView(view:inputs:)
+   21   3.8% ViewGraphRootValueUpdater._sizeThatFits(_:)
+   20   3.6% DisplayList.ViewUpdater.ViewCache.update(item:platform:state:tag:in:)
+   20   3.6% partial apply for closure #1 in ObservationCenter._withObservation<A>(do:)
+   20   3.6% ForEachState.item(at:offset:)
+   20   3.6% specialized FrameLayoutCommon.commonPlacement(of:in:childProposal:)
+   19   3.4% 0x193d437d4
+   19   3.4% DisplayList.ViewUpdater.Platform.updateItemView(_:index:item:state:)
+   19   3.4% withUnsafePointer<A, B, C>(to:_:)
+   19   3.4% closure #1 in ObservationCenter._withObservation<A>(do:)
+   19   3.4% AttachmentTextStorage.resolve<A>(into:in:with:)
+   19   3.4% specialized ResolvedTextContainer.append<A>(_:in:with:)
+   19   3.4% closure #1 in PreferenceCombiner.value.getter
+   19   3.4% NSHostingView.minSize()
+   19   3.4% AG::Graph::add_input(AG::data::ptr<AG::Node>, AG::AttributeID, bool, unsigned int)
+   19   3.4% -[NSAttributedString(NSExtendedStringDrawing) drawWithRect:options:context:]
+   19   3.4% ResolvedTextContainer.append(_:in:with:)
+   18   3.2% closure #1 in UnaryElements.makeElements(from:inputs:indirectMap:body:)
+   18   3.2% specialized static AccessibilityViewModifier._makeView(modifier:inputs:body:)
+   18   3.2% specialized LocalizedStringKey.resolveArguments<A>(from:into:in:options:isUniqueSizeVariant:)
+   18   3.2% ViewGraph.sizeThatFits(_:)
+   18   3.2% partial apply for closure #1 in ViewGraphRootValueUpdater._sizeThatFits(_:)
+   18   3.2% NSHostingView.minSizeRoundedRespectingSizingOptions()
+   17   3.1% MergedElements.makeElements(from:inputs:indirectMap:body:)
+   17   3.1% specialized static _RendererEffect._makeRendererEffect(effect:inputs:body:)
+   17   3.1% protocol witness for _ViewList_Elements.makeElements(from:inputs:indirectMap:body:) in conformance MergedElements
+   17   3.1% objc_msgSend
+   17   3.1% partial apply for closure #1 in ViewLayoutEngine.explicitAlignment(_:at:)
+   17   3.1% closure #1 in ViewLayoutEngine.explicitAlignment(_:at:)
+   17   3.1% ViewLayoutEngine.explicitAlignment(_:at:)
+   17   3.1% DisplayList.ViewUpdater.update(container:from:parentState:)
+   16   2.9% project #1 <A>(_:) in TypedUnaryViewGenerator.makeView(inputs:indirectMap:)
+   16   2.9% protocol witness for UnaryViewGenerator.makeView(inputs:indirectMap:) in conformance TypedUnaryViewGenerator
+   16   2.9% CTFontCreateWithFontDescriptor
+   16   2.9% protocol witness for UnaryLayout.placement(of:in:) in conformance _FrameLayout
+   16   2.9% specialized PropertyList.Tracker.value<A>(_:for:)
+   16   2.9% closure #1 in closure #1 in ViewLayoutEngine.explicitAlignment(_:at:)
+   15   2.7% specialized closure #1 in VStack.init(alignment:spacing:content:)
+   15   2.7% ViewLayoutEngine.childGeometries(at:origin:)
+   14   2.5% specialized static Layout.makeLayoutView(root:inputs:body:)
+   14   2.5% static _VariadicView.Tree<>._makeView(view:inputs:)
+   14   2.5% closure #1 in ViewLayoutEngine.childGeometries(at:origin:)
+   13   2.3% -[NSWindow _cornerMaskChanged]
+   13   2.3% SDFLayer.update(shape:size:in:backdropGroupID:)
+   13   2.3% DisplayList.ViewUpdater.Platform.updateSDFShapeView(_:state:shape:contentsChanged:)
+   13   2.3% TypeConformance<>.visitType<A>(visitor:)
+   13   2.3% partial apply for closure #1 in ForEachState.item(at:offset:)
+   13   2.3% closure #1 in ForEachState.item(at:offset:)
+   13   2.3% -[NSView _setDefaultKeyViewLoop]
+   13   2.3% specialized LazyMapSequence.Iterator.next()
+   12   2.2% DynamicViewList.Item.list.getter
+   12   2.2% _swift_release_dealloc
+   12   2.2% bool swift::RefCounts<swift::RefCountBitsT<(swift::RefCountInlinedness)1>>::doDecrementSlow<(swift::PerformDeinit)1>(swift::RefCountBitsT<(swift::RefCountInline
+   12   2.2% specialized static Layout.makeStaticView(root:inputs:properties:list:)
+   12   2.2% -[NSWindow _setUpFirstResponder]
+   12   2.2% StyledTextLayoutEngine.lengthThatFits(_:in:)
+   12   2.2% closure #1 in _ZStackLayout.placeSubviews(in:proposal:subviews:cache:)
+   12   2.2% LayoutProxy.layoutPriority.getter
+   12   2.2% specialized find1<A>(_:key:filter:)
+   11   2.0% ConditionalMetadata<>.makeViewList<A>(ptr:view:inputs:)
+   11   2.0% closure #1 in ConditionalMetadata<>.makeViewList<A>(ptr:view:inputs:)
+   11   2.0% closure #1 in DynamicViewList.updateValue()
+   11   2.0% ConditionalMetadata<>.MakeList.visit<A>(type:)
+   11   2.0% specialized ConditionalTypeDescriptor.project(at:baseIndex:_:)
+   11   2.0% __NSCoreTypesetterRenderLineAndAttachments
+   11   2.0% std::__1::pair<swift::GenericCacheEntry*, swift::MetadataResponse> swift::LockingConcurrentMap<swift::GenericCacheEntry, swift::LockingConcurrentMapStorage<swif
+   11   2.0% StackLayout.explicitAlignment(_:in:proposal:)
+   11   2.0% protocol witness for Layout.explicitAlignment(of:in:proposal:subviews:cache:) in conformance _HStackLayout
+   11   2.0% StackLayout.UnmanagedImplementation.explicitAlignment(_:at:)
+   11   2.0% StaticBody.container.getter
+   10   1.8% -[NSPopoverFrame setFrameSize:]
+   10   1.8% _xzm_free
+   10   1.8% static ModifiedContent<>._makeViewList(view:inputs:)
+   10   1.8% _xzm_xzone_malloc_tiny
+   10   1.8% protocol witness for ApplicationIconProviding.icon(for:) in conformance ApplicationIconCache
+   10   1.8% _CFRelease
+   10   1.8% ImageProviderBox.resolve(in:)
+   10   1.8% Image.NamedImageProvider.resolve(in:)
+   10   1.8% Attribute.syncMainIfReferences<A>(do:)
+   10   1.8% SecondaryLayerGeometryQuery.value.getter
+   10   1.8% TLine::DrawGlyphs(CGContext*) const
+   10   1.8% _NSCoreTypesetterRenderLine
+   10   1.8% TRun::DrawGlyphs(CGContext*, CFRange) const
+   10   1.8% -[NSView setFrame:]
+   10   1.8% -[NSView resizeWithOldSuperviewSize:]
+   10   1.8% _platform_memmove
+   10   1.8% AGGraphSetOutputValue
+   10   1.8% hashProbe
+   10   1.8% +[NSAttributeDictionary newWithDictionary:]
+   10   1.8% -[NSConcreteHashTable getItem:]
+   10   1.8% Text.Resolved.append(_:with:in:)
+   10   1.8% LayoutEngineBox.childGeometries(at:origin:)
+    9   1.6% GraphHost.flushTransactions()
+    9   1.6% partial apply for closure #1 in _ConditionalContent<>.makeChildViewList(metadata:view:inputs:)
+    9   1.6% _ConditionalContent<>.makeChildViewList(metadata:view:inputs:)
+    9   1.6% specialized _ArrayBuffer._consumeAndCreateNew(bufferIsUnique:minimumCapacity:growForAppend:)
+    9   1.6% DYLD-STUB$$protocol witness for OptionSet.init(rawValue:) in conformance DisplayList.Properties
+    9   1.6% Text.Resolved.append(_:in:with:)
+    9   1.6% PropertyList.Tracker.hasDifferentUsedValues(_:)
+    9   1.6% AG::Graph::add_input_dependencies(AG::AttributeID, AG::AttributeID)
+    9   1.6% NSHostingView.swiftui_addManagedSubview(_:positioned:relativeTo:)
+    9   1.6% @objc NSHostingView.swiftui_addManagedSubview(_:positioned:relativeTo:)
+    9   1.6% -[NSView addSubview:positioned:relativeTo:]
+    9   1.6% -[NSView _setSuperview:]
+    9   1.6% FocusBridge.updateDefaultKeyViewLoop()
+    9   1.6% NSHostingView._recursiveSetDefaultKeyViewLoop()
+    9   1.6% @objc NSHostingView._recursiveSetDefaultKeyViewLoop()
+    9   1.6% -[NSWindow recalculateKeyViewLoop]
+    9   1.6% NSKeyValueNotifyObserver
+    9   1.6% -[NSWindow _changeKeyAndMainLimitedOK:]
+    9   1.6% NSKeyValueDidChange
+    9   1.6% NSKeyValueDidChangeWithPerThreadPendingNotifications
+    9   1.6% -[NSWindow makeKeyWindow]
+    9   1.6% -[NSPopoverFrame _setAnchorPoint:reshape:]
+    9   1.6% std::__1::pair<swift::GenericCacheEntry*, bool> swift::StableAddressConcurrentReadableHashMap<swift::GenericCacheEntry, swift::TaggedMetadataAllocator<(unsigned
+    9   1.6% getCache(swift::TargetTypeContextDescriptor<swift::InProcess> const&)
+    9   1.6% ForegroundMaterialStyle._apply(to:)
+    9   1.6% specialized static UnaryLayout<>.makeViewImpl(modifier:inputs:body:)
+    9   1.6% protocol witness for static ViewModifier._makeView(modifier:inputs:body:) in conformance _FrameLayout
+    9   1.6% makeSecondaryLayerView<A>(secondaryLayer:alignment:inputs:body:flipOrder:)
+    9   1.6% static _BackgroundModifier._makeView(modifier:inputs:body:)
+    8   1.4% -[NSWindow _createCornerMaskFromCornerMaskImage]
+    8   1.4% ColorBox.apply(color:to:)
+    8   1.4% swift_getTypeByMangledNameImpl(swift::MetadataRequest, __swift::__runtime::llvm::StringRef, void const* const*, std::__1::function<void const* (unsigned int, un
+    8   1.4% swift_getTypeByMangledName
+    8   1.4% closure #2 in static ModifiedContent<>._makeViewList(view:inputs:)
+    8   1.4% swift_allocObject
+    8   1.4% static HStack._makeView(view:inputs:)
+    8   1.4% static PreferenceKey.visitKey<A>(_:)
+    8   1.4% protocol witness for static _VariadicView_ViewRoot._makeView(root:inputs:body:) in conformance _HStackLayout
+    8   1.4% -[NSWorkspace iconForFile:]
+    8   1.4% -[NSWorkspace _iconForURL:]
+    8   1.4% ApplicationIconCache.icon(for:)
+    8   1.4% static ApplicationIconCache.loadSystemIcon(for:)
+    8   1.4% protocol witness for UnaryLayout.sizeThatFits(in:context:child:) in conformance _FixedSizeLayout
+    8   1.4% TFont::TFont(__CTFontDescriptor const*, double, CGAffineTransform const*, __CTFontDescriptor const*)
+    8   1.4% TCFRef<CTFont::cf_type> TCFBase_NEW<CTFont, __CTFontDescriptor const*, double&, CGAffineTransform const*&, __CTFontDescriptor const*&>(__CTFontDescriptor const*
+    8   1.4% TGlyphEncoder::EncodeChars(CFRange, TAttributes const&, TGlyphEncoder::Fallbacks)
+    8   1.4% TDescriptor::CreateMatchingDescriptor(__CFSet const*, double, unsigned long) const
+    8   1.4% TDescriptor::InitBaseFont(unsigned long, double)
+    8   1.4% _SwiftDeferredNSDictionary.object(forKey:)
+    8   1.4% @objc _SwiftDeferredNSDictionary.object(forKey:)
+    8   1.4% specialized ShapeStyleResolver.updateValue()
+    8   1.4% swift_retain
+    8   1.4% _ShapeStyle_Shape.resolveStyle(id:material:)
+    8   1.4% specialized static ViewGraph.sizeThatFits(_:layoutComputer:insets:)
+    8   1.4% closure #2 in static Layout.makeStaticView(root:inputs:properties:list:)
+    8   1.4% -[NSConcreteMutableAttributedString initWithString:attributes:]
+    8   1.4% CTFontDrawGlyphsWithAdvancesInternal
+    7   1.3% lookUpImpOrForward
+    7   1.3% _objc_msgSend_uncached
+    7   1.3% -[NSImage CGImageForProposedRect:context:hints:]
+    7   1.3% GraphHost.instantiate()
+    7   1.3% GraphHost.instantiateIfNeeded()
+    7   1.3% static MultiViewModifier._makeViewList(modifier:inputs:body:)
+    7   1.3% static ViewModifier<>._makeViewList(modifier:inputs:body:)
+    7   1.3% swift::swift_slowAllocTyped(unsigned long, unsigned long, unsigned long long)
+    7   1.3% LaunchServices::BindingEvaluation::addAndEvaluate(LaunchServices::BindingEvaluation::State&, void (*)(LaunchServices::BindingEvaluation::State&), std::__1::vect
+    7   1.3% LaunchServices::BindingEvaluator::getBestBinding(LSContext*, UTTypeRecord* __strong*, NSError* __autoreleasing*) const
+    7   1.3% LaunchServices::BindingEvaluation::runEvaluator(LaunchServices::BindingEvaluation::State&, NSError* __autoreleasing*)
+    7   1.3% _LSBundleFindWithNode
+    7   1.3% -[NSAttributeDictionary objectForKey:]
+    7   1.3% TKerningEngine::PositionGlyphs(TRunGlue&, TCharStream const&, signed char)
+    7   1.3% TTypesetter::FinishLayout(std::__1::tuple<TLine const*, TCharStream const*, void const* (*)(__CTRun const*, __CFString const*, void*), void*, std::__1::shared_p
+    7   1.3% TDescriptor::CreateMatchingDescriptorInternal(__CFSet const*, unsigned long) const
+    7   1.3% Text.Style.TextStyleColor.resolve(in:with:properties:includeDefaultAttributes:)
+    7   1.3% compare(_:against:)
+    7   1.3% __70-[NSView _updateConstraintsForLayoutCheckingDirtyBits:creatingEngine:]_block_invoke
+    7   1.3% _AppKitAddSubview
+    7   1.3% -[NSView _updateConstraintsForLayoutCheckingDirtyBits:creatingEngine:]
+    7   1.3% -[RBDisplayListPredicate copyFilteredDisplayList:]
+    7   1.3% -[NSWindow becomeKeyWindow]
+    7   1.3% TTypesetter::FinishEncoding(std::__1::tuple<TLine const*, TCharStream const*, void const* (*)(__CTRun const*, __CFString const*, void*), void*, std::__1::shared
+    7   1.3% TShapingEngine::ShapeGlyphs(TRunGlue&, TCharStream const&)
+    7   1.3% attributeDictionaryHash
+    7   1.3% ___chkstk_darwin
+    7   1.3% static BoxVTable.update(elt:property:phase:)
+    7   1.3% _DynamicPropertyBuffer.update(container:phase:)
+    7   1.3% ContentStyle.MaterialStyle.platformResolveColor(in:)
+    7   1.3% specialized RendererEffectDisplayList.value.getter
+    7   1.3% EnvironmentValues.appearance(allowsVibrantBlending:)
+    7   1.3% specialized GeometryReaderLayout.placeSubviews(in:proposal:subviews:cache:)
+    7   1.3% CGContextShowGlyphsWithAdvances
+    7   1.3% CGContextDelegateDrawGlyphs
+    7   1.3% EnumerateOverlappingGlyphs(CGContext*, TFont const&, unsigned short const*, long, int, void (CFRange, bool) block_pointer)
+    7   1.3% draw_glyphs.18922
+    7   1.3% static TransactionalAnchorPreferenceTransformModifier._makeView(modifier:inputs:body:)
+    7   1.3% static AnchorGeometryTransformModifier._makeView(modifier:inputs:body:)
+    6   1.1% closure #1 in ViewGraph.instantiateOutputs()
+    6   1.1% swift_getTypeByMangledNode
+    6   1.1% swift_getTypeByMangledNodeImpl(swift::MetadataRequest, swift::Demangle::__runtime::Demangler&, swift::Demangle::__runtime::Node*, void const* const*, std::__1::
+    6   1.1% ViewGraph.instantiateOutputs()
+    6   1.1% swift::Demangle::__runtime::TypeDecoder<(anonymous namespace)::DecodedMetadataBuilder>::decodeMangledType(swift::Demangle::__runtime::Node*, unsigned int, bool)
+    6   1.1% static _TraitWritingModifier._makeViewList(modifier:inputs:body:)
+    6   1.1% static View.makeViewList(view:inputs:)
+    6   1.1% static _ViewModifier_Content._makeViewList(view:inputs:)
+    6   1.1% static View._makeViewList(view:inputs:)
+    6   1.1% static ViewModifierContentProvider.providerMakeViewList(view:inputs:)
+    6   1.1% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance AnchorGeometryTransformModifier<A>
+    6   1.1% -[NSImage _usingBestRepresentationForRect:context:hints:body:]
+    6   1.1% specialized UnaryLayoutComputer.updateValue()
+    6   1.1% TOpenTypePositioningEngine::PositionRuns(SyncState&, KerningStatus&)
+    6   1.1% TFont::~TFont()
+    6   1.1% outlined destroy of (key: NSAttributedStringKey, value: Any)
+    6   1.1% specialized static AppKitPlatformColorDefinition.resolvedHDRColor(_:environment:)
+    6   1.1% 0x1c5daa92c
+    6   1.1% AG::data::zone::realloc_bytes(AG::data::ptr<void>&, unsigned int, unsigned int, unsigned int)
+    6   1.1% __CF_IS_OBJC
+    6   1.1% -[__NSDictionaryM objectForKey:]
+    6   1.1% __swift_instantiateCanonicalPrespecializedGenericMetadata
+    6   1.1% -[NSObject(NSKeyValueObservingPrivate) _changeValueForKeys:count:maybeOldValuesDict:maybeNewValuesDict:usingBlock:]
+    6   1.1% -[NSObject(NSKeyValueObservingPrivate) _changeValueForKey:key:key:usingBlock:]
+    6   1.1% _NSSetBoolValueAndNotify
+    6   1.1% -[NSCompositeAppearance _callCoreUIWithBlock:options:requireBezelTintColor:]
+    6   1.1% UnwrapConditional.updateValue()
+    6   1.1% swift::MetadataCacheKey::operator==(swift::MetadataCacheKey const&) const
+    6   1.1% LayoutProxy.explicitAlignment(_:at:)
+    6   1.1% closure #1 in closure #1 in DynamicBody.updateValue()
+    6   1.1% partial apply for closure #1 in closure #1 in DynamicBody.updateValue()
+    6   1.1% HierarchicalShapeStyle._apply(to:)
+    6   1.1% ShapeStyleBox.apply(to:)
+    6   1.1% protocol witness for static PreferenceKey.reduce(value:nextValue:) in conformance DisplayList.Key
+    6   1.1% closure #1 in Attribute.syncMainIfReferences<A>(do:)
+    6   1.1% static View.makeDebuggableView(view:inputs:)
+    6   1.1% UpdateViewFocusItem.updateValue()
+    6   1.1% protocol witness for static _VariadicView_ViewRoot._makeView(root:inputs:body:) in conformance _VStackLayout
+    6   1.1% static VStack._makeView(view:inputs:)
+    5   0.9% SDFLayer.finishUpdatingStyle(_:in:elementCount:backdropGroupID:)
+    5   0.9% static View._makeView(view:inputs:)
+    5   0.9% static View.makeView(view:inputs:)
+    5   0.9% static ViewModifier.makeViewList(modifier:inputs:body:)
+    5   0.9% static ViewModifier._makeViewList(modifier:inputs:body:)
+    5   0.9% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance _BackgroundModifier<A>
+    5   0.9% static StyleModifier._makeViewList(modifier:inputs:body:)
+    5   0.9% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance _OverlayModifier<A>
+    5   0.9% MultiPreferenceCombinerVisitor.visit<A>(key:)
+    5   0.9% _LSBindingCreateWithURL
+    5   0.9% _FSURLCopyResourcePropertiesForKeysInternal(__CFURL const*, __CFArray const*, void*, __CFError**, unsigned char)
+    5   0.9% _LSBundleMatchesNode(_LSDatabase*, unsigned int, LSBundleData const*, id<FSNodePropertyProviding>, unsigned long long)
+    5   0.9% _LSAliasCompareToNode
+    5   0.9% _LSAliasAndInodeOnContainerMatchesNode
+    5   0.9% +[NSURL resourceValuesForKeys:fromBookmarkData:]
+    5   0.9% +[FSNode(BookmarkData) pathForBookmarkData:error:]
+    5   0.9% prepareValuesForBitmap(__CFURL const*, __FileCache*, _FilePropertyBitmap*, __CFError**)
+    5   0.9% ___LSBundleFindWithNode_block_invoke
+    5   0.9% BindingManager::CreateWithURL(__CFURL const*, bool)
+    5   0.9% _CFURLCreateResourcePropertiesForKeysFromBookmarkData
+    5   0.9% CFURLCopyResourcePropertiesForKeys
+    5   0.9% LaunchServices::BindingEvaluation::isBindingOK(LaunchServices::BindingEvaluation::State&, LaunchServices::BindingEvaluation::ExtendedBinding const&)
+    5   0.9% _LSFindOrRegisterBundleNode
+    5   0.9% static Text._makeView(view:inputs:)
+    5   0.9% specialized closure #1 in HStack.init(alignment:spacing:content:)
+    5   0.9% TFont::SetExtras(__CTFontDescriptor const*, __CFArray const*)
+    5   0.9% TASCIIEncoder::Encode(bool)
+    5   0.9% static ViewLayoutEngine.defaultAlignment(_:size:data:)
+    5   0.9% 0x23c660e60
+    5   0.9% static AppKitPlatformColorDefinition.resolvedHDRColor(_:environment:)
+    5   0.9% specialized PlatformColorProvider.resolveHDR(in:)
+    5   0.9% ViewGraphRootValueUpdater.invalidateProperties(_:mayDeferUpdate:)
+    5   0.9% TrackedValue.hasMatchingValue(in:)
+    5   0.9% void AG::Graph::add_output_edge<AG::Node>(AG::data::ptr<AG::Node>, AG::AttributeID)
+    5   0.9% AG::data::zone::alloc_bytes_recycle(unsigned int, unsigned int)
+    5   0.9% specialized _NativeDictionary._copyOrMoveAndResize(capacity:moveElements:)
+    5   0.9% -[NSPopoverFrame tileAndSetWindowShape:updateContentView:]
+    5   0.9% std::__1::pair<swift::HashMapElementWrapper<swift::GenericCacheEntry>*, unsigned int> swift::ConcurrentReadableHashMap<swift::HashMapElementWrapper<swift::Gener
+    5   0.9% specialized HierarchicalShapeStyle.apply<A>(_:to:)
+    5   0.9% PlatformViewLayoutEngine.sizeThatFits(_:)
+    5   0.9% ViewLeafView.layoutTraits()
+    5   0.9% AppKitPlatformViewHost.coreLayoutTraits()
+    5   0.9% ViewLeafView.sizeThatFits(in:environment:context:)
+    5   0.9% closure #1 in ViewLeafView.sizeThatFits(in:environment:context:)
+    5   0.9% closure #1 in ViewLeafView.layoutTraits()
+    5   0.9% RendererEffectDisplayList.value.getter
+    5   0.9% -[NSLayoutConstraint _addToEngine:mutuallyExclusiveConstraints:]
+    5   0.9% GraphHost.updatePreferences()
+    5   0.9% ViewGraphRootValueUpdater.updateGraph()
+    5   0.9% -[NSPopoverFrame contentInset]
+    5   0.9% specialized closure #1 in PropertyList.subscript.getter
+    5   0.9% AnyColorBox.apply(to:)
+    5   0.9% specialized _ZStackLayout.placeSubviews(in:proposal:subviews:cache:)
+    5   0.9% static _OverlayModifier._makeView(modifier:inputs:body:)
+    5   0.9% PlatformItemListGenerator.makeItemList()
+    5   0.9% partial apply for implicit closure #2 in implicit closure #1 in PlatformItemListGenerator.updateValue()
+    5   0.9% _GraphInputs.merge(_:ignoringPhase:)
+    4   0.7% -[NSPanel initWithContentRect:styleMask:backing:defer:]
+    4   0.7% -[NSPanel _initContent:styleMask:backing:defer:contentView:]
+    4   0.7% -[NSWindow initWithContentRect:styleMask:backing:defer:]
+    4   0.7% -[NSWindow _commonInitFrame:styleMask:backing:defer:]
+    4   0.7% -[_NSPopoverWindow initWithContentRect:styleMask:backing:defer:]
+    4   0.7% -[_NSPopoverWindow _initWithPopover:]
+    4   0.7% -[NSWindow _initContent:styleMask:backing:defer:contentView:]
+    4   0.7% getMethodNoSuper_nolock(objc_class*, objc_selector*)
+    4   0.7% -[NSPopoverFrame _coreUIOptionsWithAnchorEdge:anchorPoint:anchorSize:shouldInsetForAnchor:areasOfInterest:cornerRadius:]
+    4   0.7% ColorBox.resolveHDR(in:)
+    4   0.7% SDFLayer.updateSDFEffects(for:at:in:backdropGroupID:blend:opacity:options:gain:maxColorComponent:)
+    4   0.7% swift::Demangle::__runtime::Demangler::demangleType(__swift::__runtime::llvm::StringRef, std::__1::function<swift::Demangle::__runtime::Node* (swift::Demangle::
+    4   0.7% (anonymous namespace)::DecodedMetadataBuilder::createBoundGenericType(swift::TargetContextDescriptor<swift::InProcess> const*, __swift::__runtime::llvm::ArrayRe
+    4   0.7% static StaticIf<>._makeViewList(modifier:inputs:body:)
+    4   0.7% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance <> StaticIf<A, B, C>
+    4   0.7% static StyleableView._makeViewList(view:inputs:)
+    4   0.7% _dispatch_client_callout
+    4   0.7% _dispatch_once_callout
+    4   0.7% LaunchServices::URLPropertyProvider::prepareValues(__CFURL const*, __FileCache*, __CFString const* const*, void const**, long, void const*, __CFError**)
+    4   0.7% CFEqual
+    4   0.7% Image.NamedImageProvider.vectorInfo(in:from:at:)
+    4   0.7% AG::Graph::add_attribute(AG::Subgraph&, unsigned int, void const*, void const*)
+    4   0.7% Optional.map<A, B>(_:)
+    4   0.7% PreferencesOutputs.subscript.getter
+    4   0.7% closure #1 in ViewGraphRootValueUpdater.invalidateProperties(_:mayDeferUpdate:)
+    4   0.7% swift_cvw_destroyImpl(swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)
+    4   0.7% InvalidatableLeafLayoutComputer.view.getter
+    4   0.7% closure #1 in PlatformViewChild.updateValue()
+    4   0.7% InvalidatableLeafLayoutComputer.updateValue()
+    4   0.7% AG::data::vector<AG::OutputEdge>::reserve_slow(AG::data::zone&, unsigned int)
+    4   0.7% specialized _NativeDictionary.setValue(_:forKey:isUnique:)
+    4   0.7% EnvironmentValues.currentForegroundStyle.getter
+    4   0.7% swift_release
+    4   0.7% specialized Dictionary.subscript.setter
+    4   0.7% @objc AppKitPlatformViewHost.viewDidMoveToSuperview()
+    4   0.7% @objc AppKitPlatformViewHost.updateConstraints()
+    4   0.7% ___NSViewUpdateConstraints_block_invoke
+    4   0.7% AppKitPlatformViewHost.viewDidMoveToSuperview()
+    4   0.7% 0x193bc15cc
+    4   0.7% 0x193bc21b0
+    4   0.7% AppKitPlatformViewHost.updateConstraints()
+    4   0.7% _NSViewUpdateConstraints
+    4   0.7% -[NSPopoverFrame shapeWindow]
+    4   0.7% RB::DisplayList::Builder::draw(RB::DisplayList::Contents const&, RB::DisplayList::State&, float, RB::DisplayList::InvertiblePredicate const*, void*)
+    4   0.7% closure #1 in _KeyValueCodingAndObserving.observe<A>(_:options:changeHandler:)
+    4   0.7% @objc NSKeyValueObservation.Helper._swizzle_me_observeValue(forKeyPath:of:change:context:)
+    4   0.7% specialized NSKeyValueObservation.Helper._swizzle_me_observeValue(forKeyPath:of:change:context:)
+    4   0.7% -[NSPopoverFrame contentRectForFrameRect:styleMask:]
+    4   0.7% -[NSWindow _cornerMask]
+    4   0.7% +[NSThemeFrame _cornerMaskImageForWindowType:window:]
+    4   0.7% -[NSAppearance _createLayerContents:contentsCenter:]
+    4   0.7% _objc_rootAllocWithZone
+    4   0.7% AG::Node::allocate_value(AG::Graph&, AG::data::zone&)
+    4   0.7% TOpenTypeMorph::TOpenTypeMorph(TRunGlue&, TCharStream const*)
+    4   0.7% NSMutableAttributedString.setUpdateSchedule(_:)
+    4   0.7% Dictionary<>.transferAttributedStringStyles(to:)
+    4   0.7% FontBox.resolveDescriptor(in:)
+    4   0.7% closure #1 in closure #1 in closure #1 in CardRankingSlotView.row(at:iconKey:)
+    4   0.7% swift::TargetContextDescriptor<swift::InProcess>::getGenericContext() const
+    4   0.7% AG::Graph::update_main_refs(AG::AttributeID)
+    4   0.7% CanvasDisplayList.updateValue()
+    4   0.7% RendererEffectDisplayList.content.getter
+    4   0.7% -[NSView(NSConstraintBasedLayoutInternal) measureMin:max:ideal:stretchingPriority:]
+    4   0.7% -[NSView(NSConstraintBasedLayoutInternal) _layoutEngine_didAddLayoutConstraint:integralizationAdjustment:mutuallyExclusiveConstraints:]
+    4   0.7% -[NSView(NSConstraintBasedLayoutInternal) _tryToAddConstraint:integralizationAdjustment:mutuallyExclusiveConstraints:]
+    4   0.7% AppKitPlatformViewHost.intrinsicLayoutTraits()
+    4   0.7% closure #1 in ViewGraphRootValueUpdater.updateGraph()
+    4   0.7% AG::Graph::value_set(AG::data::ptr<AG::Node>, AGSwiftMetadata const*, void const*)
+    4   0.7% closure #1 in ViewRendererHost.updateViewGraph<A>(body:)
+    4   0.7% ViewRendererHost.updateViewGraph<A>(body:)
+    4   0.7% static TupleView._makeViewList(view:inputs:)
+    4   0.7% __CTFontGetExtraData
+    4   0.7% __CTFontGetExtraData.cold.1
+    4   0.7% -[NSFont hash]
+    4   0.7% -[__NSFontExtraData initWithFont:]
+    4   0.7% specialized apply #1 <A>(_:) in LegacyContentStyle._apply(to:)
+    4   0.7% SystemColorType.apply(color:to:)
+    4   0.7% specialized OffsetShapeStyle._apply(to:)
+    4   0.7% LegacyContentStyle._apply(to:)
+    4   0.7% _LocalizeAttributedString
+    4   0.7% ChildEnvironment.updateValue()
+    4   0.7% CGFontRenderingGetCustomAntialiasingStyle
+    4   0.7% CGColorTransformConvertColorComponents
+    4   0.7% static AllowsWindowActivationEventsModifier.Dynamic._makeView(modifier:inputs:body:)
+    4   0.7% static PlatformItemListTransformModifier._makeView(modifier:inputs:body:)
+    4   0.7% static KeyboardShortcutBindingBehavior._makeView(modifier:inputs:body:)
+    4   0.7% static FocusStateBindingModifier._makeView(modifier:inputs:body:)
+    4   0.7% static _PreferenceTransformModifier._makeView(modifier:inputs:body:)
+    4   0.7% static _FocusableModifier._makeView(modifier:inputs:body:)
+    4   0.7% Image.NamedImageProvider.resolveVector(info:value:in:at:catalog:)
+    4   0.7% specialized static ViewAlias._makeView(view:inputs:)
+    4   0.7% protocol witness for static View._makeView(view:inputs:) in conformance PrimitiveButtonStyleConfiguration.Label
+    4   0.7% static SourceFormula.makeView<A>(view:source:inputs:)
+    4   0.7% static StaticIf<>._makeView(view:inputs:)
+    4   0.7% protocol witness for UnaryLayout.placement(of:in:) in conformance _FlexFrameLayout
+    4   0.7% _FlexFrameLayout.placement(of:in:)
+    4   0.7% _platform_memset
+    3   0.5% -[NSPopoverFrame initWithFrame:styleMask:owner:]
+    3   0.5% ShapeStyleResolver.updateValue()
+    3   0.5% Color._apply(to:)
+    3   0.5% closure #1 in ViewGraph.init<A>(rootViewType:requestedOutputs:)
+    3   0.5% specialized closure #1 in closure #1 in ViewGraph.init<A>(rootViewType:requestedOutputs:)
+    3   0.5% swift_getOpaqueTypeMetadataImpl(swift::MetadataRequest, void const* const*, swift::TargetOpaqueTypeDescriptor<swift::InProcess> const*, unsigned int)
+    3   0.5% _gatherGenericParameters(swift::TargetContextDescriptor<swift::InProcess> const*, __swift::__runtime::llvm::ArrayRef<swift::MetadataPackOrValue>, swift::TargetM
+    3   0.5% __swift_instantiateConcreteTypeFromMangledNameV2
+    3   0.5% swift::_checkGenericRequirements(__swift::__runtime::llvm::ArrayRef<swift::GenericParamDescriptor>, __swift::__runtime::llvm::ArrayRef<swift::TargetGenericRequi
+    3   0.5% swift_getTypeByMangledNameInContextImpl(char const*, unsigned long, swift::TargetContextDescriptor<swift::InProcess> const*, void const* const*)
+    3   0.5% static StaticIf<>._makeViewList(view:inputs:)
+    3   0.5% BindingBlueprint::BindingBlueprint(__CFURL const*)
+    3   0.5% BindingBlueprint::copyURLProperties(__CFURL const*)
+    3   0.5% BookmarkCopyPropertyFromBookmarkData(BookmarkData&, __CFString const*, unsigned long)
+    3   0.5% -[ISIconFactory initWithBinding:]
+    3   0.5% +[ISIconFactory _iconForURL:options:iconConfiguration:]
+    3   0.5% +[ISIconFactory _iconWithBinding:]
+    3   0.5% static Text.makeCommonAttributes(view:inputs:)
+    3   0.5% static Text.makeTextAttributes(view:inputs:)
+    3   0.5% +[NSLocale(NSLocale_LanguageExtras) mostPreferredLanguageOf:withPreferredLanguages:forUsage:options:]
+    3   0.5% -[NSConcreteMutableAttributedString setAttributes:range:]
+    3   0.5% Image.ImageViewChild.updateValue()
+    3   0.5% swift_arrayInitWithCopy
+    3   0.5% __RawDictionaryStorage.find<A>(_:)
+    3   0.5% FocusStateBindingModifier.ListItemFilter.updateValue()
+    3   0.5% protocol witness for Rule.value.getter in conformance FocusStateBindingModifier<A>.ListTransform
+    3   0.5% FocusStateBindingModifier.ListTransform.value.getter
+    3   0.5% TDescriptor::~TDescriptor()
+    3   0.5% tryCast(swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*, swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*, swift::TargetM
+    3   0.5% specialized static NSAppearance.appearance(from:allowsVibrantBlending:)
+    3   0.5% swift_dynamicCast
+    3   0.5% PairwisePreferenceCombinerVisitor.visit<A>(key:)
+    3   0.5% NSHostingView.setNeedsUpdate()
+    3   0.5% FocusBridge.canAcceptFocus.setter
+    3   0.5% NSHostingView.requestUpdate(after:)
+    3   0.5% -[NSWindow(NSDisplayCycle) _postWindowNeedsUpdateConstraints]
+    3   0.5% FocusBridge.hostHierarchyDidChange()
+    3   0.5% -[NSView setNeedsUpdateConstraints:]
+    3   0.5% AG::data::vector<AG::InputEdge>::reserve_slow(AG::data::zone&, unsigned int)
+    3   0.5% -[_NSConstraintBasedLayoutHostingView updateConstraints]
+    3   0.5% ImageLayer.update(image:size:)
+    3   0.5% GraphicsImage.render(at:prefersMask:)
+    3   0.5% NSImageContents.image(size:imageScale:prefersMask:)
+    3   0.5% -[__NSCFString isEqual:]
+    3   0.5% getTag
+    3   0.5% CGColorSpaceContainsFlexGTCInfo
+    3   0.5% ColorSyncProfileGetTag
+    3   0.5% ColorSyncProfileCopyFlexGTCInfo
+    3   0.5% CGColorSpaceCopyFlexGTCInfo
+    3   0.5% RB::Fill::Color::matches(RB::Fill::Color const&) const
+    3   0.5% RB::Fill::Color::convert(RB::ColorSpace, float)
+    3   0.5% -[_NSWindowTransformAnimation startAnimation]
+    3   0.5% closure #1 in AppWindowsController.updateAppFocus()
+    3   0.5% closure #1 in static Update.ensure<A>(_:)
+    3   0.5% static Update.ensure<A>(_:)
+    3   0.5% partial apply for closure #1 in AppWindowsController.updateAppFocus()
+    3   0.5% partial apply for thunk for @escaping @callee_guaranteed @Sendable (@guaranteed NSApplication, @in_guaranteed NSKeyValueObservedChange<NSWindow?>) -> ()
+    3   0.5% implicit closure #2 in implicit closure #1 in AppWindowsController.beginObservingNSAppWindows()
+    3   0.5% _CFRuntimeCreateInstance
+    3   0.5% __CFStringCreateImmutableFunnel3
+    3   0.5% protocol witness for FormatStyle.format(_:) in conformance FloatingPointFormatStyle<A>
+    3   0.5% specialized static ResourceQuantityFormatter.formatted(_:unit:locale:)
+    3   0.5% FloatingPointFormatStyle.format(_:)
+    3   0.5% static ResourceQuantityFormatter.formatted(_:unit:locale:)
+    3   0.5% closure #1 in DashboardView.body.getter
+    3   0.5% static ResourceQuantityFormatter.byteRate(_:locale:)
+    3   0.5% BinaryFloatingPoint.formatted<A>(_:)
+    3   0.5% closure #1 in UnwrapConditional.updateValue()
+    3   0.5% partial apply for closure #1 in UnwrapConditional.updateValue()
+    3   0.5% ConditionalTypeDescriptor.project(at:baseIndex:_:)
+    3   0.5% CFStringFindWithOptionsAndLocale
+    3   0.5% IsAnyLangSysTagInPreferredLanguages(std::__1::span<unsigned int const, 18446744073709551615ul>)
+    3   0.5% TFont::ShapesAnyPreferredLanguage() const
+    3   0.5% TASCIIDataCache::InitProps()
+    3   0.5% TFont::InitShapingGlyphs() const
+    3   0.5% -[NSMutableAttributedString removeAttribute:range:]
+    3   0.5% TGlyphEncoder::RunUnicodeEncoderRecursively(unsigned int, TCFRef<CTRun*>&&, __CTFont const*, CFRange, TInlineVector<long, 30ul>&, TGlyphEncoder::Fallbacks, std:
+    3   0.5% TFontCascade::CreateFallback(__CTFont const*, __CFString const*, CTEmojiPolicy) const
+    3   0.5% FocusState.Box.update(property:phase:)
+    3   0.5% CFBasicHashApply
+    3   0.5% CFSetApplyFunction
+    3   0.5% __CFSetApplyFunction_block_invoke
+    3   0.5% withExtendedLifetime<A, B, C>(_:_:)
+    3   0.5% PropertyList.subscript.getter
+    3   0.5% -[NSAttributedString enumerateAttribute:inRange:options:usingBlock:]
+    3   0.5% -[NSLayoutConstraint _lowerIntoExpression:reportingConstantIsRounded:]
+    3   0.5% -[NSView setFrameSize:]
+    3   0.5% -[NSVisualEffectView setFrameSize:]
+    3   0.5% KeyViewProxyCache.createOrUpdateProxyView(_:)
+    3   0.5% static ZStack._makeView(view:inputs:)
+    3   0.5% protocol witness for static _VariadicView_ViewRoot._makeView(root:inputs:body:) in conformance _ZStackLayout
+    3   0.5% TBaseFont::InitFontMetrics(double) const
+    3   0.5% TTenuousComponentFont::GetGraphicsFont() const
+    3   0.5% TFont::InitStrikeMetrics() const
+    3   0.5% CTFontGetAscent
+    3   0.5% TComponentFont::CalculateFontMetrics(bool, double) const
+    3   0.5% TBaseFont::GetInitializedGraphicsFont() const
+    3   0.5% TFont::GetStrikeMetrics(bool) const
+    3   0.5% TTenuousComponentFont::InitializeVariationGraphicsFont() const
+    3   0.5% TBaseFont::GetStrikeMetrics(double, CGAffineTransform const*, bool) const
+    3   0.5% TBaseFont::CalculateFontMetrics(bool, double) const
+    3   0.5% specialized Collection<>.flattenComposites()
+    3   0.5% static _DictionaryStorage.resize(original:capacity:move:)
+    3   0.5% static _DictionaryStorage.allocate(scale:age:seed:)
+    3   0.5% partial apply for closure #1 in GeometryReader.Child.updateValue()
+    3   0.5% GeometryReader.Child.updateValue()
+    3   0.5% partial apply for closure #1 in closure #1 in GeometryReader.Child.updateValue()
+    3   0.5% NSHostingView.updateEnvironment()
+    3   0.5% specialized ColorProvider._apply(color:to:)
+    3   0.5% -[NSView displayIfNeeded]
+    3   0.5% -[NSView _displayRectIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:]
+    3   0.5% __25-[NSView displayIfNeeded]_block_invoke
+    3   0.5% FocusNavigationSequence.next()
+    3   0.5% _NativeDictionary.init(_unsafeUninitializedCapacity:allowingDuplicates:initializingWith:)
+    3   0.5% closure #2 in static Dictionary._forceBridgeFromObjectiveC(_:result:)
+    3   0.5% static Dictionary._unconditionallyBridgeFromObjectiveC(_:)
+    3   0.5% partial apply for closure #2 in static Dictionary._forceBridgeFromObjectiveC(_:result:)
+    3   0.5% IsFocusedEnvironmentChild.value.getter
+    3   0.5% closure #2 in ForEachState.item(at:offset:)
+    3   0.5% RB::Symbol::GlyphCache::ref(CUINamedVectorGlyph*, RBSymbolRenderingMode, bool)
+    3   0.5% RB::Symbol::Glyph::Glyph(RB::Symbol::GlyphCache::Key const&)
+    3   0.5% RB::Symbol::Model::glyph_info() const
+    3   0.5% -[RBSymbolAnimator alignmentRect]
+    3   0.5% AG::Graph::reset_update(AG::data::ptr<AG::Node>)
+    3   0.5% -[NSAttributeDictionary isEqualToDictionary:]
+    3   0.5% AG::AttributeID::resolve_slow(unsigned int) const
+    3   0.5% TimelineView<>.UpdateFilter.updateValue()
+    3   0.5% RB::DisplayList::Layer::bounds() const
+    3   0.5% -[RBMovedDisplayListContents boundingRect]
+    3   0.5% RB::DisplayList::Layer::compute_bounds_(RB::Bounds const*) const
+    3   0.5% specialized append #1 (_:graphite:) in EnvironmentValues.appearance(allowsVibrantBlending:)
+    3   0.5% -[NSWindow _selectFirstKeyView]
+    3   0.5% -[NSCGSWindow setCornerMask:]
+    3   0.5% NSView.inferredGraphTraits(initialInheritedEnvironment:)
+    3   0.5% closure #1 in makeSecondaryLayerView<A>(secondaryLayer:alignment:inputs:body:flipOrder:)
+    3   0.5% -[NSBundle localizedAttributedStringForKey:value:table:localization:]
+    3   0.5% specialized EnvironmentValues.subscript.getter
+    3   0.5% LayoutEngineBox.childPlacement(at:)
+    3   0.5% closure #2 in static _VariadicView.Tree<>._makeView(view:inputs:)
+    3   0.5% specialized StatefulRule<>.update<A>(to:)
+    3   0.5% initializeWithCopy for ClosedRange<>.Index
+    3   0.5% -[__NSFontExtraData dealloc]
+    3   0.5% StyleBodyAccessor.updateBody(of:changed:)
+    3   0.5% CFRetain
+    3   0.5% protocol witness for static PreferenceKey.reduce(value:nextValue:) in conformance ViewRespondersKey
+    3   0.5% FocusNavigator.allItems.getter
+    3   0.5% NSHostingView.responderNode.getter
+    3   0.5% closure #1 in NSHostingView.responderNode.getter
+    3   0.5% HitTestBindingFilter.updateValue()
+    3   0.5% ViewGraph.responderNode.getter
+    3   0.5% swift_conformsToProtocolMaybeInstantiateSuperclasses(swift::TargetMetadata<swift::InProcess> const*, swift::TargetProtocolDescriptor<swift::InProcess> const*, b
+    3   0.5% specialized NSHostingView.HostViewGraph.modifyViewInputs(inputs:graph:)
+    3   0.5% static ViewGraphFeatureBuffer._VTable.modifyViewInputs(elt:inputs:graph:)
+    3   0.5% _xzm_xzone_malloc
+    3   0.5% Sequence._compactMap<A>(_:)
+    3   0.5% Sequence.compactMap<A>(_:)
+    3   0.5% static DerivedEnvironmentPropertyKey.value(in:)
+    3   0.5% DerivedValue.hasMatchingValue(in:)
+    3   0.5% GraphicsFilter.makeCAFilter()
+    3   0.5% 0x24f60c48c
+    3   0.5% _AnyCAFilterProvider.resolve<A>(in:)
+    3   0.5% +[NSAppearance _performWithCurrentAppearance:usingBlock:]
+    3   0.5% RB::ContextDelegate::draw_glyphs(CGContextDelegate*, CGRenderingState*, CGGState*, CGAffineTransform const*, unsigned short const*, CGPoint const*, unsigned lon
+    3   0.5% render_image(RBDevice*, CGRect, NSDictionary*, void (RBDisplayList*) block_pointer)
+    2   0.4% -[NSPopoverFrame initWithFrame:]
+    2   0.4% -[NSPopoverFrame _commonPopoverInit]
+    2   0.4% -[NSView didChangeValueForKey:]
+    2   0.4% -[NSWindow _cornerRadius]
+    2   0.4% -[NSPopoverFrame _cornerRadius]
+    2   0.4% -[NSWindow _createCornerMaskFromCornerRadius]
+    2   0.4% +[NSString stringWithFormat:]
+    2   0.4% _CFStringCreateWithFormatAndArgumentsReturningMetadata
+    2   0.4% _CFStringCreateWithFormatAndArgumentsAux2
+    2   0.4% -[NSDictionary(TypeSafety) NS_removingKeysNotOfType:objectType:logRemovalsAsErrors:]
+    2   0.4% _NSImageValidateHints
+    2   0.4% cache_getImp
+    2   0.4% ColorBox.resolve(in:)
+    2   0.4% CA::Layer::class_state(objc_class*)
+    2   0.4% -[CALayer init]
+    2   0.4% CA::Layer::setter(unsigned int, _CAValueType, void const*)
+    2   0.4% swift::Demangle::__runtime::TypeDecoder<(anonymous namespace)::DecodedMetadataBuilder>::decodeGenericArgs(swift::Demangle::__runtime::Node*, unsigned int, __swi
+    2   0.4% static StyleModifierType.makeViewList<A>(view:modifier:inputs:)
+    2   0.4% ForEachList.Init.updateValue()
+    2   0.4% ForEachState.Info.Init.view.getter
+    2   0.4% specialized ForEachList.Init.info.getter
+    2   0.4% protocol witness for Rule.value.getter in conformance ForEachState<A, B, C>.Info.Init
+    2   0.4% ForEachState.Info.Init.value.getter
+    2   0.4% static ApplicationIconCache.downscaled(_:)
+    2   0.4% _CFXNotificationRegisterObserver
+    2   0.4% specialized static ApplicationIconCache.downscaled(_:)
+    2   0.4% -[NSImage drawInRect:fromRect:operation:fraction:respectFlipped:hints:]
+    2   0.4% -[NSImage bestRepresentationForRect:context:hints:]
+    2   0.4% CFXNotificationRegistrarAdd
+    2   0.4% LaunchServices::URLPropertyProvider::prepareIsApplicationValue(LaunchServices::Database::Context&, id<FSNodePropertyProviding>, __FileCache*, __CFString const*,
+    2   0.4% _LSFindOrRegisterBundleNodeInBackground
+    2   0.4% BundleBinding::BundleBinding(__CFURL const*)
+    2   0.4% GetBookmarkResourcePropertyToInfo(__CFString const*, BookmarkResourcePropertyKeyToInfoStructItem*)
+    2   0.4% BundleInfo::initialize()
+    2   0.4% BundleInfo::BundleInfo(__CFURL const*)
+    2   0.4% BindingManager::CreateWithBlueprint(BindingBlueprint*, bool)
+    2   0.4% newBindingWithBluePrint(BindingBlueprint*)
+    2   0.4% LaunchServices::URLPropertyProvider::prepareApplicationFlags(LaunchServices::Database::Context&, id<FSNodePropertyProviding>, __FileCache*, __CFString const*, L
+    2   0.4% _LSFindOrFindOrRegisterBundleNode
+    2   0.4% -[NSURL(UTIAdditions) __is_resourceValuesForKeys:error:]
+    2   0.4% static Text.makeTextChildQuery<A>(_:styledText:view:renderer:inputs:isScrapeable:)
+    2   0.4% one-time initialization function for systemAssetManager
+    2   0.4% MatchesBaseLanguageInLanguageIDs
+    2   0.4% GetBaseLanguageIdentifierFromIdentifier
+    2   0.4% @objc static NSLocale._localeIdentifier(fromComponents:)
+    2   0.4% __CFStringHash
+    2   0.4% -[NSAttributedString(NSAttributedStringFormattingSPI) __initWithFormat:attributeOptions:formattingOptions:locale:context:arguments:]
+    2   0.4% -[CUICatalog _resolvedRenditionKeyFromThemeRef:withBaseKey:scaleFactor:deviceIdiom:deviceSubtype:displayGamut:layoutDirection:sizeClassHorizontal:sizeClassVerti
+    2   0.4% NamedImage.Cache.subscript.getter
+    2   0.4% NamedImage.VectorKey.loadVectorInfo(from:idiom:)
+    2   0.4% -[CUICatalog namedVectorGlyphWithName:scaleFactor:deviceIdiom:layoutDirection:glyphContinuousSize:glyphContinuousWeight:glyphPointSize:appearanceName:locale:]
+    2   0.4% closure #1 in NamedImage.VectorKey.loadVectorInfo(from:idiom:)
+    2   0.4% specialized CUICatalog.findAsset<A, B>(key:matchTypes:assetLookup:)
+    2   0.4% OTL::GPOS::ApplyPairPosAccelerated(OTL::Lookup const&, unsigned int, TGlyphIterator&) const
+    2   0.4% TFont::UpdateFeatureSettings(__CFDictionary*, __CFArray const*, TFont::FeatureSettingsCopyOperation)
+    2   0.4% TFontFeatures::CopyNonDefault(TBaseFont const&, __CFArray const*) const
+    2   0.4% TFontFeatures::SettingsByNormalizing(TBaseFont const&, CTFeatureSetting*, TCFRef<CTFeatureSetting*>*) const
+    2   0.4% TFontFeatures::CopyNonDefaultSettings(TBaseFont const&, __CFArray const*)
+    2   0.4% __getattrlist
+    2   0.4% protocol witness for Hashable._rawHashValue(seed:) in conformance CFStringRef
+    2   0.4% _CFObject.hash(into:)
+    2   0.4% protocol witness for Hashable.hashValue.getter in conformance CFStringRef
+    2   0.4% xzm_malloc_zone_size
+    2   0.4% malloc_size
+    2   0.4% swift_beginAccess
+    2   0.4% protocol witness for ColorProvider.resolveHDR(in:) in conformance AppKitPlatformColorProvider
+    2   0.4% specialized static NSAppearance.makeAppearance(_:)
+    2   0.4% closure #1 in Attribute.init<A>(_:)
+    2   0.4% AG::data::zone::alloc_persistent(unsigned long, unsigned long)
+    2   0.4% static _BackgroundStyleModifier._makeView(modifier:inputs:body:)
+    2   0.4% static _BackgroundStyleModifier.makeShapeView(modifier:inputs:shapeIsBackground:body:)
+    2   0.4% static EnvironmentPropertyKey.valuesEqual(_:_:)
+    2   0.4% closure #2 in closure #1 in closure #6 in closure #1 in PlatformViewChild.updateValue()
+    2   0.4% partial apply for closure #2 in closure #1 in closure #6 in closure #1 in PlatformViewChild.updateValue()
+    2   0.4% closure #1 in closure #2 in closure #1 in closure #6 in closure #1 in PlatformViewChild.updateValue()
+    2   0.4% closure #1 in closure #6 in closure #1 in PlatformViewChild.updateValue()
+    2   0.4% weak_register_no_lock
+    2   0.4% RepresentableContextValues.asCurrent<A>(do:)
+    2   0.4% partial apply for closure #6 in closure #1 in PlatformViewChild.updateValue()
+    2   0.4% NSHostingView.preferencesDidChange()
+    2   0.4% specialized update #1 () in ViewGraph.updateOutputs(async:)
+    2   0.4% CFGetTypeID
+    2   0.4% __48-[NSImage CGImageForProposedRect:context:hints:]_block_invoke
+    2   0.4% adjusted_headroom
+    2   0.4% __CFStringEqual
+    2   0.4% create_color
+    2   0.4% -[_NSTaggedPointerColor CGColor]
+    2   0.4% -[_NSTaggedPointerColor _createCGColorWithAlpha:]
+    2   0.4% TAttributes::SetContextAttributes(CGContext*, bool) const
+    2   0.4% DisplayList.ViewUpdater.Platform.updateState(_:item:size:state:)
+    2   0.4% RB::ColorSpace::Conversion::operator()(float vector[3]) const
+    2   0.4% RB::DisplayList::Predicate::matches_color(RB::Fill::Color const&) const
+    2   0.4% SLSGetDisplayLink
+    2   0.4% -[NSAnimation startAnimation]
+    2   0.4% -[NSAnimation _createDisplayLink]
+    2   0.4% -[_NSDisplayLink initWithProvider:options:handler:]
+    2   0.4% -[_NSDisplayLink updateUnderlyingDisplayLink]
+    2   0.4% -[_NSDisplayLink _updateUnderlyingDisplayLink]
+    2   0.4% -[NSWindow(NSDisplayLinkInternal) _displayLinkWithOptions:target:selector:]
+    2   0.4% -[NSApplication setIsActive:]
+    2   0.4% objc_retain
+    2   0.4% AppGraph.graphDidChange()
+    2   0.4% CUICreateLayerContents
+    2   0.4% __52-[NSAppearance _createLayerContents:contentsCenter:]_block_invoke
+    2   0.4% CUIRenderer::CreateLayerContents(__CFDictionary const*, CGImage**, CGRect*)
+    2   0.4% +[CUIThemeFacet assetExistsForRenditionKey:fromTheme:]
+    2   0.4% -[CUIStructuredThemeStore canGetRenditionWithKey:]
+    2   0.4% partial apply for closure #1 in StatefulRule.value.setter
+    2   0.4% closure #1 in closure #1 in UnwrapConditional.updateValue()
+    2   0.4% closure #1 in StatefulRule.value.setter
+    2   0.4% protocol witness for LayoutEngine.spacing() in conformance StyledTextLayoutEngine
+    2   0.4% LayoutEngineBox.spacing()
+    2   0.4% ResolvedStyledText.StringDrawing.spacing()
+    2   0.4% CFLocaleCopyPreferredLanguages
+    2   0.4% @objc static NSLocale._preferredLanguagesForCurrentUser(_:)
+    2   0.4% LocaleCache.preferredLanguages(forCurrentUser:)
+    2   0.4% -[XTFontStaticRegistry fontRefFromURL:]
+    2   0.4% TGlobalFontRegistryImp::CopyPropertiesForFont(__CFURL const*, __CFSet const*, TFontQueryOptions const&) const
+    2   0.4% TBaseFont::DetermineFontFlags(unsigned int) const
+    2   0.4% TBaseFont::CopyXTProperties(__CFSet const*, bool) const
+    2   0.4% XTCopyPropertiesForFont
+    2   0.4% -[NSParagraphStyle hash]
+    2   0.4% Locale.Language.init(identifier:)
+    2   0.4% -[NSCoreTypesetter _getLineMetricsForRange:attributes:attributedString:applySpacing:usesSystemFontLeading:usesNegativeFontLeading:]
+    2   0.4% specialized __RawDictionaryStorage.find<A>(_:)
+    2   0.4% CardRankingSlotView.rowContent(at:)
+    2   0.4% partial apply for closure #1 in UnaryElements.makeElements(from:inputs:indirectMap:body:)
+    2   0.4% 0x193afdb34
+    2   0.4% 0x193afd058
+    2   0.4% -[NSConcreteMutableAttributedString attribute:atIndex:longestEffectiveRange:inRange:]
+    2   0.4% DYLD-STUB$$objc_release
+    2   0.4% __83-[NSView(NSConstraintBasedLayoutInternal) measureMin:max:ideal:stretchingPriority:]_block_invoke
+    2   0.4% -[NSView(NSConstraintBasedLayoutInternal) addConstraints:]
+    2   0.4% DYLD-STUB$$objc_retain
+    2   0.4% __58-[NSView(NSConstraintBasedLayoutInternal) addConstraints:]_block_invoke
+    2   0.4% CA::Layer::begin_change(CA::Transaction*, unsigned int, objc_object*, objc_object*&)
+    2   0.4% -[NSView resizeSubviewsWithOldSize:]
+    2   0.4% NSViewActuallyUpdateFrameFromLayoutEngine
+    2   0.4% @objc NSHostingView.setFrameSize(_:)
+    2   0.4% NSHostingView.setFrameSize(_:)
+    2   0.4% ViewGraphRootValueUpdater.updateGraph<A>(body:)
+    2   0.4% AG::Graph::propagate_dirty(AG::AttributeID)
+    2   0.4% -[NSPopoverFrame frameRectForContentRect:styleMask:]
+    2   0.4% specialized static Layout.makeDynamicView(root:inputs:properties:list:)
+    2   0.4% _ContiguousArrayStorage.__deallocating_deinit
+    2   0.4% swift_arrayDestroy
+    2   0.4% TFont::SetFlags(unsigned int, __CTFontDescriptor const*)
+    2   0.4% outlined init with copy of Text.Style
+    2   0.4% initializeWithCopy for Text.Style
+    2   0.4% partial apply for closure #1 in closure #1 in PlatformViewChild.updateValue()
+    2   0.4% -[NSLayoutConstraint _addLoweredExpression:toEngine:lastLoweredConstantWasRounded:mutuallyExclusiveConstraints:]
+    2   0.4% CA::Transaction::push(bool, bool)
+    2   0.4% FPFontGetGlyphIdealAdvanceWidths
+    2   0.4% TFont::GetAdvancesForGlyphs(unsigned short const*, double*, AdvanceStride, long, CTFontOrientation, std::__1::optional<unsigned int>, CGAffineTransform const*) 
+    2   0.4% TRunGlue::UpdateAdvancesIfNeeded()
+    2   0.4% TStorageRange::UpdateAdvances(TFont const&, std::__1::optional<unsigned int>)
+    2   0.4% TFont::GetAdvancesForGlyphsWithStyleFromCG(unsigned int, unsigned short const*, double*, AdvanceStride, long, CGAffineTransform const&, bool, double, bool) cons
+    2   0.4% CUICopyMeasurements
+    2   0.4% -[NSAppearance _copyMeasurements:context:options:requestedMeasurements:]
+    2   0.4% CUICoreThemeRenderer::CopyMeasurementsForRendition(CUIRenditionKey*, CUIDescriptor const*, __CFDictionary const*, __CFArray const*, __CFDictionary*)
+    2   0.4% __72-[NSAppearance _copyMeasurements:context:options:requestedMeasurements:]_block_invoke
+    2   0.4% CUIRenderer::CopyMeasurements(CGRect, CGContext*, __CFDictionary const*, __CFArray const*)
+    2   0.4% swift_endAccess
+    2   0.4% static _PreventsWindowDragModifier._makeView(modifier:inputs:body:)
+    2   0.4% swift::_getWitnessTable(swift::TargetProtocolConformanceDescriptor<swift::InProcess> const*, swift::TargetMetadata<swift::InProcess> const*, void const* const*)
+    2   0.4% specialized static DefaultFontDefinition.resolveTextStyleFont(textStyle:design:weight:in:)
+    2   0.4% protocol witness for FontProvider.resolveDescriptor(in:) in conformance Font.TextStyleProvider
+    2   0.4% TCGFontCache::CopyFont(__CFURL const*, __CFString const*, __CFString const*)
+    2   0.4% TBaseFont::CopyNativeFont() const
+    2   0.4% SetAlgebra.init<A>(_:)
+    2   0.4% initializeWithCopy for Font.FontCache.Key
+    2   0.4% swift_bridgeObjectRelease
+    2   0.4% void tuple_destroy<false, false>(swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)
+    2   0.4% static _ContentShapeModifier._makeView(modifier:inputs:body:)
+    2   0.4% static ScrollEdgeEffectTagModifier._makeView(modifier:inputs:body:)
+    2   0.4% closure #1 in PropertyList.subscript.getter
+    2   0.4% partial apply for closure #1 in PropertyList.subscript.getter
+    2   0.4% find1<A>(_:key:filter:)
+    2   0.4% NSKeyValueWillChangeWithPerThreadPendingNotifications
+    2   0.4% _NSKeyValueRetainedObservationInfoForObject
+    2   0.4% CFDictionaryGetValue
+    2   0.4% RB::DisplayList::Item::styled_bounds(RB::DisplayList::Style const*, unsigned int) const
+    2   0.4% DashboardPresentationStore.preferencesSnapshot.getter
+    2   0.4% NSHostingView.invalidateSizeConstraintsIfNecessary()
+    2   0.4% specialized StackLayout.UnmanagedImplementation.sizeChildrenIdeally(in:minorProposalForChild:)
+    2   0.4% @objc FirstResponderObserver.observeValue(forKeyPath:of:change:context:)
+    2   0.4% FirstResponderObserver.notifyResponderChain(_:notified:)
+    2   0.4% FirstResponderObserver.notifyAffectedRenderers(_:)
+    2   0.4% -[NSWindow _realMakeFirstResponder:]
+    2   0.4% -[NSCGSWindow _updateLayer]
+    2   0.4% -[NSAppearance bestMatchFromAppearancesWithNames:]
+    2   0.4% -[NSCompositeAppearance bestMatchFromAppearancesWithNames:]
+    2   0.4% static NSViewRepresentable._makeView(view:inputs:)
+    2   0.4% static CoreViewRepresentable._makeView(view:inputs:)
+    2   0.4% ForEachChild.updateValue()
+    2   0.4% bsearch
+    2   0.4% TAttributes::TAttributes(__CFDictionary const*, TCharStream const*, CFRange, bool)
+    2   0.4% -[NSAttributeDictionary __apply:context:]
+    2   0.4% ___CFBasicHashFindBucket_Linear
+    2   0.4% TAttributes::ApplyFont(__CFDictionary const*, __CTFont const*, TCharStream const*, CFRange, void const**)
+    2   0.4% objc_getProperty
+    2   0.4% Text.Style.TextStyleColor.baseStyle(in:)
+    2   0.4% Text.Modifier.modify(style:environment:)
+    2   0.4% View.modifier<A>(_:)
+    2   0.4% ButtonBehavior.body.getter
+    2   0.4% protocol witness for View.body.getter in conformance ButtonBehavior<A>
+    2   0.4% DYLD-STUB$$memcpy
+    2   0.4% specialized Array.append<A>(contentsOf:)
+    2   0.4% TextLayoutProperties.init(from:)
+    2   0.4% objc_initWeak
+    2   0.4% SLSRegionPerformWithSerializedBytes
+    2   0.4% SLSSetWindowEventShape
+    2   0.4% -[NSAppearance _callCoreUIWithBlock:options:requireBezelTintColor:]
+    2   0.4% static Text._makeViewList(view:inputs:)
+    2   0.4% outlined destroy of (AttributedString.LineHeight?, AttributedString.LineHeight?)
+    2   0.4% objc_release
+    2   0.4% CopyAttributeToExtras(TDescriptor const*, __CFDictionary*, __CFString const*, AcceptedType)
+    2   0.4% initializeWithCopy for DiskCardView
+    2   0.4% initializeWithCopy for Button
+    2   0.4% swift::RefCounts<swift::RefCountBitsT<(swift::RefCountInlinedness)1>>::incrementSlow(swift::RefCountBitsT<(swift::RefCountInlinedness)1>, unsigned int)
+    2   0.4% swift_conformsToProtocol2
+    2   0.4% partial apply for closure #1 in Attribute.setValue(_:)
+    2   0.4% AG::Graph::value_set_internal(AG::data::ptr<AG::Node>, AG::Node&, void const*, AGSwiftMetadata const*)
+    2   0.4% EnvironmentValues.subscript.setter
+    2   0.4% specialized PropertyList.subscript.setter
+    2   0.4% EnvironmentValues._set<A>(_:for:)
+    2   0.4% closure #1 in PropertyList.subscript.setter
+    2   0.4% partial apply for closure #1 in Optional<A>.makeChildViewList(metadata:view:inputs:)
+    2   0.4% Optional<A>.makeChildViewList(metadata:view:inputs:)
+    2   0.4% __CFStringCheckAndReplace
+    2   0.4% __CFStringChangeSizeMultiple
+    2   0.4% -[__NSCFString replaceCharactersInRange:withString:]
+    2   0.4% closure #4 in _ZStackLayout.sizeThatFits(proposal:subviews:cache:)
+    2   0.4% -[NSConcreteAttributedString initWithString:]
+    2   0.4% TCharStreamCFAttrString::TCharStreamCFAttrString(__CFAttributedString const*)
+    2   0.4% -[NSConcreteAttributedString initWithAttributedString:]
+    2   0.4% protocol witness for _LocaleProtocol.bridgeToNSLocale() in conformance _LocaleICU
+    2   0.4% partial apply for closure #1 in LocaleCache.fixedNSLocale(_:)
+    2   0.4% Locale._bridgeToObjectiveC()
+    2   0.4% outlined init with copy of _ViewInputs
+    2   0.4% -[NSCoreTypesetter _NSFastDrawString:length:attributes:paragraphStyle:typesetterBehavior:lineBreakMode:rect:padding:graphicsContext:baselineRendering:usesFontLe
+    2   0.4% closure #2 in CanvasDisplayList.updateValue()
+    2   0.4% GraphicsContext.draw(_:with:style:)
+    2   0.4% partial apply for closure #1 in closure #2 in CanvasDisplayList.updateValue()
+    2   0.4% __55+[NSLayoutConstraint _addOrRemoveConstraints:activate:]_block_invoke
+    2   0.4% +[NSLayoutConstraint _addOrRemoveConstraints:activate:]
+    2   0.4% NSHostingView.as<A>(_:)
+    2   0.4% -[NSView _oldDisplayRectIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:]
+    2   0.4% WindowSizeBridge.clampedWindowSize(minSize:maxSize:)
+    2   0.4% __38-[NSView _layoutAtWindowLevelIfNeeded]_block_invoke
+    2   0.4% __80-[NSView _oldDisplayRectIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:]_block_invoke
+    2   0.4% -[NSView _layoutAtWindowLevelIfNeeded]
+    2   0.4% ResponderNode.focusNavigationCohort(_:)
+    2   0.4% FocusNavigationSequence.iterator(responder:start:)
+    2   0.4% Text.ResolvedProperties.Paragraph.style(environment:alignment:writingDirection:lineHeight:)
+    2   0.4% type metadata accessor for EnvironmentPropertyKey<EnvironmentValues.__Key_glassEffectBackdropObserver>
+    2   0.4% MemoryCardView.body.getter
+    2   0.4% swift::OpaqueValue* tuple_initializeWithCopy<false, false>(swift::OpaqueValue*, swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)
+    2   0.4% partial apply for specialized closure #1 in static NSColor.withColorAppearance<A>(in:_:)
+    2   0.4% thunk for @escaping @callee_guaranteed () -> ()
+    2   0.4% CoreColorPlatformColorGetComponents
+    2   0.4% partial apply for closure #1 in static AppKitPlatformColorDefinition.resolvedHDRColor(_:environment:)
+    2   0.4% specialized Color.Resolved.init(platformColor:)
+    2   0.4% Color.ResolvedHDR.init(platformColor:)
+    2   0.4% x_hash_table_lookup
+    2   0.4% classDescription(objc_class*)
+    2   0.4% RBDrawingStateDrawShape
+    2   0.4% EnvironmentValues.subscript.getter
+    2   0.4% _swift_getKeyPath(pattern:arguments:)
+    2   0.4% closure #1 in static CGImageRef.render(size:scale:environment:options:backgroundGPUMode:renderer:)
+    2   0.4% thunk for @escaping @callee_guaranteed (@guaranteed RBDisplayList) -> ()
+    2   0.4% thunk for @callee_guaranteed (@guaranteed RBDisplayList) -> ()
+    2   0.4% closure #1 in SDFLayer.update(shape:size:in:backdropGroupID:)
+    2   0.4% make_image_provider(RBDevice*, CGRect, NSDictionary*, void (RBDisplayList*) block_pointer)
+    2   0.4% os_unfair_lock_unlock
+    2   0.4% closure #1 in closure #1 in closure #2 in closure #1 in DiskCardView.body.getter
+    2   0.4% _GraphValue.subscript.getter
+    2   0.4% -[NSObject copy]
+    2   0.4% util::UntypedTable::lookup(void*, void**) const
+    2   0.4% swift::TargetProtocolConformanceDescriptor<swift::InProcess>::getWitnessTable(swift::TargetMetadata<swift::InProcess> const*, swift::ConformanceExecutionContext
+    1   0.2% +[NSLayoutConstraint constraintWithAnchor:relatedBy:toAnchor:multiplier:constant:]
+    1   0.2% 0x193af9e00
+    1   0.2% NSShouldRetainWithZone
+    1   0.2% 0x193bfadf8
+    1   0.2% -[NSLayoutAnchor copyWithZone:]
+    1   0.2% objc_setProperty_atomic_copy
+    1   0.2% DYLD-STUB$$malloc_default_zone
+    1   0.2% 0x193af95d0
+    1   0.2% -[NSLayoutRect constraintsEqualToLayoutRect:]
+    1   0.2% 0x193af9b4c
+    1   0.2% -[NSControl didChangeValueForKey:]
+    1   0.2% -[NSTextField didChangeValueForKey:]
+    1   0.2% -[NSView setLayer:]
+    1   0.2% -[NSView _updateAllLayerPropertiesFromView]
+    1   0.2% -[NSView _createLayerAndInitialize]
+    1   0.2% -[NSView _updateLayerBackedness]
+    1   0.2% __21-[NSView _setWindow:]_block_invoke.159
+    1   0.2% -[NSWindow _commonAwake]
+    1   0.2% -[NSPopoverFrame _copyFrameMaskPathInRect:]
+    1   0.2% -[NSPopoverFrame _updateCachedCornerImage:]
+    1   0.2% __CFStringAppendFormatCore
+    1   0.2% dyld4::APIs::dyld_program_sdk_at_least(dyld_build_version_t)
+    1   0.2% +[CUIDesignLibrary colorWithTraits:error:]
+    1   0.2% +[CUIDesignLibraryCatalog catalogForDesignSystem:colorScheme:contrast:styling:error:]
+    1   0.2% -[CUICommonAssetStorage initWithPath:forWriting:]
+    1   0.2% -[CUIDesignLibraryCatalog initWithURL:error:]
+    1   0.2% BomSys_open
+    1   0.2% +[CUIDesignLibraryCompositeCatalog _catalogsForDesignSystem:colorScheme:contrast:styling:error:]
+    1   0.2% materialStyle #1 <A>(at:) in MaterialProvider.apply(color:to:)
+    1   0.2% specialized AdaptiveColorProvider.apply(color:to:)
+    1   0.2% BOMStorageOpenWithSys
+    1   0.2% protocol witness for ColorProvider.resolveHDR(in:) in conformance Color.SettingOpacityProvider
+    1   0.2% PerformBlockWithThemeRefCache
+    1   0.2% protocol witness for ColorProvider.resolve(in:) in conformance SystemColorType
+    1   0.2% +[CUIDesignLibraryCompositeCatalog compositeCatalogForDesignSystem:colorScheme:contrast:styling:error:]
+    1   0.2% specialized static CoreUIDefaultSystemColorDefinition.value(for:environment:)
+    1   0.2% +[CUIThemeFacet themeWithContentsOfURL:error:]
+    1   0.2% MaterialProviderBox.apply(color:to:)
+    1   0.2% specialized static CoreUIDefaultSystemColorDefinition.value(named:in:)
+    1   0.2% __open
+    1   0.2% ShapeStyle._apply(to:)
+    1   0.2% CUIDesignLibraryCacheKey.fetch()
+    1   0.2% -[CUIStructuredThemeStore initWithPath:]
+    1   0.2% MaterialProvider.apply(color:to:)
+    1   0.2% open
+    1   0.2% __RunTimeThemeRefForFileURL_block_invoke
+    1   0.2% +[CUIDesignLibrary colorWithName:designSystem:palette:colorScheme:contrast:styling:displayGamut:hierarchyLevel:error:]
+    1   0.2% class_getMethodImplementation
+    1   0.2% -[CALayer setFilters:]
+    1   0.2% -[__NSSingleObjectArrayI dealloc]
+    1   0.2% -[CAFilter dealloc]
+    1   0.2% CA::release_objects(X::List<void const*>*)
+    1   0.2% swift::Demangle::__runtime::Demangler::demangleOperator()
+    1   0.2% BodyAccessor.makeBody(container:inputs:fields:)
+    1   0.2% (anonymous namespace)::DecodedMetadataBuilder::createDependentMemberType(__swift::__runtime::llvm::StringRef, swift::MetadataPackOrValue, swift::TargetProtocolD
+    1   0.2% swift_getAssociatedTypeWitnessSlowImpl(swift::MetadataRequest, swift::TargetWitnessTable<swift::InProcess>*, swift::TargetMetadata<swift::InProcess> const*, swi
+    1   0.2% static View.makeBody(view:inputs:fields:)
+    1   0.2% lazy protocol witness table accessor for type ModifiedContent<ModifiedContent<VStack<TupleView<((<<opaque return type of View.popover<A>(isPresented:attachmentA
+    1   0.2% swift::_gatherGenericParameterCounts(swift::TargetContextDescriptor<swift::InProcess> const*, __swift::__runtime::llvm::SmallVectorImpl<unsigned int>&, swift::D
+    1   0.2% __swift_instantiateConcreteTypeFromMangledNameAbstractV2
+    1   0.2% lazy protocol witness table accessor for type ModifiedContent<<<opaque return type of View.accessibilityElement(children:)>>.0, AccessibilityAttachmentModifier>
+    1   0.2% lazy protocol witness table accessor for type ModifiedContent<ModifiedContent<<<opaque return type of View.onChange<A>(of:initial:_:)>>.0, _AppearanceActionModi
+    1   0.2% lazy protocol witness table accessor for type ModifiedContent<<<opaque return type of View.onChange<A>(of:initial:_:)>>.0, _AppearanceActionModifier> and confor
+    1   0.2% lazy protocol witness table accessor for type ModifiedContent<VStack<TupleView<((<<opaque return type of View.popover<A>(isPresented:attachmentAnchor:arrowEdge:
+    1   0.2% swift_getTypeByMangledNameInContextInMetadataStateImpl(unsigned long, char const*, unsigned long, swift::TargetContextDescriptor<swift::InProcess> const*, void 
+    1   0.2% swift_getAssociatedConformanceWitnessSlow
+    1   0.2% DashboardView.body.getter
+    1   0.2% swift::Demangle::__runtime::Demangler::DemangleInitRAII::DemangleInitRAII(swift::Demangle::__runtime::Demangler&, __swift::__runtime::llvm::StringRef, std::__1:
+    1   0.2% static NetworkDisplayText.activeSummary(_:)
+    1   0.2% String.append(_:)
+    1   0.2% specialized DefaultStringInterpolation.appendInterpolation<A>(_:)
+    1   0.2% static ConditionallyArchivableView._makeViewList(view:inputs:)
+    1   0.2% ConditionalGraphValue<>.makeViewList(inputs:)
+    1   0.2% static ResolvedButtonStyleBody._makeView(view:inputs:)
+    1   0.2% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance OpacityRendererEffect
+    1   0.2% protocol witness for static View._makeViewList(view:inputs:) in conformance ResolvedButtonStyleBody<A>
+    1   0.2% static _AnimationModifier._makeViewList(modifier:inputs:body:)
+    1   0.2% static View.makeDebuggableViewList(view:inputs:)
+    1   0.2% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance _PreferenceTransformModifier<A>
+    1   0.2% specialized closure #1 in ZStack.init(alignment:content:)
+    1   0.2% static Font.system(size:weight:design:)
+    1   0.2% one-time initialization function for focus
+    1   0.2% closure #1 in CPUCardView.focusLine.getter
+    1   0.2% specialized _VariadicView.Tree.init(_:content:)
+    1   0.2% type metadata accessor for VStack
+    1   0.2% -[NSWorkspace(SLSIconAppearance) currentIconAppearanceConfiguration]
+    1   0.2% __68-[NSWorkspace(SLSIconAppearance) currentIconAppearanceConfiguration]_block_invoke
+    1   0.2% CGColorSyncTransformCacheGetRetained
+    1   0.2% DoInitializeTransform
+    1   0.2% -[NSImageRep drawInRect:fromRect:operation:fraction:respectFlipped:hints:]
+    1   0.2% CGContextDrawImageWithOptions
+    1   0.2% ColorSyncTransformCreate
+    1   0.2% CGDataProviderCreateForDestinationWithImage
+    1   0.2% ripc_AcquireRIPImageData
+    1   0.2% CGCMSConverterCreate
+    1   0.2% __74-[NSImageRep drawInRect:fromRect:operation:fraction:respectFlipped:hints:]_block_invoke
+    1   0.2% __71-[NSImage drawInRect:fromRect:operation:fraction:respectFlipped:hints:]_block_invoke.1380
+    1   0.2% CGDataProviderCreateForDestination
+    1   0.2% CGColorTransformConvertRequired
+    1   0.2% ripc_DrawImage
+    1   0.2% CGSImageDataLock
+    1   0.2% ConversionManager::MakeConversionSequence(CMMProfileInfoContainer*, CMMColorConversionInfo*, __CFDictionary const*)
+    1   0.2% CMMProfile::InnerGetMatrixTags(CMMXYZTag* (&) [3], CMMCurveTag* (&) [3])
+    1   0.2% CGColorTransformCacheGetConversionType
+    1   0.2% img_image
+    1   0.2% CMMMatrixDisplayProfile::GetMatrixTags(CMMXYZTag* (&) [3], CMMRGBCurves&, __CFDictionary const*)
+    1   0.2% CGContextDrawImage
+    1   0.2% CMMProfile::GetTag(icTagSignature)
+    1   0.2% AppleCMMInitializeTransform
+    1   0.2% -[__NSDictionaryM __setObject:forKey:]
+    1   0.2% LaunchServices::BindingEvaluation::compareBindings(LaunchServices::BindingEvaluation::State&, LaunchServices::BindingEvaluation::ExtendedBinding const&, LaunchS
+    1   0.2% _LSAliasGetPath
+    1   0.2% BookmarkData::getDataItemAtOffset(unsigned int) const
+    1   0.2% BookmarkData::BookmarkData(__CFAllocator const*, __CFData const*)
+    1   0.2% LaunchServices::BindingEvaluation::getBindingPath(LaunchServices::BindingEvaluation::State&, LaunchServices::BindingEvaluation::ExtendedBinding const&)
+    1   0.2% std::__1::vector<LaunchServices::BindingEvaluation::ExtendedBinding, LaunchServices::MallocZoneAllocator<LaunchServices::BindingEvaluation::ExtendedBinding, Lau
+    1   0.2% void std::__1::allocator_traits<LaunchServices::MallocZoneAllocator<LaunchServices::BindingEvaluation::ExtendedBinding, LaunchServices::BindingEvaluation::Bindi
+    1   0.2% -[LSApplicationRecord initWithURL:fetchingPlaceholder:error:]
+    1   0.2% -[__NSFrozenDictionaryM dealloc]
+    1   0.2% -[__NSCFConstantString release]
+    1   0.2% _LSFindBundleWithInfo_NoIOFiltered
+    1   0.2% -[LSApplicationRecord _initWithNode:bundleIdentifier:placeholderBehavior:systemPlaceholder:itemID:forceInBundleContainer:context:error:]
+    1   0.2% cow_cleanup
+    1   0.2% __LSRECORD_IS_PERFORMING_IO_FOR_A_CALLER__
+    1   0.2% __136-[LSApplicationRecord _initWithNode:bundleIdentifier:placeholderBehavior:systemPlaceholder:itemID:forceInBundleContainer:context:error:]_block_invoke
+    1   0.2% __CFCheckCFInfoPACSignature_Bridged
+    1   0.2% +[FSNode(BookmarkData) getName:fileIdentifier:creationDate:forBookmarkData:error:]
+    1   0.2% -[NSTaggedPointerString getCharacters:range:]
+    1   0.2% returnPathComponentsAsString(BookmarkData&, unsigned int, unsigned long long)
+    1   0.2% static StyledTextContentView._makeInnerView(view:inputs:)
+    1   0.2% type metadata accessor for _ContiguousArrayStorage<CustomAttributeWriter.Type>
+    1   0.2% protocol witness for static View._makeView(view:inputs:) in conformance StyledTextContentView
+    1   0.2% specialized _ArrayBuffer._consumeAndCreateNew()
+    1   0.2% specialized Array.remove(at:)
+    1   0.2% closure #2 in closure #1 in NetworkCardView.body.getter
+    1   0.2% specialized static ViewBuilder.buildExpression<A>(_:)
+    1   0.2% swift::Demangle::__runtime::Vector<swift::Demangle::__runtime::Node*>::push_back(swift::Demangle::__runtime::Node* const&, swift::Demangle::__runtime::NodeFacto
+    1   0.2% swift::Demangle::__runtime::Demangler::demangleSymbolicReference(unsigned char)
+    1   0.2% 0x19216deec
+    1   0.2% Text.Style.init()
+    1   0.2% +[NSBundle bundleForClass:]
+    1   0.2% _NSFrameworkPathFromLibraryPath
+    1   0.2% +[SFSCoreGlyphsBundle public]
+    1   0.2% __29+[SFSCoreGlyphsBundle public]_block_invoke
+    1   0.2% access
+    1   0.2% specialized static Dictionary._unconditionallyBridgeFromObjectiveC(_:)
+    1   0.2% -[CUICatalog initWithName:fromBundle:error:]
+    1   0.2% specialized @nonobjc CUICatalog.init(name:from:error:)
+    1   0.2% -[CUICatalog _setPreferredLocalization:]
+    1   0.2% -[NSAttributedString(_NSPresentationIntentDirtying) _willRequireIntentResolutionWhenContainingAttributes:]
+    1   0.2% -[NSMutableAttributedString addAttributes:range:]
+    1   0.2% uloc_getBaseName
+    1   0.2% 0x192fdcc3c
+    1   0.2% _CFBundleCopyLocalizationsForPreferences
+    1   0.2% ulocimp_getSubtags(std::__1::basic_string_view<char, std::__1::char_traits<char>>, icu::ByteSink*, icu::ByteSink*, icu::ByteSink*, icu::ByteSink*, char const**,
+    1   0.2% _platform_strcmp$VARIANT$Base
+    1   0.2% ualoc_localizationsToUse
+    1   0.2% _CFBundleCopyPreferredLanguagesInList
+    1   0.2% ulocimp_getSubtags(std::__1::basic_string_view<char, std::__1::char_traits<char>>, icu::CharString*, icu::CharString*, icu::CharString*, icu::CharString*, char 
+    1   0.2% +[NSBundle preferredLocalizationsFromArray:forPreferences:]
+    1   0.2% 0x192f9ff14
+    1   0.2% 0x192fdb830
+    1   0.2% _CFBundleCreateMutableArrayOfFallbackLanguages
+    1   0.2% TGlyphIterator::NextCoveredBy(OTL::Lookup const&)
+    1   0.2% TGlyphIterator::CurrentGlyphIsIgnored(OTL::Lookup const*) const
+    1   0.2% TFontFeatureTable::LoadTableData(TBaseFont const&)
+    1   0.2% CreateOTFeatureTable(TBaseFont const&)
+    1   0.2% TBaseFont::CopyOTFontFeatureTable() const
+    1   0.2% CGFontNameTableCreate
+    1   0.2% TFontFeatureTable::TFontFeatureTable(TBaseFont const&)
+    1   0.2% TBaseFont::HasOTFontFeatureTable() const
+    1   0.2% TsfntTable::TsfntTable(TSFNTFont const&, unsigned int)
+    1   0.2% TComponentFont::GetGlyphsForCharacterRange(CFRange, unsigned short*) const
+    1   0.2% FPFontGetGlyphsForCharacterRange
+    1   0.2% TASCIIDataCache::TASCIIDataCache(TFont const*)
+    1   0.2% TcmapUnicodeTable::TcmapUnicodeTable(TSFNTFont const&)
+    1   0.2% TSFNTFont::GetTableOffset(unsigned int, unsigned long*) const
+    1   0.2% TBaseFont::GetGlyphsForCharacterRange(CFRange, unsigned short*) const
+    1   0.2% TSFNTFont::GetGlyphsForCharacterRange(unsigned short*, CFRange) const
+    1   0.2% TFPFont::GetGlyphsForCharacterRange(unsigned short*, CFRange) const
+    1   0.2% TFont::InitASCIIDataCache() const
+    1   0.2% TSFNTFont::GetTable(unsigned int, unsigned long&) const
+    1   0.2% Image.ResizableProvider.resolve(in:)
+    1   0.2% -[CUINamedVectorGlyph initWithName:scaleFactor:deviceIdiom:pointSize:fromCatalog:usingRenditionKey:themeRef:locale:]
+    1   0.2% -[CUINamedVectorGlyph _lookupCatalogImageForIdiom:locale:]
+    1   0.2% specialized static Locale.identifier(fromAnyComponents:)
+    1   0.2% -[CUICatalog imageWithName:scaleFactor:deviceIdiom:layoutDirection:locale:adjustRenditionKeyWithBlock:]
+    1   0.2% corePropertyProviderPrepareValues(__CFURL const*, __FileCache*, __CFString const* const*, void const**, long, void const*, __CFError**)
+    1   0.2% Text.ResolvedProperties.markParagraphBoundary(at:in:environment:)
+    1   0.2% specialized Array.init(repeating:count:)
+    1   0.2% _ContiguousArrayBuffer.init(_uninitializedCount:minimumCapacity:)
+    1   0.2% TTenuousComponentFont::~TTenuousComponentFont()
+    1   0.2% TBaseFont::~TBaseFont()
+    1   0.2% storeEnumTagSinglePayload for ClosedRange<>.Index
+    1   0.2% lastAppearance(in:)
+    1   0.2% static _ConditionalContent<>._makeViewList(view:inputs:)
+    1   0.2% static DynamicView.makeDynamicViewList(metadata:view:inputs:)
+    1   0.2% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance _FrameLayout
+    1   0.2% partial apply for closure #1 in Attribute.init<A>(_:)
+    1   0.2% swift::metadataimpl::FixedSizeBufferValueWitnesses<swift::metadataimpl::ValueWitnesses<swift::metadataimpl::NativeBox<unsigned int, 4ul, 4ul, 4ul>>, true, 4ul, 
+    1   0.2% static RendererEffect._makeView(modifier:inputs:body:)
+    1   0.2% static RendererEffect.makeRendererEffect(effect:inputs:body:)
+    1   0.2% static _RendererEffect._makeRendererEffect(effect:inputs:body:)
+    1   0.2% +[CATransaction(CATransactionPrivate) generateSeed]
+    1   0.2% +[_NSCGSTransaction currentTransaction]
+    1   0.2% +[NSDisplayCycle currentDisplayCycle]
+    1   0.2% NSCGSTransactionEnsureAttachment
+    1   0.2% DYLD-STUB$$mach_absolute_time
+    1   0.2% protocol witness for static EnvironmentKey._valuesEqual(_:_:) in conformance LocaleKey
+    1   0.2% specialized static Locale.== infix(_:_:)
+    1   0.2% outlined destroy of LocalePreferences?
+    1   0.2% -[NSViewController _viewControllerSupports10_10Features]
+    1   0.2% protocol witness for CoreViewRepresentable.makeViewProvider(context:) in conformance PlatformViewRepresentableAdaptor<A>
+    1   0.2% @objc DashboardLowestAnchorCapture.AnchorView.init(frame:)
+    1   0.2% weak_entry_insert(weak_table_t*, weak_entry_t*)
+    1   0.2% PlatformViewRepresentableAdaptor.makeViewProvider(context:)
+    1   0.2% _CFXNotificationRegistrarAddObserver
+    1   0.2% DashboardLowestAnchorCapture.AnchorView.init(frame:)
+    1   0.2% @nonobjc NSView.init()
+    1   0.2% -[NSView initWithFrame:]
+    1   0.2% objc_moveWeak
+    1   0.2% -[NSView _commonAwake]
+    1   0.2% -[NSNotificationCenter addObserverForName:object:queue:usingBlock:]
+    1   0.2% AG::data::table::alloc_page(AG::data::zone&, unsigned int)
+    1   0.2% AG::data::zone::alloc_slow(unsigned int, unsigned int)
+    1   0.2% FocusBridge.preferencesDidChange(_:)
+    1   0.2% -[NSConcreteMapTable grow]
+    1   0.2% -[NSLayoutConstraint _setIdentifier:]
+    1   0.2% -[NSView updateConstraints]
+    1   0.2% -[NSConcreteMapTable setObject:forKey:]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _makeEngineHostConstraints]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _updateEngineHostConstraints]
+    1   0.2% __53-[NSBitmapImageRep _performBlockUsingBackingCGImage:]_block_invoke
+    1   0.2% BIRBackingType
+    1   0.2% -[NSBitmapImageRep CGImage]
+    1   0.2% -[NSBitmapImageRep _performBlockUsingBackingCGImage:]
+    1   0.2% objc_msgSend$entangleContext:
+    1   0.2% -[NSWindow _cgsPlaceWindow:]
+    1   0.2% NSCGSTransactionEntangleContext
+    1   0.2% NSCGSWindowMarkProperty_
+    1   0.2% -[NSCGSWindow(NSCGSWindowGeometry) setSize:]
+    1   0.2% DYLD-STUB$$memcmp
+    1   0.2% NSColorSetWithFillAndStroke
+    1   0.2% DisplayList.ViewUpdater.Platform.updateGeometry(_:item:size:state:clipRectChanged:)
+    1   0.2% -[NSView _postFrameChangeNotification]
+    1   0.2% -[NSView setFrameOrigin:]
+    1   0.2% CoreViewSetGeometry
+    1   0.2% -[NSPopoverFrame _arrowRect]
+    1   0.2% std::__1::optional<swift::MetadataResponse> swift::MetadataCacheEntryBase<swift::GenericCacheEntry, void const*>::beginAllocation<swift::TargetTypeContextDescri
+    1   0.2% os_unfair_lock_lock
+    1   0.2% outlined destroy of FocusItem?
+    1   0.2% type metadata accessor for Any?
+    1   0.2% invocation function for block in SLSGetCALocalDisplay(int)
+    1   0.2% +[CALocalDisplay displayWithDisplayId:name:deviceName:update:timings:]
+    1   0.2% CA::Display::Display::update()
+    1   0.2% void std::__1::vector<CGSDisplayMode, std::__1::allocator<CGSDisplayMode>>::__init_with_size[abi:nqn210106]<CGSDisplayMode*, CGSDisplayMode*>(CGSDisplayMode*, C
+    1   0.2% SLSIsDisplayModeVRR
+    1   0.2% SLSGetCALocalDisplay(int)
+    1   0.2% -[CADisplay _initWithDisplay:]
+    1   0.2% class_respondsToSelector_inst
+    1   0.2% -[NSXPCConnection _sendInvocation:orArguments:count:methodSignature:selector:withProxy:]
+    1   0.2% ___ensureAuxServiceAwareOfHostApp_block_invoke
+    1   0.2% -[NSDictionary(NSDictionary) encodeWithCoder:]
+    1   0.2% _ensureAuxServiceAwareOfHostApp
+    1   0.2% _NSXPCSerializationAddInvocationWithOnlyObjectArgumentsArray
+    1   0.2% -[NSXPCEncoder _encodeInvocationObjectArgumentsOnly:count:typeString:selector:isReply:into:]
+    1   0.2% __auxiliaryProxyFor_block_invoke
+    1   0.2% -[NSXPCConnection _sendSelector:withProxy:arg1:arg2:arg3:]
+    1   0.2% auxiliaryProxyFor
+    1   0.2% _NSXPCDistantObjectSimpleMessageSend3
+    1   0.2% -[NSXPCEncoder _encodeObject:]
+    1   0.2% specialized static AppKitMainMenuItem.updateMainMenu(to:windowsController:environment:focusedValues:focusStore:updateImmediately:testAppGraph:)
+    1   0.2% AppDelegate.makeMainMenu(updateImmediately:)
+    1   0.2% -[NSMenuItem setSubmenu:]
+    1   0.2% AppKitMainMenuItem.updateMenuHost(_:windowsController:environment:updateImmediately:)
+    1   0.2% specialized AppDelegate.scenesDidChange(phaseChanged:)
+    1   0.2% CUICoreThemeRenderer::CommonGetLayerContents(CUIDescriptor const*, long, CGImage**, CGRect*)
+    1   0.2% AG::LayoutDescriptor::Compare::operator()(unsigned char const*, unsigned char const*, unsigned char const*, unsigned long, unsigned long, unsigned int)
+    1   0.2% closure #1 in ConditionalTypeDescriptor.project(at:baseIndex:_:)
+    1   0.2% AG::LayoutDescriptor::compare(unsigned char const*, unsigned char const*, unsigned char const*, unsigned long, unsigned int)
+    1   0.2% getEnumTagSinglePayload for Bool
+    1   0.2% specialized ViewTraitCollection.value<A>(for:defaultValue:)
+    1   0.2% DiskCardView.body.getter
+    1   0.2% static ResourceRateGraph.make(history:firstHistoryPointAt:currentTimestamp:timeRange:)
+    1   0.2% outlined init with take of RateHistoryPoint
+    1   0.2% PairPosFormat2::ValuePair(unsigned short, unsigned short, void const*) const
+    1   0.2% OTL::GPOS::ApplyPairPos(OTL::LookupSubtable const*, TGlyphIterator&, unsigned int) const
+    1   0.2% OTL::GPOS::ApplyLookupAt(OTL::Lookup const&, unsigned int, TGlyphIterator&, unsigned long) const
+    1   0.2% CFStringGetCharactersPtr
+    1   0.2% TFontFeatures::FindFeatureSelector(__CFArray const*, TFeatureSetting const&, bool&)
+    1   0.2% (anonymous namespace)::TFeatureType::GetSelector(__CFNumber const*) const
+    1   0.2% -[XTFontStaticRegistry internalURLStringFromURL:]
+    1   0.2% @objc static NSURLComponents._componentsWith(url:resolvingAgainstBaseURL:)
+    1   0.2% specialized static NSURLComponents._componentsWith(url:resolvingAgainstBaseURL:)
+    1   0.2% outlined enum tag store of URLComponents._URLComponents?
+    1   0.2% -[__NSPlaceholderURLComponents initWithURL:resolvingAgainstBaseURL:]
+    1   0.2% specialized URLComponents._URLComponents.init(string:encodingInvalidCharacters:)
+    1   0.2% +[NSURLComponents componentsWithURL:resolvingAgainstBaseURL:]
+    1   0.2% -[XTFontStaticRegistry standarizedURLString:]
+    1   0.2% IsLanguageIdentifierSuitableForKnownUrduSequences(__CFString const*)
+    1   0.2% objc_msgSend$isEqual:
+    1   0.2% _setThreadLayoutData
+    1   0.2% TOpenTypePositioningEngine::SetScript(UScriptCode)
+    1   0.2% OTL::GCommon::InitLangSysTable(OTL::GCommon::Table, TFont const&, unsigned int, unsigned int)
+    1   0.2% OTL::GCommon::GCommon(OTL::GCommon::Table, TFont const&, __CFData const*, OTL::GDEF const&, unsigned int, unsigned int)
+    1   0.2% TOpenTypePositioningEngine::TOpenTypePositioningEngine(TRunGlue&, TCharStream const*)
+    1   0.2% outlined init with copy of TimelineSchedule?
+    1   0.2% weak_unregister_no_lock
+    1   0.2% specialized __RawDictionaryStorage.find<A>(_:hashValue:)
+    1   0.2% Font.StaticModifierProvider.resolveDescriptor(in:)
+    1   0.2% protocol witness for FontProvider.resolveDescriptor(in:) in conformance Font.SystemProvider
+    1   0.2% specialized Dictionary.init(dictionaryLiteral:)
+    1   0.2% specialized static DefaultFontDefinition.resolveSystemFont(size:design:weight:in:)
+    1   0.2% objc_destructInstance_nonnull_realized(objc_object*)
+    1   0.2% _object_remove_associations
+    1   0.2% objc_destructInstance
+    1   0.2% _Block_release
+    1   0.2% _SwiftDeferredNSDictionary.bridgeValues()
+    1   0.2% -[_NSPopoverWindow _updateContentViewSafeAreaInsets]
+    1   0.2% NSDP_setPropertyValue
+    1   0.2% __cons_NSDP_NSDPTypeEdgeInsets_block_invoke.413
+    1   0.2% -[NSKeyValueDependency invalidate]
+    1   0.2% 0x193af852c
+    1   0.2% __cons_NSDP_NSDPTypeRetainedObject_block_invoke_3
+    1   0.2% propertyStorage
+    1   0.2% NSDP_getPropertyValue
+    1   0.2% objc_getAssociatedObject
+    1   0.2% NSDP_getComputedPropertyValue
+    1   0.2% EnvironmentValues.systemMaterialDefinition.getter
+    1   0.2% _findAnySubviewNeedingAutoLayoutEngine
+    1   0.2% +[NSView(NSConstraintBasedLayoutInternal) _classToCheckForRequiresConstraintBasedLayout]
+    1   0.2% +[NSView(NSConstraintBasedLayoutInternal) requiresConstraintBasedLayout]
+    1   0.2% -[NSView _needsLayoutEngine]
+    1   0.2% objc_retainAutoreleasedReturnValue
+    1   0.2% CatalogAppearance.asset<A>(for:accentColor:)
+    1   0.2% _ResolvedCompositeAppearance.asset<A>(for:accentColor:)
+    1   0.2% specialized Color.Resolved.init(failableCGColor:)
+    1   0.2% protocol witness for RootTransformProvider.rootTransform() in conformance NSHostingView<A>
+    1   0.2% NSHostingView.rootTransform()
+    1   0.2% +[NSHashTable weakObjectsHashTable]
+    1   0.2% -[NSView(GeometryInWindowNotifications) _observerForChangesInGeometryInWindow:]
+    1   0.2% RootTransform.value.getter
+    1   0.2% -[_NSViewGeometryInWindowConcreteObservation initWithView:options:changeHandler:]
+    1   0.2% +[NSHashTable alloc]
+    1   0.2% protocol witness for PlatformDrawable.update(content:required:) in conformance RBDrawingLayer
+    1   0.2% -[NSView superview]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) nsli_lowerAttribute:intoExpression:withCoefficient:forConstraint:onBehalfOfLayoutGuide:]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) nsli_engineToUserScalingCoefficientsInEngine:]
+    1   0.2% -[CALayer setBounds:]
+    1   0.2% CA::Layer::set_bounds(CA::Rect const&, bool)
+    1   0.2% _bridgeAnyObjectToAny(_:)
+    1   0.2% @objc NSHostingView.observeValue(forKeyPath:of:change:context:)
+    1   0.2% swift_getObjectType
+    1   0.2% NSHostingView.didChangeValue(forKey:)
+    1   0.2% @objc NSHostingView.didChangeValue(forKey:)
+    1   0.2% NSAttributedString.isDynamic.getter
+    1   0.2% CFStringHashCString
+    1   0.2% specialized static DisplayList.ViewUpdater.Model.merge(item:index:into:)
+    1   0.2% GraphicsFilter.isIdentity.getter
+    1   0.2% -[NSView _addSubview:]
+    1   0.2% DYLD-STUB$$swift_getGenericMetadata
+    1   0.2% @objc NSHostingView.didAddSubview(_:)
+    1   0.2% NSHostingView.didAddSubview(_:)
+    1   0.2% AG::Graph::Context::call_update()
+    1   0.2% closure #1 in GraphHost.init(data:)
+    1   0.2% ViewGraphRootValueUpdater.graphDidChange()
+    1   0.2% NSHostingView.updateFocusedItem()
+    1   0.2% closure #1 in MainMenuItemHost.requestUpdate(after:)
+    1   0.2% ViewGraph.setFocusedItem(_:)
+    1   0.2% ViewGraph.setFocusStore(_:)
+    1   0.2% AG::Graph::call_update()
+    1   0.2% protocol witness for ViewGraphRootValueUpdater.updateFocusStore() in conformance MainMenuItemHost
+    1   0.2% -[NSPopoverFrame _isBackdropCompatible]
+    1   0.2% -[NSCompositeAppearance resolvedAppearanceForWidget:variant:]
+    1   0.2% -[NSAppearance resolvedAppearanceForWidget:variant:]
+    1   0.2% objc_loadWeakRetained
+    1   0.2% weak_entry_for_referent
+    1   0.2% 0x193afbac0
+    1   0.2% static _ViewListOutputs.concat(_:inputs:)
+    1   0.2% outlined init with copy of _ViewListOutputs.Views
+    1   0.2% -[NSURL(NSURL) _trueSelf]
+    1   0.2% -[NSURL(NSURL) hash]
+    1   0.2% _foundation_swift_nsurl_feature_enabled
+    1   0.2% TCGFontCache::CopyFontWithOpticalSizeVariation(CGFont*, __CFURL const*, __CFDictionary const*)
+    1   0.2% void OTL::GlyphLookups::SetLookupInRange<false>(std::__1::pair<unsigned short, unsigned short>, CFRange, bool)
+    1   0.2% GetSymbolicTraitsFromTraits(__CFDictionary const*)
+    1   0.2% objc_autoreleaseReturnValue
+    1   0.2% objc_msgSend$objectForKey:
+    1   0.2% 0x23c671e00
+    1   0.2% 0x19216d9c0
+    1   0.2% _CFStringGetCStringPtrInternal
+    1   0.2% lazy protocol witness table accessor for type AccessibilityAttachmentModifier and conformance AccessibilityAttachmentModifier
+    1   0.2% protocol witness for static ViewModifier._makeViewList(modifier:inputs:body:) in conformance AccessibilityAttachmentModifier
+    1   0.2% _getBestLocalization
+    1   0.2% specialized static Hasher._hash(seed:_:)
+    1   0.2% AGSubgraphCreate2
+    1   0.2% $_0::operator()() const::'lambda0'(unsigned long, std::__type_descriptor_t)::__invoke(unsigned long, std::__type_descriptor_t)
+    1   0.2% operator_new_impl[abi:nqe210106](unsigned long, std::__type_descriptor_t)
+    1   0.2% static DiskDisplayText.miniGraphAccessibility(_:phase:locale:)
+    1   0.2% GraphHost.setEnvironment(_:)
+    1   0.2% objc_opt_new
+    1   0.2% +[NSDictionary allocWithZone:]
+    1   0.2% -[NSSharedKeyDictionary setObject:forKey:]
+    1   0.2% protocol witness for DynamicPropertyBox.update(property:phase:) in conformance ObservedObjectPropertyBox<A>
+    1   0.2% swift_bridgeObjectRetain
+    1   0.2% RB::UntypedTable::~UntypedTable()
+    1   0.2% class_isMetaClass
+    1   0.2% objc_autorelease
+    1   0.2% +[NSAppearance _fauxVibrantDarkAppearance]
+    1   0.2% __60-[NSView(NSConstraintBasedLayoutInternal) _setLayoutEngine:]_block_invoke
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _setLayoutEngine:]
+    1   0.2% __60-[NSView(NSConstraintBasedLayoutInternal) _setLayoutEngine:]_block_invoke_2
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _parentalLayoutEngineDidChangeTo:]
+    1   0.2% -[NSISEngine tryToAddConstraintWithMarker:expression:mutuallyExclusiveConstraints:]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _didChangeHostsAutolayoutEngineTo:]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _tryToEncapsulateSubtreeLayout]
+    1   0.2% make_and_host_engine
+    1   0.2% -[NSISEngine _tryToAddConstraintWithMarkerEngineVar:row:mutuallyExclusiveConstraints:]
+    1   0.2% _substituteOutAllOccurencesOfBodyVar
+    1   0.2% __create_resolved_source_space_block_invoke
+    1   0.2% _ShapeStyle_RenderedLayers.beginLayer(id:style:shape:)
+    1   0.2% 0x23c65c668
+    1   0.2% _DictionaryStorage.__deallocating_deinit
+    1   0.2% _SwiftDeferredNSDictionary.__deallocating_deinit
+    1   0.2% _DictionaryStorage.deinit
+    1   0.2% swift::metadataimpl::ValueWitnesses<swift::metadataimpl::ObjCRetainableBox>::destroy(swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)
+    1   0.2% TFPFont::GetGlyphIdealAdvanceWidths(unsigned short const*, double*, unsigned long) const
+    1   0.2% ItemVariationStore::ValueForDeltaSet(unsigned short, unsigned short, unsigned long, short const*, double const*) const
+    1   0.2% -[CUICommonAssetStorage assetExistsForKeyData:length:]
+    1   0.2% -[NSPopoverFrame _windowChangedKeyState]
+    1   0.2% -[NSVisualEffectView _reactToMaterialChangeDiscardingMaterialLayers:invalidatingPreferredAppearance:]
+    1   0.2% +[NSWindow _enableKeyStateChangeNotifications]
+    1   0.2% _findPagesForKey
+    1   0.2% NSVisualEffectViewGetMetadataValue
+    1   0.2% BOMTreeValueExists
+    1   0.2% -[NSVisualEffectView _windowChangedKeyState]
+    1   0.2% _findIndexForKey
+    1   0.2% -[CUIStructuredThemeStore assetExistsForKey:]
+    1   0.2% -[NSVisualEffectView _vibrantBlendingStyleForSubtree]
+    1   0.2% NSViewGetEffectiveVibrantBlendingStyle
+    1   0.2% -[NSView _invalidateEffectiveVibrantBlendingStyle]
+    1   0.2% 0x193c4e3c0
+    1   0.2% -[NSWindow _setKeyViewGroupBoundaryNeedsRecalc:]
+    1   0.2% -[NSView removeFromSuperview]
+    1   0.2% -[NSView _removeSubview:]
+    1   0.2% swift::runtime::SwiftTLSContext::get()
+    1   0.2% static ButtonActionModifier._makeView(modifier:inputs:body:)
+    1   0.2% static GestureViewModifier.makeView(modifier:inputs:body:)
+    1   0.2% 0x23c6683c0
+    1   0.2% closure #1 in closure #1 in NetworkCardView.body.getter
+    1   0.2% swift_isUniquelyReferenced_nonNull_native
+    1   0.2% -[CUINamedVectorGlyph monochromeLayers]
+    1   0.2% -[CUINamedVectorGlyph _performWithLockedRenditions:]
+    1   0.2% object_getClass
+    1   0.2% _entry_get_optionally_checking_collisions
+    1   0.2% -[_CGFontCacheKey isEqual:]
+    1   0.2% -[NSCache setObject:forKey:cost:]
+    1   0.2% cache_set_and_retain
+    1   0.2% __NSCacheKeyEqual
+    1   0.2% _malloc_zone_malloc
+    1   0.2% protocol witness for Collection.subscript.read in conformance [A]
+    1   0.2% ApplicationRowIconView.body.getter
+    1   0.2% AccessibilityNullableOptionSet.init(adding:)
+    1   0.2% View.accessibilityHidden(_:)
+    1   0.2% View.accessibilityAddVisibility(_:)
+    1   0.2% protocol witness for IteratorProtocol.next() in conformance IndexingIterator<A>
+    1   0.2% String.hash(into:)
+    1   0.2% CTFontDescriptorRef.weight(_:)
+    1   0.2% protocol witness for FontModifier.modify(descriptor:in:) in conformance Font.WeightModifier
+    1   0.2% protocol witness for Hashable._rawHashValue(seed:) in conformance Character
+    1   0.2% Font.ModifierProvider.resolveDescriptor(in:)
+    1   0.2% TDescriptor::TDescriptor(TDescriptor const&, __CFDictionary const*)
+    1   0.2% Hasher.combine(bytes:)
+    1   0.2% CTFontDescriptorCreateCopyWithAttributes
+    1   0.2% LeafLayoutComputer.updateValue()
+    1   0.2% String._bridgeToObjectiveCImpl()
+    1   0.2% +[NSIndirectTaggedPointerString newIndirectTaggedNSStringWithConstantNullTerminatedASCIIBytes_:length_:]
+    1   0.2% _tryCastFromClassToObjCBridgeable(swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*, swift::OpaqueValue*, swift::TargetMetadata<swift::InProce
+    1   0.2% -[__NSDictionaryM count]
+    1   0.2% specialized closure #1 in ObjectCache.subscript.getter
+    1   0.2% initializeWithCopy for ObjectCache.Item
+    1   0.2% outlined init with copy of (key: NSAttributedStringKey, value: Any)
+    1   0.2% DashboardAlignedValueView.body.getter
+    1   0.2% protocol witness for View.body.getter in conformance DashboardAlignedValueView
+    1   0.2% swift::metadataimpl::FixedSizeBufferValueWitnesses<swift::metadataimpl::ValueWitnesses<swift::metadataimpl::NativeBox<unsigned int, 4ul, 4ul, 4ul>>, true, 4ul, 
+    1   0.2% specialized thunk for @escaping @callee_guaranteed (@in_guaranteed A, @in_guaranteed B) -> (@out A, @out B)
+    1   0.2% ForEach.IDGenerator.makeID(data:index:offset:)
+    1   0.2% specialized KeyPathBuffer.init(base:)
+    1   0.2% swift_getAtKeyPath
+    1   0.2% KeyPath._projectReadOnly(from:)
+    1   0.2% static NetworkDisplayText.compactActiveSummary(_:)
+    1   0.2% closure #1 in static NetworkDisplayText.compactActiveSummary(_:)
+    1   0.2% specialized DynamicViewList.Item.init(type:owner:list:id:isUnary:subgraph:allItems:)
+    1   0.2% __reusableDependencyContextForKey_block_invoke
+    1   0.2% @objc AppKitPlatformViewHost.intrinsicContentSize.getter
+    1   0.2% specialized ModifiedContent<>.accessibilityLabel(_:)
+    1   0.2% specialized AccessibilityStaticTextModifier.body(content:)
+    1   0.2% protocol witness for static TextAccessibilityProvider.makeView(content:text:resolved:) in conformance SwiftUITextAccessibilityProvider
+    1   0.2% AccessibilityStyledTextContentView.body.getter
+    1   0.2% RBPathBoundingRect(RBPath, RB::AffineTransform const*)
+    1   0.2% path_element_bounding_box(unsigned char, CGPoint const*, double&, double&, double&, double&, CGPoint*, unsigned long&)
+    1   0.2% RB::Coverage::Path::bounds(RB::AffineTransform const&, unsigned int) const
+    1   0.2% CG::Path::path_bounding_box() const
+    1   0.2% CGPathGetPathBoundingBox
+    1   0.2% RB::DisplayList::LayerItem::bounds(unsigned int) const
+    1   0.2% $_12::__invoke(void const*)
+    1   0.2% static Update.dispatchActions()
+    1   0.2% DYLD-STUB$$static Published.subscript.getter
+    1   0.2% -[NSAutoreleasePool init]
+    1   0.2% objc_autoreleasePoolPush
+    1   0.2% _CFAutoreleasePoolPush
+    1   0.2% __NSAccessibilityEntryPointIsAccessibilityElement_block_invoke
+    1   0.2% _NSAccessibilityElementForRectInView
+    1   0.2% -[NSAccessibilityAttributeAccessorInfo getAttributeValue:forObject:]
+    1   0.2% NSAccessibilityGetObjectValueForAttribute
+    1   0.2% NSAccessibilityUnignoredAncestor
+    1   0.2% -[NSPopover _accessibilityEstablishParentChildRelationshipForPopoverWindow:]
+    1   0.2% ___NSAccessibilityEntryPointValueForAttribute_block_invoke.773
+    1   0.2% _accessibilityFindRoleFromProtocol
+    1   0.2% NSAccessibilityGetObjectForAttributeUsingLegacyAPI
+    1   0.2% NSAccessibilityPerformEntryPointObject
+    1   0.2% NSAccessibilityIsAccessibilityElementBase
+    1   0.2% NSAccessibilityEntryPointIsAccessibilityElement
+    1   0.2% -[NSPopover accessibilityParent]
+    1   0.2% _NSAccessibilityEntryPointValueForAttribute
+    1   0.2% -[NSPopover(NSPopoverAccessibility) accessibilityAttributeValue:]
+    1   0.2% NSAccessibilityPerformEntryPointBOOL
+    1   0.2% destroy for SDFLayer.SDFElement.Contents
+    1   0.2% outlined destroy of (SDFLayer.SDFElement.Contents, SDFLayer.SDFElement.Contents)
+    1   0.2% get_glyph_bboxes
+    1   0.2% RB::Coverage::Glyphs::glyph_bounds(unsigned int, unsigned int) const
+    1   0.2% TFPFont::GetGlyphIdealBounds(unsigned int) const
+    1   0.2% FPFontGetGlyphIdealBounds
+    1   0.2% TFPFont::CopyGlyphPath(unsigned int) const
+    1   0.2% RB::Coverage::Glyphs::bounds(RB::AffineTransform const&, unsigned int) const
+    1   0.2% TGlyphOutlineDictionaryCache<unsigned short, 64ul, 512ul>::Copy(unsigned int)
+    1   0.2% -[NSSharedKeySet isEmpty]
+    1   0.2% +[NSMutableDictionary(NSSharedKeySetDictionary) dictionaryWithSharedKeySet:]
+    1   0.2% swift_getObjCClassMetadata
+    1   0.2% -[CALayer observationInfo]
+    1   0.2% CA::Layer::set_bit(unsigned int, unsigned int, unsigned int, bool, void (CA::Layer::*)(CA::Transaction*))
+    1   0.2% +[CUIThemeFacet facetWithRenditionKey:fromTheme:]
+    1   0.2% _ContiguousArrayStorage._getNonVerbatimBridgingBuffer()
+    1   0.2% -[NSArray containsObject:]
+    1   0.2% __SwiftDeferredNSArray.withUnsafeBufferOfObjects<A>(_:)
+    1   0.2% @objc __SwiftNativeNSArrayWithContiguousStorage.countByEnumerating(with:objects:count:)
+    1   0.2% NSAppearance.apply(to:vibrantBlendingStyle:materialContext:)
+    1   0.2% destroy for DashboardView
+    1   0.2% specialized PlatformViewRepresentableFeature.modifyWrappedOutputs<A>(outputs:proxy:)
+    1   0.2% static CoreViewRepresentableFeatureBuffer._VTable.modifyWrappedOutputs<A>(elt:outputs:proxy:)
+    1   0.2% CoreViewRepresentableFeatureBuffer.Element.modifyWrappedOutputs<A>(outputs:proxy:)
+    1   0.2% lazy protocol witness table accessor for type MergedTransaction and conformance MergedTransaction
+    1   0.2% specialized ForEachChild.info.getter
+    1   0.2% -[__NSCFConstantString retain]
+    1   0.2% TCFBase<TFont>::ClassEqual(void const*, void const*)
+    1   0.2% -[NSConcreteAttributedString initWithString:attributes:]
+    1   0.2% TDescriptor::Equal(TDescriptor const*) const
+    1   0.2% TDescriptor::GetAttributes(bool) const
+    1   0.2% TTenuousComponentFont::CopyAttribute(unsigned long) const
+    1   0.2% TBaseFont::CreateDescriptorAttributes() const
+    1   0.2% TFont::operator==(TFont const&) const
+    1   0.2% TTenuousComponentFont::AddDescriptorAttributes(TInlineVector<__CFString const*, 30ul>*, TInlineVector<void const*, 30ul>*) const
+    1   0.2% -[NSFont isEqual:]
+    1   0.2% TCFBase<TDescriptor>::ClassEqual(void const*, void const*)
+    1   0.2% TComponentFont::AddDescriptorAttributes(TInlineVector<__CFString const*, 30ul>*, TInlineVector<void const*, 30ul>*) const
+    1   0.2% RB::Symbol::Glyph::Layer::set_stroke_keyframes(std::__1::span<RBPathClipStrokeKeyframe const, 18446744073709551615ul>, CUINamedVectorGlyph*)
+    1   0.2% RBPathMap(RBPath, RB::Path::Consumer&, RB::AffineTransform const*)
+    1   0.2% RB::Symbol::Glyph::Layer::Layer(CUINamedVectorGlyph*, CUIVectorGlyphLayer*, RBSymbolRenderingMode, float, float)
+    1   0.2% comparisonUsingOrderingForStringKeys
+    1   0.2% -[NSConstantDictionary objectForKey:]
+    1   0.2% TAttributes::ApplyAttributeHandlers(void const*, void const*, void*)
+    1   0.2% -[NSParagraphStyle(_NSParagraphStyleMarkdownSettings) codeBlockIntentLanguageHint]
+    1   0.2% TextForegroundKeyColorModifier.modify(style:environment:)
+    1   0.2% -[NSConcreteMutableAttributedString initWithAttributedString:]
+    1   0.2% -[NSConcreteMutableAttributedString initWithString:]
+    1   0.2% -[NSRLEArray initWithRefCountedRunArray:]
+    1   0.2% -[NSRLEArray _makeNewListFrom:]
+    1   0.2% ModifiedContent.init(content:modifier:)
+    1   0.2% @objc __StringStorage.isEqual(to:)
+    1   0.2% __CFBasicHashAddValue
+    1   0.2% __CFBasicHashRehash
+    1   0.2% CFBasicHashAddValue
+    1   0.2% initializeWithCopy for PlatformItemList.Item
+    1   0.2% outlined init with copy of FocusItem?
+    1   0.2% CUIRenderer::DecodeToCUIInfo(CGRect, CGContext*, __CFDictionary const*, CUIInfo*) const
+    1   0.2% swift_getEnumCaseMultiPayload
+    1   0.2% EnvironmentBox.update(property:phase:)
+    1   0.2% specialized PropertyList.Tracker.derivedValue<A>(_:for:)
+    1   0.2% swift_getAssociatedTypeWitness
+    1   0.2% AppKitPlatformViewHost.coreRepresentedViewProvider.getter
+    1   0.2% ViewLeafView.representedViewProvider.getter
+    1   0.2% closure #1 in PlatformViewDisplayList.updateValue()
+    1   0.2% PlatformViewDisplayList.updateValue()
+    1   0.2% -[NSImageRepGeometryProxy dealloc]
+    1   0.2% NSAttributedString.MetricsCache.findMetrics(requestedSize:wantsNumberOfLineFragments:)
+    1   0.2% swift::metadataimpl::ValueWitnesses<swift::metadataimpl::AggregateBox<>>::assignWithTake(swift::OpaqueValue*, swift::OpaqueValue*, swift::TargetMetadata<swift::
+    1   0.2% specialized AnimatableAttributeHelper.update(value:defaultAnimation:environment:sampleCollector:)
+    1   0.2% SetNSFont(CGContext*, void const*)
+    1   0.2% TTenuousComponentFont::CopyGraphicsFont() const
+    1   0.2% CTFontCopyGraphicsFont
+    1   0.2% -[NSFont setInContext:]
+    1   0.2% -[NSFont _backingCGSFont]
+    1   0.2% append_referrer(weak_entry_t*, objc_object**)
+    1   0.2% swift_unknownObjectWeakInit
+    1   0.2% PAMarkOperationStart
+    1   0.2% -[PAPerfLoggingClientOperation initAndStartWithOperationCategory:andOperationName:andPid:shouldMonitorWSUpdates:]
+    1   0.2% _dispatch_source_set_handler
+    1   0.2% _dispatch_Block_copy
+    1   0.2% _Block_copy
+    1   0.2% DYLD-STUB$$malloc_type_malloc
+    1   0.2% -[NSApplication(NSEventRouting) _setGestureEventMask:]
+    1   0.2% TEventTypeIndex::RemoveTypes(unsigned long, EventTypeSpec const*, EventTypeSpec*, unsigned long*)
+    1   0.2% GlobalRegistryEventUnregistered(unsigned int, unsigned int)
+    1   0.2% GetEventClassRef
+    1   0.2% RemoveHandlersFromIndex(EventTargetRec*, HandlerRec*, unsigned long, EventTypeSpec const*)
+    1   0.2% RemoveEventHandler
+    1   0.2% mach_msg_overwrite
+    1   0.2% __SLSSetWindowEventShape_block_invoke
+    1   0.2% mach_msg2_trap
+    1   0.2% mach_msg
+    1   0.2% mach_msg2_internal
+    1   0.2% -[NSAppearance _normalizedBezelTintColor]
+    1   0.2% -[NSWindow(NSWindow_Carbon) _hasWindowRefCreatedForCarbonControl]
+    1   0.2% _StringGuts.append(_:)
+    1   0.2% protocol witness for TextOutputStream.write(_:) in conformance DefaultStringInterpolation
+    1   0.2% static StyleContextAcceptsPredicate.evaluate(inputs:)
+    1   0.2% specialized static NavigationDisclosureEnvironmentModifier._makeInputs(modifier:inputs:)
+    1   0.2% static _AllowsHitTestingModifier._makeView(modifier:inputs:body:)
+    1   0.2% static StrokeBorderShapeView._makeView(view:inputs:)
+    1   0.2% closure #1 in CPUCardView.body.getter
+    1   0.2% specialized static DynamicContainer.makeContainer<A>(adaptor:inputs:)
+    1   0.2% outlined init with copy of NamedImage._BitmapInfo<NamedImage.WeakOrStrongImageContents>
+    1   0.2% swift_getEnumTagSinglePayloadGeneric
+    1   0.2% NamedImage.VectorKey.init(name:location:in:textStyle:idiom:)
+    1   0.2% __PerformBlockWithThemeRegistry
+    1   0.2% -[CUINamedVectorGlyph referencePointSize]
+    1   0.2% -[CUINamedLookup _renditionForSpecificKey:]
+    1   0.2% _LookupThemeProvider
+    1   0.2% GetContentModificationTime(char const*)
+    1   0.2% CGFontCreateWithPathAndName
+    1   0.2% FPFontCreateWithPathAndName
+    1   0.2% realpath$DARWIN_EXTSN
+    1   0.2% CreateFontWithFontURL(__CFURL const*, __CFString const*, __CFString const*)
+    1   0.2% create_private_data_with_path_and_name
+    1   0.2% SpacerLayoutComputer.Engine.sizeThatFits(_:)
+    1   0.2% AG::Subgraph::add_node(AG::data::ptr<AG::Node>)
+    1   0.2% CTLineGetPenOffsetForFlush
+    1   0.2% TAttributes::GetCompositionLanguage() const
+    1   0.2% TRun::GetLeftHangersGlyphCountAndWidth(long, unsigned long, TCharStream const&, int) const
+    1   0.2% TLine::GetLeftHangersGlyphCountAndWidth(unsigned long const*) const
+    1   0.2% __CFNumberGetValue
+    1   0.2% TDescriptorSource::FindFontNameForTextStyle(__CFString const*, __CFDictionary const*, bool*, __CFString const**, __CFString const**)
+    1   0.2% -[__NSDictionaryI objectForKeyedSubscript:]
+    1   0.2% __CFNumberHash
+    1   0.2% _NSIndirectTaggedPointerStringIsEqualToCFString
+    1   0.2% isEqualToString
+    1   0.2% TOpenTypeMorph::CompareRuns(TRun const&, TRun const&)
+    1   0.2% TTenuousComponentFont::CopyName(__CFString const*) const
+    1   0.2% TFont::Compare(TFont const&, bool) const
+    1   0.2% protocol witness for ViewModifier.body(content:) in conformance OnCommandModifier
+    1   0.2% ModifierBodyAccessor.updateBody(of:changed:)
+    1   0.2% specialized FocusState.projectedValue.getter
+    1   0.2% closure #1 in ModifierBodyAccessor.updateBody(of:changed:)
+    1   0.2% __commpage_gettimeofday_internal
+    1   0.2% HistoryGraphSlotView.body.getter
+    1   0.2% gettimeofday
+    1   0.2% Date.init()
+    1   0.2% clock_gettime
+    1   0.2% mach_absolute_time
+    1   0.2% __swift_memcpy16_4
+    1   0.2% protocol witness for StatefulRule.updateValue() in conformance DynamicBody<A, B>
+    1   0.2% outlined destroy of Image.Resolved
+    1   0.2% AGSubgraphSetCurrent
+    1   0.2% _objc_msgForward_impcache
+    1   0.2% getEnumTagSinglePayload for ContinuousClock.Instant
+    1   0.2% type metadata accessor for AnyCancellable
+    1   0.2% SubscriptionLifetime.subscribe<A>(subscriber:to:)
+    1   0.2% closure #1 in ObservedObjectPropertyBox.update(property:phase:)
+    1   0.2% ObservedObjectPropertyBox.update(property:phase:)
+    1   0.2% -[_NSConstraintBasedLayoutHostingView _informContainerThatSubviewsNeedUpdateConstraints]
+    1   0.2% +[NSAccessibilityNotificationTable shared]
+    1   0.2% NSAccessibilityIsAnyNotificationObserved
+    1   0.2% -[NSWindow(NSWindowAccessibility) accessibilityPostNotification:]
+    1   0.2% OTL::GSUB::ApplyLookups(TRunGlue&, int, OTL::GlyphLookups&, SyncState&, void (*)(void*, CFRange, long), void*) const
+    1   0.2% TOpenTypeMorph::ShapeGlyphs(SyncState&)
+    1   0.2% OTL::CoverageBitmap::CoversBitmap(unsigned char const*, unsigned long) const
+    1   0.2% objc_msgSend$effectiveAppearance
+    1   0.2% -[NSView _hasSolariumAppearance]
+    1   0.2% -[NSPopoverFrame _windowWillOrderOnScreen]
+    1   0.2% -[NSPopoverFrame _updateCachedCornerStateIfNeeded]
+    1   0.2% TFontCascade::CreateFallbackFromDescriptor(__CTFontDescriptor const*, unsigned int) const
+    1   0.2% TCFRef<CTFont::cf_type> TCFBase_NEW<CTFont, __CTFontDescriptor const*&, double const&, CGAffineTransform* const&, unsigned int&, __CTFontDescriptor const*>(__CT
+    1   0.2% TFontCascade::GetFallbackFont(TBaseFont const*, __CTFontDescriptor const*, unsigned int, double) const
+    1   0.2% swift::metadataimpl::ValueWitnesses<swift::metadataimpl::ObjCRetainableBox>::initializeWithCopy(swift::OpaqueValue*, swift::OpaqueValue*, swift::TargetMetadata<
+    1   0.2% specialized Array._reserveCapacityImpl(minimumCapacity:growForAppend:)
+    1   0.2% swift::TargetMetadata<swift::InProcess>::getTypeContextDescriptor() const
+    1   0.2% getContextDescriptor(swift::TargetMetadata<swift::InProcess> const*)
+    1   0.2% ViewGraph.setRootView<A>(_:)
+    1   0.2% 0x193ab7e5c
+    1   0.2% ViewGraphHost.setRootView<A>(_:)
+    1   0.2% closure #1 in ViewGraphHost.updateRootView(transaction:)
+    1   0.2% implicit closure #2 in implicit closure #1 in GraphHost.flushTransactions()
+    1   0.2% protocol witness for GraphMutation.apply() in conformance CustomGraphMutation
+    1   0.2% NSView.idiom.getter
+    1   0.2% AGTypeProjectEnumData
+    1   0.2% specialized static AccessibilityViewModifier.makePropertiesTransform(modifier:inputs:outputs:includeGeometry:resolvableModifier:scrapeableID:)
+    1   0.2% DYLD-STUB$$_GraphInputs.subscript.getter
+    1   0.2% objc_retain_x28
+    1   0.2% specialized ViewTraitCollection.subscript.setter
+    1   0.2% BaseViewList.Init.value.getter
+    1   0.2% -[NSConcreteMutableAttributedString replaceCharactersInRange:withAttributedString:]
+    1   0.2% ConvertSettingsToOTFeatures(OTL::FeatureList const&, TFontFeatureSettingList const&, bool, OTL::FeatureBuffer*, bool (*)(unsigned int), KerningStatus*, FeatureD
+    1   0.2% CFArrayGetCount
+    1   0.2% OTL::GCommon::IterateScriptTables(OTL::GCommon::Header const*, void const*, std::__1::function<bool (unsigned int, OTL::ScriptTable const*, bool&)>)
+    1   0.2% std::__1::__function::__func<TOpenTypeMorph::AddShapingGlyphs(TFont const&, std::__1::function<void (unsigned short, unsigned short)>, std::__1::function<void (
+    1   0.2% std::__1::function<bool (unsigned int, OTL::ScriptTable const*, bool&)>::operator()(unsigned int, OTL::ScriptTable const*, bool&) const
+    1   0.2% std::__1::__function::__func<TOpenTypeMorph::AddShapingGlyphs(TFont const&, std::__1::function<void (unsigned short, unsigned short)>, std::__1::function<void (
+    1   0.2% std::__1::function<bool (unsigned int, OTL::LangSysTable const*, bool&)>::operator()(unsigned int, OTL::LangSysTable const*, bool&) const
+    1   0.2% TOpenTypeMorph::AddShapingGlyphs(TFont const&, std::__1::function<void (unsigned short, unsigned short)>, std::__1::function<void (unsigned short, unsigned shor
+    1   0.2% OTL::GCommon::IterateLangSysTables(OTL::GCommon::Header const*, OTL::ScriptTable const*, void const*, std::__1::function<bool (unsigned int, OTL::LangSysTable c
+    1   0.2% protocol witness for Rule.value.getter in conformance _ForegroundStyleModifier<A>.ForegroundStyleEnvironment
+    1   0.2% class_createInstance
+    1   0.2% __CFAllocateObject
+    1   0.2% -[NSAttributeDictionary mutableCopyWithZone:]
+    1   0.2% _xzm_malloc_zone_malloc_type_calloc_entry
+    1   0.2% __NSDictionaryM_new
+    1   0.2% Text.foregroundColor(_:)
+    1   0.2% Text.dashboardTypography(_:)
+    1   0.2% DYLD-STUB$$free
+    1   0.2% AGGraphCreateAttribute
+    1   0.2% static ViewInputFlag.evaluate(inputs:)
+    1   0.2% -[NSDisplayCycle containsObserver:]
+    1   0.2% protocol witness for static DerivedEnvironmentKey.value(in:) in conformance ShouldRedactContentKey
+    1   0.2% specialized find<A>(_:key:)
+    1   0.2% MaterialProviderBox.resolveLayers(in:)
+    1   0.2% closure #2 in MaterialEffectResolvedData.updateValue()
+    1   0.2% 0x24f6741bc
+    1   0.2% EnvironmentValues.windowAppearsActive.getter
+    1   0.2% 0x24f66fc34
+    1   0.2% 0x24f616488
+    1   0.2% MaterialEffectResolvedData.updateValue()
+    1   0.2% RB::DisplayList::Transform::apply_to_color(RB::Fill::Color&) const
+    1   0.2% -[RBDisplayListTransform copyApplyingToDisplayList:]
+    1   0.2% _simd_log2_f4
+    1   0.2% RB::DisplayList::Contents::apply_transform(RB::DisplayList::Transform const&)
+    1   0.2% RB::DisplayList::GenericItem1<RB::Coverage::Path, RB::Fill::Color>::GenericItem1(RB::Heap&, RB::Coverage::Path const&, RB::Fill::Color const&, RB::AffineTransfo
+    1   0.2% RB::DisplayList::LayerItem::copy(RB::DisplayList::Builder&, unsigned int) const
+    1   0.2% RB::DisplayList::GenericItem<RB::Coverage::Path, RB::Fill::Color>::copy(RB::DisplayList::Builder&, unsigned int) const
+    1   0.2% RB::DisplayList::Layer::copy(RB::DisplayList::Builder&, unsigned int) const
+    1   0.2% static AppKitPlatformColorDefinition.resolvedColor(_:environment:)
+    1   0.2% GraphicsContext.fill(_:with:style:)
+    1   0.2% specialized PlatformColorProvider.resolve(in:)
+    1   0.2% GraphicsContext.Storage.Shared.setShading(_:in:)
+    1   0.2% protocol witness for ColorProvider.resolveHDR(in:) in conformance Color.OpacityColor
+    1   0.2% closure #1 in closure #1 in HistoryGraphView.body.getter
+    1   0.2% DYLD-STUB$$objc_autorelease
+    1   0.2% -[NSLayoutConstraint _makeExtraVars]
+    1   0.2% NSHostingView.maxSizeRoundedRespectingSizingOptions()
+    1   0.2% partial apply for implicit closure #4 in NSHostingView.windowDidLayout()
+    1   0.2% CGSize._bridgeToObjectiveC()
+    1   0.2% CAValueEqual
+    1   0.2% -[CALayer setCompositingFilter:]
+    1   0.2% specialized MutableCollection<>.sort(by:)
+    1   0.2% @objc NSHostingView.acceptsFirstResponder.getter
+    1   0.2% outlined init with copy of FocusNavigationCohortElement
+    1   0.2% FocusBridge.hostAcceptsFirstResponder.getter
+    1   0.2% specialized MutableCollection<>._insertionSort(within:sortedEnd:by:)
+    1   0.2% NSHostingView.needsPanelToBecomeKey.getter
+    1   0.2% specialized UnsafeMutableBufferPointer._stableSortImpl(by:)
+    1   0.2% FocusNavigator.firstNavigableItem.getter
+    1   0.2% CA::Display::DisplayLinkItem::DisplayLinkItem(CA::Display::Display*, void const*, objc_selector*)
+    1   0.2% +[CADisplayLink(CADisplayLinkPrivate) displayLinkWithDisplay:target:selector:]
+    1   0.2% -[NSWindow(NSWindowSharedFirstResponder) _changeAllAttachmentsKeyState]
+    1   0.2% -[NSWindow _setFrameNeedsDisplay:]
+    1   0.2% -[NSCGSWindowCornerPathMask dealloc]
+    1   0.2% 0x23c67add4
+    1   0.2% destroy for Material.Layer.SDFLayer.GroupLayer
+    1   0.2% type metadata accessor for SidebarStyleContext
+    1   0.2% objc_msgSend$setSecondaryLineBreakMode:
+    1   0.2% makeParagraphStyle(context:alignment:fallbackAlignment:writingDirection:fallbackWritingDirection:lineHeight:)
+    1   0.2% xzm_malloc_zone_malloc_type_malloc
+    1   0.2% closure #1 in Attribute.setValue(_:)
+    1   0.2% TRunGlue::TGlyph::glyphID() const
+    1   0.2% ZeroMarkWidths(TRunGlue&, void*, bool (*)(void*, TRunGlue::TGlyph))
+    1   0.2% EnvironmentValues._systemAccentValue.getter
+    1   0.2% HashFilterCombiner<IdentityHashFilter, MultiplicativeHashFilter>::AddRange(unsigned int, unsigned int)
+    1   0.2% OTL::Coverage::Iterate(std::__1::function<bool (unsigned short, unsigned short, unsigned short)>) const
+    1   0.2% std::__1::__function::__func<OTL::Lookup::InitCoverageUnion() const::'lambda'(unsigned short, unsigned short, unsigned short), bool (unsigned short, unsigned sh
+    1   0.2% OTL::Lookup::InitCoverageUnion() const
+    1   0.2% OTL::Lookup const* TBaseFont::NthLookup<OTL::GPOS>(OTL::GPOS const&, unsigned int) const
+    1   0.2% OTL::Coverage::IterateFmt1(std::__1::function<bool (unsigned short, unsigned short, unsigned short)>) const
+    1   0.2% std::__1::function<bool (unsigned short, unsigned short, unsigned short)>::operator()(unsigned short, unsigned short, unsigned short) const
+    1   0.2% specialized Hasher.init(_seed:)
+    1   0.2% Hasher.init(_seed:)
+    1   0.2% _ViewInputs.withoutGeometryDependencies.getter
+    1   0.2% specialized GraphHost.intern<A>(_:for:id:)
+    1   0.2% -[NSBuiltinAppearance _catalystName]
+    1   0.2% -[NSDynamicNamedColor colorUsingColorSpace:]
+    1   0.2% specialized closure #1 in static DashboardColorPalette.dynamicColor(light:dark:)
+    1   0.2% lazy protocol witness table accessor for type MergedEnvironment and conformance MergedEnvironment
+    1   0.2% swift_cvw_initWithCopyImpl(swift::OpaqueValue*, swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)
+    1   0.2% initializeWithCopy for TypesettingConfiguration
+    1   0.2% outlined init with copy of ResolvableAttributeConfiguration
+    1   0.2% objc_msgSend$numberWithDouble:
+    1   0.2% CompareValueWithValueInAxisForKey(double, __CFDictionary const*, __CFString const*, double*)
+    1   0.2% ClampValueToRangeOfAxis(double, __CFDictionary const*)
+    1   0.2% TFont::FinishConstruction(__CTFontDescriptor const*)
+    1   0.2% AG::(anonymous namespace)::TypeDescriptorCache::fetch(AG::swift::metadata const*, unsigned int, AG::LayoutDescriptor::HeapMode, int)
+    1   0.2% protocol witness for static EnvironmentKey._valuesEqual(_:_:) in conformance TintKey
+    1   0.2% -[CALayer setMinificationFilter:]
+    1   0.2% CAObject_defaultValueForAtom
+    1   0.2% NSColorConvertColorToColorSpace
+    1   0.2% CGColorTransformConvertColor
+    1   0.2% TypedElement.__deallocating_deinit
+    1   0.2% TypedElement.deinit
+    1   0.2% PropertyList.Element.deinit
+    1   0.2% RB::DisplayList::Builder::culling_bounds(RB::DisplayList::State&)
+    1   0.2% RB::ColorSpace::Conversion::Conversion(RB::ColorSpace, float, RB::ColorSpace, float)
+    1   0.2% initializeWithCopy for DisplayList.ViewUpdater.Model.State
+    1   0.2% outlined init with copy of DisplayList.ViewUpdater.Model.State
+    1   0.2% CGDrawingLayer.init(options:)
+    1   0.2% DisplayList.ViewUpdater.Platform._makeItemView(item:state:)
+    1   0.2% static CALayerPlatformViewDefinition.makeDrawingView(options:)
+    1   0.2% protocol witness for Rule.value.getter in conformance DynamicPreferenceCombiner<A>
+    1   0.2% -[RBDevice queue]
+    1   0.2% RB::ImageProvider::start_rendering_locked(bool, std::__1::unique_lock<std::__1::mutex>&)
+    1   0.2% RB::ImageProvider::start_rendering(bool)
+    1   0.2% EnvironmentValues.colorScheme.getter
+    1   0.2% FocusStateBindingResponderFilter.updateValue()
+    1   0.2% UpdateFocusableViewResponder.updateValue()
+    1   0.2% AllowsWindowActivationEventsModifier.ResponderUpdater.updateValue()
+    1   0.2% PropertyList.Tracker.value<A>(_:for:)
+    1   0.2% -[NSAppearance _wantsSolariumForWidget:]
+    1   0.2% protocol witness for DynamicView.childInfo(metadata:) in conformance <> _ConditionalContent<A, B>
+    1   0.2% StatefulMaterialProviderBox.deinit
+    1   0.2% closure #2 in ConditionalTypeDescriptor.project(at:baseIndex:_:)
+    1   0.2% type metadata accessor for Mutex
+    1   0.2% assignWithCopy for MaterialEffect
+    1   0.2% StatefulMaterialProviderBox.__deallocating_deinit
+    1   0.2% specialized static KeyPressModifier.makeEnvironment(modifier:environment:)
+    1   0.2% UpdateEnvironment.value.getter
+    1   0.2% specialized Set.formUnion<A>(_:)
+    1   0.2% specialized Set._Variant.insert(_:)
+    1   0.2% destroy for TypesettingConfiguration
+    1   0.2% SymbolVariants.contains(_:)
+    1   0.2% Image.Location.fillVariant(_:name:)
+    1   0.2% -[_CFXPreferences copyAppValueForKey:identifier:container:configurationURL:]
+    1   0.2% _CFPreferencesCopyAppValueWithContainerAndConfiguration
+    1   0.2% -[_CFXPreferences withSearchListForIdentifier:container:cloudConfigurationURL:perform:]
+    1   0.2% -[NSConcreteMutableAttributedString replaceCharactersInRange:withString:]
+    1   0.2% _CFAllocatorAllocateImpl
+    1   0.2% outlined destroy of LazyMapSequence<LazyFilterSequence<LayoutSubviews>, ViewDimensions>
+    1   0.2% swift_deallocObject
+    1   0.2% destroy for LazyDropWhileSequence
+    1   0.2% _ForegroundStyleModifier.ForegroundStyleEnvironment.value.getter
+    1   0.2% initializeBufferWithCopyOfBuffer for StyledTextContentView
+    1   0.2% static Hasher._hash(seed:_:)
+    1   0.2% closure #1 in AlignmentKey.init(id:axis:)
+    1   0.2% TypesettingLanguage.resolve(with:locale:)
+    1   0.2% 0x192fdf600
+    1   0.2% ulocimp_toLanguageTag(char const*, icu::ByteSink&, bool, UErrorCode&)
+    1   0.2% Locale.Language.minimalIdentifier.getter
+    1   0.2% uloc_toLanguageTag
+    1   0.2% StatefulRule.withObservation<A>(observationCenter:do:)
+    1   0.2% partial apply for closure #1 in TimelineView<>.UpdateFilter.updateValue()
+    1   0.2% Duration.components.getter
+    1   0.2% static HistoryGraphTimeAxis.make(points:currentTimestamp:timeRange:)
+    1   0.2% _Int128.multipliedFullWidth(by:)
+    1   0.2% partial apply for closure #1 in closure #1 in TimelineView<>.UpdateFilter.updateValue()
+    1   0.2% specialized closure #1 in TimelineView<>.init(_:content:)
+    1   0.2% closure #1 in TimelineView<>.UpdateFilter.updateValue()
+    1   0.2% closure #1 in TimelineView<>.init(_:content:)
+    1   0.2% Rule.withObservation<A>(observationCenter:do:)
+    1   0.2% Duration.secondsAsDouble.getter
+    1   0.2% __swift_memcpy41_8
+    1   0.2% closure #1 in LocaleCache.fixedNSLocale(_:)
+    1   0.2% outlined destroy of LocaleCache.State.IdentifierAndPrefs
+    1   0.2% initializeWithCopy for _ViewListInputs
+    1   0.2% outlined init with copy of _ViewListInputs
+    1   0.2% Array._makeUniqueAndReserveCapacityIfNotUnique()
+    1   0.2% Array.append(_:)
+    1   0.2% _availability_version_check
+    1   0.2% __isPlatformOrVariantPlatformVersionAtLeast
+    1   0.2% _ArrayBuffer._consumeAndCreateNew(bufferIsUnique:minimumCapacity:growForAppend:)
+    1   0.2% protocol witness for static ViewModifier._makeView(modifier:inputs:body:) in conformance _FlexFrameLayout
+    1   0.2% protocol witness for static ViewModifier._makeView(modifier:inputs:body:) in conformance _PaddingLayout
+    1   0.2% -[NSView _informContainerThatSubviewsNeedUpdateConstraints]
+    1   0.2% -[NSView(NSViewRoot) _viewRoot]
+    1   0.2% -[NSObject _isDeallocating]
+    1   0.2% assignWithCopy for EnvironmentValues
+    1   0.2% closure #1 in RendererEffectDisplayList.value.getter
+    1   0.2% _ClipEffect.effectValue(size:)
+    1   0.2% Shape.effectivePath(in:)
+    1   0.2% type metadata accessor for (value: ViewTransform, changed: Bool)
+    1   0.2% specialized PointerRegionUpdater.updateValue()
+    1   0.2% AG::Graph::mark_changed(AG::data::ptr<AG::Node>, AG::AttributeType const*, void const*, void const*)
+    1   0.2% DeprecatedAlertBridge.preferencesDidChange(_:)
+    1   0.2% -[NSISRestrictedToZeroMarkerVariable shouldBeMinimized]
+    1   0.2% DYLD-STUB$$pthread_main_np
+    1   0.2% SLSCopyRegionSerializedBytes
+    1   0.2% AG::Graph::index_of_input_slow(AG::Node&, AG::InputEdge::Comparator)
+    1   0.2% RB::DisplayList::Layer::append(RB::DisplayList::Builder&, RB::DisplayList::Item*)
+    1   0.2% RB::blend_into_zero(RB::BlendMode)
+    1   0.2% closure #1 in GraphicsContext.drawSDF(of:style:distanceRange:gradient:ovalization:)
+    1   0.2% std::__1::unique_ptr<RB::XML::Document, std::__1::default_delete<RB::XML::Document>>::reset[abi:nqn210106](RB::XML::Document*)
+    1   0.2% _NSAddKeyValueDependency
+    1   0.2% -[NSView isHiddenOrHasHiddenAncestor]
+    1   0.2% CGSNewRegionWithRectList
+    1   0.2% CGRegionCreateWithRects
+    1   0.2% shape_union_with_bounds
+    1   0.2% shape_union
+    1   0.2% -[NSWindow _borderView]
+    1   0.2% _ViewInputs.subscript.setter
+    1   0.2% swift::TargetMetadata<swift::InProcess>::isCanonicalStaticallySpecializedGenericMetadata() const
+    1   0.2% specialized static ViewInputFlag._makeInputs(modifier:inputs:)
+    1   0.2% swift::MetadataResponse performOnMetadataCache<swift::MetadataResponse, swift_checkMetadataState::CheckStateCallbacks>(swift::TargetMetadata<swift::InProcess> c
+    1   0.2% swift_checkMetadataState
+    1   0.2% static ViewInputFlagModifier._makeInputs(modifier:inputs:)
+    1   0.2% makeViewResponderFilter #1 (inputs:outputs:) in static _FocusableModifier._makeView(modifier:inputs:body:)
+    1   0.2% TypedElement.copy(before:after:)
+    1   0.2% PropertyList.merge(_:)
+    1   0.2% specialized TypedElement.init(value:before:after:)
+    1   0.2% closure #3 in closure #13 in PropertyList.merge(_:)
+    1   0.2% partial apply for closure #1 in ForEachChild.updateValue()
+    1   0.2% closure #1 in ForEachChild.updateValue()
+    1   0.2% outlined assign with take of Text.Style
+    1   0.2% swift::metadataimpl::ValueWitnesses<swift::metadataimpl::SwiftRetainableBox>::destroy(swift::OpaqueValue*, swift::TargetMetadata<swift::InProcess> const*)
+    1   0.2% outlined destroy of Font
+    1   0.2% assignWithTake for Text.Style
+    1   0.2% specialized Material.ResolvedMaterial.Flags.init(environment:)
+    1   0.2% outlined init with copy of Font.FontCache.Key
+    1   0.2% Text.Resolved.append<A>(_:in:with:isUniqueSizeVariant:)
+    1   0.2% ResolvedTextContainer.append<A>(_:in:with:)
+    1   0.2% TAttributes::HandleLanguageAttribute(void const*, TAttributes::AttributeHandlerContext*)
+    1   0.2% __tolower
+    1   0.2% _CompareLowerTestEntryPrefixToTableEntryKey
+    1   0.2% CFLocaleCreateCanonicalLanguageIdentifierFromString
+    1   0.2% _UpdateFullLocaleString
+    1   0.2% objc_alloc_init
+    1   0.2% static Group<A>._makeViewList(view:inputs:)
+    1   0.2% _ViewList_TemporarySublistTransform.apply(sublist:)
+    1   0.2% swift::metadataimpl::BufferValueWitnesses<swift::metadataimpl::ValueWitnesses<swift::metadataimpl::SwiftRetainableBox>, true, 8ul, 8ul, (swift::metadataimpl::Fi
+    1   0.2% closure #2 in closure #1 in MemoryCardView.body.getter
+    1   0.2% closure #2 in MemoryCardView.pressureSwapLine.getter
+    1   0.2% StringProtocol.replacingOccurrences<A, B>(of:with:options:range:)
+    1   0.2% CFStringFindAndReplace
+    1   0.2% -[NSString stringByReplacingOccurrencesOfString:withString:options:range:]
+    1   0.2% LocalizedStringKey.StringInterpolation.appendLiteral(_:)
+    1   0.2% __CFStringFoldCharacterClusterAtIndex
+    1   0.2% TDescriptorSource::CreateDescriptorForTextStyle(__CFString const*, __CFString const*, __CFString const*, __CFDictionary const*) const
+    1   0.2% CTFontDescriptorCreateWithTextStyleAndAttributes
+    1   0.2% _conditionallyBridgeFromObjectiveC<A>(_:_:)
+    1   0.2% initializeWithCopy for _ViewInputs
+    1   0.2% Button.body.getter
+    1   0.2% __swift_memcpy16_8
+    1   0.2% View.accessibility(isEnabled:body:)
+    1   0.2% View.accessibility(_:)
+    1   0.2% View.accessibilityLabel(_:)
+    1   0.2% DiskCardView.rateRow(_:rate:)
+    1   0.2% View.accessibilityLabel<A>(_:)
+    1   0.2% AG::Subgraph::add_indirect(AG::data::ptr<AG::IndirectNode>, bool)
+    1   0.2% AG::Graph::add_indirect_attribute(AG::Subgraph&, AG::AttributeID, unsigned long, std::__1::optional<unsigned long>, bool, unsigned int)
+    1   0.2% (anonymous namespace)::create_offset_attribute(unsigned int, unsigned long, std::__1::optional<unsigned long>)
+    1   0.2% AG::Subgraph::insert_attribute(AG::AttributeID, bool)
+    1   0.2% _PaddingLayout.effectiveInsets(in:)
+    1   0.2% -[CAFilter initWithType:]
+    1   0.2% DYLD-STUB$$objc_autoreleaseReturnValue
+    1   0.2% static EnvironmentValues.FontContextKey.value(in:)
+    1   0.2% closure #1 in closure #1 in closure #1 in ResourceRateGraphSlotView.slot(at:)
+    1   0.2% specialized Path.withMutableBuffer(do:)
+    1   0.2% Path.addLine(to:)
+    1   0.2% RB::Path::Storage::append_element(RBPathElement, double const*, void const*)
+    1   0.2% outlined init with copy of DisplayList.Item
+    1   0.2% outlined copy of DisplayList.Item.Value
+    1   0.2% -[_WMWindow performUpdatesUsingBlock:]
+    1   0.2% -[NSWindow(NSWMWindowManagement) window:didUpdateWithChangedProperties:]
+    1   0.2% -[NSWMWindowCoordinator performTransactionUsingBlock:]
+    1   0.2% -[WMWindowTransaction addAction:]
+    1   0.2% TBaseFont::SupportsConnectedLanguage() const
+    1   0.2% ShapeStyledDisplayList.updateValue()
+    1   0.2% RBDrawingStateBeginLayer
+    1   0.2% RB::DisplayList::CustomEffectStyle::map_roi(RB::Rect&, RB::AffineTransform&) const
+    1   0.2% RB::DisplayList::Style::roi(RB::Rect&, RB::AffineTransform&) const
+    1   0.2% RB::DisplayList::Builder::begin_layer(RB::DisplayList::State const&, unsigned int)
+    1   0.2% -[NSFont fontForAppearance:]
+    1   0.2% __131-[NSCoreTypesetter _getLineMetricsForRange:attributes:attributedString:applySpacing:usesSystemFontLeading:usesNegativeFontLeading:]_block_invoke
+    1   0.2% -[CoreGraphicsContext push]
+    1   0.2% objc_msgSend$_initWithGraphicsPort:flipped:drawingToScreen:
+    1   0.2% +[NSGraphicsContext(NSGraphicsContextDeprecated) graphicsContextWithGraphicsPort:flipped:]
+    1   0.2% CA::Layer::set_bit_int(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)
+    1   0.2% closure #1 in static _BackgroundModifier._makeView(modifier:inputs:body:)
+    1   0.2% partial apply for closure #1 in MultiPreferenceCombinerVisitor.visit<A>(key:)
+    1   0.2% outlined destroy of Locale.Language.Components
+    1   0.2% ScriptAndLangSysFromCanonicalLanguageInternal(__CFString const*)
+    1   0.2% uscript_getCode
+    1   0.2% _xzm_chunk_list_slot_push
+    1   0.2% specialized static DashboardValueColumn.bytes(_:locale:)
+    1   0.2% icu::number::impl::DecimalQuantity::readLongToBcd(long long)
+    1   0.2% static DashboardValueColumn.bytes(_:locale:)
+    1   0.2% icu::number::impl::DecimalQuantity::setToDouble(double)
+    1   0.2% unumf_formatDouble
+    1   0.2% icu::number::impl::DecimalQuantity::_setToDoubleFast(double)
+    1   0.2% ICUNumberFormatterBase.FormatResult.init(formatter:value:)
+    1   0.2% 0x19216b190
+    1   0.2% -[_NSTaggedPointerColor hash]
+    1   0.2% EnvironmentValues.stringResolutionDate.setter
+    1   0.2% specialized PropertyList.Tracker.invalidateValue<A>(for:from:to:)
+    1   0.2% move(_:to:)
+    1   0.2% closure #1 in closure #2 in DynamicContainerInfo.makeItem(_:uniqueId:container:disableTransitions:)
+    1   0.2% closure #1 in static ModifiedContent<>._makeView(view:inputs:)
+    1   0.2% -[__NSDictionaryI dealloc]
+    1   0.2% PreferencesOutputs.makePreferenceWriter<A>(inputs:key:value:)
+    1   0.2% partial apply for implicit closure #1 in static PlatformItemListTextRepresentable.makeRepresentation(inputs:context:outputs:)
+    1   0.2% protocol witness for static PlatformTextRepresentable.makeRepresentation(inputs:context:outputs:) in conformance PlatformItemListTextRepresentable
+    1   0.2% implicit closure #1 in static PlatformItemListTextRepresentable.makeRepresentation(inputs:context:outputs:)
+    1   0.2% TextForegroundStyleModifier.modify(style:environment:)
+    1   0.2% EnvironmentValues.pixelLength.getter
+    1   0.2% protocol witness for static DerivedEnvironmentKey.value(in:) in conformance TextLayoutProperties.Key
+    1   0.2% 0x193ab79e4
+    1   0.2% specialized GraphHost.asyncTransaction<A>(_:id:mutation:style:mayDeferUpdate:)
+    1   0.2% ViewGraphHost.updateRootView(transaction:)
+    1   0.2% AG::data::table::raw_page_seed(AG::data::ptr<AG::data::page>) const
+    1   0.2% -[RBShape _setGlyphs:positions:count:font:renderingStyle:dilation:shouldDrawBitmapRuns:]
+    1   0.2% -[NSView _resetSupportsDirectLayerContentsCache]
+    1   0.2% AppKitPlatformViewHost.coreUpdateEnvironment(_:viewPhase:)
+    1   0.2% -[NSView _usesCustomLayer]
+    1   0.2% protocol witness for CoreViewRepresentableHost.init(_:host:environment:viewPhase:) in conformance AppKitPlatformViewHost<A>
+    1   0.2% specialized AppKitPlatformViewHost.init(_:host:environment:viewPhase:)
+    1   0.2% NSView.adoptEnvironment(_:hostedSubview:)
+    1   0.2% -[NSView _viewDidChangeAppearance:]
+    1   0.2% specialized AppKitPlatformViewHost.__allocating_init(_:host:environment:viewPhase:)
+    1   0.2% -[NSView setAppearance:]
+    1   0.2% _swift_pod_direct_initializeBufferWithCopyOfBuffer
+    1   0.2% CA::Layer::insert_sublayer(CA::Transaction*, CALayer*, unsigned long)
+    1   0.2% CAInternAtom
+    1   0.2% -[CALayer insertSublayer:atIndex:]
+    1   0.2% CA::Layer::update_added_sublayer(CA::Transaction*, CA::Layer*, unsigned int)
+    1   0.2% -[CAShapeLayer didChangeValueForKey:]
+    1   0.2% CA::Layer::toggle_flipped(CA::Transaction*)
+    1   0.2% hash_cf
+    1   0.2% partial apply for implicit closure #3 in NSHostingView.windowDidLayout()
+    1   0.2% -[RBFill setCGColor:]
+    1   0.2% CGColorGetContentHeadroom
+    1   0.2% -[RBFill setCGColor:].cold.1
+    1   0.2% RB::ContextDelegate::set_color_in_shape(CGColor*, CGGState*, CGRenderingState*, bool)
+    1   0.2% outlined init with copy of ZStack<ForEach<[PrimitiveGlassItemOverlayContent.OverlayValue], UniqueID, AnyView>>
+    1   0.2% initializeWithCopy for _ShapeStyle_RenderedShape.Shape
+    1   0.2% -[NSWindow _setNeedsDisplayInRect:]
+    1   0.2% KeyViewProxyCache.layoutProxy(_:)
+    1   0.2% 0x193bc85f8
+    1   0.2% KeyViewProxyCache.configureProxy(_:for:)
+    1   0.2% 0x193bc8778
+    1   0.2% __swift_noop_void_return
+    1   0.2% -[CAFilter setValue:forKey:]
+    1   0.2% _CAFilterSetInput
+    1   0.2% CA::AttrList::set(unsigned int, _CAValueType, void const*)
+    1   0.2% specialized default argument 1 of View.onKeyPress(keys:phases:action:)
+    1   0.2% static ViewGraph.current.getter
+    1   0.2% AGSubgraphGetGraph
+    1   0.2% specialized static GraphHost.currentHost.getter
+    1   0.2% util::pointer_hash(void const*)
+    1   0.2% specialized static ShapeStyledLeafView.makeLeafView(view:inputs:styles:interpolatorGroup:data:)
+    1   0.2% static Image.Resolved._makeView(view:inputs:)
+    1   0.2% static Image.makeImageAttributes(view:inputs:)
+    1   0.2% static Image.makeImageViewChild<A>(_:image:options:inputs:outputs:)
+    1   0.2% AG::Graph::intern_type(unsigned long, AG::ClosureFunctionVP<void*>)
+    1   0.2% AGGraphInternAttributeType
+    1   0.2% static Image._makeView(view:inputs:)
+    1   0.2% swift_getTypeByMangledNameInEnvironment
+    1   0.2% swift::_conformsToProtocol(swift::OpaqueValue const*, swift::TargetMetadata<swift::InProcess> const*, swift::TargetProtocolDescriptorRef<swift::InProcess>, swif
+    1   0.2% _getKeyPathClassAndInstanceSizeFromPattern(_:_:)
+    1   0.2% std::__1::__function::__func<swift::TargetProtocolConformanceDescriptor<swift::InProcess>::getWitnessTable(swift::TargetMetadata<swift::InProcess> const*, swift
+    1   0.2% specialized _walkKeyPathPattern<A>(_:walker:)
+    1   0.2% _resolveKeyPathGenericArgReference(_:genericEnvironment:arguments:)
+    1   0.2% swift_conformsToProtocolWithExecutionContext
+    1   0.2% specialized ForegroundStyle._apply(to:)
+    1   0.2% ImageResolutionContext.updateSymbolAnimator(_:)
+    1   0.2% specialized ShapeStyle.isMultiLevel(in:)
+    1   0.2% specialized ContiguousArray._createNewBuffer(bufferIsUnique:minimumCapacity:growForAppend:)
+    1   0.2% specialized _ContiguousArrayBuffer._consumeAndCreateNew(bufferIsUnique:minimumCapacity:growForAppend:)
+    1   0.2% specialized LocalizedStringKey.getArgumentsForInflection(for:in:idiom:with:including:)
+    1   0.2% objc_msgSendSuper2
+    1   0.2% -[__NSDictionaryM dealloc]
+    1   0.2% ParagraphStyleResolutionContext.init(_:)
+    1   0.2% -[NSStringDrawingContext setFirstBaselineOffset:]
+    1   0.2% thunk for @callee_guaranteed (@in_guaranteed Any?, @unowned _NSRange, @unowned UnsafeMutablePointer<ObjCBool>) -> ()
+    1   0.2% outlined init with copy of GesturePhase<TappableSpatialEvent>
+    1   0.2% URL.init(urlValue:)
+    1   0.2% closure #1 in NSAttributedString.hasLinkAttributes.getter
+    1   0.2% thunk for @escaping @callee_guaranteed (@in_guaranteed Any?, @unowned _NSRange, @unowned UnsafeMutablePointer<ObjCBool>) -> ()
+    1   0.2% CTLineGetTrailingWhitespaceWidth
+    1   0.2% TLine::GetTrailingWhitespace() const
+    1   0.2% partial apply for closure #3 in _ZStackLayout.placeSubviews(in:proposal:subviews:cache:)
+    1   0.2% TRun::GetTrailingWhitespace() const
+    1   0.2% CFAllocatorAllocateTyped
+    1   0.2% TBaseFont::CharactersCovered(unsigned short const*, long, bool*) const
+    1   0.2% CFCharacterSetIsLongCharacterMember
+    1   0.2% Set.update(with:)
+    1   0.2% EnvironmentValues.bridgedEnvironmentResolver.getter
+    1   0.2% get_AXSLargeTextMacUseDynamicTypeForCurrentAppSymbolLoc()
+    1   0.2% _Block_object_dispose
+    1   0.2% TDescriptorSource::CopySpliceFontForName(__CFString const*, __CFString const*, __CFNumber const*, __CFNumber const*, CTFontLegibilityWeight, __CFBoolean const*,
+    1   0.2% GetAccessibilityMacUseDynamicTypeForCurrentApp()
+    1   0.2% TDescriptorSource::CopySplicedDescriptorForName(__CFString const*, __CFString const*, __CFString const*, __CFNumber const*, __CFNumber const*, CTFontLegibilityW
+    1   0.2% specialized ShapeStyle.copyStyle(name:in:foregroundStyle:)
+    1   0.2% specialized Group<A>.init(content:)
+    1   0.2% CFSetGetValue
+    1   0.2% -[NSRunLoop(NSRunLoop) performInModes:block:]
+    1   0.2% onNextMainRunLoop(do:)
+    1   0.2% CFRunLoopPerformBlock
+    1   0.2% __CFRunLoopCopyMode
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _populateEngineWithConstraintsForViewSubtree:forComputingFittingSizeOfView:]
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _makeOrUpdateContentSizeWidthConstraint:heightConstraint:]
+    1   0.2% __125-[NSView(NSConstraintBasedLayoutInternal) systemLayoutSizeFittingSize:withHorizontalFittingPriority:verticalFittingPriority:]_block_invoke_2
+    1   0.2% AppKitPlatformViewHost.fittingSize.getter
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) _defaultContentHuggingPriorities]
+    1   0.2% @objc AppKitPlatformViewHost.fittingSize.getter
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) systemLayoutSizeFittingSize:withHorizontalFittingPriority:verticalFittingPriority:]
+    1   0.2% ResolvedStyledText.StringDrawing.drawingMargins.getter
+    1   0.2% NSAttributedString.maxFontMetrics.getter
+    1   0.2% partial apply for closure #1 in closure #2 in static String._unconditionallyBridgeFromObjectiveC(_:)
+    1   0.2% String.init(unsafeUninitializedCapacity:initializingUTF8With:)
+    1   0.2% closure #1 in closure #2 in static String._unconditionallyBridgeFromObjectiveC(_:)
+    1   0.2% static String._unconditionallyBridgeFromObjectiveC(_:)
+    1   0.2% swift_deallocClassInstance
+    1   0.2% specialized Array.replaceSubrange<A>(_:with:)
+    1   0.2% PreferenceValues.setValue<A>(_:of:at:)
+    1   0.2% -[NSView(NSConstraintBasedLayoutInternal) nsli_engineToUserScalingCoefficients]
+    1   0.2% -[_NSCGSWindowOrdering setLevel:forWindow:]
+    1   0.2% -[_NSCGSWindowLocalOrderingState setLevel:forWindow:]
+    1   0.2% -[_NSCGSWindowOrderingProperties levelForWindow:]
+    1   0.2% -[NSCGSWindow(NSCGSWindowOrdering) setLevel:]
+    1   0.2% _NSCGSWindowOrderingAddOperation
+    1   0.2% -[NSWindow _didAddChildWindow:]
+    1   0.2% -[NSWindow _applyWindowLevelWithTagUpdateNeeded:]
+    1   0.2% CGColorSpaceCreateResolvedColorSpace
+    1   0.2% CGColorSpaceGetType
+    1   0.2% ResponderNode.visit(applying:)
+    1   0.2% MultiViewResponder.visit(applying:)
+    1   0.2% closure #1 in ResponderNode.focusNavigationCohort(_:)
+    1   0.2% CGRect.convert(to:transform:)
+    1   0.2% protocol witness for ViewTransformElement.forEach(inverted:stop:_:) in conformance SizedSpaceElement
+    1   0.2% protocol witness for BaseFocusResponder.frame.getter in conformance NSViewResponder
+    1   0.2% specialized ViewTransform.forEach(inverted:_:)
+    1   0.2% specialized closure #1 in ViewTransform.convert(_:_:)
+    1   0.2% Element.forEach(inverted:stop:_:)
+    1   0.2% specialized ViewTransform.convert(_:_:)
+    1   0.2% specialized ApplyViewTransform.convert(to:transform:)
+    1   0.2% PlatformViewResponderBase.frame.getter
+    1   0.2% closure #1 in ResponderNode.visitBaseFocusResponders(applying:)
+    1   0.2% swift::SubstGenericParametersFromMetadata::getMetadataKeyArgOrdinal(unsigned int) const
+    1   0.2% swift::SubstGenericParametersFromMetadata::setup() const
+    1   0.2% closure #1 in closure #1 in _KeyValueCodingAndObserving.observe<A>(_:options:changeHandler:)

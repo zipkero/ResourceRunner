@@ -1,0 +1,205 @@
+{
+  "event": {
+    "eventCreatedBeforeTapObservedMs": 0.289709,
+    "eventTimestampNanoseconds": 1221162404803791,
+    "location": {
+      "x": 1130,
+      "y": 16.5
+    },
+    "pidTailTapObservedMach": 29307897722244
+  },
+  "firstAllFourCardAX": {
+    "cards": {
+      "CPUCard": "CPU 카드, 전체 사용률 10%, User 6%, System 4%, User와 System 두 계열 중첩 그래프, 기준선 50%, 최근 10분 그래프, 앱 TOP 5 · 시스템 프로세스 제외 · 읽기 실패 13개, 단축키 ⌘1",
+      "DiskCard": "Disk 카드, 정상 측정, 현재 Read 75.7 KB/s, Write 279.7 KB/s, 보조 정보 확인됨, 저장 공간 전체 994.7 GB, 사용 가능 814.0 GB, 사용 가능은 macOS 회수 가능한 공간 포함, 사용 중은 전체에서 사용 가능을 뺀 값이며 실제 파일 점유량이 아님, APFS 공유 공간이며 볼륨별 독점 사용량이 아님, Disk 최근 10분 그래프, Read 점선, Write 실선, 원본 범위 0–19.1 MB/s, 현재 측정, 수집 공백은 이어 그리지 않음, 단축키 ⌘4",
+      "MemoryCard": "Memory 카드, 사용 중 23.0 GB, 전체 물리 메모리 36.0 GB, Memory Pressure 정상, Swap 0.0 KB, Swap 최근 변화 +0.0 KB, App 17.6 GB, Wired 3.1 GB, Compressed 779.5 MB, Cached 11.3 GB, 구성 합계 32.7 GB, 앱 TOP 5 · 시스템 프로세스 제외 · 읽기 실패 13개, 단축키 ⌘2",
+      "NetworkCard": "Network 카드, 일부 수집 실패: 물리 대상의 식별·연결·속도 일부를 확인하지 못했습니다, 확인된 일부 합계 다운로드 23.7 KB/s, 업로드 7.4 KB/s, 일부 수집 실패: 대상 identity 또는 물리 정보 일부 미확인, 활성 확인 4개 · 논리·Wi-Fi·가상 · 상태 미확인 8개, 단축키 ⌘3"
+    },
+    "finishedMach": 29307900787628,
+    "finishedRelativeToTapMs": 127.72433333333333,
+    "sequence": 9,
+    "startedMach": 29307897780590,
+    "startedRelativeToTapMs": 2.4310833333333335
+  },
+  "probeCounts": {
+    "axRows": 421,
+    "eventRows": 1,
+    "frameRows": 895,
+    "jpegFrames": 256
+  },
+  "selectedFrames": [
+    {
+      "displayRelativeToCreationMs": 103.60533404350281,
+      "displayRelativeToTapMs": 103.315625,
+      "displayTimeMach": 29307900201819,
+      "image": "frame-0024.jpg",
+      "imageSHA256": "ef98843b736760ce079f04dfbb628913cfcded81e562e88a7c870df747e339c8",
+      "metadataWindowIDs": [
+        54914
+      ],
+      "sequence": 24,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 111.94041728973389,
+      "displayRelativeToTapMs": 111.65070833333333,
+      "displayTimeMach": 29307900401861,
+      "image": "frame-0025.jpg",
+      "imageSHA256": "ef98843b736760ce079f04dfbb628913cfcded81e562e88a7c870df747e339c8",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 25,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 120.27341723442078,
+      "displayRelativeToTapMs": 119.98370833333333,
+      "displayTimeMach": 29307900601853,
+      "image": "frame-0026.jpg",
+      "imageSHA256": "095cfc703dd5428043ce1216f91c76726e0b7ea87d52d89868e540bca07142dd",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 26,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 136.9371256828308,
+      "displayRelativeToTapMs": 136.64741666666666,
+      "displayTimeMach": 29307901001782,
+      "image": "frame-0027.jpg",
+      "imageSHA256": "226f6a6837f40ff9b91b2d21a5bd4b485eee6412a65b02fd448f6bab4dca5438",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 27,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 145.26879215240479,
+      "displayRelativeToTapMs": 144.97908333333334,
+      "displayTimeMach": 29307901201742,
+      "image": "frame-0028.jpg",
+      "imageSHA256": "40f5e087ba498b36341849556aa653a8ee55966b3825b0f0590347a7175b72b7",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 28,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 153.60212564468384,
+      "displayRelativeToTapMs": 153.31241666666665,
+      "displayTimeMach": 29307901401742,
+      "image": "frame-0029.jpg",
+      "imageSHA256": "ac7c7518517366d92ce71bb1d484ce4cfcb4bc011f0c66dffdf2cdf20d59bb3d",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 29,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 161.9354588985443,
+      "displayRelativeToTapMs": 161.64575,
+      "displayTimeMach": 29307901601742,
+      "image": "frame-0030.jpg",
+      "imageSHA256": "c028657c757d3b722d440755f9f6cc32d9dcf262a6fb3d3c3412b6ab3c742d38",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 30,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 170.27120900154114,
+      "displayRelativeToTapMs": 169.9815,
+      "displayTimeMach": 29307901801800,
+      "image": "frame-0031.jpg",
+      "imageSHA256": "2ecc53382c4357941b81a659e32a06630b3ceb988ed7cc0555e53cb5d2a2cfe6",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 31,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 178.60400080680847,
+      "displayRelativeToTapMs": 178.31429166666666,
+      "displayTimeMach": 29307902001787,
+      "image": "frame-0032.jpg",
+      "imageSHA256": "099e8758efe5cd858e8c84353629423efbff6a01a10f3c8ee0f02b9089d10337",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 32,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 186.93758392333984,
+      "displayRelativeToTapMs": 186.647875,
+      "displayTimeMach": 29307902201793,
+      "image": "frame-0033.jpg",
+      "imageSHA256": "6158dfa1d2064c07dff459e9e0e96ca21e3cba55801694e579a32b3b8d39bd67",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 33,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 195.26875066757202,
+      "displayRelativeToTapMs": 194.97904166666666,
+      "displayTimeMach": 29307902401741,
+      "image": "frame-0034.jpg",
+      "imageSHA256": "e2220eeda3f2764cdff31fc199454e0d752c3054a77cbda2b279d8700b6f5542",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 34,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 203.6063756942749,
+      "displayRelativeToTapMs": 203.31666666666666,
+      "displayTimeMach": 29307902601844,
+      "image": "frame-0035.jpg",
+      "imageSHA256": "fadd6c6926dd54fe42ef78918c5d30b46b54c3bf16a7dfc594ec605650428eaf",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 35,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 211.94037580490112,
+      "displayRelativeToTapMs": 211.65066666666667,
+      "displayTimeMach": 29307902801860,
+      "image": "frame-0036.jpg",
+      "imageSHA256": "ce9f499be7ae9ddc1b6ac770373d2a1a08604b93489db9fa43e6fa9bcbf8e0d7",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 36,
+      "status": 0
+    },
+    {
+      "displayRelativeToCreationMs": 270.27295899391174,
+      "displayRelativeToTapMs": 269.98325,
+      "displayTimeMach": 29307904201842,
+      "image": "frame-0042.jpg",
+      "imageSHA256": "d85c04cdc7d9ef5bfdf21e3d26f1570071916f4e67a010dabe0b07a3d437b055",
+      "metadataWindowIDs": [
+        54917
+      ],
+      "sequence": 42,
+      "status": 0
+    }
+  ],
+  "timebase": {
+    "denom": 3,
+    "numer": 125,
+    "unit": "nanoseconds per Mach tick"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "bundleID": "com.zipkero.ResourceRunner.Task005PerfDiagnostic",
+  "exe": "/private/tmp/resourcerunner-task005-perf-current/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "289dfabbd3b743dc5ef4b7fe426044170ef7d0715321cac05c24c013486bf90b",
+  "launchCallBefore": {
+    "epoch": 1791710988.955981,
+    "mach": 29292762633732
+  },
+  "minimumWarmSeconds": 600,
+  "pid": 29449,
+  "ps": "29449 Sun Oct 11 18:29:49 2026     /private/tmp/resourcerunner-task005-perf-current/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+  "timebaseDenom": 3,
+  "timebaseNumer": 125,
+  "verifiedAlive": {
+    "epoch": 1791710989.057068,
+    "mach": 29292765059875
+  }
+}

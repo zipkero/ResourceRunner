@@ -51,13 +51,8 @@ final class SettingsWindowUITests: XCTestCase {
     }
 
     private func settingsOwnsKeyboardFocus(_ app: XCUIApplication) -> Bool {
-        let tree = app.debugDescription
-        guard let start = tree.range(of: "identifier: 'ResourceRunnerSettingsWindow'") else {
-            return false
-        }
-        let suffix = tree[start.lowerBound...]
-        let windowTree = suffix.prefix(upTo: suffix.range(of: "    MenuBar,")?.lowerBound ?? suffix.endIndex)
-        return windowTree.contains("Keyboard Focused")
+        // DEBUG fixture 창이 조회 순간의 실제 isKeyWindow를 반환합니다.
+        settingsWindow(app).value as? String == "key"
     }
 
     private func openFromStatusMenu(_ app: XCUIApplication) {
@@ -379,6 +374,18 @@ final class SettingsWindowUITests: XCTestCase {
         closeSettings(app)
         if !app.buttons["CPUCard"].exists { status.click() }
         XCTAssertTrue(app.buttons["CPUCard"].waitForExistence(timeout: 3))
+    }
+
+    @MainActor
+    func testSettingsKeyProbeReportsVisibleWindowLosingKey() {
+        let app = launch()
+        openFromStatusMenu(app)
+        let window = settingsWindow(app)
+        XCTAssertTrue(window.exists)
+        XCTAssertEqual(window.value as? String, "key")
+        app.statusItems.firstMatch.click()
+        XCTAssertTrue(window.exists)
+        XCTAssertEqual(window.value as? String, "not-key")
     }
 
     @MainActor

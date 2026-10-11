@@ -110,7 +110,12 @@ struct CollectionPipelinesTests {
         #expect(await system.contexts.isEmpty)
         await pipelines.lifecycle.update(.systemSnapshot(initial()))
         await clock.advance(by: .seconds(10))
-        await pipelineWait { await !system.contexts.isEmpty }
+        // 두 축은 독립 scheduler라 각각 첫 context를 받은 뒤 동일한 저장 프로필을 비교합니다.
+        await pipelineWait {
+            let systemReady = await !system.contexts.isEmpty
+            let processReady = await !process.contexts.isEmpty
+            return systemReady && processReady
+        }
         #expect(await system.contexts.first?.interval == .seconds(10))
         #expect(await process.contexts.first?.interval == .seconds(10))
         #expect(admission.issue(.systemMetrics)?.interval == .seconds(10))

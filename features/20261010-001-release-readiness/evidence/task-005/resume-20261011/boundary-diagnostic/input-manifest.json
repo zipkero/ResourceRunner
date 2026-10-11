@@ -1,0 +1,506 @@
+{
+ "app": {
+  "buildCommand": "xcodebuild build -project ResourceRunnerTask005Boundary.xcodeproj -scheme ResourceRunner -configuration Release -destination platform=macOS -derivedDataPath /private/tmp/resourcerunner-task005-boundary-build CODE_SIGNING_ALLOWED=YES",
+  "buildLog": "/private/tmp/resourcerunner-task005-boundary-build.log",
+  "buildLogSHA256": "4ce25eb2b04e63e19433a1f23a7fda8c43e9b032b56d74ef3ea812a7c014c821",
+  "bundleID": "com.zipkero.ResourceRunner.Task005PerfDiagnostic",
+  "configuration": "Release (-O)",
+  "exe": "/private/tmp/resourcerunner-task005-boundary-build/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "d742c68284aa7645eca6673859c4dff3d62278aaf958f30df34f1b827b53fe99",
+  "installRecordMach": 29501992450943,
+  "pid": 17729,
+  "preLaunchMach": 29501972323369,
+  "started": "2026-10-11 20:55:06 KST"
+ },
+ "appEventsSHA256": "a665b946a85872c9cade15c9da025f4d53ebc8fb91de507d906632a57fcae183",
+ "head": "e02b3b291a5e3254c1df14086868d28d65aacdd3",
+ "productInputs": {
+  "copyAdded": [
+   "ResourceRunner/Task005BoundaryDiagnostic.swift"
+  ],
+  "copyDiffersFromR2Only": [
+   "ResourceRunner.xcodeproj/project.pbxproj (bundle ID 4 lines; same SHA as isolated perf project)",
+   "ResourceRunner/StatusBarController.swift (instrumentation)"
+  ],
+  "copyPBXSHA256": "bd4efb94383cdf366d5a6b3f1776359c9afc5b6c61d403733f9672cd387b9d66",
+  "copyStatusBarControllerSHA256": "4dceab7fbb399308377eca5f5975ecf2a9cc42c8f0a87b17031c1e9f373fbb9e",
+  "diagnosticSourceSHA256": "163b20cd4ed3c726105d2d1f3255eb7b21f33643bed6b5dd32c2e68544ac63de",
+  "instrumentationPatchSHA256": "2a07eef75f7e50e20f9b0536d6f069a150d6f299053a94e11ca064518a6d5a0c",
+  "originalSourcesMatchResumeRuntimeManifestR2": "127/127",
+  "originalStatusBarControllerSHA256": "79896af34634605ae0884a53f91e285590a7618af0196b45ecb6e3a4b4af84ae"
+ },
+ "purpose": "task-005 boundary diagnostic (tap callback vs app receipt error bound); auxiliary evidence only, not formal cohort",
+ "rawJPEGNote": "ROI JPEG includes unrelated screen content; not copied into repository",
+ "rawJPEGRoot": "/private/tmp/resourcerunner-task005-boundary-runs",
+ "resultsSHA256": "08d1ca1f6780401c3e66dda1d0c1f03ce7347490208fc1f9ecf3af6155b14d25",
+ "selectedFrames": {
+  "trial-00-firstopen": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-00-firstopen/frames/frame-0051.jpg",
+    "sha256": "6d4ddda99fe34093a2ac26e4169151cef72e759b0e5f00443e72c3aa4ba45d47"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-00-firstopen/frames/frame-0016.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-00-firstopen/frames/frame-0031.jpg",
+    "sha256": "260d311b069a2fba6ec1174d6d859a6c30852106cf2f509bb562015d4f8ad636"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-00-firstopen/frames/frame-0184.jpg",
+    "sha256": "931725c5f7254d0a43c13c1f23764c727d62a0b2f757f56374fee08a1111d472"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-00-firstopen/frames/frame-0035.jpg",
+    "sha256": "b6cb6c6da4e8fb871ad2a388f1b70659c0e668b9c7072f172f18f0df3552326f"
+   }
+  },
+  "trial-01-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-01-A/frames/frame-0046.jpg",
+    "sha256": "d334ad0afdabe08bb284c8a3b0057d56adfb32b6afb41f410b87e4fe4112134d"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-01-A/frames/frame-0015.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-01-A/frames/frame-0027.jpg",
+    "sha256": "615f2fb1530c7f2f9371cf7e640c14e53149c0f5445e441fc1fc0ca2bd3354e1"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-01-A/frames/frame-0184.jpg",
+    "sha256": "3592544edc975da9ab5c74fba629de22dbcfe89a779cac6913fa65171bdc2c53"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-01-A/frames/frame-0031.jpg",
+    "sha256": "e476d4450aa2a2b8712959a68f8cae2d1172f6aa4a3f3171d4ac9ba7695ccdfa"
+   }
+  },
+  "trial-02-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-02-B/frames/frame-0042.jpg",
+    "sha256": "4d26cfb9ee22d388f190240a9da68361aeb313bf58c17d41424547d481d97723"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-02-B/frames/frame-0012.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-02-B/frames/frame-0023.jpg",
+    "sha256": "a4f8420eeb50ae5225af88b2384aff77911bc43002ae59ee53b54d0f24316374"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-02-B/frames/frame-0177.jpg",
+    "sha256": "d076d2cd9551ae7a73ea54448a5f094b3d6bbe96116dde6fbb5fa65079d94dc6"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-02-B/frames/frame-0026.jpg",
+    "sha256": "6de36708f8711b6a5d5cbfa2db8a1234c3b3f085eb1b84d0988a8f6885118971"
+   }
+  },
+  "trial-03-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-03-A/frames/frame-0046.jpg",
+    "sha256": "99bb956262c1fba8c8c31f64287227cbf249752167d850b9b21059442fa494a7"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-03-A/frames/frame-0014.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-03-A/frames/frame-0026.jpg",
+    "sha256": "e4d6f9d918566827b431b9512f4364ef3818e021e52202005c219c75062a0515"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-03-A/frames/frame-0186.jpg",
+    "sha256": "a58cf7bcbc7fa3c2b77f60401b5eb5b6d74fa894c28289166610a193fa5ef59b"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-03-A/frames/frame-0030.jpg",
+    "sha256": "7063f443389739ab936f6f5c91ae2b1d915d06075ffb4ecfe3ae88a4a60c65e3"
+   }
+  },
+  "trial-04-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-04-B/frames/frame-0043.jpg",
+    "sha256": "cfe0e622cf34ae1136f8b8f6689bd73dc0e0642a4f11f25c8e891390789957d3"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-04-B/frames/frame-0012.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-04-B/frames/frame-0023.jpg",
+    "sha256": "13846ae36a83cfcc3c0cc19b22da20a9e0468e3a49bf170fd24c2dadbb3eddf7"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-04-B/frames/frame-0175.jpg",
+    "sha256": "55ced306325849a6198e9fc08374e9d10d8c13add74db75b92918a4e7b5bdcfa"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-04-B/frames/frame-0028.jpg",
+    "sha256": "17c2d708c2d1457ad734bde77215f4f9db58a15da6cd4148a3bb4df1a0bc6d93"
+   }
+  },
+  "trial-05-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-05-A/frames/frame-0047.jpg",
+    "sha256": "7b8268871ca52521b0af7f95b7a46ac9cbd2a9a0016f5e0a251d16a547096e17"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-05-A/frames/frame-0015.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-05-A/frames/frame-0028.jpg",
+    "sha256": "af3da6e1453eb4f8bd5a36a95847b1de72bb277aeb8caf6aede75577a752fad7"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-05-A/frames/frame-0191.jpg",
+    "sha256": "7729ed0d04c5d33cff13fd565ddee06f551662b125816e1c0fde7f6a76831bf8"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-05-A/frames/frame-0031.jpg",
+    "sha256": "f64a438685edae5b479e779b920ec757c61f46960a70298a2438e80948a7c14a"
+   }
+  },
+  "trial-06-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-06-B/frames/frame-0042.jpg",
+    "sha256": "57330d5cb3d657b4070598a448fcb31053d613b835d77300296027b0086a82eb"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-06-B/frames/frame-0013.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-06-B/frames/frame-0023.jpg",
+    "sha256": "d6de9a68341f9e00ba8d719eafc00a51ae8c856839b4b03e0c48e0b2759e4ef5"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-06-B/frames/frame-0181.jpg",
+    "sha256": "bd9fbbc8c03dc4f05aebb9eeccd4b7856b0abf0492fcb1b02ccd4026a0904da7"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-06-B/frames/frame-0027.jpg",
+    "sha256": "8d542135594f12f908ec15cc43221417a96b918c3c535e3c0298e95e18687c78"
+   }
+  },
+  "trial-07-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-07-A/frames/frame-0047.jpg",
+    "sha256": "8e12b0e24311a10eeb725803c43161e3612de0c100798fb85bf3d01d0bf0e370"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-07-A/frames/frame-0013.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-07-A/frames/frame-0027.jpg",
+    "sha256": "aa15fcf989ca9e6d3ee3880b1263345d07cd889c55ea2c0fc206f0565cf51384"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-07-A/frames/frame-0187.jpg",
+    "sha256": "beb32c73250658fe41ad04e59c8394916de19956db52b08c4578a975d8690989"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-07-A/frames/frame-0030.jpg",
+    "sha256": "f3dd434dae9978f55469d6e1ab7c5ff34cf768ee3a9fa14877939432c0e6d6f4"
+   }
+  },
+  "trial-08-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-08-B/frames/frame-0041.jpg",
+    "sha256": "95f083647114ce6bd51e669466a62aff6342e7ec8db0de8a07bd42231c016df6"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-08-B/frames/frame-0012.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-08-B/frames/frame-0022.jpg",
+    "sha256": "d76f2effc4b770acc93443606398c2cc73bb16794b697c85ff763d1ba3c7355f"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-08-B/frames/frame-0179.jpg",
+    "sha256": "2f1b29ba5d968981ee506ac4e63eaf37163c542befe5f944eb398d351c9211c9"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-08-B/frames/frame-0025.jpg",
+    "sha256": "880c7697257fd6a0080d304cb628f5c33687a1fb622a420620a57579d740082a"
+   }
+  },
+  "trial-09-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-09-A/frames/frame-0044.jpg",
+    "sha256": "680c1bf7d2b3b5c98cffc476495c38e4ce9a9ef806734d8e86391890859e4b22"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-09-A/frames/frame-0013.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-09-A/frames/frame-0025.jpg",
+    "sha256": "f413ec10d55659c2f6202dac21117f1d855bcc3e4162ffc55c6e4ac560dc19a7"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-09-A/frames/frame-0185.jpg",
+    "sha256": "a866d10157478a1f70468f2323ff5d3c89955180a7b9f4bed5a0e7155a550601"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-09-A/frames/frame-0029.jpg",
+    "sha256": "91804f0eb06b4568a0c1324de9211beff0d1c2208f80ac2ad9898f6fa1c84715"
+   }
+  },
+  "trial-10-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-10-B/frames/frame-0043.jpg",
+    "sha256": "1211ef20fa661e831f185ecc1ecba0c4d989249a2729b566e967e0abca56e5fe"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-10-B/frames/frame-0013.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-10-B/frames/frame-0023.jpg",
+    "sha256": "0259ed6f97e235dd4d1dd85c1538f6f2c6648c171a8852d2f644179097a2e05c"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-10-B/frames/frame-0172.jpg",
+    "sha256": "4c1f5f41cb51063a4ef36504a55d0a88f78f0e41edf94f61e89b2d36716c8eaf"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-10-B/frames/frame-0026.jpg",
+    "sha256": "bb2da0b33739e6330e92ad383c57bc5269e8e5a853ebe4b63adccebe462729e4"
+   }
+  },
+  "trial-11-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-11-A/frames/frame-0045.jpg",
+    "sha256": "129c0fd07b506135e7db7fab536206350f2082a27e696eb86d98fecfc96089c1"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-11-A/frames/frame-0015.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-11-A/frames/frame-0026.jpg",
+    "sha256": "902e2d69de11149b072bd2f570a95b50b11dbd920d847105966e07c377eea9a7"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-11-A/frames/frame-0185.jpg",
+    "sha256": "d9954d28586828cd2a4d4380a3ae9137cee4fb30605f5c8b88ba94a0c8583a21"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-11-A/frames/frame-0030.jpg",
+    "sha256": "710ed646a5f9ed3056b5ea35a304e8d5eeeb1bb3b1e6cc5aafd799e1b1e2393b"
+   }
+  },
+  "trial-12-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-12-B/frames/frame-0043.jpg",
+    "sha256": "c9a4e5727f80aa74c2d49c4c6929d34ce9e6623dbd0ac9f15f233157be1c9a41"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-12-B/frames/frame-0014.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-12-B/frames/frame-0024.jpg",
+    "sha256": "c401abed33e8592626f38a545777b72b22563f38b566b27354a2f21297b88e9b"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-12-B/frames/frame-0177.jpg",
+    "sha256": "fa8fe1c743a68fb12553d8401e4a9978f9a3476a3ce743f10b09598f7adcbf53"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-12-B/frames/frame-0028.jpg",
+    "sha256": "fea1b53365d20b4b46de7de629d1ad1a6e0e4dc400ba0e28f054055b3938024c"
+   }
+  },
+  "trial-13-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-13-A/frames/frame-0048.jpg",
+    "sha256": "9b5dfbab3e029e46910eb04fdc958313ae5e5b9ba976dd038f481d916069ac98"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-13-A/frames/frame-0014.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-13-A/frames/frame-0027.jpg",
+    "sha256": "a1614ce7bf4d55332247ed1229db80c6da6d999a50b4a73db4af7bf75652dbb4"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-13-A/frames/frame-0187.jpg",
+    "sha256": "00d0189082367a248eb1be786b433d4ec28292c95a364c22308b6514c5372611"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-13-A/frames/frame-0031.jpg",
+    "sha256": "89b47f09428b1b6d21a2401eea1a1a029a20c99383a2e369dda153d4444a7202"
+   }
+  },
+  "trial-14-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-14-B/frames/frame-0045.jpg",
+    "sha256": "3a7f773d11d09113b88e1dbdf32623689a81fa1c3344289b8eb26449f905e178"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-14-B/frames/frame-0014.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-14-B/frames/frame-0024.jpg",
+    "sha256": "2a5b47dab7a9d8463ad3d64aba6d653a4f1672a2ee88660174a2bf13a601e5cd"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-14-B/frames/frame-0177.jpg",
+    "sha256": "2528e11afe35ebe736c0da68fcff7c507332ab23d1d7f7540a1ee9fabd9857fb"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-14-B/frames/frame-0028.jpg",
+    "sha256": "8376774cdb73a83c21db6bcdf23a62aaffba24e23946dfd15153b0c7d45b5f91"
+   }
+  },
+  "trial-15-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-15-A/frames/frame-0047.jpg",
+    "sha256": "38b4f1dfb22da36a5bdebb08ccf9c333a5e5b3225e1c9a86ab47d55bfdb7bfcc"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-15-A/frames/frame-0015.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-15-A/frames/frame-0027.jpg",
+    "sha256": "62fafebef4e2593c20f35e59809af4a4ae08bfccc08b50884464089409ab4df0"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-15-A/frames/frame-0188.jpg",
+    "sha256": "30e1d4156cc9aad32df5cb61b294c749f12ea3ba079b9f01db946c2314dd2c43"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-15-A/frames/frame-0031.jpg",
+    "sha256": "220abb1acb7ed45f371893a25f402f30ca98dff5ef7ba57c24d488aeca263d29"
+   }
+  },
+  "trial-16-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-16-B/frames/frame-0042.jpg",
+    "sha256": "1de5ac9953968ec595b528c5beff79cd0bfe3adf9a6b46a0c8b732e3ac126328"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-16-B/frames/frame-0013.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-16-B/frames/frame-0022.jpg",
+    "sha256": "c7c734d9990a75799deafef0653c90d16ea5f797010d43d8048d321a71ad46c7"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-16-B/frames/frame-0179.jpg",
+    "sha256": "701e8de6e6bcf3d21fca94f5f81d07676bc47e982f2c8ca243f3df8e41c6f478"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-16-B/frames/frame-0026.jpg",
+    "sha256": "211f9787037a201d7058f1929678a34df902ecafe80f6db7722d510d6b1f546a"
+   }
+  },
+  "trial-17-A": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-17-A/frames/frame-0044.jpg",
+    "sha256": "5c30a08409df242a0865f93d25ba0f32d1d0e2c5b834a4faaa81ac52c448e42a"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-17-A/frames/frame-0014.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-17-A/frames/frame-0024.jpg",
+    "sha256": "0928926cf2828dbc5c4af1d695e1e2bb6aa16b8023b663dc48b0be858d297aa8"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-17-A/frames/frame-0180.jpg",
+    "sha256": "0bca48b2b6a056db342feb0f9f23de72628dcbe027d51e3fd189ac47bc676298"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-17-A/frames/frame-0028.jpg",
+    "sha256": "4a793e364b3180257ea61c5f477f6ed2e924f8dd4ffde5bbf0da67e4efc9b827"
+   }
+  },
+  "trial-18-B": {
+   "animationFull97": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-18-B/frames/frame-0041.jpg",
+    "sha256": "820b343961c0fca9746a5ba538af0fcda65419d313b7349de7e7a46d93f494ba"
+   },
+   "baseline": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-18-B/frames/frame-0012.jpg",
+    "sha256": "6242716ca20bbc43b6cd224f820290e23395d1379346f87d64e77cd9015ed72e"
+   },
+   "firstPixel": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-18-B/frames/frame-0020.jpg",
+    "sha256": "deee90c7d1208054a306004cddf952c053e80a153c988d8c76108f9549a2c6e2"
+   },
+   "reference": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-18-B/frames/frame-0179.jpg",
+    "sha256": "70f7e6a9a16cf450afaa332ee2555821a71d7558f76f9a5c8e342f8f30d42999"
+   },
+   "visible1pct": {
+    "path": "/private/tmp/resourcerunner-task005-boundary-runs/trial-18-B/frames/frame-0024.jpg",
+    "sha256": "0d0c4683c66221848ffa32c32b5d1228bbde5cea671971dffadc1cbbd057d66d"
+   }
+  }
+ },
+ "system": {
+  "macVersion": "26.6.2",
+  "machine": "arm64"
+ },
+ "timebase": [
+  125,
+  3
+ ],
+ "tools": {
+  "analysis": {
+   "command": "python3 analyze_boundary.py /private/tmp/resourcerunner-task005-boundary-runs raw/app-events-17729.jsonl /private/tmp/resourcerunner-task005-boundary-pixel-diff results.json",
+   "sha256": "b5deb58161fbdfc5c62828a45ba5606099e1d3c459117b2c734452196205fb32",
+   "source": "boundary-diagnostic/analyze_boundary.py"
+  },
+  "axProbe": {
+   "binary": "/private/tmp/resourcerunner-task005-target-ax-probe-resume",
+   "sha256": "de9962d47bd1f437e83c8b6fa97418bb25eb4c4fbf439f615d1ac8494bb952b1",
+   "source": "tools/target_ax_probe.swift",
+   "sourceSHA256": "e60b5cc19660f2e331115e2b300173a9736c09f99e6ec1a71e4e6e9f60d6e99e"
+  },
+  "driver": {
+   "sha256": "fbe0dee1e61d323f154b78eccab99498f6ef55d23b43abe564ec3a8af31ad129",
+   "source": "boundary-diagnostic/boundary_driver.py"
+  },
+  "eventProbe": {
+   "binary": "/private/tmp/resourcerunner-task005-target-event-probe-resume-r3",
+   "sha256": "0c92f3cf94baa9fbbcd451adeb81864e8f58ebd8896084e5e81ad1ffa7b72f4b",
+   "source": "tools/target_event_probe.swift",
+   "sourceSHA256": "57c05981128d3f71119b1c62486dc61023fb60c4096e153b8719286b7370cc07"
+  },
+  "frameProbe": {
+   "binary": "/private/tmp/resourcerunner-task005-external-frame-probe-resume-r3",
+   "sha256": "56680d7f8ebcabedadd7c08f7210f6d28886fb944378b682ec6ef3fde0fc0ffe",
+   "source": "tools/external_frame_probe.swift",
+   "sourceSHA256": "92b062582f48ba03fabc4bb0b456e7ae6b9ba2a2f67c3bf009feed37865d6aa6"
+  },
+  "guiState": {
+   "binary": "/private/tmp/resourcerunner-task005-gui-state-resume",
+   "sha256": "6f00f83dbab6112f9773cf23bb80eb9b61fda00af6f338a45a12fcdaf0465858",
+   "source": "tools/gui_state.swift",
+   "sourceSHA256": "2de79b3dfbe7e65e5a2829a9986e85658a397d61ad6b9342a421d6dc6a42ae39"
+  },
+  "pixelDiff": {
+   "binary": "/private/tmp/resourcerunner-task005-boundary-pixel-diff",
+   "build": "swiftc -O pixel_diff.swift",
+   "sha256": "161afe8e798f0da51579a318550ade10a1c1c92938499c0d18833f2f559c006e",
+   "source": "boundary-diagnostic/pixel_diff.swift",
+   "sourceSHA256": "308f325ef79a41cd23b0948004feb4568af665039c4cba5dff87865c008e6736"
+  }
+ }
+}

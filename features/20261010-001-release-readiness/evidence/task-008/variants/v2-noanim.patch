@@ -1,0 +1,10 @@
+--- /private/tmp/resourcerunner-task005-boundary-src/ResourceRunner/StatusBarController.swift	2026-10-11 20:54:08
++++ /private/tmp/resourcerunner-task008/src-v2-noanim/ResourceRunner/StatusBarController.swift	2026-10-11 21:35:19
+@@ -58,6 +58,7 @@
+         self.viewport = viewport
+         makePopoverContentController = { NSHostingController(rootView: popoverContent) }
+         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
++        popover.animates = false // task-008 V2
+ 
+         super.init()
+         Task005BoundaryDiagnostic.shared.install()

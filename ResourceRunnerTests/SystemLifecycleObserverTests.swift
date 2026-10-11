@@ -367,7 +367,8 @@ struct SystemLifecycleObserverTests {
         #expect(first.lowPowerMode == subscription.initial.lowPowerMode)
     }
 
-    /// 등록 중 도착한 callback이 둘 이상이면 도착 순서를 그대로 지켜야 합니다.
+#if DEBUG
+    /// 출력 stream은 최신값만 남길 수 있으므로 등록 중 callback의 실제 병합 순서를 직접 읽습니다.
     @Test func multipleCallbacksDuringRegistrationApplyInArrivalOrder() async {
         let observer = SystemLifecycleObserver(
             notificationCenter: NotificationCenter(),
@@ -380,22 +381,21 @@ struct SystemLifecycleObserverTests {
             }
         )
 
+        var applied: [SystemLifecycleSnapshot] = []
+        observer.onAppliedSnapshot = { applied.append($0) }
         let subscription = observer.start()
-
-        var received: [SystemLifecycleSnapshot] = []
-        let collector = Task { @MainActor in
-            for await snapshot in subscription.updates {
-                received.append(snapshot)
-            }
-        }
-        await waitUntil { received.count >= 3 }
-        collector.cancel()
-
-        #expect(received.map(\.screenLockState) == [.locked, .unknown, .unlocked])
-        #expect(received.map(\.revision) == [1, 2, 3])
+        await waitUntil { applied.count >= 3 }
+        #expect(applied.map(\.screenLockState) == [.locked, .unknown, .unlocked])
+        #expect(applied.map(\.revision) == [1, 2, 3])
+        guard applied.count == 3 else { return }
+        var iterator = subscription.updates.makeAsyncIterator()
+        let latest = await iterator.next()
+        #expect(latest?.screenLockState == .unlocked)
+        #expect(latest?.revision == 3)
     }
+#endif
 
-    /// 위 테스트와 달리 `updates`를 소비하지 않은 채로 raw event 처리가 끝날 시간을 준 뒤 소비를 시작해,
+    /// `updates`를 소비하지 않은 채로 raw event 처리가 끝날 시간을 준 뒤 소비를 시작해,
     /// `SystemLifecycleObserver.start()`가 실제로 `.bufferingNewest(1)` stream을 반환하는지 직접 확인합니다.
     /// (내부 raw event queue는 무제한이라 세 콜백 모두 소비되지만, `updates`에는 최신 조합 하나만 남아야 합니다.)
     @Test func lagInConsumingUpdatesKeepsOnlyLatestCombinedSnapshot() async {

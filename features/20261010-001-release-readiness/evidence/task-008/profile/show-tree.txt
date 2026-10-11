@@ -1,0 +1,129 @@
+main-thread samples 4716, samples under "showRelativeToRect": 554
+  554 100.0% -[NSPopover showRelativeToRect:ofView:preferredEdge:]
+    349  63.0% -[NSPopover _makePopoverWindowIfNeeded]
+      326  58.8% -[NSWindow setContentViewController:]
+        326  58.8% NSPerformVisuallyAtomicChange
+          326  58.8% -[NSWindow _contentViewControllerChanged]
+            318  57.4% -[_NSPopoverWindow setContentView:]
+              317  57.2% -[NSWindow setContentView:]
+                316  57.0% -[NSView addSubview:]
+                  316  57.0% -[NSView _setWindow:]
+                    315  56.9% @objc NSHostingView.viewDidMoveToWindow()
+                      315  56.9% NSHostingView.viewDidMoveToWindow()
+                        312  56.3% NSHostingView.updateRequiredBridges()
+       19   3.4% 0x193d437d4
+         17   3.1% -[_NSPopoverWindow setFrame:display:]
+           14   2.5% -[NSWindow _setFrameCommon:display:fromServer:]
+             14   2.5% -[NSWindow _oldPlaceWindow:fromServer:]
+               12   2.2% -[NSWindow(NSConstraintBasedLayoutInternal) _layoutViewTree]
+                 12   2.2% -[NSView layoutSubtreeIfNeeded]
+                   12   2.2% NSPerformVisuallyAtomicChange
+                     12   2.2% -[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]
+                       12   2.2% NSPerformVisuallyAtomicChange
+                         12   2.2% __56-[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]_block_invoke
+    117  21.1% -[NSWindow(NSConstraintBasedLayoutInternal) layoutIfNeeded]
+      115  20.8% -[NSWindow(NSConstraintBasedLayoutInternal) updateConstraintsIfNeeded]
+        115  20.8% -[NSView(NSConstraintBasedLayoutInternal) _withAutomaticEngineOptimizationDisabled:]
+          115  20.8% -[NSISEngine withBehaviors:performModifications:]
+            115  20.8% -[NSView updateConstraintsForSubtreeIfNeeded]
+              115  20.8% NSPerformVisuallyAtomicChange
+                115  20.8% __45-[NSView updateConstraintsForSubtreeIfNeeded]_block_invoke
+                  115  20.8% -[NSView(NSConstraintBasedLayoutInternal) _withAutomaticEngineOptimizationDisabled:]
+                    115  20.8% -[NSISEngine withBehaviors:performModifications:]
+                      115  20.8% __45-[NSView updateConstraintsForSubtreeIfNeeded]_block_invoke_2
+                        115  20.8% -[NSView _updateConstraintsForSubtreeIfNeededCollectingViewsWithInvalidBaselines:]
+     48   8.7% -[NSWindow addChildWindow:ordered:]
+       47   8.5% NSPerformVisuallyAtomicChange
+         47   8.5% -[NSWindow _rebuildOrderingGroup:]
+           47   8.5% _NSWindowWalkOrderingGroupInternal
+             47   8.5% -[NSWindow _doOrderWindow:]
+               47   8.5% NSPerformVisuallyAtomicChange
+                 44   7.9% __27-[NSWindow _doOrderWindow:]_block_invoke.750
+                   44   7.9% -[NSWindow _reallyDoOrderWindow:]
+                     44   7.9% -[NSWindow _reallyDoOrderWindowAboveOrBelow:]
+                       44   7.9% -[NSWindow _doWindowWillBeVisibleAsSheet:]
+                         31   5.6% -[NSWindow _setUpFirstResponderBeforeBecomingVisible]
+                         12   2.2% -[NSWindow _setUpFirstResponder]
+     30   5.4% _NSPopoverPositionOnScreen
+       30   5.4% -[_NSPopoverWindow setFrame:display:]
+         30   5.4% -[NSWindow _setFrameCommon:display:fromServer:]
+           30   5.4% -[NSWindow _oldPlaceWindow:fromServer:]
+             28   5.1% -[NSWindow(NSConstraintBasedLayoutInternal) _layoutViewTree]
+               28   5.1% -[NSView layoutSubtreeIfNeeded]
+                 28   5.1% NSPerformVisuallyAtomicChange
+                   28   5.1% -[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]
+                     28   5.1% NSPerformVisuallyAtomicChange
+                       28   5.1% __56-[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]_block_invoke
+                         23   4.2% -[NSView _layoutSubtreeWithOldSize:]
+
+TOP inclusive symbols under anchor:
+  554 100.0% -[NSPopover showRelativeToRect:ofView:preferredEdge:]
+  531  95.8% NSPerformVisuallyAtomicChange
+  432  78.0% AG::Graph::UpdateStack::update()
+  429  77.4% <deduplicated_symbol>
+  399  72.0% specialized implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+  381  68.8% AG::Graph::update_attribute(AG::data::ptr<AG::Node>, unsigned int)
+  362  65.3% AGGraphGetValue
+  361  65.2% AG::Graph::input_value_ref_slow(AG::data::ptr<AG::Node>, AG::AttributeID, unsigned int, unsigned int, AGSwiftMetadata const*, unsigned char&, long)
+  349  63.0% -[NSPopover _makePopoverWindowIfNeeded]
+  338  61.0% AG::Graph::value_ref(AG::AttributeID, unsigned int, AGSwiftMetadata const*, unsigned char&)
+  338  61.0% AGGraphGetWeakValue
+  326  58.8% -[NSWindow _contentViewControllerChanged]
+  326  58.8% -[NSWindow setContentViewController:]
+  325  58.7% -[NSView addSubview:]
+  322  58.1% implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+  318  57.4% -[NSView _setWindow:]
+  318  57.4% partial apply for implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+  318  57.4% -[_NSPopoverWindow setContentView:]
+  317  57.2% -[NSWindow setContentView:]
+  315  56.9% @objc NSHostingView.viewDidMoveToWindow()
+  315  56.9% NSHostingView.viewDidMoveToWindow()
+  314  56.7% DynamicPreferenceCombiner.value.getter
+  312  56.3% NSHostingView.didChangeRequiredBridges(from:to:)
+  312  56.3% NSHostingView.updateRequiredBridges()
+  311  56.1% GraphHost.preferenceValues()
+  311  56.1% NSHostingViewRootDelegate.hostingViewDidUpdateRequiredBridges<A>(_:added:removed:)
+  286  51.6% closure #1 in PairPreferenceCombiner.value.getter
+  286  51.6% PairPreferenceCombiner.value.getter
+  279  50.4% protocol witness for static PreferenceKey.reduce(value:nextValue:) in conformance HostPreferencesKey
+  278  50.2% HostPreferencesTransform.updateValue()
+  278  50.2% HostPreferencesWriter.updateValue()
+  183  33.0% -[_NSPopoverWindow setFrame:display:]
+  183  33.0% 0x193bfd4f0
+  183  33.0% 0x193bfd518
+  174  31.4% -[NSWindow _setFrameCommon:display:fromServer:]
+  170  30.7% -[NSWindow _oldPlaceWindow:fromServer:]
+  170  30.7% -[NSView layoutSubtreeIfNeeded]
+  170  30.7% -[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]
+  170  30.7% -[NSWindow(NSConstraintBasedLayoutInternal) _layoutViewTree]
+  170  30.7% __56-[NSView _layoutSubtreeIfNeededAndAllowTemporaryEngine:]_block_invoke
+  169  30.5% AnimatableFrameAttribute.updateValue()
+  165  29.8% LayoutEngineBox.sizeThatFits(_:)
+  160  28.9% UnaryLayoutEngine.sizeThatFits(_:)
+  160  28.9% _FrameLayout.sizeThatFits(in:context:child:)
+  160  28.9% LayoutProxy.size(in:)
+  160  28.9% 0x23c660830
+  159  28.7% StackLayout.UnmanagedImplementation.placeChildren(in:)
+  159  28.7% specialized StackLayout.UnmanagedImplementation.placeChildren1(in:minorProposalForChild:)
+  158  28.5% specialized StackLayout.UnmanagedImplementation.sizeChildrenGenerallyWithConcreteMajorProposal(in:minorProposalForChild:)
+  158  28.5% closure #1 in ViewLayoutEngine.sizeThatFits(_:)
+  158  28.5% ViewLayoutEngine.sizeThatFits(_:)
+  157  28.3% DynamicLayoutViewChildGeometry.updateValue()
+  156  28.2% _NSViewLayout
+  156  28.2% ___NSViewLayout_block_invoke
+  156  28.2% __36-[NSView _layoutSubtreeWithOldSize:]_block_invoke
+  156  28.2% -[NSView _layoutSubtreeWithOldSize:]
+  155  28.0% 0x193bc2dd0
+  155  28.0% 0x193bc21ec
+  155  28.0% KeyViewLoopSeedFilter.updateValue()
+  155  28.0% specialized UnaryChildGeometry.value.getter
+  153  27.6% LayoutEngine.lengthThatFits(_:in:)
+  153  27.6% StackLayout.UnmanagedImplementation.prioritize(_:proposedSize:)
+  153  27.6% LayoutEngineBox.lengthThatFits(_:in:)
+  152  27.4% _PaddingLayout.sizeThatFits(in:context:child:)
+  152  27.4% protocol witness for UnaryLayout.sizeThatFits(in:context:child:) in conformance _PaddingLayout
+  151  27.3% ViewGraphRootValueUpdater.render(interval:updateDisplayList:targetTimestamp:)
+  151  27.3% closure #1 in ViewGraphRootValueUpdater.render(interval:updateDisplayList:targetTimestamp:)
+  151  27.3% +[NSAnimationContext runAnimationGroup:]
+  148  26.7% -[NSWindow(NSConstraintBasedLayoutInternal) layoutIfNeeded]
+  147  26.5% protocol witness for UnaryLayout.sizeThatFits(in:context:child:) in conformance _FlexFrameLayout

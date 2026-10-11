@@ -1,0 +1,20 @@
+--- /private/tmp/resourcerunner-task005-boundary-src/ResourceRunner/StatusBarController.swift	2026-10-11 20:54:08
++++ /private/tmp/resourcerunner-task008/src-v1-keephost/ResourceRunner/StatusBarController.swift	2026-10-11 21:35:19
+@@ -240,7 +240,7 @@
+             displayGeneration &+= 1
+             displaySessionActive = true
+             d.record("openBegin", ["animates": popover.animates])
+-            popover.contentViewController = makePopoverContentController()
++            if popover.contentViewController == nil { popover.contentViewController = makePopoverContentController() } // task-008 V1: hosting 유지
+             d.record("contentControllerAssigned")
+             updateViewportFromScreen()
+             d.record("viewportUpdated")
+@@ -382,7 +382,7 @@
+         correctionTask?.cancel()
+         correctionTask = nil
+         viewport?.endDisplaySession()
+-        popover.contentViewController = nil
++        // task-008 V1: 닫힘 시 hosting 회수 생략
+     }
+ }
+ 

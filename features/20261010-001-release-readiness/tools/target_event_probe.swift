@@ -52,6 +52,12 @@ guard let tap = CGEvent.tapCreateForPid(pid: pid, place: .tailAppendEventTap,
 }
 let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
 CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
+// 단일 orchestration이 실제 run loop 진입 뒤에만 입력을 보내도록 ACK를 남깁니다.
+let readyTimer = Timer(timeInterval: 0, repeats: false) { _ in
+    print("ready")
+    fflush(stdout)
+}
+RunLoop.current.add(readyTimer, forMode: .common)
 RunLoop.current.run(until: Date().addingTimeInterval(TimeInterval(seconds)))
 CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
 try handle.close()

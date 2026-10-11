@@ -1,0 +1,47 @@
+samples per open: [71, 51, 40, 47, 45, 49, 42, 38, 44, 48, 35, 44]
+ first rest/open  symbol
+    71      43.9  -[NSPopover showRelativeToRect:ofView:preferredEdge:]
+    50      27.2  -[NSPopover _makePopoverWindowIfNeeded]
+    62      42.6  NSPerformVisuallyAtomicChange
+    42      25.1  -[NSView _setWindow:]
+    42      25.7  -[NSView addSubview:]
+    42      25.8  -[NSWindow _contentViewControllerChanged]
+    42      25.8  -[NSWindow setContentViewController:]
+    41      24.9  @objc NSHostingView.viewDidMoveToWindow()
+    41      24.9  NSHostingView.viewDidMoveToWindow()
+    41      25.1  -[NSWindow setContentView:]
+    41      25.2  -[_NSPopoverWindow setContentView:]
+    40      24.6  GraphHost.preferenceValues()
+    40      24.6  NSHostingViewRootDelegate.hostingViewDidUpdateRequiredBridges<A>(_:added:removed:)
+    40      24.7  NSHostingView.didChangeRequiredBridges(from:to:)
+    40      24.7  NSHostingView.updateRequiredBridges()
+    40      25.3  partial apply for implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+    49      34.5  <deduplicated_symbol>
+    43      28.9  AG::Graph::input_value_ref_slow(AG::data::ptr<AG::Node>, AG::AttributeID, unsigned int, unsigned int, AGSwiftMetadata const*, unsigned char&
+    39      25.0  DynamicPreferenceCombiner.value.getter
+    43      29.0  AGGraphGetValue
+    39      25.7  implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+    48      34.9  AG::Graph::UpdateStack::update()
+    40      27.1  AGGraphGetWeakValue
+    40      27.1  AG::Graph::value_ref(AG::AttributeID, unsigned int, AGSwiftMetadata const*, unsigned char&)
+    35      22.1  HostPreferencesTransform.updateValue()
+    35      22.1  HostPreferencesWriter.updateValue()
+    35      22.2  protocol witness for static PreferenceKey.reduce(value:nextValue:) in conformance HostPreferencesKey
+    43      30.7  AG::Graph::update_attribute(AG::data::ptr<AG::Node>, unsigned int)
+    35      22.8  PairPreferenceCombiner.value.getter
+    35      22.8  closure #1 in PairPreferenceCombiner.value.getter
+    44      32.3  specialized implicit closure #1 in closure #1 in closure #1 in Attribute.init<A>(_:)
+    18       7.3  DynamicPreferenceCombiner.info.getter
+    19       8.5  specialized DynamicContainerInfo.updateItems(disableTransitions:)
+    19       8.7  specialized DynamicContainerInfo.updateValue()
+    11       0.7  closure #1 in ObservationCenter._withObservation<A>(do:)
+    11       0.8  partial apply for closure #1 in ObservationCenter._withObservation<A>(do:)
+    10       0.0  protocol witness for ApplicationIconProviding.icon(for:) in conformance ApplicationIconCache
+    10       0.3  closure #1 in ForEachState.item(at:offset:)
+    10       0.3  partial apply for closure #1 in ForEachState.item(at:offset:)
+    13       3.7  ForEachState.forEachItem(from:style:do:)
+    13       3.7  specialized ForEachList.applyNodes(from:style:list:transform:to:)
+    13       3.7  protocol witness for ViewList.applyNodes(from:style:list:transform:to:) in conformance ForEachList<A, B, C>
+    10       0.9  ForEachState.item(at:offset:)
+    14       5.7  ViewList.applySublists(from:list:to:)
+     8       0.0  -[NSWorkspace _iconForURL:]

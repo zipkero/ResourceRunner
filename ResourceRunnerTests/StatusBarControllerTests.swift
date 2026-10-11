@@ -40,12 +40,14 @@ struct StatusBarControllerTests {
 
     @Test func statusItemHasFixedSquareLength() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
 
         #expect(controller.statusItem.length == NSStatusItem.squareLength)
     }
 
     @Test func popoverUsesTransientBehavior() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
 
         #expect(controller.popover.behavior == .transient)
     }
@@ -53,6 +55,7 @@ struct StatusBarControllerTests {
     @Test func savedOffAndRapidChangesKeepPopoverAndDelegateIdentity() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
             automaticallyClosesPopover: false)
+        defer { finishFixture(controller) }
         let output = RecordingOutput()
         controller.output = output
         let popover = controller.popover
@@ -75,12 +78,14 @@ struct StatusBarControllerTests {
     /// delegate 배선이 끊기면 실제 열림·닫힘 출력이 수집 일정으로 전달되지 않습니다.
     @Test func popoverDelegateIsWiredToController() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
 
         #expect(controller.popover.delegate === controller)
     }
 
     @Test func delegateOutputReflectsActualShowAndCloseInOrder() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         let output = RecordingOutput()
         controller.output = output
         activateTestApp()
@@ -104,6 +109,7 @@ struct StatusBarControllerTests {
     /// 닫힘의 해제와 재열림의 새 host를 실제 AppKit delegate 경계에서 확인합니다.
     @Test func closeReleasesHostAndRapidReopenKeepsNewHost() async {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         let output = RecordingOutput()
         controller.output = output
         activateTestApp()
@@ -141,6 +147,7 @@ struct StatusBarControllerTests {
     @Test func reopenAsSoonAsPopoverReportsClosedSchedulesCorrection() async throws {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
             viewport: DashboardViewport())
+        defer { finishFixture(controller) }
         let output = RecordingOutput()
         controller.output = output
         activateTestApp()
@@ -180,6 +187,7 @@ struct StatusBarControllerTests {
     /// task-012 검증 조건: `StatusBarController`가 받은 값을 버튼 접근성 이름에 그대로 반영하는지 확인합니다.
     @Test func renderReflectsReceivedAccessibilityLabelOnButton() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         guard let button = controller.statusItem.button else {
             Issue.record("status item에 button이 없습니다")
             return
@@ -197,6 +205,7 @@ struct StatusBarControllerTests {
     /// task-012 검증 조건: 표시 경로가 접근성 값을 설정하지 않아 상태 문자열이 접근성 이름 한 자리에만 존재합니다.
     @Test func renderDoesNotSetAccessibilityValue() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         guard let button = controller.statusItem.button else {
             Issue.record("status item에 button이 없습니다")
             return
@@ -217,6 +226,7 @@ struct StatusBarControllerTests {
     /// 색상 전환은 폭·실루엣 크기를 유지하고 이미지를 재사용합니다.
     @Test func cyclingStatesKeepsSizeAndReusesCachedColorImages() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         guard let button = controller.statusItem.button, let nativeImage = button.image else {
             Issue.record("status item의 이미지가 없습니다")
             return
@@ -244,6 +254,7 @@ struct StatusBarControllerTests {
 
     @Test func coloredIconsPreserveMaskAndUseExpectedCPUColors() throws {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         let button = try #require(controller.statusItem.button)
         let expectations: [(CharacterActivityState, NSColor)] = [
             (.high, .systemYellow), (.veryHigh, .systemOrange), (.sustainedHigh, .systemRed)
@@ -290,6 +301,7 @@ struct StatusBarControllerTests {
     /// `NSPopover`가 외부 클릭으로 판정해 팝오버를 닫는데, 그것은 주입 수단의 성질이지 표시 경로의 결과가 아닙니다.
     @Test func renderKeepsAnOpenPopoverShown() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        defer { finishFixture(controller) }
         let output = RecordingOutput()
         controller.output = output
         guard controller.statusItem.button != nil else {
@@ -326,6 +338,21 @@ struct StatusBarControllerTests {
         }
 
         controller.popover.performClose(nil)
+    }
+
+    private func finishFixture(_ controller: StatusBarController) {
+        // 다음 시험에 이전 메뉴바 scene과 닫힘 delegate가 남지 않게 생성한 항목만 정리합니다.
+        if controller.popover.isShown || controller.popover.contentViewController != nil {
+            controller.popover.performClose(nil)
+            let deadline = Date().addingTimeInterval(2)
+            while (controller.popover.isShown || controller.popover.contentViewController != nil)
+                && Date() < deadline {
+                RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02))
+            }
+            #expect(!controller.popover.isShown)
+            #expect(controller.popover.contentViewController == nil)
+        }
+        NSStatusBar.system.removeStatusItem(controller.statusItem)
     }
 
     private func activateTestApp() {

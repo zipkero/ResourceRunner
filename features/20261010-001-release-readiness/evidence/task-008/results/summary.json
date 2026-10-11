@@ -1,0 +1,430 @@
+{
+ "v0": {
+  "firstopen": {
+   "completeMs": {
+    "max": 199.27,
+    "median": 199.27,
+    "min": 199.27,
+    "n": 1
+   },
+   "firstPixelMs": {
+    "max": 124.27,
+    "median": 124.27,
+    "min": 124.27,
+    "n": 1
+   },
+   "showDurationMs": {
+    "max": 76.06,
+    "median": 76.06,
+    "min": 76.06,
+    "n": 1
+   },
+   "showReturnMs": {
+    "max": 78.52,
+    "median": 78.52,
+    "min": 78.52,
+    "n": 1
+   }
+  },
+  "name": "V0 기준(task-005 진단 binary)",
+  "reopen": {
+   "completeMs": {
+    "max": 197.58,
+    "median": 174.88,
+    "min": 156.59,
+    "n": 18
+   },
+   "firstPixelMs": {
+    "max": 130.91,
+    "median": 103.47,
+    "min": 85.51,
+    "n": 18
+   },
+   "showDurationMs": {
+    "max": 73.86,
+    "median": 47.96,
+    "min": 35.12,
+    "n": 18
+   },
+   "showReturnMs": {
+    "max": 76.0,
+    "median": 52.04,
+    "min": 38.86,
+    "n": 18
+   }
+  },
+  "reopenA_noAX": {
+   "completeMs": {
+    "max": 197.58,
+    "median": 180.89,
+    "min": 179.29,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 130.91,
+    "median": 113.37,
+    "min": 106.35,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 73.86,
+    "median": 56.08,
+    "min": 52.21,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 76.0,
+    "median": 59.31,
+    "min": 58.23,
+    "n": 9
+   }
+  },
+  "reopenB_AX": {
+   "completeMs": {
+    "max": 170.46,
+    "median": 162.74,
+    "min": 156.59,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 100.6,
+    "median": 94.94,
+    "min": 85.51,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 43.71,
+    "median": 37.86,
+    "min": 35.12,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 45.86,
+    "median": 42.74,
+    "min": 38.86,
+    "n": 9
+   }
+  }
+ },
+ "v1": {
+  "firstopen": {
+   "completeMs": {
+    "max": 200.2,
+    "median": 200.2,
+    "min": 200.2,
+    "n": 1
+   },
+   "firstPixelMs": {
+    "max": 116.86,
+    "median": 116.86,
+    "min": 116.86,
+    "n": 1
+   },
+   "showDurationMs": {
+    "max": 72.56,
+    "median": 72.56,
+    "min": 72.56,
+    "n": 1
+   },
+   "showReturnMs": {
+    "max": 74.86,
+    "median": 74.86,
+    "min": 74.86,
+    "n": 1
+   }
+  },
+  "name": "V1 hosting 유지",
+  "reopen": {
+   "completeMs": {
+    "max": 161.54,
+    "median": 137.55,
+    "min": 129.61,
+    "n": 18
+   },
+   "firstPixelMs": {
+    "max": 92.03,
+    "median": 67.56,
+    "min": 55.43,
+    "n": 18
+   },
+   "showDurationMs": {
+    "max": 27.68,
+    "median": 12.32,
+    "min": 8.8,
+    "n": 18
+   },
+   "showReturnMs": {
+    "max": 36.47,
+    "median": 15.92,
+    "min": 10.0,
+    "n": 18
+   }
+  },
+  "reopenA_noAX": {
+   "completeMs": {
+    "max": 161.54,
+    "median": 147.65,
+    "min": 129.61,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 92.03,
+    "median": 78.2,
+    "min": 61.54,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 27.68,
+    "median": 20.47,
+    "min": 9.58,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 36.47,
+    "median": 25.32,
+    "min": 10.4,
+    "n": 9
+   }
+  },
+  "reopenB_AX": {
+   "completeMs": {
+    "max": 138.76,
+    "median": 134.23,
+    "min": 130.37,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 71.28,
+    "median": 64.36,
+    "min": 55.43,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 13.62,
+    "median": 12.16,
+    "min": 8.8,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 18.57,
+    "median": 13.87,
+    "min": 10.0,
+    "n": 9
+   }
+  }
+ },
+ "v2": {
+  "firstopen": {
+   "completeMs": {
+    "max": 120.76,
+    "median": 120.76,
+    "min": 120.76,
+    "n": 1
+   },
+   "firstPixelMs": {
+    "max": 120.76,
+    "median": 120.76,
+    "min": 120.76,
+    "n": 1
+   },
+   "showDurationMs": {
+    "max": 72.98,
+    "median": 72.98,
+    "min": 72.98,
+    "n": 1
+   },
+   "showReturnMs": {
+    "max": 79.79,
+    "median": 79.79,
+    "min": 79.79,
+    "n": 1
+   }
+  },
+  "name": "V2 animates=false",
+  "reopen": {
+   "completeMs": {
+    "max": 123.28,
+    "median": 91.17,
+    "min": 72.41,
+    "n": 18
+   },
+   "firstPixelMs": {
+    "max": 123.28,
+    "median": 91.17,
+    "min": 72.41,
+    "n": 18
+   },
+   "showDurationMs": {
+    "max": 75.79,
+    "median": 46.26,
+    "min": 35.57,
+    "n": 18
+   },
+   "showReturnMs": {
+    "max": 78.02,
+    "median": 51.78,
+    "min": 36.94,
+    "n": 18
+   }
+  },
+  "reopenA_noAX": {
+   "completeMs": {
+    "max": 123.28,
+    "median": 104.76,
+    "min": 94.93,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 123.28,
+    "median": 104.76,
+    "min": 94.93,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 75.79,
+    "median": 59.41,
+    "min": 52.36,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 78.02,
+    "median": 64.88,
+    "min": 57.76,
+    "n": 9
+   }
+  },
+  "reopenB_AX": {
+   "completeMs": {
+    "max": 87.4,
+    "median": 86.49,
+    "min": 72.41,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 87.4,
+    "median": 86.49,
+    "min": 72.41,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 40.16,
+    "median": 38.38,
+    "min": 35.57,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 45.79,
+    "median": 43.74,
+    "min": 36.94,
+    "n": 9
+   }
+  }
+ },
+ "v3": {
+  "firstopen": {
+   "completeMs": {
+    "max": 191.8,
+    "median": 191.8,
+    "min": 191.8,
+    "n": 1
+   },
+   "firstPixelMs": {
+    "max": 125.13,
+    "median": 125.13,
+    "min": 125.13,
+    "n": 1
+   },
+   "showDurationMs": {
+    "max": 69.06,
+    "median": 69.06,
+    "min": 69.06,
+    "n": 1
+   },
+   "showReturnMs": {
+    "max": 71.42,
+    "median": 71.42,
+    "min": 71.42,
+    "n": 1
+   }
+  },
+  "name": "V3 카드 keyboardShortcut 제거(진단 전용)",
+  "reopen": {
+   "completeMs": {
+    "max": 184.79,
+    "median": 171.27,
+    "min": 153.07,
+    "n": 18
+   },
+   "firstPixelMs": {
+    "max": 112.68,
+    "median": 96.66,
+    "min": 83.89,
+    "n": 18
+   },
+   "showDurationMs": {
+    "max": 53.31,
+    "median": 40.56,
+    "min": 31.54,
+    "n": 18
+   },
+   "showReturnMs": {
+    "max": 59.4,
+    "median": 44.0,
+    "min": 35.86,
+    "n": 18
+   }
+  },
+  "reopenA_noAX": {
+   "completeMs": {
+    "max": 184.79,
+    "median": 175.41,
+    "min": 171.72,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 112.68,
+    "median": 105.73,
+    "min": 97.5,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 53.31,
+    "median": 50.01,
+    "min": 43.84,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 59.4,
+    "median": 51.73,
+    "min": 46.01,
+    "n": 9
+   }
+  },
+  "reopenB_AX": {
+   "completeMs": {
+    "max": 170.82,
+    "median": 161.35,
+    "min": 153.07,
+    "n": 9
+   },
+   "firstPixelMs": {
+    "max": 95.82,
+    "median": 87.78,
+    "min": 83.89,
+    "n": 9
+   },
+   "showDurationMs": {
+    "max": 37.28,
+    "median": 35.59,
+    "min": 31.54,
+    "n": 9
+   },
+   "showReturnMs": {
+    "max": 41.99,
+    "median": 40.94,
+    "min": 35.86,
+    "n": 9
+   }
+  }
+ }
+}

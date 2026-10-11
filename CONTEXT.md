@@ -1,95 +1,55 @@
 # Context
 
-저장: 2026-10-11 16:20 KST
+저장: 2026-10-11 22:02 +09:00
 
 ## 현재 목표
-
-M5 첫 범위인 개인 사용 성능 개선을 `implement-loop`로 진행합니다.
-현재 요청은 인수인계를 저장하고 이번 변경을 main에 스테이징·커밋·푸시하는 것입니다.
+개인 사용 성능 개선 feature의 IMPLEMENT를 이어간다.
+지금 초점은 팝오버 열림 지연(SPEC §5.6의 클릭 처리 100ms·팝오버 표시 200ms)을 기준 완화 없이 줄이는 task-008이다.
 
 ## 현재 상태
-
-- 프로젝트 `/Users/zipkero/XcodeProjects/ResourceRunner`, branch `main`, upstream `origin/main`.
-  이번 커밋의 선행 HEAD는 `69842e14e920e95da179f525055b22dd75c56b74`입니다.
-  최종 커밋 식별자는 `git log -1`에서 확인합니다. 검증 manifest의 이전 HEAD는 당시 소스·미커밋 diff의 출처이므로 그대로 보존합니다.
-- 활성 feature의 SPEC/DESIGN은 승인됐고 IMPLEMENT는 미완료입니다. task-001~004 승인, task-005 `blocked`, task-006/007 미진입입니다.
-- 선행 Per-Request: 고양이 애니메이션을 제외하고 정적 18pt CPU 색상·고정 메뉴바 폭·툴팁/접근성 이름·1pt 포커스를 적용했습니다.
-  관련 제품 문서와 개인 사용 범위를 갱신했고 당시 단위27/27·UI4/4 및 설치 Release 검증을 완료했습니다.
-- task-004: 실제 열림에 hosting 생성, 실제 didClose에 해제합니다. viewport와 store의 session/generation 및 이전 앵커·늦은 콜백·보정 Task 경계를 처리합니다.
-  수집·이력·최신 캐시·epoch·설정·그래프 의미를 유지하며 현재 영향56/56·skip0 및 Debug/Release 성공 후 독립 verifier approved를 main이 확정했습니다.
-  최초 reject는 이전 AnchorView 해제의 session 검사 누락이었고 해결했습니다. 구현 재시도1·근거 재검증0입니다.
-- task-004 최종 새 PID50374의 600초 워밍업·본체5초·닫힘60초·300초×3은 모두 유효301표본입니다.
-  닫힘 Footprint 최대는 원본419.27~421.64MB → 제품60.92~61.02MB, CPU는2.52~2.53%로1% 목표 미달입니다.
-  제품 patch SHA `410df544ac8e389daaceeecf2aa0834e4b743b2842d4a01dc1be7ed967a651bd`,
-  Release SHA `ccab3eb6a5b27ea82555a189043f69fc643a4bc5dc19d17b742ed4e0e423fee2`,
-  진단 SHA `281a1e6eba0d0b79e84fd3dc49210d56ee9ba732cef15ac03f2bc9093b891475`입니다.
-  정확한 원시·해시·이전 시도 이력은 task-004 evidence가 소유합니다. 드문 late-didClose 중간 순서의 실제 재현은 주장하지 않습니다.
-- task-005 worker blocked 결과를 인수했습니다. 제품 코드를 추가 수정하지 않았습니다.
-  전체 단위 직렬696/696·skip0, Debug/Release 성공. 최초 병렬 실행의 팝오버3실패는 이력으로 보존하며 간섭 원인은 미확정입니다.
-  현재 단위 결과 `/private/tmp/resourcerunner-task005-unit-serial.xcresult`,
-  Release SHA `0b6ae93b24a6174aca192a22e754289de68dfcc14329b45ddfe6c907d4872c89`입니다.
-- task-005 격리 UI runner가 실제 앱 시작 전에 macOS `Enable UI Automation` 인증을 요구했습니다.
-  unsigned suite·signed smoke 모두 대기했고 `ui-automation-mode.log`의 testmanagerd 인증 요구를 확인했습니다.
-  사용자에게 인증 절차 진행 여부를 요청했으나 답변/인증 완료는 확인하지 못했습니다. 현재 요청은 저장·커밋·푸시이며 인증 진행 승인이 아닙니다.
-  UI·반복·공식100/200ms는 미검증입니다. task-005 verify 미실행, 최근 reject 없음, 구현 재시도0·근거 재검증0입니다.
-- 외부 도구 `external_frame_probe.swift`, `target_event_probe.swift`, `target_ax_probe.swift`와 짧은 사전시험2회를 보존했습니다.
-  AX/화면 캡처/ListenEvent/PostEvent 권한은 당시 모두 true였지만 UI Automation 인증은 별도입니다.
-  PID tap·WindowServer displayTime·후행 창 metadata·AX 응답 완료 시각을 구분해야 합니다.
-  사전시험2의198ms 프레임은 애니메이션 중 부분 표시였습니다. 600초 워밍업 없는 도구 시험이므로 공식 실패/통과로 해석하지 않습니다.
-  최신 카드·실제 TOP5·그래프가 완전히 표시된 픽셀과 최신 AX의 같은 내용 대응 및 보수적100/200ms 상한 관찰은 아직 보완이 필요합니다.
-  fixed ROI fingerprint는 pixel buffer의 BGRA 가정 불일치로 unavailable이었습니다.
-- 격리 UI는 동일 소스와 별도 app/runner ID를 쓴 임시 프로젝트로 준비했습니다. 임시 프로젝트·진단·runner·관측 프로세스는 정리했습니다.
-  ID diff와 원본127파일 SHA는 task-005 evidence에 있습니다. 기본 `XCUIApplication()`로 production ID 앱을 실행하면 기존 세션이 종료될 수 있으므로 반드시 격리합니다.
-  로그인 등록/해제·System Settings 변경 시험은 제외합니다. Release 경로가 필요한 읽기 전용 UI는 별도로 실행해야 합니다.
-- 2026-10-11 저장 전 설치 앱 PID16136/2026-10-09 16:28:46 시작 및 실행 파일 SHA를 다시 확인했습니다.
-  `/Users/zipkero/Applications/ResourceRunner.app` SHA는 `a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80`입니다.
-  성능 수정본은 아직 실제 설치에 반영하지 않았습니다. task-006 승인 전 기존 세션을 종료/교체하지 않습니다.
-  현재 설정은 상세 ten이고 이전 plist는 `/tmp/resourcerunner-task001-settings.plist`, 설치 백업은 `/tmp/rr-static-color-installed-backup/ResourceRunner.app`입니다.
-- 공식 동결 원본은 `/tmp/resourcerunner-task001-frozen`과 task-001 manifest입니다. 설치 바이너리의 소스 대응은 공식 baseline으로 증명되지 않았습니다.
-  task-002의7상태21회 baseline과 task-003 원인 조사 및 task-004 최종 비교는 각각의 evidence와 manifest를 따릅니다.
-  원본/진단 비교는 동일 진단 ID·기본 설정·도구·환경으로 순차 한 인스턴스만 실행합니다.
-  실제 proc 경로는 `/private/tmp/...`이므로 측정 `--exe`의 문자열 대응을 먼저 검사합니다. 입력 오류만 있으면 불필요한 새 PID/600초 재워밍업을 피합니다.
+작업 주체가 Codex에서 Claude Code로 바뀌었다.
+- task-005 경계 진단은 완료했다. 외부 tap과 앱 mouse-up 수신의 차이는 최대 8.45ms였고, 첫 픽셀 지연(재열림 중앙 102ms·첫 열림 135ms)은 측정 오차가 아닌 실제 앱 지연이다.
+- task-008 원인 비교는 완료했고 결과는 `blocked`(정지 반환)다. 제품 코드는 바꾸지 않았다.
+  - hosting을 유지하면 재열림 `show` 48.0→12.3ms, 첫 픽셀 103.5→67.6ms로 줄지만, task-004의 "닫힘 시 hosting 회수" 결정을 바꿔야 한다.
+  - `animates=false`면 재열림 완전 표시 174.9→91.2ms로 줄지만, spec에 없는 사용자 가시 변경이다.
+  - 설계를 바꾸지 않는 경로(카드 `.keyboardShortcut` 비용)는 −3.6ms로 실행 간 변동 안이다.
+  - 첫 열림 첫 픽셀은 모든 변형에서 117~125ms였다(변형마다 1회). 시험한 어떤 경로도 첫 열림 100ms를 보여주지 못했다.
+- task-001~004는 `[x]`이고, task-008·005·006·007은 `[ ]`다.
+- 마지막 검증: task-008은 제품 변경이 없어 단위·UI 테스트와 verify를 하지 않았다. 진단 변형 Release 빌드는 성공했다. task-005 범위의 단위 696/696·영향 UI 56/56·Release UI 1/1은 이전에 통과했다.
+- 멈춤 원인: 개선 경로가 설계 변경이나 사용자 가시 변경뿐이라 사용자 결정이 필요하다. 사용자가 (a)·(b)·(c) 중 하나를 고르면 풀린다.
+- Git: `main`, 기준 HEAD `e02b3b2`. 이번 세션 끝에 커밋·푸시한다.
+- 기존 설치 앱 `/Users/zipkero/Applications/ResourceRunner.app` PID 16136은 유지 중이다. 성능 개선본은 설치하지 않았다.
 
 ## 현재 작업 문서
-
-[feature 상태](./features/20261010-001-release-readiness/README.md),
-[명세](./features/20261010-001-release-readiness/spec.md),
-[설계](./features/20261010-001-release-readiness/design.md),
-[Task와 승인](./features/20261010-001-release-readiness/implement.md).
-
-[task-004 근거](./features/20261010-001-release-readiness/evidence/task-004/README.md),
-[task-005 근거와 재개 조건](./features/20261010-001-release-readiness/evidence/task-005/README.md),
-[선행 정적 메뉴바 검증](./docs/verification/20261009-static-menu-bar.md), [ROADMAP](./ROADMAP.md).
+[feature README](./features/20261010-001-release-readiness/README.md), [implement.md task-008](./features/20261010-001-release-readiness/implement.md), [design.md §2.4](./features/20261010-001-release-readiness/design.md), [spec.md](./features/20261010-001-release-readiness/spec.md).
 
 ## 확정된 결정
-
-- 개인 Mac에서 혼자 사용하는 앱입니다. 외부 배포·공증·패키지 준비를 제외하며 기존 로컬 서명·Sandbox·설정·로그인 실행은 유지합니다.
-- CPU 고양이는 항상 정적입니다. 낮음/보통 기본색, 높음 노랑, 매우 높음 주황, 장시간 고부하 빨강입니다. 포커스는1pt·불투명도0.7입니다.
-- 기본값은 시스템 제외·상세20·자동닫기 켜짐이며 상세10/20/50을 지원합니다.
-- VPN·유선LAN·외장디스크·다른 계정 전환 실시험을 제외합니다. M1~M4는 해당 사용자 범위로 완료했고 M5 전체는 미완료입니다.
-- CPU1%/3%, Footprint100,000,000bytes, 실제 외부100/200ms 기준을 임의 완화하지 않습니다.
-  일반 Release에 상시 로그를 추가하지 않습니다. 실제 설치는 task-006 사전 승인 뒤 task-007에서만 변경합니다.
+- 100/200ms, Footprint 100,000,000bytes, CPU 1%/3% 기준은 완화하지 않는다. — [design.md §2.4](./features/20261010-001-release-readiness/design.md)
+- "완전 표시"는 애니메이션 종료가 아니라 네 카드 값·TOP5 행·그래프가 프레임에서 처음 모두 식별되는 시점이다. — [design.md §2.4](./features/20261010-001-release-readiness/design.md)
+- 열림 지연 개선은 task-005 앞의 task-008이 맡고, task-005는 task-008 이후 코드로 다시 판정한다. — [implement.md](./features/20261010-001-release-readiness/implement.md)
+- SPEC §5.7은 task-005에서 완성된다(task-007 참조에서 제외). — [implement.md 매핑](./features/20261010-001-release-readiness/implement.md)
+- 진단 앱은 격리 bundle ID(`com.zipkero.ResourceRunner.Task005PerfDiagnostic` 등)로만 실행하고, 설치 앱 PID 16136은 건드리지 않는다. 실제 설치는 task-006 승인 뒤 task-007에서만 한다. — [implement.md 머리말](./features/20261010-001-release-readiness/implement.md)
 
 ## 미확정 판단
-
-- UI Automation 인증 진행 여부와 현재 Mac 사용 여부는 미확인입니다. 과거 무사용 회신을 새 측정의 무사용으로 단정하지 않습니다.
-- CPU 잔여 비용의 비중은 미확정입니다. process survey·순위 집계·카드 재조립·최근 이력 변환은 소스상 후보일 뿐 현재 CPU 귀속 증명이 아닙니다.
-- CPU 그래프의 반복되는 ‘데이터 수집 중 09:59/10:00’ 문구는 최근600초 첫 표본을 수집 시작처럼 계산하는 경로와 연결됩니다.
-  닫힘 중 수집·이력이 계속되는 것은 확인했으나 문구 수정은 하지 않았습니다. 별도 범위 판단이 필요합니다.
-- task-005의 최신 전체 표시 관측, 반복 자원 회수, 첫 열림/재열림 반응과 task-006/007 목표 충족은 미검증입니다.
+- task-008 진행 경로를 정해야 한다. — [evidence/task-008/README.md](./features/20261010-001-release-readiness/evidence/task-008/README.md)
+  - (a) 닫힘 시 hosting 회수를 바꾸는 design 변경. 닫힘 Footprint 61MB가 회귀할 위험이 있다.
+  - (b) 팝오버 애니메이션 끄기를 spec에 넣는 사용자 가시 변경.
+  - (c) 효과가 확정되지 않은 작은 경로를 별도 Task로 시험한다. ⌘1–4를 key monitor로 다시 구현하거나 아이콘을 미리 읽는 방식이다.
+  - (a)+(b)를 함께 고를 수도 있다.
+  - hosting을 남기되 빈 화면으로 바꿔 두는 중간안은 측정하지 않았다.
+- 첫 열림 100ms를 달성할 경로가 아직 없다. 모든 변형에서 첫 픽셀이 117~125ms였다. — [evidence/task-008/README.md](./features/20261010-001-release-readiness/evidence/task-008/README.md)
 
 ## 다음 작업
 
-- 작업: 사용자가 UI Automation 인증 진행을 승인하면 격리 UI를 다시 시작해 Mac에서 직접 인증하도록 안내하고, task-005 검증을 재개합니다.
-- 완료 기준: 같은 소스·artifact의 영향 UI·반복·실제 외부 반응 조건을 확인하고 독립 verify를 인수합니다. 부족/실패를 통과로 대체하지 않습니다.
-  긴 GUI 시험 전 현재 Mac 사용 상태와 일정을 안내하며, 측정 중 빌드·테스트·프로파일러를 겹치지 않습니다.
+- 작업: 사용자에게 task-008 경로(a/b/c)를 받아 소유 단계로 반영한다. design 변경은 `/design-init`, spec 변경은 `/spec-init`, Task 조정은 `/implement-init`이다. 그 뒤 implementer로 task-008을 재개한다.
+- 완료 기준: task-008이 독립 verify에서 `approved`되는 것이다. 개선 전후 같은 진단 방식에서 첫 픽셀과 완전 표시가 앞당겨지고, 단위·영향 UI·Release UI·Debug/Release 빌드가 skip 0으로 통과하며, 닫힘 Footprint/CPU가 task-004 대비 회귀하지 않아야 한다.
 
 ## 먼저 읽을 파일
-
-활성 feature의 README/spec/design/implement와 task-005 evidence README를 먼저 읽습니다.
-구현은 `~/.codex/skills/implement-loop/SKILL.md`, `~/.codex/skills/implement/SKILL.md`,
-검증은 `~/.codex/skills/verify/SKILL.md`, 상태는 `~/.codex/docs/phased-state.md`를 따릅니다.
+- [evidence/task-008/README.md](./features/20261010-001-release-readiness/evidence/task-008/README.md) — 이번에 만든 파일
+- [boundary-diagnostic/README.md](./features/20261010-001-release-readiness/evidence/task-005/resume-20261011/boundary-diagnostic/README.md) — 이번에 만든 파일
+- [implement.md](./features/20261010-001-release-readiness/implement.md) — task-008을 추가하고 매핑을 변경함
+- [design.md](./features/20261010-001-release-readiness/design.md) — §2.4에 완전 표시 정의를 추가함
+- [evidence/task-004/README.md](./features/20261010-001-release-readiness/evidence/task-004/README.md) — 닫힘 Footprint/CPU baseline
 
 ## 문서 반영 필요
-
-없음.
+없음

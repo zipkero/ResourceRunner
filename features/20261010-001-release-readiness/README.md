@@ -19,9 +19,9 @@
 
 ## 다음 Task
 
-[task-005](./implement.md): 현재 기능과 반복 수명·반응 시간 인수.
-Task 7개 중4개 승인. 제품의 닫힘 hosting 보유 감소와 관련 화면 경계를 확인했으며 전체 성능 목표는 아직 미충족입니다.
-현재 task-005는 macOS `Enable UI Automation` 사용자 인증이 필요해 `blocked`입니다. 전체 단위696/696·skip0와 Debug/Release는 통과했으나 UI·반복·공식 반응 시간은 미검증입니다.
+[task-008](./implement.md): 팝오버 열림 지연의 원인 확정과 제품 최적화.
+Task 8개 중4개 승인. task-008은 `blocked`(정지 반환)이며 제품 코드는 바꾸지 않았습니다. 사용자 결정이 필요합니다: (a) 닫힘 시 hosting 회수를 바꾸는 design 변경, (b) 팝오버 애니메이션 끄기를 spec에 넣는 사용자 가시 변경, (c) 효과 미확정인 작은 경로를 별도 Task로 시험. 근거는 [evidence/task-008](./evidence/task-008/README.md)입니다.
+task-005는 task-008 이후 코드로 다시 판정합니다.
 
 ## 이력
 
@@ -62,3 +62,22 @@ Task 7개 중4개 승인. 제품의 닫힘 hosting 보유 감소와 관련 화�
   사용자에게 인증 진행 여부를 요청하고 임시 프로젝트·실행 프로세스를 정리했습니다. 기존 설치 앱과 승인Task001~004는 유지합니다.
   task-005는 blocked·미승인, 구현 재시도0·근거 재검증0이며 task-006/007은 미진입입니다.
   인증 완료 후 같은 소스의 격리 UI와 반복·외부100/200ms 검증을 재개합니다.
+
+- 2026-10-11: 사용자 진행 요청으로 task-005 재개와 UI Automation 인증 절차 진행을 승인했습니다.
+  격리 signed UI smoke가 인증 대기 없이 실제 automation session에서1/1·skip0로 통과했습니다.
+  기존 설치 앱을 유지하고 영향 UI 직렬 suite를 시작했습니다. task-005 미승인·재시도0·근거 재검증0, 선행 기준·승인은 유지합니다.
+- 2026-10-11: 첫 영향 UI54/55·skip0의 포커스 실패와 단독 재현을 보존했습니다. assertion 시각의 독립 AX에서 설정 창·요소 포커스 유지가 확인됐으나 runner 문자열/hasFocus 관측은 불일치했습니다.
+  main이 DEBUG·`--settings-ui-test` 전용 read-only `isKeyWindow` 접근성 관측과 정·부 조건 검증을 task-005 관측 보완 범위로 확정했습니다.
+  제품의 일반 실행·Release 동작과 승인 기준은 유지합니다. 보완 단독2/2·skip0 이후 현재 입력 전체 검증을 진행하며 task-005 승인·formal 완료로 확대하지 않습니다.
+
+- 2026-10-11: task-005 현재 단위696/696·영향 UI56/56·Release UI1/1·skip0와 Debug/Release 빌드 근거를 인수했습니다. 시험 관측/fixture를 보완했고 일반 Release 동작의 추가 최적화는 하지 않았습니다.
+  첫 공식 시도의 도구 종료 뒤 클릭은 무효 이력으로 보존하고 단일 driver로 보완했습니다. 새 PID29449의630.438초 warm 후 첫 열림 원시·픽셀 crop·해시를 확보했습니다.
+  독립 verifier는 실제 전달과 tap callback 오차 상한 및 나머지 cohort 부족으로 evidence rejected를 반환했습니다. SDK/Apple delivery-point 설명 추가 대조 후에도 판정이 유지됐습니다.
+  구현 재시도0·근거 재검증0이며 현재 관측 수단으로 Resolution을 충족하지 못해 evidence_exhausted로 중단합니다. 기준 의미와 SPEC/DESIGN·001~004 승인을 유지하고 task-005/IMPLEMENT는 미완료로 둡니다. 진단 프로세스를 정리하고 기존 설치PID16136을 유지했습니다.
+- 2026-10-11: Claude Code로 이어받아 task-005 경계 진단을 수행했습니다(evidence/task-005/resume-20261011/boundary-diagnostic/). tap과 앱 mouse-up 수신 차이는 최대8.45ms이며 첫 픽셀 지연(재열림 중앙102ms·첫 열림135ms)은 실제 앱 지연입니다. 주된 구간은 `popover.show` 동기 호출(35~80ms)입니다.
+  사용자 결정으로 DESIGN §2.4에 완전 표시를 "네 카드 값·TOP5 행·그래프가 프레임에서 처음 모두 식별되는 시점"으로 명시했습니다(기존 문언의 해석 확정, 기준 완화 없음). 영향 Task005~007은 모두 미승인이라 되돌린 승인은 없습니다.
+  IMPLEMENT 체크리스트에 task-008(열림 지연 원인 확정·최적화)을 task-005 앞에 추가하고, 사용자 결정으로 §5.7 완성 자리를 task-005로 옮겼습니다(task-007 참조에서 §5.7 제거). task-001~004 승인 유지, IMPLEMENT 미완료.
+
+- 2026-10-11: task-008 원인 비교(진단 사본, 변형별 첫 열림1회·재열림18회)를 인수했습니다. 재열림 `show` 동기 비용의 주원인은 열 때마다 새로 만드는 hosting의 SwiftUI graph 생성이고, 완전 표시까지 가장 긴 구간은 NSPopover 열림 애니메이션입니다.
+  hosting 유지는 재열림 첫 픽셀 103.5→67.6ms, `animates=false`는 재열림 완전 표시 174.9→91.2ms였으나 각각 DESIGN 결정 변경·사용자 가시 변경이라 Task 정지 조건에 따라 구현하지 않았습니다. 첫 열림 첫 픽셀은 모든 변형에서 117~125ms(각1회)였습니다.
+  제품 변경·verify 없음. task-008 `blocked`, 선행 승인 유지, IMPLEMENT 미완료.

@@ -1,0 +1,8 @@
+opens 12 main samples within 40.0 ms after last show sample per open: [25, 20, 18, 21, 18, 20, 20, 20, 21, 19, 16, 17]
+  195 CA::Transaction::commit()
+   35 _DPSBlockUntilNextEventMatchingListInMode
+    1 -[NSCGSContext dealloc]
+    1 _xzm_free
+    1 AutoreleasePoolPage::releaseUntil(objc_object**)
+    1 objc_release
+    1 -[__NSCFConstantString release]

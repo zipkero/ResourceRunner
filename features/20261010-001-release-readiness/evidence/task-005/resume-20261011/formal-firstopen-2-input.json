@@ -1,0 +1,52 @@
+{
+  "binarySHA256": {
+    "ax": {
+      "path": "/private/tmp/resourcerunner-task005-target-ax-probe-resume",
+      "sha256": "de9962d47bd1f437e83c8b6fa97418bb25eb4c4fbf439f615d1ac8494bb952b1"
+    },
+    "event": {
+      "path": "/private/tmp/resourcerunner-task005-target-event-probe-resume-r3",
+      "sha256": "0c92f3cf94baa9fbbcd451adeb81864e8f58ebd8896084e5e81ad1ffa7b72f4b"
+    },
+    "exe": {
+      "path": "/private/tmp/resourcerunner-task005-perf-current/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "sha256": "289dfabbd3b743dc5ef4b7fe426044170ef7d0715321cac05c24c013486bf90b"
+    },
+    "frame": {
+      "path": "/private/tmp/resourcerunner-task005-external-frame-probe-resume-r3",
+      "sha256": "56680d7f8ebcabedadd7c08f7210f6d28886fb944378b682ec6ef3fde0fc0ffe"
+    },
+    "gui": {
+      "path": "/private/tmp/resourcerunner-task005-gui-state-resume",
+      "sha256": "6f00f83dbab6112f9773cf23bb80eb9b61fda00af6f338a45a12fcdaf0465858"
+    }
+  },
+  "bundleID": "com.zipkero.ResourceRunner.Task005PerfDiagnostic",
+  "createdEpoch": 1791711215.428857,
+  "driverCommand": [
+    "python3",
+    "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-005/resume-20261011/firstopen_driver.py",
+    "29449",
+    "/private/tmp/resourcerunner-task005-perf-current/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "289dfabbd3b743dc5ef4b7fe426044170ef7d0715321cac05c24c013486bf90b",
+    "/private/tmp/resourcerunner-task005-firstopen-formal-2",
+    "--guard-mach",
+    "29292765059875"
+  ],
+  "guardStartMach": 29292765059875,
+  "head": "e02b3b291a5e3254c1df14086868d28d65aacdd3",
+  "pid": 29449,
+  "sourceSHA256": {
+    "features/20261010-001-release-readiness/evidence/task-005/resume-20261011/firstopen_driver.py": "cd35eae62f644fa15b453e88d49b2cc84344fb85c709463c9cfaff968a94ac86",
+    "features/20261010-001-release-readiness/tools/external_frame_probe.swift": "92b062582f48ba03fabc4bb0b456e7ae6b9ba2a2f67c3bf009feed37865d6aa6",
+    "features/20261010-001-release-readiness/tools/gui_state.swift": "2de79b3dfbe7e65e5a2829a9986e85658a397d61ad6b9342a421d6dc6a42ae39",
+    "features/20261010-001-release-readiness/tools/target_ax_probe.swift": "e60b5cc19660f2e331115e2b300173a9736c09f99e6ec1a71e4e6e9f60d6e99e",
+    "features/20261010-001-release-readiness/tools/target_event_probe.swift": "57c05981128d3f71119b1c62486dc61023fb60c4096e153b8719286b7370cc07"
+  },
+  "system": {
+    "macVersion": "26.6.2",
+    "machine": "arm64"
+  },
+  "timebaseDenom": 3,
+  "timebaseNumer": 125
+}

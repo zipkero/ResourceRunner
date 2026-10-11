@@ -1,0 +1,268 @@
+diff -ruN /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/StatusBarController.swift ResourceRunner/StatusBarController.swift
+--- /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/StatusBarController.swift	2026-10-10 20:03:45
++++ ResourceRunner/StatusBarController.swift	2026-10-11 20:54:08
+@@ -60,6 +60,7 @@
+         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
+ 
+         super.init()
++        Task005BoundaryDiagnostic.shared.install()
+ 
+         popover.delegate = self
+         viewport?.requestCorrection = { [weak self] in self?.scheduleFrameCorrection() }
+@@ -216,6 +217,11 @@
+     /// 포커스를 뺏지 않으면서 키 이벤트를 받으려면 `NSPanel`의 `.nonactivatingPanel`이 필요한데,
+     /// 그건 ANALYSIS §5 DP1이 기각한 옵션 C입니다.
+     @objc func togglePopover() {
++        let d = Task005BoundaryDiagnostic.shared
++        if let event = NSApp.currentEvent {
++            d.recordEvent("togglePopoverEnter", event, mach: mach_absolute_time(),
++                extra: ["shown": popover.isShown])
++        }
+         guard let button = statusItem.button else { return }
+ 
+         if NSApp.currentEvent?.type == .rightMouseUp {
+@@ -224,18 +230,30 @@
+         }
+ 
+         if popover.isShown {
++            d.record("closeCall")
+             popover.performClose(nil)
++            d.record("closeReturn")
++            d.expectBeforeWaiting("close")
+         } else {
+             correctionTask?.cancel()
+             correctionTask = nil
+             displayGeneration &+= 1
+             displaySessionActive = true
++            d.record("openBegin", ["animates": popover.animates])
+             popover.contentViewController = makePopoverContentController()
++            d.record("contentControllerAssigned")
+             updateViewportFromScreen()
++            d.record("viewportUpdated")
+             NSApp.activate()
++            d.record("activateReturn")
+             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
++            d.record("showReturn", ["windowNumber": popover.contentViewController?.view.window?.windowNumber ?? -1])
++            d.popoverWindow = popover.contentViewController?.view.window
+             popover.contentViewController?.view.window?.makeKey()
++            d.record("makeKeyReturn")
+             scheduleFrameCorrection()
++            d.record("openEnd")
++            d.expectBeforeWaiting("open")
+         }
+     }
+ 
+@@ -338,7 +356,16 @@
+ }
+ 
+ extension StatusBarController: NSPopoverDelegate {
++    func popoverWillShow(_ notification: Notification) {
++        Task005BoundaryDiagnostic.shared.record("popoverWillShow")
++    }
++
++    func popoverWillClose(_ notification: Notification) {
++        Task005BoundaryDiagnostic.shared.record("popoverWillClose")
++    }
++
+     func popoverDidShow(_ notification: Notification) {
++        Task005BoundaryDiagnostic.shared.record("popoverDidShow")
+         guard notification.object as? NSPopover === popover,
+               displaySessionActive, popover.isShown else { return }
+         scheduleFrameCorrection()
+@@ -346,6 +373,7 @@
+     }
+ 
+     func popoverDidClose(_ notification: Notification) {
++        Task005BoundaryDiagnostic.shared.record("popoverDidClose")
+         guard notification.object as? NSPopover === popover,
+               displaySessionActive, !popover.isShown else { return }
+         displaySessionActive = false
+diff -ruN /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Task005BoundaryDiagnostic.swift ResourceRunner/Task005BoundaryDiagnostic.swift
+--- /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner/Task005BoundaryDiagnostic.swift	1970-01-01 09:00:00
++++ ResourceRunner/Task005BoundaryDiagnostic.swift	2026-10-11 20:53:57
+@@ -0,0 +1,147 @@
++// task-005 경계 진단 전용 임시 계측. 격리 사본에만 존재하며 원본 저장소에 넣지 않는다.
++// 모든 시각은 mach_absolute_time tick이다. 기록은 main thread에서 시각만 잡고
++// 직렬화·쓰기는 별도 queue에서 한다.
++import AppKit
++import Darwin
++
++nonisolated final class Task005BoundaryDiagnostic: @unchecked Sendable {
++    static let shared = Task005BoundaryDiagnostic()
++
++    private let queue = DispatchQueue(label: "task005.boundary.writer")
++    private var handle: FileHandle?
++    private let lock = NSLock()
++    private var installed = false
++    private var sequence = 0
++    // run loop 관측값. main thread에서만 갱신한다.
++    var lastAfterWaitingMach: UInt64 = 0
++    var lastBeforeWaitingMach: UInt64 = 0
++    var pendingBeforeWaitingLabel: String?
++    var pendingBeforeWaitingCount = 0
++    weak var popoverWindow: NSWindow?
++
++    func install() {
++        lock.lock()
++        defer { lock.unlock() }
++        guard !installed else { return }
++        installed = true
++        let pid = ProcessInfo.processInfo.processIdentifier
++        let url = URL(fileURLWithPath: NSTemporaryDirectory())
++            .appendingPathComponent("task005-boundary-\(pid).jsonl")
++        FileManager.default.createFile(atPath: url.path, contents: nil)
++        handle = try? FileHandle(forWritingTo: url)
++        var timebase = mach_timebase_info_data_t()
++        mach_timebase_info(&timebase)
++        record("install", ["path": url.path, "pid": Int(pid),
++            "timebaseNumer": Int(timebase.numer), "timebaseDenom": Int(timebase.denom)])
++        swizzle()
++        addRunLoopObservers()
++        NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
++            object: nil, queue: nil) { [weak self] note in
++            let mach = mach_absolute_time()
++            guard let self, let window = note.object as? NSWindow else { return }
++            let isPopover = window === self.popoverWindow ||
++                String(describing: type(of: window)).contains("Popover")
++            guard isPopover else { return }
++            self.record("popoverWindowOcclusion", ["visible": window.occlusionState.contains(.visible),
++                "windowNumber": window.windowNumber, "alpha": window.alphaValue,
++                "class": String(describing: type(of: window))], mach: mach)
++        }
++    }
++
++    func record(_ name: String, _ fields: [String: Any] = [:], mach: UInt64 = mach_absolute_time()) {
++        let thread = Thread.isMainThread
++        queue.async { [self] in
++            sequence += 1
++            var row = fields
++            row["name"] = name
++            row["mach"] = mach
++            row["seq"] = sequence
++            row["mainThread"] = thread
++            guard let data = try? JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]) else { return }
++            handle?.write(data)
++            handle?.write(Data([0x0a]))
++        }
++    }
++
++    func recordEvent(_ hook: String, _ event: NSEvent, mach: UInt64, extra: [String: Any] = [:]) {
++        var fields: [String: Any] = ["hook": hook, "type": Int(event.type.rawValue),
++            "nsTimestampSeconds": event.timestamp,
++            "cgTimestamp": event.cgEvent?.timestamp ?? 0,
++            "windowNumber": event.windowNumber,
++            "lastAfterWaitingMach": lastAfterWaitingMach,
++            "lastBeforeWaitingMach": lastBeforeWaitingMach]
++        for (key, value) in extra { fields[key] = value }
++        record("event", fields, mach: mach)
++    }
++
++    func expectBeforeWaiting(_ label: String, count: Int = 3) {
++        pendingBeforeWaitingLabel = label
++        pendingBeforeWaitingCount = count
++    }
++
++    private func addRunLoopObservers() {
++        let after = CFRunLoopObserverCreateWithHandler(kCFAllocatorDefault,
++            CFRunLoopActivity.afterWaiting.rawValue, true, CFIndex.min) { [weak self] _, _ in
++            self?.lastAfterWaitingMach = mach_absolute_time()
++        }
++        // Core Animation commit observer(2000000)보다 뒤에서 잡아 commit 이후 시점을 남긴다.
++        let before = CFRunLoopObserverCreateWithHandler(kCFAllocatorDefault,
++            CFRunLoopActivity.beforeWaiting.rawValue, true, CFIndex.max) { [weak self] _, _ in
++            let mach = mach_absolute_time()
++            guard let self else { return }
++            self.lastBeforeWaitingMach = mach
++            if let label = self.pendingBeforeWaitingLabel, self.pendingBeforeWaitingCount > 0 {
++                self.pendingBeforeWaitingCount -= 1
++                self.record("beforeWaitingAfter", ["label": label,
++                    "remaining": self.pendingBeforeWaitingCount], mach: mach)
++                if self.pendingBeforeWaitingCount == 0 { self.pendingBeforeWaitingLabel = nil }
++            }
++        }
++        CFRunLoopAddObserver(CFRunLoopGetMain(), after, .commonModes)
++        CFRunLoopAddObserver(CFRunLoopGetMain(), before, .commonModes)
++    }
++
++    private func swizzle() {
++        let pairs: [(Selector, Selector)] = [
++            (#selector(NSApplication.nextEvent(matching:until:inMode:dequeue:)),
++             #selector(NSApplication.task005_nextEvent(matching:until:inMode:dequeue:))),
++            (#selector(NSApplication.sendEvent(_:)), #selector(NSApplication.task005_sendEvent(_:))),
++        ]
++        for (original, replacement) in pairs {
++            guard let a = class_getInstanceMethod(NSApplication.self, original),
++                  let b = class_getInstanceMethod(NSApplication.self, replacement) else {
++                record("swizzleFailed", ["selector": NSStringFromSelector(original)])
++                continue
++            }
++            method_exchangeImplementations(a, b)
++        }
++    }
++
++    static func isLeftMouse(_ event: NSEvent) -> Bool {
++        event.type == .leftMouseDown || event.type == .leftMouseUp
++    }
++}
++
++extension NSApplication {
++    @objc nonisolated dynamic func task005_nextEvent(matching mask: NSEvent.EventTypeMask, until expiration: Date?,
++                                         inMode mode: RunLoop.Mode, dequeue deqFlag: Bool) -> NSEvent? {
++        let event = task005_nextEvent(matching: mask, until: expiration, inMode: mode, dequeue: deqFlag)
++        if let event, deqFlag, Task005BoundaryDiagnostic.isLeftMouse(event) {
++            let mach = mach_absolute_time()
++            Task005BoundaryDiagnostic.shared.recordEvent("nextEventReturn", event, mach: mach,
++                extra: ["mode": mode.rawValue])
++        }
++        return event
++    }
++
++    @objc nonisolated dynamic func task005_sendEvent(_ event: NSEvent) {
++        let isMouse = Task005BoundaryDiagnostic.isLeftMouse(event)
++        if isMouse {
++            Task005BoundaryDiagnostic.shared.recordEvent("sendEventEnter", event, mach: mach_absolute_time())
++        }
++        task005_sendEvent(event)
++        if isMouse {
++            Task005BoundaryDiagnostic.shared.recordEvent("sendEventReturn", event, mach: mach_absolute_time())
++        }
++    }
++}
+--- /Users/zipkero/XcodeProjects/ResourceRunner/ResourceRunner.xcodeproj/project.pbxproj	2026-10-11 17:20:20
++++ ResourceRunnerTask005Boundary.xcodeproj/project.pbxproj	2026-10-11 20:53:35
+@@ -428,7 +428,7 @@
+ 					"@executable_path/../Frameworks",
+ 				);
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005PerfDiagnostic;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				REGISTER_APP_GROUPS = YES;
+ 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+@@ -460,7 +460,7 @@
+ 					"@executable_path/../Frameworks",
+ 				);
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005PerfDiagnostic;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				REGISTER_APP_GROUPS = YES;
+ 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+@@ -520,7 +520,7 @@
+ 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunnerUITests;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005PerfDiagnosticUITests;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+ 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+@@ -539,7 +539,7 @@
+ 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunnerUITests;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005PerfDiagnosticUITests;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+ 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

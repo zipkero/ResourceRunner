@@ -1,0 +1,784 @@
+{
+ "bundleID": "com.zipkero.ResourceRunner.Task005PerfDiagnostic (네 변형 동일, 설정 plist 없음=기본값)",
+ "head": "e02b3b291a5e3254c1df14086868d28d65aacdd3",
+ "productSourcesUnchanged": {
+  "ResourceRunner.xcodeproj/project.pbxproj": "328c988575295bec4d8513fb46e8c3d5e63b580cf706ba777862260fc4ebe431",
+  "ResourceRunner/DashboardView.swift": "c9aaf8db88d7e26afe22278245835037d6b598f1e89be67cbaf19d52ac794e65",
+  "ResourceRunner/StatusBarController.swift": "79896af34634605ae0884a53f91e285590a7618af0196b45ecb6e3a4b4af84ae"
+ },
+ "profile": {
+  "command": "xcrun xctrace record --template \"Time Profiler\" --attach PID --time-limit 40s (V0 PID 78508, 12회 열기/닫기 gui_state toggle)",
+  "files": {
+   "profile/after-show-40ms.txt": "8b158bf487510a199d8b0b70998e050ae69fae67c26f859cc84b39be3cea9f68",
+   "profile/by-open.txt": "720dc50c2ba75adc1f4ff2f39ec582a66a0d877647c388c234ceefb81f7fa805",
+   "profile/show-flat.txt": "2a0ede2113ca1f08e8879f60fac071a7ec181cf3a7e03863d90d2b78207b3c5f",
+   "profile/show-tree.txt": "4904c0bcd37043de9b0c496e1c54b4a8c7f5a2267b6e5dcb391ff954e790776d",
+   "profile/v0-time-profile.xml.gz": "054cbb589175138c071ca485405052c0f8ffc5d1339a382f2bf30329b71b983d",
+   "profile/xctrace.log": "d59747a98efe917a6179df6d325376e39e8d465f747c709945189596cfa052cf"
+  },
+  "tpXMLSHA256": "a8375acc29d6b8d8e6c99e66d9f86537f562e27bff83c107e9350bb7f3fdee8b",
+  "trace": "/private/tmp/resourcerunner-task008/profile-v0/v0.trace"
+ },
+ "purpose": "task-008 원인 비교 진단(보조 근거). 정식 100/200ms 판정·task-005 cohort 아님. 제품 코드 변경 없음.",
+ "results": {
+  "results/summary.json": "86dac10f2b5734bf3cfddac59789ea5a727d98553f850c485fc5e603bb15263b",
+  "results/v0-boundary-results.json": "d9199a44173233d6d8c03aa0d5785a3596a964197c55bb9132efa3bad23fa906",
+  "results/v0-complete.json": "dbd1243c398509d3fbf6a3f1464e782e2ec68709d079b77d8e03f3c2a3f4bd74",
+  "results/v1-boundary-results.json": "668f5846ce016042e33501e072ff7601bfe19813b21a63263754d532f7a95f4c",
+  "results/v1-complete.json": "d86dec4fffabdcc72b1696ca93c124e2ab70e0759ac12e96dded5249868d6ee5",
+  "results/v2-boundary-results.json": "f75532ea3a8a27599a04b3cfdc472ee041be2d0c8f29b03a9d4f2ee06dcb5851",
+  "results/v2-complete.json": "7428fcec619f69e966f0f74f42c03d2d73fa0f32a41350aeae70458c8dfac42c",
+  "results/v3-boundary-results.json": "7de16ab19e2b4533961da1855c44817607eef5af7ef50bb4df562c1b6488f863",
+  "results/v3-complete.json": "74b86982083d4d05e943513600c0bc4b9bfba279f17258970e03713bc11a8eb7"
+ },
+ "runs": {
+  "v0-baseline": {
+   "appEvents": "raw/v0-baseline/app-events-83766.jsonl",
+   "appEventsSHA256": "f0252f70690a6b37e37e01bda7448f8bcc60f3c51f03c5730e5c039779430514",
+   "exeSHA256": "d742c68284aa7645eca6673859c4dff3d62278aaf958f30df34f1b827b53fe99",
+   "exit": {
+    "epoch": 1791722397.4837818,
+    "pid": 83766,
+    "stillRunning": false
+   },
+   "lstart": "Sun Oct 11 21:36:16 2026",
+   "pid": 83766,
+   "rawJPEGRoot": "/private/tmp/resourcerunner-task008/runs/v0-baseline-p1",
+   "trialStatus": [
+    {
+     "exit": 0,
+     "trial": "trial-00-firstopen"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-01-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-02-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-03-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-04-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-05-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-06-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-07-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-08-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-09-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-10-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-11-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-12-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-13-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-14-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-15-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-16-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-17-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-18-B"
+    }
+   ]
+  },
+  "v1-keephost": {
+   "appEvents": "raw/v1-keephost/app-events-88890.jsonl",
+   "appEventsSHA256": "0ab0c8be7bf5464fd09c680c4c311bf9a2b019400fec4a8cf605554e8c761230",
+   "exeSHA256": "8d447cfe91056d08abb06607986d2ea9c95e8a858acb864715c8e6d2fe682679",
+   "exit": {
+    "epoch": 1791722631.638459,
+    "pid": 88890,
+    "stillRunning": false
+   },
+   "lstart": "Sun Oct 11 21:40:11 2026",
+   "pid": 88890,
+   "rawJPEGRoot": "/private/tmp/resourcerunner-task008/runs/v1-keephost-p1",
+   "trialStatus": [
+    {
+     "exit": 0,
+     "trial": "trial-00-firstopen"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-01-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-02-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-03-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-04-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-05-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-06-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-07-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-08-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-09-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-10-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-11-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-12-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-13-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-14-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-15-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-16-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-17-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-18-B"
+    }
+   ]
+  },
+  "v2-noanim": {
+   "appEvents": "raw/v2-noanim/app-events-93892.jsonl",
+   "appEventsSHA256": "124013532c98f6025d08d4a351049f261283b660cca8295a0a92b78db4684aaa",
+   "exeSHA256": "3d11996c103b214abeb5fdb05b5b3f913410c392c032a6feeeca14c237954b1b",
+   "exit": {
+    "epoch": 1791722863.876524,
+    "pid": 93892,
+    "stillRunning": false
+   },
+   "lstart": "Sun Oct 11 21:44:03 2026",
+   "pid": 93892,
+   "rawJPEGRoot": "/private/tmp/resourcerunner-task008/runs/v2-noanim-p1",
+   "trialStatus": [
+    {
+     "exit": 0,
+     "trial": "trial-00-firstopen"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-01-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-02-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-03-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-04-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-05-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-06-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-07-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-08-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-09-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-10-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-11-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-12-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-13-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-14-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-15-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-16-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-17-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-18-B"
+    }
+   ]
+  },
+  "v3-noshortcut": {
+   "appEvents": "raw/v3-noshortcut/app-events-6691.jsonl",
+   "appEventsSHA256": "11d80cb0dcad96ce8756d0ebbd7e5f8ab9b1bcfc0f3a94699a63c04598da89b4",
+   "exeSHA256": "e337b77b30afacd5f7776aca109429ec408d1aab60d22feac9fb873f5b3fd7c8",
+   "exit": {
+    "epoch": 1791723394.192928,
+    "pid": 6691,
+    "stillRunning": false
+   },
+   "lstart": "Sun Oct 11 21:52:53 2026",
+   "pid": 6691,
+   "rawJPEGRoot": "/private/tmp/resourcerunner-task008/runs/v3-noshortcut-p1",
+   "trialStatus": [
+    {
+     "exit": 0,
+     "trial": "trial-00-firstopen"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-01-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-02-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-03-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-04-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-05-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-06-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-07-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-08-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-09-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-10-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-11-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-12-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-13-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-14-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-15-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-16-B"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-17-A"
+    },
+    {
+     "exit": 0,
+     "trial": "trial-18-B"
+    }
+   ]
+  }
+ },
+ "selectedCompleteFrames": {
+  "v0": {
+   "trial-00-firstopen": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "9c0e2649969cce1d40d700fdb80db4f9b921f71562703b30e929370607bc960d"
+   },
+   "trial-01-A": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "1fba50c25ac515cdce050d4fe9fcfbbd5b020ae90949da30057bb442161fb8b6"
+   },
+   "trial-02-B": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "6c66c6e694adb45605d5c8d1e54a92de4087013dd0cc3ff542a55a5a830cb349"
+   },
+   "trial-03-A": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "a9d05cc72d3c81a6b3d79c293f2d0b43c69b38fd12eeee650af9f77d44380996"
+   },
+   "trial-04-B": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "4125f272f3b07a6b7ca4d1def1af7d8df6b96eab2ae958afeeff9ccf2ce65e41"
+   },
+   "trial-05-A": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "85d08a4cf1c6b77ad6a0b163ca97aca30dffdb483b5f709aeee5d187c30528d0"
+   },
+   "trial-06-B": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "08e7a320b9f836e0ae6d5d3135c50c72672b5c4b0c55b260c65008a370f17b04"
+   },
+   "trial-07-A": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "e4386f13de3f6fcd6d1437f41b3a8500d7d9376209812eca164182ad8dcbb9b7"
+   },
+   "trial-08-B": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "02cc8cd670e4484da37ad84e09c933b1327cf4b4e4889ccb62a92c963bb09cb6"
+   },
+   "trial-09-A": {
+    "completeImage": "frame-0036.jpg",
+    "sha256": "d252fbad3c03e01bc4f0d5afe857aad01bd887cdde98a66324e951974e3da648"
+   },
+   "trial-10-B": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "fc6d9e71d1e3485b1c22e8c6ef00f32ae0f81e9c7f15b1953ffea90fc70ddf9f"
+   },
+   "trial-11-A": {
+    "completeImage": "frame-0036.jpg",
+    "sha256": "21e51717367ebfdd307313fc1364d0456a081d680846f394fc758776c632f620"
+   },
+   "trial-12-B": {
+    "completeImage": "frame-0028.jpg",
+    "sha256": "3186fb42c5d04dfedb5e2f459bcd7f41facb7617e48c945d4da4142ad5c8f88e"
+   },
+   "trial-13-A": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "6bac907d264ebf009b0edadcf706328d1cd91c9619552404540ef91c609fcb1e"
+   },
+   "trial-14-B": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "0410d6c3cc933ee9a4fec5b1f94ea31bb376118a6a4495bd0b9d681a588aae6f"
+   },
+   "trial-15-A": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "715b4bd53edfcca3117e352bf71a6e254a1aac5340b1809bd160bdc616a3cd77"
+   },
+   "trial-16-B": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "ed6c20f82355b0ae2a21d914ac5f464e48404f835deb88ffbfdc3604d428cece"
+   },
+   "trial-17-A": {
+    "completeImage": "frame-0034.jpg",
+    "sha256": "f6bd303ac5e2a6c05717fdd2d02c461388d7411b7a027a400980c2376dc168c4"
+   },
+   "trial-18-B": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "f4f370ee31097e5026eb91f84d189ef5ce9b2cbbb62958897c93a06576fa0c4e"
+   }
+  },
+  "v1": {
+   "trial-00-firstopen": {
+    "completeImage": "frame-0033.jpg",
+    "sha256": "d93f8cf5bdfa7568ee8a0218b15569d98b1f678efb23ccb296009c0522c72d80"
+   },
+   "trial-01-A": {
+    "completeImage": "frame-0029.jpg",
+    "sha256": "0f52cf4832d0323b81d48288bcb1d0e253e2ba7558423657e2b8172ff0bcf8f0"
+   },
+   "trial-02-B": {
+    "completeImage": "frame-0028.jpg",
+    "sha256": "6edf5760f8c355d5abac780501a8e353f4eba135552cb45634ac6522147c28dc"
+   },
+   "trial-03-A": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "79dd0ed941aa6ec030b05760b852158225612ba162603500cd6adfecbeb60e93"
+   },
+   "trial-04-B": {
+    "completeImage": "frame-0027.jpg",
+    "sha256": "052d426ad42df12948f1e2abb47998c9c80b790d2ecf895ae75aea446b80542c"
+   },
+   "trial-05-A": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "8b68bdb26320d9ba3c46ce77f5eaa845854a7aa168874b5dc91321d9c3e42976"
+   },
+   "trial-06-B": {
+    "completeImage": "frame-0027.jpg",
+    "sha256": "1fd64f7df32f5a2966e046b7b07dba078b8f20a9d4a95d12c4fef2ff6c04f0c5"
+   },
+   "trial-07-A": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "afe353aaca70bb631f702359a8020a3760c8f4a3cf333daaa9db0610692582f3"
+   },
+   "trial-08-B": {
+    "completeImage": "frame-0028.jpg",
+    "sha256": "4c5aa84681aa45940d9e2a3f1e1082ca33b7b6d4a6226f8908caf24a51adef47"
+   },
+   "trial-09-A": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "d0b4c7e33b4390d87dcf5f2364d5f6e4580a7affb9084553bac2439e453d1e99"
+   },
+   "trial-10-B": {
+    "completeImage": "frame-0026.jpg",
+    "sha256": "18f377f53de181fdc667c458a98914b85ca13637481a00d5ebbcd9908ba4b5f4"
+   },
+   "trial-11-A": {
+    "completeImage": "frame-0027.jpg",
+    "sha256": "1fb33cc3fd9ef824fc2e660a7e6ac1b08724952fb6787dc1a9d877d09d7f69d6"
+   },
+   "trial-12-B": {
+    "completeImage": "frame-0027.jpg",
+    "sha256": "eab456f5bcebc1ad3977f048117911705b0b5f84041d2b5c5d444d14ee5f4b34"
+   },
+   "trial-13-A": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "7f9fd6c00a648595b39b78f733d8c7afd879ac614ce1657ef860580e516f06ad"
+   },
+   "trial-14-B": {
+    "completeImage": "frame-0026.jpg",
+    "sha256": "7f29086959d69fd101e93c15178efbab9b3cdf69efabbd92e340bae99b185d24"
+   },
+   "trial-15-A": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "180f1c15c22624b25209b8ebdae25c50598b44151578090756370279b3558b40"
+   },
+   "trial-16-B": {
+    "completeImage": "frame-0029.jpg",
+    "sha256": "95222bb679f2eca7f4718703acb345d78cd283f891598e523939f500d1cdd5ce"
+   },
+   "trial-17-A": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "0ed33803ee52c4c8ed72c4a3c0a45577e539a3bab7dc54895bddd704f5c18a3e"
+   },
+   "trial-18-B": {
+    "completeImage": "frame-0028.jpg",
+    "sha256": "46b16a3f330a71892f85f2365d1bafcd6feaf1c79b92a4d0dcb8b90520d63fbc"
+   }
+  },
+  "v2": {
+   "trial-00-firstopen": {
+    "completeImage": "frame-0023.jpg",
+    "sha256": "2eba82fff7c029c9446f931f22d3eee76b236ec1cccbb18b7fed20f4c386924a"
+   },
+   "trial-01-A": {
+    "completeImage": "frame-0026.jpg",
+    "sha256": "57e86babbf7d4fc69fb98968062052f9ba303b1ae3c4cf2c9848148f2607d1cf"
+   },
+   "trial-02-B": {
+    "completeImage": "frame-0019.jpg",
+    "sha256": "50a945fac2be6f8439e8ab852546a60cdc7836dce588904749db7f74141f2a75"
+   },
+   "trial-03-A": {
+    "completeImage": "frame-0025.jpg",
+    "sha256": "24cfd2e486f584da0e29ad80fa71dc6d4bbe171a57effa6a6bbfc7f5c1792af6"
+   },
+   "trial-04-B": {
+    "completeImage": "frame-0023.jpg",
+    "sha256": "3ffe5f7edd020f7055d98697bc84fab11c17ae8332dfcff1f1bf670aa1ce6699"
+   },
+   "trial-05-A": {
+    "completeImage": "frame-0026.jpg",
+    "sha256": "2f0d1d52136de0e0b92d163b29af613b724082bbaf84570e3f78018d9866ba95"
+   },
+   "trial-06-B": {
+    "completeImage": "frame-0020.jpg",
+    "sha256": "548b94cfe052b2bcf2b24e6cdb761be2e231a57fc32ab256277dfcc710b05bdf"
+   },
+   "trial-07-A": {
+    "completeImage": "frame-0027.jpg",
+    "sha256": "95c4b54359d077c3d7c980f465416532564d118568e5281c9b268769bd13c48d"
+   },
+   "trial-08-B": {
+    "completeImage": "frame-0019.jpg",
+    "sha256": "b5a3e69cb0c73f4c0db55084be1a71a0fef7a59645b2ab3ae6b2cebbbf57dd59"
+   },
+   "trial-09-A": {
+    "completeImage": "frame-0026.jpg",
+    "sha256": "adaf8d1b40795aead6aa8319ab8a326de955b0a3b6305e73ef5a6b4ce68421f0"
+   },
+   "trial-10-B": {
+    "completeImage": "frame-0021.jpg",
+    "sha256": "eb4d5211c2f030a0e31d31dcf8ce44b00209206af315fd6e9b4ed3663a2b736f"
+   },
+   "trial-11-A": {
+    "completeImage": "frame-0024.jpg",
+    "sha256": "0a913951a6882720ebea401eaa3b2602abd1254d73fa81b2ac6d50292e5594d2"
+   },
+   "trial-12-B": {
+    "completeImage": "frame-0024.jpg",
+    "sha256": "407c9f3f38bd044f34f21bef44fc3d83054c7828319b0099e944697ab55ead42"
+   },
+   "trial-13-A": {
+    "completeImage": "frame-0024.jpg",
+    "sha256": "88922a8898a767aeb16b3aec44fa6f01066ce8e3c79ca36624a6f45d9f2b7556"
+   },
+   "trial-14-B": {
+    "completeImage": "frame-0021.jpg",
+    "sha256": "fa1991bbe9d5d79b16c45e0f6bb0fb1c397828f41b55a95d34373306df93eb4e"
+   },
+   "trial-15-A": {
+    "completeImage": "frame-0025.jpg",
+    "sha256": "b8890065d4138099ba49107db9d4d82b91660ea3f73c9fa703dd09c4c0f02171"
+   },
+   "trial-16-B": {
+    "completeImage": "frame-0022.jpg",
+    "sha256": "b115e66e4080274b7f3a07e30dde1182f064ae9f3a7861f29223eb670a8deb15"
+   },
+   "trial-17-A": {
+    "completeImage": "frame-0027.jpg",
+    "sha256": "761fd5724d289165037fab6c877798634803751c2308c013a8b606a8e2a12350"
+   },
+   "trial-18-B": {
+    "completeImage": "frame-0024.jpg",
+    "sha256": "9ade5c77994cd00fb7950fd02f6e9d708f0544d5673385238101ca9807ea6e6b"
+   }
+  },
+  "v3": {
+   "trial-00-firstopen": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "593044b5f564175e8ce68c25f4a783f8a8adc589a926ebcabb9f7866f5b5a77e"
+   },
+   "trial-01-A": {
+    "completeImage": "frame-0034.jpg",
+    "sha256": "5bfa0a151ce3f324cee355cef7604f207740cc899420601f6d6c697088099b5d"
+   },
+   "trial-02-B": {
+    "completeImage": "frame-0028.jpg",
+    "sha256": "9d5aa0fd7cd6e716e182c70de287df0afad5468ed1879a7d28d0c35d3db5f32c"
+   },
+   "trial-03-A": {
+    "completeImage": "frame-0034.jpg",
+    "sha256": "3e1a6c569e1bb9b18b38ad1e8683377da2d2eb963e2271b4dd06894d7e17f9da"
+   },
+   "trial-04-B": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "031ab24040b94b1ad5b2aaf6e182410fcc39f39a2ec636599911c3665ce7aecd"
+   },
+   "trial-05-A": {
+    "completeImage": "frame-0033.jpg",
+    "sha256": "e10b465bb87cc10671abd7a9b016cf8d02ae5172725cf8cc0a12e6b0daa298a9"
+   },
+   "trial-06-B": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "387011de8b42b908892967840bfb976387ced8c8612d205709ef05a2bd02d300"
+   },
+   "trial-07-A": {
+    "completeImage": "frame-0033.jpg",
+    "sha256": "8bb4278fbe17de88c182c771c4f177da1daa5d9e7a2d99c29a17823a70db52e2"
+   },
+   "trial-08-B": {
+    "completeImage": "frame-0029.jpg",
+    "sha256": "990b1df993198f58cc61b5c32b48600200ec0dfabe20aa993a76c2e77de2e759"
+   },
+   "trial-09-A": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "0e78a944a29a97c5648adbab3a6874c045a03664466158510069a7b9edca0b03"
+   },
+   "trial-10-B": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "e41503d09384611419b6e927ae147cbcaf9ffb377422ef3e36e8097fc08e18eb"
+   },
+   "trial-11-A": {
+    "completeImage": "frame-0035.jpg",
+    "sha256": "0527d50e3f9a21057a99e510e960dbea68b9186c80078f2f86f94afc1f0fc0a2"
+   },
+   "trial-12-B": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "e0b06b29bca302c4aafe56a0f813d61efc403911bc146944daea29dd599eec1b"
+   },
+   "trial-13-A": {
+    "completeImage": "frame-0033.jpg",
+    "sha256": "7ca137c4dab1911b71a455df5ed038f80e530a697f50bcc9aa62aa2b786a4ed6"
+   },
+   "trial-14-B": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "fd9b562313c7c60c04d66f5913d58a289a84c3db4fd5334e716079fa7369a8d5"
+   },
+   "trial-15-A": {
+    "completeImage": "frame-0032.jpg",
+    "sha256": "ed9e3517cafdc139823e1ca35739995c7006865f966445e09fe45d7cf9a7d4e0"
+   },
+   "trial-16-B": {
+    "completeImage": "frame-0031.jpg",
+    "sha256": "ff304cb3972c55d57aa931c72a0b3ce9aa718b172dbb960d60e0698ef9a1dc51"
+   },
+   "trial-17-A": {
+    "completeImage": "frame-0034.jpg",
+    "sha256": "16a984402ea68afe9272ddbcfc5e3ef1ff57f8981b5e4823286432ceb74aef00"
+   },
+   "trial-18-B": {
+    "completeImage": "frame-0030.jpg",
+    "sha256": "76822cbb4ff58545452e00d82647369e367baa6fcac0272ee00827549cf45bc7"
+   }
+  }
+ },
+ "toolBinaries": {
+  "/private/tmp/resourcerunner-task005-boundary-pixel-diff": "161afe8e798f0da51579a318550ade10a1c1c92938499c0d18833f2f559c006e",
+  "/private/tmp/resourcerunner-task005-external-frame-probe-resume-r3": "56680d7f8ebcabedadd7c08f7210f6d28886fb944378b682ec6ef3fde0fc0ffe",
+  "/private/tmp/resourcerunner-task005-gui-state-resume": "6f00f83dbab6112f9773cf23bb80eb9b61fda00af6f338a45a12fcdaf0465858",
+  "/private/tmp/resourcerunner-task005-target-ax-probe-resume": "de9962d47bd1f437e83c8b6fa97418bb25eb4c4fbf439f615d1ac8494bb952b1",
+  "/private/tmp/resourcerunner-task005-target-event-probe-resume-r3": "0c92f3cf94baa9fbbcd451adeb81864e8f58ebd8896084e5e81ad1ffa7b72f4b",
+  "/private/tmp/resourcerunner-task008/content-match": "fac82edd0f9966a178cd9723de6e0ffca1e7ceaadfa9e32657f1ada364ae8f78",
+  "/private/tmp/resourcerunner-task008/montage": "c6e11f779bfc846debdc6d0a024d1ef8f7804e00fc9d2245c1701e8fb2c6c28b"
+ },
+ "tools": {
+  "tools/analyze_boundary.py": "b5deb58161fbdfc5c62828a45ba5606099e1d3c459117b2c734452196205fb32",
+  "tools/analyze_complete.py": "8deea383822dfb17e20a204151d949f3da0ec5f8a6a2afabce4b6221291e93a8",
+  "tools/boundary_driver.py": "fbe0dee1e61d323f154b78eccab99498f6ef55d23b43abe564ec3a8af31ad129",
+  "tools/content_match.swift": "96add9c5f83ea699bb3f6ddb0ce94ec2ea938b93cae9d1b2ba608a8348648220",
+  "tools/montage.swift": "81362112a1eba13c1d5b3da7846786f92a29ac3134fe87164d25cedb7fb476b8",
+  "tools/pixel_diff.swift": "308f325ef79a41cd23b0948004feb4568af665039c4cba5dff87865c008e6736",
+  "tools/profile_after_show.py": "9376321a1ad70aede6234c9bd7dd2b368e048416e52181d29dc46b22f5fc2345",
+  "tools/profile_by_open.py": "cd326d1fc0ffa51a9e42147b20efea4b37206d1226dbf93ced13b3430ea65eb4",
+  "tools/profile_show.py": "2cccf7955a928ab31028aff1641146ee291bee92f399232067b4205d709e4f76",
+  "tools/run_variant.py": "ffce62cf3b65f9fc4b4d97c2e69b1c7569703569f51a7279dddd43b5d44ee916"
+ },
+ "variants": {
+  "v0": {
+   "app": "/private/tmp/resourcerunner-task005-boundary-build/Build/Products/Release/ResourceRunner.app",
+   "build": "task-005 boundary-diagnostic input-manifest.json의 빌드 그대로 재사용",
+   "exeSHA256": "d742c68284aa7645eca6673859c4dff3d62278aaf958f30df34f1b827b53fe99",
+   "patchFromProduct": "variants/v0-instrumentation-from-task005.patch",
+   "source": "/private/tmp/resourcerunner-task005-boundary-src",
+   "statusBarControllerSHA256": "4dceab7fbb399308377eca5f5975ecf2a9cc42c8f0a87b17031c1e9f373fbb9e"
+  },
+  "v1": {
+   "app": "/private/tmp/resourcerunner-task008/build-v1-keephost/Build/Products/Release/ResourceRunner.app",
+   "buildCommand": "xcodebuild build -project ResourceRunnerTask005Boundary.xcodeproj -scheme ResourceRunner -configuration Release -destination platform=macOS -derivedDataPath /private/tmp/resourcerunner-task008/build-v1-keephost CODE_SIGNING_ALLOWED=YES",
+   "buildLog": "/private/tmp/resourcerunner-task008/build-v1-keephost.log",
+   "buildLogSHA256": "cf8955f89a6e9cd7c1724440e2afa8fee363265ec80d0b02f4a7a7a9527041bb",
+   "changedFile": "ResourceRunner/StatusBarController.swift",
+   "changedFileSHA256": "e37b450986f21b89e1f9676e4ebf0714baccb1e1849901173ffaebee0219eae2",
+   "exeSHA256": "8d447cfe91056d08abb06607986d2ea9c95e8a858acb864715c8e6d2fe682679",
+   "otherFilesIdenticalToV0": "diff -rq 결과 변경 파일 1개 외 차이 없음(evidence/docs 제외)",
+   "patchFromV0": "variants/v1-keephost.patch",
+   "patchSHA256": "0167fda1180653ff4f50314c1f89716f1d7fd14f4dc0a5f393f2eae725b45912",
+   "source": "/private/tmp/resourcerunner-task008/src-v1-keephost"
+  },
+  "v2": {
+   "app": "/private/tmp/resourcerunner-task008/build-v2-noanim/Build/Products/Release/ResourceRunner.app",
+   "buildCommand": "xcodebuild build -project ResourceRunnerTask005Boundary.xcodeproj -scheme ResourceRunner -configuration Release -destination platform=macOS -derivedDataPath /private/tmp/resourcerunner-task008/build-v2-noanim CODE_SIGNING_ALLOWED=YES",
+   "buildLog": "/private/tmp/resourcerunner-task008/build-v2-noanim.log",
+   "buildLogSHA256": "5d8af4638f1d75dcd020778cc823dff6a13af3d69c0e98b544617c48dc945f6c",
+   "changedFile": "ResourceRunner/StatusBarController.swift",
+   "changedFileSHA256": "69b6736348a8596e7bf97f78d480bbb3f149c6c3dd0e85f48a5fefa8882fad58",
+   "exeSHA256": "3d11996c103b214abeb5fdb05b5b3f913410c392c032a6feeeca14c237954b1b",
+   "otherFilesIdenticalToV0": "diff -rq 결과 변경 파일 1개 외 차이 없음(evidence/docs 제외)",
+   "patchFromV0": "variants/v2-noanim.patch",
+   "patchSHA256": "6f35e5ffdb58ae37e048cbb2d292a270bfe7a4b6118d00d8f4afd6e0ce5b1ac1",
+   "source": "/private/tmp/resourcerunner-task008/src-v2-noanim"
+  },
+  "v3": {
+   "app": "/private/tmp/resourcerunner-task008/build-v3-noshortcut/Build/Products/Release/ResourceRunner.app",
+   "buildCommand": "xcodebuild build -project ResourceRunnerTask005Boundary.xcodeproj -scheme ResourceRunner -configuration Release -destination platform=macOS -derivedDataPath /private/tmp/resourcerunner-task008/build-v3-noshortcut CODE_SIGNING_ALLOWED=YES",
+   "buildLog": "/private/tmp/resourcerunner-task008/build-v3-noshortcut.log",
+   "buildLogSHA256": "5e1c02734e7ee6d5b2d127dbb11d230aad833bc370e3e606fc24296a129b2854",
+   "changedFile": "ResourceRunner/DashboardView.swift",
+   "changedFileSHA256": "c99b14963f020c4f85662142c98f5151fac201e56aed4c6e1dc3835bc00656f6",
+   "exeSHA256": "e337b77b30afacd5f7776aca109429ec408d1aab60d22feac9fb873f5b3fd7c8",
+   "otherFilesIdenticalToV0": "diff -rq 결과 변경 파일 1개 외 차이 없음(evidence/docs 제외)",
+   "patchFromV0": "variants/v3-noshortcut.patch",
+   "patchSHA256": "637a953de48b1663c479c07f717d1faa643db564efda8833c76a7c86a5acc874",
+   "source": "/private/tmp/resourcerunner-task008/src-v3-noshortcut"
+  }
+ }
+}

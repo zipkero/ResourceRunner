@@ -296,6 +296,10 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
     private var workspaceTokens: [NSObjectProtocol] = []
     private var producer: CombinedSnapshotProducer?
     private var consumerTask: Task<Void, Never>?
+#if DEBUG
+    // 등록 중 callback의 실제 병합 순서를 시험에서만 읽습니다. 출력 stream의 버퍼 정책은 건드리지 않습니다.
+    var onAppliedSnapshot: ((SystemLifecycleSnapshot) -> Void)?
+#endif
 
     init(
         notificationCenter: NotificationCenter = .default,
@@ -373,9 +377,15 @@ final class SystemLifecycleObserver: SystemLifecycleSource {
 
         let producer = CombinedSnapshotProducer(initial: initial, continuation: updatesContinuation)
         self.producer = producer
+#if DEBUG
+        let onAppliedSnapshot = onAppliedSnapshot
+#endif
         consumerTask = Task { @MainActor in
             for await change in rawEvents {
                 producer.apply(change)
+#if DEBUG
+                onAppliedSnapshot?(producer.currentSnapshot)
+#endif
             }
         }
 

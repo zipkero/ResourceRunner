@@ -1,0 +1,38 @@
+--- /private/tmp/resourcerunner-task005-boundary-src/ResourceRunner/DashboardView.swift	2026-10-09 16:18:34
++++ /private/tmp/resourcerunner-task008/src-v3-noshortcut/ResourceRunner/DashboardView.swift	2026-10-11 21:52:26
+@@ -55,7 +55,7 @@
+                 .background(DashboardLowestAnchorCapture(viewport: viewport,
+                     card: .cpu, revision: store.preferencesSnapshot.revision,
+                     isLast: preferences.visibleCards.last == .cpu))
+-                .keyboardShortcut(DashboardView.cpuSelectionKey, modifiers: .command)
++                // task-008 V3: keyboardShortcut 제거(진단 전용)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.cpuCard.cpuAccessibilityLabel(
+                     timeRange: preferences.graphTimeRange,
+@@ -91,7 +91,7 @@
+                 .background(DashboardLowestAnchorCapture(viewport: viewport,
+                     card: .memory, revision: store.preferencesSnapshot.revision,
+                     isLast: preferences.visibleCards.last == .memory))
+-                .keyboardShortcut(DashboardView.memorySelectionKey, modifiers: .command)
++                // task-008 V3: keyboardShortcut 제거(진단 전용)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.memoryCard.memoryAccessibilityLabel(
+                     showsTopApplications: preferences.showsMemoryTopApplications))
+@@ -122,7 +122,7 @@
+                 .background(DashboardLowestAnchorCapture(viewport: viewport,
+                     card: .network, revision: store.preferencesSnapshot.revision,
+                     isLast: preferences.visibleCards.last == .network))
+-                .keyboardShortcut("3", modifiers: .command)
++                // task-008 V3: keyboardShortcut 제거(진단 전용)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.networkCard.accessibilityLabel + ", " +
+                     NetworkDisplayText.activeSummary(store.networkCard.interfaces) + ", 단축키 ⌘3")
+@@ -153,7 +153,7 @@
+                 .background(DashboardLowestAnchorCapture(viewport: viewport,
+                     card: .disk, revision: store.preferencesSnapshot.revision,
+                     isLast: preferences.visibleCards.last == .disk))
+-                .keyboardShortcut("4", modifiers: .command)
++                // task-008 V3: keyboardShortcut 제거(진단 전용)
+                 .accessibilityElement(children: .ignore)
+                 .accessibilityLabel(store.diskCard.accessibilityLabel(locale: locale) + ", " +
+                     DiskDisplayText.miniGraphAccessibility(presentation: store.diskCard,

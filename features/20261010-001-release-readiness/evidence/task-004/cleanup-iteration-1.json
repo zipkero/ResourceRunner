@@ -1,0 +1,15 @@
+{
+  "recordedAt": "2026-10-10T10:10:04.162489+00:00",
+  "terminatedAfterFormalAndProbe": {
+    "baselineDiagnosticPID": 7578,
+    "baselineWindowObserverPID": 8593,
+    "candidateDiagnosticPID": 45442,
+    "candidateWindowObserverPID": 45727,
+    "commonCaffeinatePID": 7998
+  },
+  "noneRemain": true,
+  "productionPID16136Present": true,
+  "productionExeSHA256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80",
+  "candidateDetailReopenSHA256": "2e23380015726a4ce0e9e0b532b08b944f47b35d2752e9af3188e9ede3e6ee28",
+  "notes": "Outside formal, candidate detail reopen returned body, as baseline did. No production process or settings change."
+}

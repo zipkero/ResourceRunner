@@ -1,0 +1,38 @@
+--- ResourceRunner.xcodeproj/project.pbxproj	2026-09-03 21:03:59
++++ ResourceRunnerTask005UITests.xcodeproj/project.pbxproj	2026-10-10 20:53:35
+@@ -428,7 +428,7 @@
+ 					"@executable_path/../Frameworks",
+ 				);
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005UITest;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				REGISTER_APP_GROUPS = YES;
+ 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+@@ -460,7 +460,7 @@
+ 					"@executable_path/../Frameworks",
+ 				);
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005UITest;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				REGISTER_APP_GROUPS = YES;
+ 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+@@ -520,7 +520,7 @@
+ 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunnerUITests;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005UITests;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+ 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+@@ -539,7 +539,7 @@
+ 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+ 				GENERATE_INFOPLIST_FILE = YES;
+ 				MARKETING_VERSION = 1.0;
+-				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunnerUITests;
++				PRODUCT_BUNDLE_IDENTIFIER = com.zipkero.ResourceRunner.Task005UITests;
+ 				PRODUCT_NAME = "$(TARGET_NAME)";
+ 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+ 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-10T10:32:33.704374+00:00",
+  "pid": 5757,
+  "startLstart": "Sat Oct 10 19:32:18 2026",
+  "launchEpochConservative": 1791628339.0,
+  "exe": "/private/tmp/resourcerunner-task004-perf-diagnostic-r3.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "cd5c4a1fbfddfa14fcf4c63c613405ce34cf9609cb1f114f4755e39b542d9768",
+  "windowObserverSession": 57152,
+  "commonCaffeinateSession": 60729,
+  "commonCaffeinatePID": 90920,
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "hardware": "Mac15,11 / Apple M3 Max / 36GB",
+    "power": "AC attached; 80% at preflight",
+    "appearance": "Dark",
+    "installedProductionPID": 16136,
+    "userInteraction": "Quiet period ended 19:10 KST; current Mac use unknown, main optional question pending; diagnostic icon excluded"
+  },
+  "comparison": "Original baseline 3 valid runs unchanged original exe/tools/settings/config; original arm prior use unknown, new arm current use unknown; validity from raw",
+  "previousPreflight": "r2 executable path string mismatch, r3 observer start abandoned; fresh PID and protocol"
+}

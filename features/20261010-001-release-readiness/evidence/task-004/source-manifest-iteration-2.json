@@ -1,0 +1,48 @@
+{
+  "base": "/tmp/resourcerunner-task001-frozen",
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "files": {
+    "ResourceRunner/ApplicationCoordinator.swift": {
+      "before_sha256": "0858e6d5cccba764a278aa831c8f3f9195a19513e631cf4d055bc9aad8c478e6",
+      "after_sha256": "0c8f1f555e36a6f7e66b8a6cd9005081418af192a50126f1498845fa8c448c7a",
+      "added_lines": 1,
+      "removed_lines": 0
+    },
+    "ResourceRunner/StatusBarController.swift": {
+      "before_sha256": "87c5000fce7e9b890b99a6c52aa3c226bbd71b29b2cfff84e53d67338e2dc856",
+      "after_sha256": "661fe5ff120f44f64c3e241bbe9288a57cda66bb168145a69bb9762468a9820f",
+      "added_lines": 36,
+      "removed_lines": 10
+    },
+    "ResourceRunner/DashboardViewport.swift": {
+      "before_sha256": "3c42cef1bcf1785d1cc9a60e4b1e8c324531fcd7fee274a29a8174ce64ec150d",
+      "after_sha256": "7b66e2fe1a3058e5856d59f48a3361a25e6d5587f4f66638e4b90c7176b42da9",
+      "added_lines": 41,
+      "removed_lines": 8
+    },
+    "ResourceRunner/DashboardPresentationStore.swift": {
+      "before_sha256": "fde32f7a651bea45a7e808a51901d04df249c9e787c5d386283bafaa7e2a97db",
+      "after_sha256": "d4cb444e6f94cdd6d96234bfa75a39d9ae4eeb2a3a6d33fded752e736c0ee897",
+      "added_lines": 9,
+      "removed_lines": 3
+    },
+    "ResourceRunnerTests/StatusBarControllerTests.swift": {
+      "before_sha256": "60b38500479387ed9343f82445b5268113ba5696f80c13f84182a58a3283623e",
+      "after_sha256": "7e6b0957221e562d6e2d4ebf5c9e293228a1b88344bafa9861116602bd65396c",
+      "added_lines": 74,
+      "removed_lines": 27
+    },
+    "ResourceRunnerTests/DashboardViewportTests.swift": {
+      "before_sha256": "fdd00b63d8e6014d102a3b20c2e36b6d52f35e6580734d791e83721a1e4121b4",
+      "after_sha256": "3643df05479e5979a61594668c799a1df36cc491c0fe282c3c7d3d78ce3201b8",
+      "added_lines": 88,
+      "removed_lines": 12
+    },
+    "ResourceRunnerTests/DashboardPresentationTests.swift": {
+      "before_sha256": "97cb558fd2355bed4259ee387402e6cb59ded922be18c5b4eae479131f05146e",
+      "after_sha256": "52457c0ec7efd93a0a714670c60d7f1e55c7ecb2c527b82c7aef091e631cec6c",
+      "added_lines": 19,
+      "removed_lines": 0
+    }
+  }
+}

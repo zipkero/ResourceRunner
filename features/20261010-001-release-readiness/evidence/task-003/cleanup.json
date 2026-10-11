@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-10T08:51:04.976004+00:00",
+  "processes": [
+    {
+      "pid": 13523,
+      "running": false,
+      "ps": ""
+    },
+    {
+      "pid": 49148,
+      "running": false,
+      "ps": ""
+    },
+    {
+      "pid": 13679,
+      "running": false,
+      "ps": ""
+    },
+    {
+      "pid": 49504,
+      "running": false,
+      "ps": ""
+    },
+    {
+      "pid": 90478,
+      "running": false,
+      "ps": ""
+    },
+    {
+      "pid": 16136,
+      "running": true,
+      "ps": "16136 Fri Oct  9 16:28:46 2026     /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner"
+    }
+  ],
+  "scope": "temporary diagnostics and caffeinate stopped; production preserved"
+}

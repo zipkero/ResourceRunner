@@ -1,0 +1,182 @@
+{
+  "baseline": [
+    {
+      "name": "closed-r1-a1",
+      "hashes": {
+        "raw": "b92805d6f6ca33d7d6d35a795668492f7db284b12c3390147783157e4c362347",
+        "ax": "810d2193e1255eac590be0378c470fd6e9c2ce3159d85c885a44725b86266d84",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "fa6cda5292e3e0f20098f79ebaf4cbaf6826ec73a6c08552ab5cb811bcace5f7"
+      },
+      "pid": 13523,
+      "startTicks": 28501710513243,
+      "exePath": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 3.2901237988644025,
+      "rssMaximumBytes": 144162816,
+      "footprintMinimumBytes": 282592240,
+      "footprintMedianBytes": 417285104,
+      "footprintMaximumBytes": 424084464,
+      "footprintOver400MBCount": 168,
+      "lifetimeMaximumFootprintBytes": 431588336,
+      "maximumScheduleDelayMS": 10.015791,
+      "axObservations": 59,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r2-a1",
+      "hashes": {
+        "raw": "6a4ed28876163318f65b3b52b56a02979fc6e8d5d9c7fe11a82cea50cbb6f928",
+        "ax": "2eb64cca861faed211b200f4a4953c91e84e5baa80c1f39bffb47257b1cbbfd7",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "48e5943e9345f8bc4d584ff3333a9aa6f08cfbd39e64ed415e9cc143ec68bef5"
+      },
+      "pid": 13523,
+      "startTicks": 28501710513243,
+      "exePath": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 3.60097505487394,
+      "rssMaximumBytes": 144982016,
+      "footprintMinimumBytes": 283280368,
+      "footprintMedianBytes": 421315568,
+      "footprintMaximumBytes": 424543216,
+      "footprintOver400MBCount": 190,
+      "lifetimeMaximumFootprintBytes": 441435120,
+      "maximumScheduleDelayMS": 10.04375,
+      "axObservations": 59,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r3-a1",
+      "hashes": {
+        "raw": "bf5be622d7d4facc8c1415638eef697bf21f99b37ba4588aec043f4b69d27d09",
+        "ax": "c569b0876f44b07a7f870297fd2e38f8c4d5f3f17e60527ff49c1bcb4c4c338b",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "516bc01c67ba88e474aee9ded68e19b27f7965dc4cf02b7d13efd552be3a5000"
+      },
+      "pid": 13523,
+      "startTicks": 28501710513243,
+      "exePath": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 5.832998106111379,
+      "rssMaximumBytes": 144605184,
+      "footprintMinimumBytes": 275235824,
+      "footprintMedianBytes": 279020528,
+      "footprintMaximumBytes": 422560752,
+      "footprintOver400MBCount": 69,
+      "lifetimeMaximumFootprintBytes": 441435120,
+      "maximumScheduleDelayMS": 10.054083,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    }
+  ],
+  "candidate": [
+    {
+      "name": "closed-r1-a1",
+      "hashes": {
+        "raw": "5655d273bbdb8ca5b46c58a25f43c71de042dabfa260c1449133bc9917cd8908",
+        "ax": "2537797d05ce8c7786c2622b52463246b7ceaaa8b1151ef346b6d4942c1483fe",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "cc1f28e61a7ea4f32cd5ee35f6443ffea28ccd8fe9d364fcb5f148dfe0ae1029"
+      },
+      "pid": 49148,
+      "startTicks": 28541183008342,
+      "exePath": "/private/tmp/resourcerunner-task003-hosting-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 2.200814016808193,
+      "rssMaximumBytes": 140361728,
+      "footprintMinimumBytes": 62571504,
+      "footprintMedianBytes": 62718960,
+      "footprintMaximumBytes": 62800880,
+      "footprintOver400MBCount": 0,
+      "lifetimeMaximumFootprintBytes": 296190960,
+      "maximumScheduleDelayMS": 10.062125,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r2-a1",
+      "hashes": {
+        "raw": "9d3c3937fd65f88fcd69426ede8c72b44105323a1c44999905e9f13ba90fb48b",
+        "ax": "dfa77a2781366b617a3b1add6f16f7a32291db0c3d5e861df74e691e1308137f",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "8ea357e330cb1a08a2eaa5fdeaedbfe74388cd28728ee97e89c05acb97651dee"
+      },
+      "pid": 49148,
+      "startTicks": 28541183008342,
+      "exePath": "/private/tmp/resourcerunner-task003-hosting-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 2.1037779348558794,
+      "rssMaximumBytes": 140410880,
+      "footprintMinimumBytes": 62735344,
+      "footprintMedianBytes": 62735344,
+      "footprintMaximumBytes": 62817264,
+      "footprintOver400MBCount": 0,
+      "lifetimeMaximumFootprintBytes": 296190960,
+      "maximumScheduleDelayMS": 10.057459,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r3-a1",
+      "hashes": {
+        "raw": "4e45e442b37a654ac540c8fa461d210227e8a607bbeb7a5efe23375aad93fdc7",
+        "ax": "de1cd5cb7beddc0d43c3f92f21eba5c7622b5346741b5c49807a810e55fac064",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "24116e061ee7a6c399c5efeb2168c94193e6992dea7aa76466ee765ef2ff4a84"
+      },
+      "pid": 49148,
+      "startTicks": 28541183008342,
+      "exePath": "/private/tmp/resourcerunner-task003-hosting-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 2.2755047844212246,
+      "rssMaximumBytes": 140509184,
+      "footprintMinimumBytes": 62800880,
+      "footprintMedianBytes": 62882800,
+      "footprintMaximumBytes": 62931952,
+      "footprintOver400MBCount": 0,
+      "lifetimeMaximumFootprintBytes": 296190960,
+      "maximumScheduleDelayMS": 10.061958,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    }
+  ],
+  "pairs": [
+    {
+      "repeat": 1,
+      "cpuReductionPercentagePoints": 1.0893097820562097,
+      "footprintMaximumReductionBytes": 361283584,
+      "footprintMedianReductionBytes": 354566144,
+      "rssMaximumReductionBytes": 3801088
+    },
+    {
+      "repeat": 2,
+      "cpuReductionPercentagePoints": 1.4971971200180607,
+      "footprintMaximumReductionBytes": 361725952,
+      "footprintMedianReductionBytes": 358580224,
+      "rssMaximumReductionBytes": 4571136
+    },
+    {
+      "repeat": 3,
+      "cpuReductionPercentagePoints": 3.5574933216901545,
+      "footprintMaximumReductionBytes": 359628800,
+      "footprintMedianReductionBytes": 216137728,
+      "rssMaximumReductionBytes": 4096000
+    }
+  ],
+  "baselineCpuRunRangePercentagePoints": 2.5428743072469766,
+  "baselineFootprintMaximumRunRangeBytes": 1982464,
+  "allValid": true
+}

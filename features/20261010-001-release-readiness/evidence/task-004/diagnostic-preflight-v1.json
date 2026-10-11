@@ -1,0 +1,109 @@
+{
+  "recordedAt": "2026-10-10T09:11:38.328822+00:00",
+  "cwd": "/Users/zipkero/XcodeProjects/ResourceRunner",
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "bundleID": "com.zipkero.ResourceRunner.PerfDiagnostic",
+  "settingsCanonicalSHA256FromTask003": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+  "diagnosticBundleDifferenceFromOriginal": [
+    "Contents/MacOS/ResourceRunner"
+  ],
+  "sign": "ad hoc; codesign --verify --strict passed; displayed entitlements equal to original",
+  "files": {
+    "originalExe": {
+      "path": "/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5676080,
+      "sha256": "d549f7fd7ac53cb819419f2b39ed2205aaea3254db67ae19a16530030d4528c0"
+    },
+    "productReleaseExe": {
+      "path": "/tmp/resourcerunner-task004-release/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5741360,
+      "sha256": "08274e6e798e00a5892d99bc0d4627de7b7518b6a152b8893e15f57c054c6e37"
+    },
+    "diagnosticExe": {
+      "path": "/tmp/resourcerunner-task004-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5726800,
+      "sha256": "c7fcc8fbc268a092e9e1ff9f0f889702a72eae072686144b9437941e64f816ce"
+    },
+    "diagnosticInfo": {
+      "path": "/tmp/resourcerunner-task004-perf-diagnostic.app/Contents/Info.plist",
+      "bytes": 1343,
+      "sha256": "c27de674f660d223c9b9f3993b6b48b0194f6cfac54e9b3d479e450c970ad018"
+    },
+    "entitlementsSource": {
+      "path": "/tmp/resourcerunner-task001-entitlements.plist",
+      "bytes": 349,
+      "sha256": "011c5f9b798c9b8f9a0a08252211f893dd033bf133d0d017e795872585057155"
+    },
+    "settingsPlist": {
+      "path": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "bytes": 410,
+      "sha256": "a50883949d479d01d31166f524d093adf9bf3a842772cbb8c95602a1537411b4"
+    },
+    "sourcePatch": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/product-source.patch",
+      "bytes": 18372,
+      "sha256": "6cb8ce346fc8b04d106c1d49628feb2fcc7bea47e4673402d135840986c1197a"
+    },
+    "sourceManifest": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/source-manifest.json",
+      "bytes": 1586,
+      "sha256": "2ba33be6ed00f1c33fa03d906cd8376a8be01d41bc404623674c78bb64254dde"
+    },
+    "xcresultInfo": {
+      "path": "/tmp/resourcerunner-task004-tests-r5.xcresult/Info.plist",
+      "bytes": 715,
+      "sha256": "3410c89a30f8647d94d07ba9f73d6d07e00ec4afeb4d96b4732befeb1604f1b4"
+    },
+    "releaseBuildLog": {
+      "path": "/tmp/resourcerunner-task004-release-r2.log",
+      "bytes": 52256,
+      "sha256": "66ab9cfd0e9276c5c7cd56341aa10f4624d15b3d4b4d463458d01d14c7dcd741"
+    },
+    "orchestrator": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/orchestrate_closed_after_open.py",
+      "bytes": 10360,
+      "sha256": "18b70990edd619ce62a3e58cf440a69841efd4c1f6711ef3d3dbbd401f6d553b"
+    },
+    "measureSource": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/measure.swift",
+      "bytes": 12796,
+      "sha256": "73a8ab6c70d42a66b80290aea84a3de1592454f5c72b581d36afe39105d39cd5"
+    },
+    "measureBinary": {
+      "path": "/tmp/resourcerunner-task001-measure",
+      "bytes": 147648,
+      "sha256": "572a50580d439845f93d97cc3b9562b959d8632f0349a70591b44d57beb921d4"
+    },
+    "analyze": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/analyze.py",
+      "bytes": 4817,
+      "sha256": "4d9b0b81fc930f19ed9300affef60e5a162728c855ade07895c2ba07c5ca154b"
+    },
+    "guiSource": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/gui_state.swift",
+      "bytes": 7036,
+      "sha256": "2de79b3dfbe7e65e5a2829a9986e85658a397d61ad6b9342a421d6dc6a42ae39"
+    },
+    "guiBinary": {
+      "path": "/tmp/resourcerunner-task002-gui-state",
+      "bytes": 86304,
+      "sha256": "087f8cda1961bb6fc9fd3b6935da5ea49b411a6d82c21a2ea59979ebdfa04ded"
+    },
+    "observerSource": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/window_observer.swift",
+      "bytes": 2297,
+      "sha256": "5bb4f6889367ce50356552529e1c2a847c201ad36967ccb317791a2e86545651"
+    },
+    "observerBinary": {
+      "path": "/tmp/resourcerunner-task003-window-observer",
+      "bytes": 89832,
+      "sha256": "ac7561b2e615323430ddfdc19aca93b280998e5ad7bd1536ff6f7a4728befae6"
+    },
+    "installedExe": {
+      "path": "/Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5705312,
+      "sha256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80"
+    }
+  },
+  "measurementStatus": "prepared; no GUI or cohort started at manifest creation"
+}

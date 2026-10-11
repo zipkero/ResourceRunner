@@ -1,0 +1,22 @@
+{
+  "recordedAt": "2026-10-10T11:00:38.193266+00:00",
+  "terminatedDiagnosticAndHelpers": [
+    7578,
+    8593,
+    45442,
+    45727,
+    7998,
+    91186,
+    91444,
+    5381,
+    5757,
+    5902,
+    18048,
+    90920
+  ],
+  "noneRemain": true,
+  "productionPID16136Present": true,
+  "productionExeSHA256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80",
+  "repairCandidateDetailReopenSHA256": "27ff23c65dfd42186875075e7e71ad6057303bcdb786af3717e728a6e7582640",
+  "notes": "Outside formal, repair candidate detail reopen returned body, as baseline did. Earlier attempt directories are preserved; no production process or settings change."
+}

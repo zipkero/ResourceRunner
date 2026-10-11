@@ -1,0 +1,436 @@
+{
+  "evidenceFiles": {
+    "features/20261010-001-release-readiness/evidence/task-005/README.md": {
+      "bytes": 12607,
+      "sha256": "b005bce5d635c11ca2cbbeb71a79e226e50bcc9344dfd31ccb81662ea698fbd3"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/isolated-ui-project.patch": {
+      "bytes": 1630,
+      "sha256": "b5a88f6907609e4513f3eb8738a4b26b8d62acc9d92ef9ab471cf41ee2edd02c"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/ax.jsonl": {
+      "bytes": 189957,
+      "sha256": "23025947b1e89d7205601cb2c810b84ff2d1b77a0846377bd58bd143cd498ebc"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/ax.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/ax.stdout": {
+      "bytes": 17,
+      "sha256": "22eeddf14ac5ac5fee41134d70d7072107237de58b35a4d1db84310ae5bd1f54"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0155.jpg": {
+      "bytes": 881,
+      "sha256": "5e6a6c4a2a54abc3107558ff1866e0d9e40335cb936b921f0e58de6675720efe"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0156.jpg": {
+      "bytes": 1200,
+      "sha256": "017235ecf601dbd99b1f0c7d041709bda2871f7d6acd6397ce300291fa571679"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0157.jpg": {
+      "bytes": 1719,
+      "sha256": "6ed4cdb7a3ce7a2fa7841b8aba7757b8c3fb742ba3ec00e34545118968f03145"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0158.jpg": {
+      "bytes": 2458,
+      "sha256": "edb42fb000265032a075102b506d9535b042f5e2fb1d61b23dbd3588ee70388e"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0159.jpg": {
+      "bytes": 3460,
+      "sha256": "eafe083489d59f0c4230f8d4d28fc5c954e25483c58e2243d257647387df1265"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0160.jpg": {
+      "bytes": 4742,
+      "sha256": "e86d6ee524e172f498ab918bba15ebec9985accdaf42a7373a0e0ca49c90e4f9"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0161.jpg": {
+      "bytes": 8878,
+      "sha256": "b869df8c372c94fbb8f3e1c178a797bad969a3a91332d6cd58fba1323ba3b2dd"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0162.jpg": {
+      "bytes": 11216,
+      "sha256": "eff6288bc131938ad7f2969c327644cecf5ef65b7e9a55c6aa964b4d00ea63f7"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0163.jpg": {
+      "bytes": 14381,
+      "sha256": "010178aaf2145354b412d83e5094161dc32ee05ebde57aa0e08b6a14ae797e50"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0164.jpg": {
+      "bytes": 16092,
+      "sha256": "2e7d226a6a6b63009da59d4eefbf0009b6d634960613fd55b6ff7d6949425ddd"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0165.jpg": {
+      "bytes": 18768,
+      "sha256": "dc09bde968e0a77c770bf3d99e093a0dc8948c6b0c72cf0090b6e070bcab95e9"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0166.jpg": {
+      "bytes": 21094,
+      "sha256": "b3bb01d4a5f129703357fbd6c45c78de757f6c03daeadaae0b83ebb5a126e4ff"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0167.jpg": {
+      "bytes": 22773,
+      "sha256": "a5b1ec84ef4a960106b650937ab8587424de4ac934b738c94e87c2f45c3a5874"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0168.jpg": {
+      "bytes": 24862,
+      "sha256": "e39c72c46997b75087048e6a3139c73906ceebfba95f1dc514ae9d7155357f40"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0169.jpg": {
+      "bytes": 25656,
+      "sha256": "873c18fc4ce55945a7ff12e6d63836b4537038fa11610e4fe19bb0829062ce31"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0170.jpg": {
+      "bytes": 26256,
+      "sha256": "cc774e074b82a4be66d372a61d5350ca3729fab2c2e605a66ecb9005b58f676b"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0171.jpg": {
+      "bytes": 28168,
+      "sha256": "2c7dfb36e4c58ac1c33fdaf0737b27e3934a0068ef9d449b4644d9e6a02c0ee6"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0172.jpg": {
+      "bytes": 29033,
+      "sha256": "3fd47d0d877bdb916a55ceec54b66c3e86cdffd632107032ada750e9716c7687"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0173.jpg": {
+      "bytes": 30141,
+      "sha256": "b29ff539be71ea85cab7a7325c0ac48c99592e9cbf22b55424847f0422478b7a"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0174.jpg": {
+      "bytes": 29619,
+      "sha256": "c8f6beaf730fb64496db9d48aa7a6fc4a99a0a93b6930f7fbcf312600beb90c5"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0175.jpg": {
+      "bytes": 31035,
+      "sha256": "92eaf1ffe20437e9490378e808a7922c8a621e0e3674802a0adb29dbf9f476e4"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0176.jpg": {
+      "bytes": 31522,
+      "sha256": "ebd8d602bb54e59c42bca407870f73b8fddadf710f49b3625e9ce8805b3ba0d9"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0177.jpg": {
+      "bytes": 31183,
+      "sha256": "d8a1fd27cb659e6c91dd4e701e0f42055f4688b86af28d896c3743788d864fcc"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0178.jpg": {
+      "bytes": 31208,
+      "sha256": "9322a0dc2130333c27cca6cca20a4036464a09ad9bff9efeba794c9da76bbad1"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0179.jpg": {
+      "bytes": 31545,
+      "sha256": "cf09dc9e7430688efef964dc5572a163c7680e5977a4bef5cdbb62fcf842ca02"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0180.jpg": {
+      "bytes": 32055,
+      "sha256": "10d5ae1983fcc9ba5d9b6f08ab63ca6fec356458b6817e2b44c19a8468c9d4f6"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0181.jpg": {
+      "bytes": 32368,
+      "sha256": "b27921115d2f6cb9a94dedc05299017011d7506efb793a25bca0393bf251be25"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0182.jpg": {
+      "bytes": 32301,
+      "sha256": "4f2650aededa4c80ca1e98114dacd8c5f48c2355d8bb8988ad1a7401bd6d2bdd"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0183.jpg": {
+      "bytes": 32360,
+      "sha256": "23c5babf838d99ada3957179211bcebc4730f3f613590f7ed0e119d1e5595bb1"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0184.jpg": {
+      "bytes": 32059,
+      "sha256": "aca6a574a8cf5b32ae12e650b2f08373f57806aaa38b88be93e3e797c45a59e7"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0185.jpg": {
+      "bytes": 31656,
+      "sha256": "49598832bb568080c03d06a2e1ffef872d259e04b8bd085b86c8841e5f0f7ab2"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0186.jpg": {
+      "bytes": 31414,
+      "sha256": "547d1439e9d323fbc90db4c1268d319106fce18c2e93b342f4b49f0d587266d4"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0187.jpg": {
+      "bytes": 31097,
+      "sha256": "81cdd9891bee4f4602c162e14d9ca83a5d05a21ecbd8d3096cfaf40df023f006"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0188.jpg": {
+      "bytes": 31217,
+      "sha256": "9283288fd602f3b5957af4104b5c6c3309412122a7fd5dbb47c193e4456e3941"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0189.jpg": {
+      "bytes": 30813,
+      "sha256": "12866ef81185fffd3a1097c8a7d9591c4ab5c7ab6c587ad939549a28dcc31070"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0190.jpg": {
+      "bytes": 30861,
+      "sha256": "ffc6b2e5fd3e371afde39f57afec692c2333870df8a95ec3ea4074b30c21d005"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0191.jpg": {
+      "bytes": 31115,
+      "sha256": "53108eee2e7aa2df39c0d21a2224bda152f6109523646daa84f97f8073769606"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0192.jpg": {
+      "bytes": 31115,
+      "sha256": "53108eee2e7aa2df39c0d21a2224bda152f6109523646daa84f97f8073769606"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0193.jpg": {
+      "bytes": 30742,
+      "sha256": "58b271aa5389eeb885870c01628b4f12e1a05a8c030a97b38e304dbf8f8e7a87"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0194.jpg": {
+      "bytes": 31025,
+      "sha256": "40f63944b140502e559bd8bd5a4dc073275fb42eac28424fe9efae46620c0189"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0195.jpg": {
+      "bytes": 31298,
+      "sha256": "8cb0dc6c59df90f7200f49528900e4ceaa9006ce0feacda866994952d8636c89"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0196.jpg": {
+      "bytes": 31296,
+      "sha256": "45ad16acc5dad132df327fed3791fd721a4abd4dac1251a7bd29f15a5e498e98"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0197.jpg": {
+      "bytes": 31658,
+      "sha256": "bdbf1aa36fa3f22f12cdf5d27b91f08a983b4dd3367b25765e4ab47763b1b049"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0198.jpg": {
+      "bytes": 31752,
+      "sha256": "9c67268a9c3744e9920d80a4436adb1b92f5197bb7bbd6e72fae2e49f5ece6e4"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0199.jpg": {
+      "bytes": 31732,
+      "sha256": "9d1d06955b4f43ff6d866a55533c9db4d8e7f715eefd80def852bbc8c3ae3133"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0200.jpg": {
+      "bytes": 31663,
+      "sha256": "d94cc8df2b4b491da5b2ec6b6060165f3b28add3f7356be64dd60471f9acfd59"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0201.jpg": {
+      "bytes": 31691,
+      "sha256": "47f975eb919d8d5ffb00f2f7e5f1d26f689b0b86a51f4eebb34d744ccf8283d3"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frame-0202.jpg": {
+      "bytes": 31740,
+      "sha256": "157d31d276089efe91e6464b120542fcff9aec07cc0a5460368b54447e10cac2"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/capture/frames.jsonl": {
+      "bytes": 244365,
+      "sha256": "0ab6e0604d0b97a30fe7f208a9b5e869e6ff4b0050b0ac5283e122b5b59a0c7a"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/close.json": {
+      "bytes": 167,
+      "sha256": "e414ccb01243e076bdcefb0df82102f50a60b6e8a76604275b73b430751c0035"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/close.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/event.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/event.stdout": {
+      "bytes": 11,
+      "sha256": "e2822070e8d3092e1d8964b47487aa7b7559f939b190f3aed0a845b90821a7cb"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/events.jsonl": {
+      "bytes": 194,
+      "sha256": "6cbdfda4f56dc2c536bae99803557aa8fb7ad37324f5cf8290adc27a68c9efaa"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/frame.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/frame.stdout": {
+      "bytes": 35,
+      "sha256": "bbe24bf472ecd7c238b9321f24910fa8a7544c724807dd5da2a1de6d7acf2f4c"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/open.json": {
+      "bytes": 1734,
+      "sha256": "6e0b00c701d851b46132c88d1edd3b9066738c011c390b7c007f2c8d4ac22123"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight-2/open.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0150.jpg": {
+      "bytes": 30772,
+      "sha256": "d366cadc1903a4803024fc53456195419a30683ccd58823ed04c8e38bd301c40"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0151.jpg": {
+      "bytes": 32393,
+      "sha256": "08c21dd67c4e98a86736da0bf4f01fb43daeb8e84147e3c9a8d462bb8719bb1b"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0152.jpg": {
+      "bytes": 37034,
+      "sha256": "e557cb4e4c08353aa866edfebae8f30c0190c1afdd0654ce9b4c349607f1abde"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0153.jpg": {
+      "bytes": 36480,
+      "sha256": "b4ecbbf37a84898f78e4ed93a30659348f56542de7d9e36fb0085c797975b92e"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0154.jpg": {
+      "bytes": 36310,
+      "sha256": "b5dc319a291460c9206a8ec88d665c1ee15bd8816833ab12f9f2c76891f02f9b"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0155.jpg": {
+      "bytes": 36226,
+      "sha256": "1e56878b8bbde8407293259f2b22de0ae0db50a6c927d6509ffc333541f709db"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0156.jpg": {
+      "bytes": 35602,
+      "sha256": "9cf1afa6d20e718223d3ae07fcc496dd07a797ada1a34d0c81f82dfacadbffa1"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0157.jpg": {
+      "bytes": 32060,
+      "sha256": "676b9e4429f448ea981b30a551df46f490770333ada85a21e6ec76da421f773f"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0158.jpg": {
+      "bytes": 32305,
+      "sha256": "072fcf81c064b7fcbe055ce11ea6723add47461f3654dd2b1c5cac1e74409c86"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0159.jpg": {
+      "bytes": 32329,
+      "sha256": "7939ea8ba6f63db72531c79c4f0e697936ee6a1d3cc1ace523974f5eed17fe51"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0160.jpg": {
+      "bytes": 28427,
+      "sha256": "9a0b713eef7aaa88bc23054e543792448686b06dbd181077cea2f54f28541c11"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frame-0161.jpg": {
+      "bytes": 28462,
+      "sha256": "3469fba7c003b983ab7093b6f9e4b4fd65c7a3f4e921f351c7eb275e090f97de"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/capture/frames.jsonl": {
+      "bytes": 159220,
+      "sha256": "d0404207728a0b09b6acb0595d4c9c818917f6414a85c11c3cfcb6cabcfa3dff"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/close.json": {
+      "bytes": 167,
+      "sha256": "e414ccb01243e076bdcefb0df82102f50a60b6e8a76604275b73b430751c0035"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/close.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/event.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/event.stdout": {
+      "bytes": 11,
+      "sha256": "e2822070e8d3092e1d8964b47487aa7b7559f939b190f3aed0a845b90821a7cb"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/events.jsonl": {
+      "bytes": 194,
+      "sha256": "772a8b93edd8f12352f646c255b6024f07a86c572e00564348a024dc4c9a1ac8"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/frame.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/frame.stdout": {
+      "bytes": 34,
+      "sha256": "722da8ede0f3367090bec5e8bd6575cf9196f7e56f828d4bcbc79b36e82de9cd"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/open.json": {
+      "bytes": 1739,
+      "sha256": "dc00f03104caca2495ac7d3d69c9984c29789198ffb301dde68a4b931314e73a"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/preflight/open.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/ui-automation-mode.log": {
+      "bytes": 440,
+      "sha256": "ffbffedeacd28a7216841d6c6ce8c2bb4bdb173248bf6fd9f4bdf14194e7ac46"
+    },
+    "features/20261010-001-release-readiness/evidence/task-005/ui-source-manifest.json": {
+      "bytes": 15948,
+      "sha256": "85fc5d6b3091cfc9702f9ade9301a0180812f9efb5f424f0975a4df09a82d80a"
+    }
+  },
+  "externalArtifacts": {
+    "axProbeBinary": {
+      "bytes": 82424,
+      "path": "/private/tmp/resourcerunner-task005-target-ax-probe",
+      "sha256": "6944a8384fa1bf03f4154c499020b93036ab41e01b408b929a41baa5e0269e08"
+    },
+    "debugBuildLog": {
+      "bytes": 86980,
+      "path": "/private/tmp/resourcerunner-task005-debug.log",
+      "sha256": "0013bec21600f286ab4a7ce596fc839b8d5179557a65c9397e8a6574c2e4f6b1"
+    },
+    "eventProbeBinary": {
+      "bytes": 65640,
+      "path": "/private/tmp/resourcerunner-task005-target-event-probe",
+      "sha256": "14dda8d8b518f44255b37e1b638d586170d1551a8f9a0f6aa74ded9fdcb483dc"
+    },
+    "frameProbeBinary": {
+      "bytes": 151432,
+      "path": "/private/tmp/resourcerunner-task005-external-frame-probe",
+      "sha256": "5e870e6f30efa268287c0ea6673caff0a5df544b98e248dd17b4f5226203c79a"
+    },
+    "installedExecutable": {
+      "bytes": 5705312,
+      "path": "/Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "sha256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80"
+    },
+    "releaseBuildLog": {
+      "bytes": 80843,
+      "path": "/private/tmp/resourcerunner-task005-release.log",
+      "sha256": "844c33b80504d112fb9e5af40eb6ad14e27eb9816686d8c2d06e0a45773a3fdf"
+    },
+    "releaseExecutable": {
+      "bytes": 5742096,
+      "path": "/private/tmp/resourcerunner-task005-release/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "sha256": "0b6ae93b24a6174aca192a22e754289de68dfcc14329b45ddfe6c907d4872c89"
+    },
+    "statusSerialResult": {
+      "bytes": 715,
+      "path": "/private/tmp/resourcerunner-task005-status-serial.xcresult/Info.plist",
+      "sha256": "ae13687556477b7b5f7ee546655b1e03db868baf45771743cdf289dea399ba9d"
+    },
+    "uiSignedSmokeLog": {
+      "bytes": 326689,
+      "path": "/private/tmp/resourcerunner-task005-ui-signed-smoke.log",
+      "sha256": "eb2dd72e668a630bd95d92940ac64c866f424d6f4109e6415623e1e44d805414"
+    },
+    "uiUnsignedLog": {
+      "bytes": 300505,
+      "path": "/private/tmp/resourcerunner-task005-ui.log",
+      "sha256": "19a5296e1c96a0c31f30b475e13db8c600308be1741692e5d70336d99a43510a"
+    },
+    "unitInitialLog": {
+      "bytes": 474085,
+      "path": "/private/tmp/resourcerunner-task005-unit.log",
+      "sha256": "edc894ebb0346feb8c15cb59e0e73c0f0768fee77b9fb34a48500899ff88f749"
+    },
+    "unitSerialLog": {
+      "bytes": 929519,
+      "path": "/private/tmp/resourcerunner-task005-unit-serial.log",
+      "sha256": "227c2f9c4da9474f2dd276c3dc75a38d222f1158119a368d3bfd30463637db4d"
+    },
+    "unitSerialResult": {
+      "bytes": 715,
+      "path": "/private/tmp/resourcerunner-task005-unit-serial.xcresult/Info.plist",
+      "sha256": "8caac12d341a76990ce902c93c67e263c2d9e340e0bf96ab29cd93fc5bfcd234"
+    }
+  },
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "preflight2Note": "Fixed ROI fingerprint unavailable; no formal 100/200ms decision.",
+  "sourceCount": 127,
+  "toolSources": {
+    "features/20261010-001-release-readiness/tools/external_frame_probe.swift": {
+      "bytes": 9830,
+      "sha256": "3e79721be734ee87b023553f9a9b8ac1f5713f1f0fe23fcb91292be9fa605b0e"
+    },
+    "features/20261010-001-release-readiness/tools/target_ax_probe.swift": {
+      "bytes": 2302,
+      "sha256": "e60b5cc19660f2e331115e2b300173a9736c09f99e6ec1a71e4e6e9f60d6e99e"
+    },
+    "features/20261010-001-release-readiness/tools/target_event_probe.swift": {
+      "bytes": 2341,
+      "sha256": "86197f6a92323e3613e23167b6dc197727daabbc07badaab5c43a547f66ed0b8"
+    }
+  }
+}

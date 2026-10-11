@@ -21,8 +21,8 @@ nonisolated struct DashboardFocusReturnRequest: Equatable, Sendable {
 }
 
 /// 팝오버가 닫혀 있어도 갱신을 계속 받아 최신 카드 표시 상태를 보유하는 표시 계층 저장소.
-/// 팝오버 콘텐츠 뷰는 앱 시작 때 한 번 만들어져 계속 살아 있으므로, 이 저장소가 항상 최신 값을
-/// 들고 있으면 팝오버를 여는 순간 빈 화면이나 로딩 상태를 거칠 경로가 없습니다(ANALYSIS §5 DP10, SPEC §5.9).
+/// 팝오버 콘텐츠 뷰는 열 때 생성하고 닫힐 때 해제합니다. 저장소가 최신 값을 계속 보유하므로
+/// 다시 열 때 새 수집을 기다리지 않고 현재 카드 상태를 표시합니다(ANALYSIS §5 DP10, SPEC §5.9).
 @MainActor
 final class DashboardPresentationStore: ObservableObject {
     @Published private(set) var preferencesSnapshot: PreferencesSnapshot
@@ -134,12 +134,18 @@ final class DashboardPresentationStore: ObservableObject {
     func recordSampleBoundary(_ context: CollectionRunContext) {
         lastCollectionBoundarySequence = max(lastCollectionBoundarySequence, context.boundarySequence)
     }
-    /// 어느 카드 옆에 상세 팝업이 열려 있는지. `selectCard(_:)`를 거쳐서만 바뀌므로 `updateCPUCard`·`updateMemoryCard`가
+    /// 어느 카드 옆에 상세 팝업이 열려 있는지. 수집 값 갱신과 독립이므로 `updateCPUCard`·`updateMemoryCard`가
     /// 매 tick 호출되어도 선택 상태는 그대로 유지됩니다(task-010 검증 조건, ANALYSIS §2 「팝오버 열림과 카드 선택」).
     /// 이 값이 바로 카드 옆 상세 팝업의 표시 여부를 유도하는 바인딩 원본입니다 —
     /// 팝업이 스스로 닫히면 `dismissDetail(for:)`가 그 사실을 이 값으로 되돌립니다(ANALYSIS §5 DP14).
     @Published private(set) var selection: DashboardSelection = .none
     private(set) var selectionGeneration: UInt64 = 0
+
+    /// 실제 본체 닫힘에서 원본처럼 상세 선택을 해제하고 이전 host의 닫힘 콜백을 무효화합니다.
+    func endDisplaySession() {
+        selectionGeneration &+= 1
+        if selection != .none { selection = .none }
+    }
 
     /// 카드 활성화 하나로만 선택 상태를 전이시킵니다.
     /// 이미 선택된 카드를 다시 활성화하면 선택이 해제되어 요약 상태로 돌아가고,

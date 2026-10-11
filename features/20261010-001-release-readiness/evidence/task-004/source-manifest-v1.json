@@ -1,0 +1,36 @@
+{
+  "base": "/tmp/resourcerunner-task001-frozen",
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "files": {
+    "ResourceRunner/StatusBarController.swift": {
+      "before_sha256": "87c5000fce7e9b890b99a6c52aa3c226bbd71b29b2cfff84e53d67338e2dc856",
+      "after_sha256": "661fe5ff120f44f64c3e241bbe9288a57cda66bb168145a69bb9762468a9820f",
+      "added_lines": 36,
+      "removed_lines": 10
+    },
+    "ResourceRunner/DashboardViewport.swift": {
+      "before_sha256": "3c42cef1bcf1785d1cc9a60e4b1e8c324531fcd7fee274a29a8174ce64ec150d",
+      "after_sha256": "63f925737951e171f4a1be92cd89b2a647b59cbe125db282acacd8e649a9e15a",
+      "added_lines": 30,
+      "removed_lines": 2
+    },
+    "ResourceRunner/DashboardPresentationStore.swift": {
+      "before_sha256": "fde32f7a651bea45a7e808a51901d04df249c9e787c5d386283bafaa7e2a97db",
+      "after_sha256": "abf7dd497fb2b18cc8775c348ad567e5ea44ef31a2f528a7b0d27bb02bbad06b",
+      "added_lines": 2,
+      "removed_lines": 2
+    },
+    "ResourceRunnerTests/StatusBarControllerTests.swift": {
+      "before_sha256": "60b38500479387ed9343f82445b5268113ba5696f80c13f84182a58a3283623e",
+      "after_sha256": "7e6b0957221e562d6e2d4ebf5c9e293228a1b88344bafa9861116602bd65396c",
+      "added_lines": 74,
+      "removed_lines": 27
+    },
+    "ResourceRunnerTests/DashboardViewportTests.swift": {
+      "before_sha256": "fdd00b63d8e6014d102a3b20c2e36b6d52f35e6580734d791e83721a1e4121b4",
+      "after_sha256": "56c37b5c2d37ebed5d4b71429636c30c8cb0afa3681f13ceeddf53cfa06ebe79",
+      "added_lines": 22,
+      "removed_lines": 0
+    }
+  }
+}

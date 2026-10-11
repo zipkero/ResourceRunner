@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-10T09:42:22.492351+00:00",
+  "pid": 45442,
+  "startLstart": "Sat Oct 10 18:42:03 2026",
+  "launchEpochConservative": 1791625324.0,
+  "exe": "/private/tmp/resourcerunner-task004-perf-diagnostic-r2.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "579e9cb5de13b3b980646e0930d19874f75b9226bcd40415aa40bdc1464c0969",
+  "orchestratorSession": 74786,
+  "windowObserverSession": 26436,
+  "commonCaffeinateSession": 19248,
+  "commonCaffeinatePID": 7998,
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "hardware": "Mac15,11 / Apple M3 Max / 36GB",
+    "power": "AC attached; 80% at preflight",
+    "appearance": "Dark",
+    "installedProductionPID": 16136,
+    "userInteraction": "User confirmed continued non-use at approximately 18:27 KST; diagnostic icon excluded"
+  },
+  "note": "Conservative epoch is ps lstart second plus 1s. Current product arm uses r6 54/54 test result and Release r3 rebuild after detail-callback boundary fix."
+}

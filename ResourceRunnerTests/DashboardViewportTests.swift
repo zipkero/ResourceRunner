@@ -102,8 +102,8 @@ struct DashboardViewportTests {
 
         viewport.configure(visibleCards: [.cpu, .memory, .disk], revision: 1,
             normalizesMemoryHeight: true)
-        viewport.registerCard(view: memory, card: .memory, revision: 1, order: 1, isLast: false)
-        viewport.registerCard(view: disk, card: .disk, revision: 1, order: 2, isLast: true)
+        viewport.registerCard(view: memory, card: .memory, revision: 1, displaySession: viewport.displaySession, order: 1, isLast: false)
+        viewport.registerCard(view: disk, card: .disk, revision: 1, displaySession: viewport.displaySession, order: 2, isLast: true)
         #expect(viewport.expectedAnchor == .disk)
         #expect(viewport.lowestAnchorView === disk)
         #expect(viewport.memoryCardView === memory)
@@ -113,15 +113,15 @@ struct DashboardViewportTests {
         #expect(viewport.expectedAnchor == .memory)
         #expect(viewport.lowestAnchorView == nil)
         #expect(viewport.memoryCardView == nil)
-        viewport.registerCard(view: disk, card: .disk, revision: 1, order: 3, isLast: true)
-        viewport.unregisterCard(view: memory, card: .memory, revision: 1)
+        viewport.registerCard(view: disk, card: .disk, revision: 1, displaySession: viewport.displaySession, order: 3, isLast: true)
+        viewport.unregisterCard(view: memory, card: .memory, revision: 1, displaySession: viewport.displaySession)
         #expect(viewport.lowestAnchorView == nil)
-        viewport.registerCard(view: newMemory, card: .memory, revision: 2, order: 5, isLast: true)
+        viewport.registerCard(view: newMemory, card: .memory, revision: 2, displaySession: viewport.displaySession, order: 5, isLast: true)
         #expect(viewport.lowestAnchorView === newMemory)
-        viewport.registerCard(view: memory, card: .memory, revision: 2, order: 1, isLast: true)
-        viewport.unregisterCard(view: memory, card: .memory, revision: 2)
+        viewport.registerCard(view: memory, card: .memory, revision: 2, displaySession: viewport.displaySession, order: 1, isLast: true)
+        viewport.unregisterCard(view: memory, card: .memory, revision: 2, displaySession: viewport.displaySession)
         #expect(viewport.lowestAnchorView === newMemory)
-        viewport.unregisterCard(view: newMemory, card: .memory, revision: 2)
+        viewport.unregisterCard(view: newMemory, card: .memory, revision: 2, displaySession: viewport.displaySession)
         #expect(viewport.lowestAnchorView == nil)
         #expect(viewport.memoryCardView == nil)
     }
@@ -173,6 +173,82 @@ struct DashboardViewportTests {
             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome))
     }
 
+    @Test func oldSessionDelayedCloseDoesNotCloseNewDetailAtSameRevision() async throws {
+        let viewport = DashboardViewport()
+        let oldDetail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),
+            styleMask: .borderless, backing: .buffered, defer: false)
+        oldDetail.isReleasedWhenClosed = false
+        oldDetail.orderFront(nil)
+        viewport.registerDetail(window: oldDetail, selection: .cpu, contentSize: .zero)
+        viewport.configure(visibleCards: [], revision: 1, normalizesMemoryHeight: false)
+        viewport.endDisplaySession()
+        #expect(!oldDetail.isVisible)
+
+        let newDetail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),
+            styleMask: .borderless, backing: .buffered, defer: false)
+        newDetail.isReleasedWhenClosed = false
+        defer { newDetail.close() }
+        newDetail.orderFront(nil)
+        viewport.registerDetail(window: newDetail, selection: .cpu, contentSize: .zero)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(newDetail.isVisible)
+        #expect(viewport.detailWindow === newDetail)
+    }
+
+    @Test func oldAnchorCallbacksDoNotCorrectOrCloseReopenedDetailAtSameRevision() async throws {
+        let viewport = DashboardViewport()
+        let body = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 280, height: 400),
+            styleMask: .borderless, backing: .buffered, defer: false)
+        body.isReleasedWhenClosed = false
+        defer { body.close() }
+        body.orderFront(nil)
+
+        viewport.configure(visibleCards: [.cpu], revision: 1, normalizesMemoryHeight: false)
+        let oldAnchor = DashboardLowestAnchorCapture.AnchorView()
+        oldAnchor.viewport = viewport
+        oldAnchor.displaySession = viewport.displaySession
+        oldAnchor.card = .cpu
+        oldAnchor.revision = 1
+        oldAnchor.isLast = true
+        oldAnchor.frame = CGRect(x: 0, y: 0, width: 260, height: 112)
+        body.contentView?.addSubview(oldAnchor)
+        try await Task.sleep(for: .milliseconds(30))
+        #expect(viewport.lowestAnchorView === oldAnchor)
+
+        viewport.endDisplaySession()
+        viewport.configure(visibleCards: [.cpu], revision: 1, normalizesMemoryHeight: false)
+        let newAnchor = DashboardLowestAnchorCapture.AnchorView()
+        newAnchor.viewport = viewport
+        newAnchor.displaySession = viewport.displaySession
+        newAnchor.card = .cpu
+        newAnchor.revision = 1
+        newAnchor.isLast = true
+        newAnchor.frame = CGRect(x: 0, y: 120, width: 260, height: 112)
+        body.contentView?.addSubview(newAnchor)
+        try await Task.sleep(for: .milliseconds(30))
+        #expect(viewport.lowestAnchorView === newAnchor)
+
+        let detail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),
+            styleMask: .borderless, backing: .buffered, defer: false)
+        detail.isReleasedWhenClosed = false
+        defer { detail.close() }
+        detail.orderFront(nil)
+        viewport.registerDetail(window: detail, selection: .cpu, contentSize: .zero)
+        var correctionCount = 0
+        viewport.requestCorrection = { correctionCount += 1 }
+
+        DashboardLowestAnchorCapture.dismantleNSView(oldAnchor, coordinator: ())
+        #expect(correctionCount == 0)
+        oldAnchor.removeFromSuperview()
+        #expect(correctionCount == 0)
+        oldAnchor.report()
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(correctionCount == 0)
+        #expect(viewport.lowestAnchorView === newAnchor)
+        #expect(viewport.detailWindow === detail)
+        #expect(detail.isVisible)
+    }
+
     @Test func actualMemoryLastAndDiskLastFramesUseDifferentHeightCorrections() throws {
         let screen = try #require(NSScreen.main)
         let window = NSWindow(contentRect: CGRect(x: screen.visibleFrame.minX + 20,
@@ -190,7 +266,7 @@ struct DashboardViewportTests {
         viewport.apply(screen: screen)
         viewport.configure(visibleCards: [.memory], revision: 1,
             normalizesMemoryHeight: false)
-        viewport.registerCard(view: memory, card: .memory, revision: 1, order: 1, isLast: true)
+        viewport.registerCard(view: memory, card: .memory, revision: 1, displaySession: viewport.displaySession, order: 1, isLast: true)
         let memoryCenter = window.convertToScreen(memory.convert(memory.bounds, to: nil)).midY
         let noRankingSize = viewport.detailSize
         #expect(noRankingSize == DashboardViewportPolicy.detailSize(
@@ -199,7 +275,7 @@ struct DashboardViewportTests {
 
         viewport.configure(visibleCards: [.memory], revision: 2,
             normalizesMemoryHeight: true)
-        viewport.registerCard(view: memory, card: .memory, revision: 2, order: 1, isLast: true)
+        viewport.registerCard(view: memory, card: .memory, revision: 2, displaySession: viewport.displaySession, order: 1, isLast: true)
         #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,
             lowestAnchorCenterY: memoryCenter + CGFloat(169 - 184) / 2))
@@ -207,8 +283,8 @@ struct DashboardViewportTests {
 
         viewport.configure(visibleCards: [.memory, .disk], revision: 3,
             normalizesMemoryHeight: true)
-        viewport.registerCard(view: memory, card: .memory, revision: 3, order: 1, isLast: false)
-        viewport.registerCard(view: disk, card: .disk, revision: 3, order: 2, isLast: true)
+        viewport.registerCard(view: memory, card: .memory, revision: 3, displaySession: viewport.displaySession, order: 1, isLast: false)
+        viewport.registerCard(view: disk, card: .disk, revision: 3, displaySession: viewport.displaySession, order: 2, isLast: true)
         let diskCenter = window.convertToScreen(disk.convert(disk.bounds, to: nil)).midY
         #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,

@@ -56,8 +56,8 @@ struct StatusBarControllerTests {
         let output = RecordingOutput()
         controller.output = output
         let popover = controller.popover
-        let content = popover.contentViewController
         let delegate = popover.delegate
+        #expect(popover.contentViewController == nil)
         #expect(popover.behavior == .applicationDefined)
 
         controller.applyAutomaticallyClosesPopover(true)
@@ -67,14 +67,12 @@ struct StatusBarControllerTests {
         controller.applyAutomaticallyClosesPopover(true)
         #expect(popover.behavior == .transient)
         #expect(controller.popover === popover)
-        #expect(popover.contentViewController === content)
+        #expect(popover.contentViewController == nil)
         #expect(popover.delegate === delegate)
         #expect(output.reportedValues.isEmpty)
     }
 
-    /// 아래 출력 테스트는 delegate 메서드를 직접 호출하므로 `NSPopover`를 거치지 않습니다.
-    /// 배선이 끊겨도 그 테스트는 통과하므로, 실제 delegate 연결은 여기서 따로 확인합니다.
-    /// 이 연결이 끊기면 `popoverPresented(_:)`가 영영 호출되지 않고 수집 일정이 팝오버 상태에 반응하지 않습니다.
+    /// delegate 배선이 끊기면 실제 열림·닫힘 출력이 수집 일정으로 전달되지 않습니다.
     @Test func popoverDelegateIsWiredToController() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
 
@@ -85,18 +83,99 @@ struct StatusBarControllerTests {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
         let output = RecordingOutput()
         controller.output = output
-
-        // 실제 화면 표시 없이도 delegate 이벤트만으로 출력이 표시 상태를 그대로 반영하는지 확인합니다.
-        controller.popoverDidShow(Notification(name: NSPopover.didShowNotification, object: controller.popover))
-        controller.popoverDidClose(Notification(name: NSPopover.didCloseNotification, object: controller.popover))
-        controller.popoverDidShow(Notification(name: NSPopover.didShowNotification, object: controller.popover))
-
+        activateTestApp()
+        controller.togglePopover()
+        #expect(controller.popover.isShown)
+        #expect(controller.popover.contentViewController != nil)
+        controller.togglePopover()
+        waitForPopoverClose(controller)
+        #expect(!controller.popover.isShown)
+        #expect(controller.popover.contentViewController == nil)
+        controller.togglePopover()
+        #expect(controller.popover.isShown)
+        let didShowDeadline = Date().addingTimeInterval(2)
+        while output.reportedValues.count < 3 && Date() < didShowDeadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02))
+        }
         #expect(output.reportedValues == [true, false, true])
+        controller.popover.performClose(nil)
     }
 
-    // `togglePopover()`가 실제로 `NSPopover.isShown`을 뒤집는지는 단위 테스트 host 프로세스가
-    // 비활성 상태라 `NSPopover.show()`가 화면에 실제로 표시되지 않아 여기서 검증하지 않습니다.
-    // 실제 클릭 이벤트로 열고 닫는 경로는 ResourceRunnerUITests가 검증합니다.
+    /// 닫힘의 해제와 재열림의 새 host를 실제 AppKit delegate 경계에서 확인합니다.
+    @Test func closeReleasesHostAndRapidReopenKeepsNewHost() async {
+        let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        let output = RecordingOutput()
+        controller.output = output
+        activateTestApp()
+        controller.togglePopover()
+        guard let first = controller.popover.contentViewController,
+              controller.popover.isShown else {
+            Issue.record("첫 팝오버가 열리지 않았습니다")
+            return
+        }
+        controller.togglePopover()
+        waitForPopoverClose(controller)
+        #expect(controller.popover.contentViewController == nil)
+        let reportedAfterClose = output.reportedValues
+        controller.popoverDidShow(Notification(name: NSPopover.didShowNotification,
+            object: controller.popover))
+        #expect(output.reportedValues == reportedAfterClose)
+        controller.togglePopover()
+        guard let second = controller.popover.contentViewController,
+              controller.popover.isShown else {
+            Issue.record("두 번째 팝오버가 열리지 않았습니다")
+            return
+        }
+        #expect(second !== first)
+        let reported = output.reportedValues
+        controller.popoverDidClose(Notification(name: NSPopover.didCloseNotification,
+            object: controller.popover))
+        #expect(output.reportedValues == reported)
+        #expect(controller.popover.contentViewController === second)
+        try? await Task.sleep(for: .milliseconds(550))
+        #expect(controller.popover.isShown)
+        #expect(controller.popover.contentViewController === second)
+        controller.popover.performClose(nil)
+    }
+
+    @Test func reopenAsSoonAsPopoverReportsClosedSchedulesCorrection() async throws {
+        let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
+            viewport: DashboardViewport())
+        let output = RecordingOutput()
+        controller.output = output
+        activateTestApp()
+        controller.togglePopover()
+        let first = try #require(controller.popover.contentViewController)
+        #expect(controller.popover.isShown)
+        let firstShowDeadline = Date().addingTimeInterval(2)
+        while !output.reportedValues.contains(true) && Date() < firstShowDeadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.002))
+        }
+        #expect(output.reportedValues == [true])
+
+        controller.togglePopover()
+        let deadline = Date().addingTimeInterval(2)
+        while controller.popover.isShown && Date() < deadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.002))
+        }
+        #expect(!controller.popover.isShown)
+        controller.togglePopover()
+        let second = try #require(controller.popover.contentViewController)
+        let window = try #require(second.view.window)
+        let screen = try #require(window.screen ?? NSScreen.main)
+        #expect(second !== first)
+        #expect(controller.popover.isShown)
+
+        window.setFrameOrigin(CGPoint(x: screen.visibleFrame.maxX + 100,
+            y: screen.visibleFrame.minY + 20))
+        try await Task.sleep(for: .milliseconds(550))
+        #expect(controller.popover.isShown)
+        #expect(controller.popover.contentViewController === second)
+        #expect(output.reportedValues == [true, false, true])
+        #expect(DashboardViewportPolicy.contains(window.frame,
+            visibleFrame: screen.visibleFrame))
+        controller.popover.performClose(nil)
+    }
 
     /// task-012 검증 조건: `StatusBarController`가 받은 값을 버튼 접근성 이름에 그대로 반영하는지 확인합니다.
     @Test func renderReflectsReceivedAccessibilityLabelOnButton() {
@@ -135,24 +214,75 @@ struct StatusBarControllerTests {
         }
     }
 
-    /// task-012 검증 조건: 다섯 상태를 순환시켜도 `NSStatusItem.length`와 버튼 이미지 참조가 변하지 않는지 확인합니다.
-    @Test func cyclingThroughAllStatesKeepsLengthAndButtonImageStable() {
+    /// 색상 전환은 폭·실루엣 크기를 유지하고 이미지를 재사용합니다.
+    @Test func cyclingStatesKeepsSizeAndReusesCachedColorImages() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
-        guard let button = controller.statusItem.button else {
-            Issue.record("status item에 button이 없습니다")
+        guard let button = controller.statusItem.button, let nativeImage = button.image else {
+            Issue.record("status item의 이미지가 없습니다")
             return
         }
-
         let fixedLength = controller.statusItem.length
-        let fixedImage = button.image
-
+        var images: [CharacterActivityState: NSImage] = [:]
         let states: [CharacterActivityState] = [.low, .moderate, .high, .veryHigh, .sustainedHigh]
         for state in states {
             controller.render(.presenting(state))
-
             #expect(controller.statusItem.length == fixedLength)
-            #expect(button.image === fixedImage)
+            #expect(button.image?.size == NSSize(width: 18, height: 18))
+            #expect(button.image?.isTemplate == (state == .low || state == .moderate))
+            #expect(button.toolTip == button.accessibilityLabel())
+            images[state] = button.image
         }
+        #expect(images[.low] === nativeImage)
+        #expect(images[.moderate] === nativeImage)
+        #expect(images[.high] !== images[.veryHigh])
+        #expect(images[.veryHigh] !== images[.sustainedHigh])
+        for state in states.reversed() {
+            controller.render(.presenting(state))
+            #expect(button.image === images[state])
+        }
+    }
+
+    @Test func coloredIconsPreserveMaskAndUseExpectedCPUColors() throws {
+        let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+        let button = try #require(controller.statusItem.button)
+        let expectations: [(CharacterActivityState, NSColor)] = [
+            (.high, .systemYellow), (.veryHigh, .systemOrange), (.sustainedHigh, .systemRed)
+        ]
+        var alphaMasks: [[Int]] = []
+        for (state, color) in expectations {
+            controller.render(.presenting(state))
+            let image = try #require(button.image)
+            // TIFF는 drawing-handler 이미지의 RGB를 Generic RGB로 재해석하므로 실제 그리기 경로를 검사합니다.
+            let bitmap = try #require(NSBitmapImageRep(bitmapDataPlanes: nil,
+                pixelsWide: 18, pixelsHigh: 18, bitsPerSample: 8, samplesPerPixel: 4,
+                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                bytesPerRow: 0, bitsPerPixel: 0))
+            let context = try #require(NSGraphicsContext(bitmapImageRep: bitmap))
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = context
+            image.draw(in: NSRect(x: 0, y: 0, width: 18, height: 18))
+            NSGraphicsContext.restoreGraphicsState()
+            let expected = try #require(color.usingColorSpace(.deviceRGB))
+            var mask: [Int] = []
+            var opaquePixels = 0
+            for y in 0..<bitmap.pixelsHigh {
+                for x in 0..<bitmap.pixelsWide {
+                    let pixel = try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB))
+                    mask.append(Int((pixel.alphaComponent * 255).rounded()))
+                    if pixel.alphaComponent > 0.95 {
+                        opaquePixels += 1
+                        #expect(abs(pixel.redComponent - expected.redComponent) < 0.02)
+                        #expect(abs(pixel.greenComponent - expected.greenComponent) < 0.02)
+                        #expect(abs(pixel.blueComponent - expected.blueComponent) < 0.02)
+                    }
+                }
+            }
+            #expect(opaquePixels > 0)
+            #expect(mask.contains(0))
+            alphaMasks.append(mask)
+        }
+        #expect(alphaMasks[0] == alphaMasks[1])
+        #expect(alphaMasks[1] == alphaMasks[2])
     }
 
     /// task-012 검증 조건: 팝오버를 연 뒤 표시 경로만 실행해 `NSPopover.isShown`이 유지되는지 확인합니다.
@@ -162,21 +292,13 @@ struct StatusBarControllerTests {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
         let output = RecordingOutput()
         controller.output = output
-        guard let button = controller.statusItem.button else {
+        guard controller.statusItem.button != nil else {
             Issue.record("status item에 button이 없습니다")
             return
         }
 
-        // 단위 테스트 host 프로세스는 비활성 상태로 시작하고 `NSPopover.show(...)`는 비활성 앱에서 표시되지 않습니다.
-        // `togglePopover()`의 여는 경로와 같이 앱을 먼저 활성화하되, 활성화는 비동기로 완료되므로
-        // 실제로 활성 상태가 될 때까지 run loop를 돌린 뒤 팝오버를 엽니다.
-        NSApp.activate()
-        let activationDeadline = Date().addingTimeInterval(2)
-        while !NSApp.isActive && Date() < activationDeadline {
-            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
-        }
-
-        controller.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        activateTestApp()
+        controller.togglePopover()
 
         guard controller.popover.isShown else {
             Issue.record("팝오버가 열리지 않아 보존 여부를 관찰할 수 없습니다 (앱 활성 상태: \(NSApp.isActive))")
@@ -204,6 +326,21 @@ struct StatusBarControllerTests {
         }
 
         controller.popover.performClose(nil)
+    }
+
+    private func activateTestApp() {
+        NSApp.activate()
+        let deadline = Date().addingTimeInterval(2)
+        while !NSApp.isActive && Date() < deadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
+        }
+    }
+
+    private func waitForPopoverClose(_ controller: StatusBarController) {
+        let deadline = Date().addingTimeInterval(2)
+        while controller.popover.contentViewController != nil && Date() < deadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02))
+        }
     }
 }
 

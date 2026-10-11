@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-10-10T11:37:39.137496+00:00",
+  "terminatedDiagnosticAndHelpers": [
+    7578,
+    8593,
+    45442,
+    45727,
+    7998,
+    91186,
+    91444,
+    5381,
+    5757,
+    5902,
+    18048,
+    90920,
+    50374,
+    50596,
+    50217
+  ],
+  "noneRemain": true,
+  "productionPID16136Present": true,
+  "productionExeSHA256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80",
+  "finalCandidateDetailReopenSHA256": "c54c400ec0b497613d8a518a179dfb37ffeaddb48fc81d585cfeeca11d1fe91f",
+  "notes": "Outside formal, final candidate detail reopen returned body, as baseline did. Earlier iteration and failed-attempt directories are preserved; no production process or settings change."
+}

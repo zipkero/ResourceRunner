@@ -16,8 +16,8 @@ protocol StatusBarControllerOutput: AnyObject {
 }
 
 /// `NSStatusItem`, `NSPopover`와 팝오버 delegate를 소유하는 AppKit 경계.
-/// 메뉴바 항목은 고정 폭(`NSStatusItem.squareLength`)이고 버튼 이미지는 구성 시점에 한 번만 설정합니다.
-/// 상태가 바뀌어도 갱신되는 것은 버튼의 접근성 이름 하나뿐입니다.
+/// 메뉴바 항목은 고정 폭(`NSStatusItem.squareLength`)이며 같은 정적 고양이의 색상만 CPU 상태에 맞춰 바꿉니다.
+/// 색상별 이미지는 구성 시 한 번 만들고 재사용하므로 애니메이션 타이머나 프레임 갱신이 필요 없습니다.
 /// 팝오버 behavior는 현재 일반 설정을 따르고,
 /// delegate가 보고하는 실제 표시 상태를 단일 소스로 삼아 클릭 토글과 어긋나지 않게 합니다.
 /// 우클릭은 설정 메뉴를 열고 Debug에서는 상태 주입 항목도 별도 구역에 둡니다.
@@ -31,9 +31,13 @@ final class StatusBarController: NSObject {
     let statusItem: NSStatusItem
     let popover: NSPopover
     let viewport: DashboardViewport?
+    private let makePopoverContentController: () -> NSViewController
     private var screenObserver: NSObjectProtocol?
-    private var correctionScheduled = false
+    private var displayGeneration: UInt64 = 0
+    private var displaySessionActive = false
+    private var correctionTask: Task<Void, Never>?
     private var keyMonitor: Any?
+    private var stateImages: [CharacterActivityState: NSImage] = [:]
     var keyboardDismiss: (() -> Bool)?
     var openSettings: (() -> Void)?
 
@@ -52,8 +56,8 @@ final class StatusBarController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         popover = NSPopover()
         self.viewport = viewport
+        makePopoverContentController = { NSHostingController(rootView: popoverContent) }
         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
-        popover.contentViewController = NSHostingController(rootView: popoverContent)
 
         super.init()
 
@@ -78,7 +82,11 @@ final class StatusBarController: NSObject {
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.scheduleFrameCorrection() }
+            let generation = MainActor.assumeIsolated { self?.displayGeneration }
+            Task { @MainActor [weak self] in
+                guard self?.displayGeneration == generation else { return }
+                self?.scheduleFrameCorrection()
+            }
         }
 
         if let button = statusItem.button {
@@ -86,12 +94,34 @@ final class StatusBarController: NSObject {
             let image = NSImage(named: "StatusCatStatic")?.copy() as? NSImage
             image?.size = NSSize(width: Self.statusImageLength, height: Self.statusImageLength)
             image?.isTemplate = true
+            stateImages = Self.makeStateImages(template: image)
             button.image = image
             button.target = self
             button.action = #selector(togglePopover)
             // 좌클릭은 팝오버를 토글하고 우클릭은 설정 메뉴를 엽니다.
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
+    }
+
+    /// 낮음·보통은 template을 공유해 메뉴바의 밝기와 강조 상태에 자동 대응합니다.
+    /// 고부하 색상은 원본 알파를 마스크로 사용해 같은 고양이 실루엣과 18pt 크기를 유지합니다.
+    private static func makeStateImages(template: NSImage?) -> [CharacterActivityState: NSImage] {
+        guard let template else { return [:] }
+        var images: [CharacterActivityState: NSImage] = [.low: template, .moderate: template]
+        for (state, color) in [(CharacterActivityState.high, NSColor.systemYellow),
+                               (.veryHigh, NSColor.systemOrange),
+                               (.sustainedHigh, NSColor.systemRed)] {
+            let size = template.size
+            let tinted = NSImage(size: size, flipped: false) { rect in
+                template.draw(in: rect)
+                color.setFill()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            tinted.isTemplate = false
+            images[state] = tinted
+        }
+        return images
     }
 
     deinit {
@@ -196,6 +226,11 @@ final class StatusBarController: NSObject {
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            correctionTask?.cancel()
+            correctionTask = nil
+            displayGeneration &+= 1
+            displaySessionActive = true
+            popover.contentViewController = makePopoverContentController()
             updateViewportFromScreen()
             NSApp.activate()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
@@ -205,17 +240,23 @@ final class StatusBarController: NSObject {
     }
 
     private func scheduleFrameCorrection() {
-        guard !correctionScheduled else { return }
-        correctionScheduled = true
-        Task { @MainActor [weak self] in
+        guard popover.isShown, correctionTask == nil else { return }
+        let generation = displayGeneration
+        correctionTask = Task { @MainActor [weak self] in
             await Task.yield()
-            self?.correctFrames()
+            guard let self, !Task.isCancelled,
+                  self.displayGeneration == generation, self.popover.isShown else { return }
+            self.correctFrames()
             try? await Task.sleep(for: .milliseconds(120))
-            self?.correctFrames()
+            guard !Task.isCancelled, self.displayGeneration == generation,
+                  self.popover.isShown else { return }
+            self.correctFrames()
             // 하단 카드 상세는 macOS가 최초 창 생성 뒤 한 번 더 앵커 위치를 조정합니다.
             try? await Task.sleep(for: .milliseconds(380))
-            self?.correctFrames()
-            self?.correctionScheduled = false
+            guard !Task.isCancelled, self.displayGeneration == generation,
+                  self.popover.isShown else { return }
+            self.correctFrames()
+            self.correctionTask = nil
         }
     }
 
@@ -298,20 +339,34 @@ final class StatusBarController: NSObject {
 
 extension StatusBarController: NSPopoverDelegate {
     func popoverDidShow(_ notification: Notification) {
+        guard notification.object as? NSPopover === popover,
+              displaySessionActive, popover.isShown else { return }
         scheduleFrameCorrection()
         output?.popoverPresented(true)
     }
 
     func popoverDidClose(_ notification: Notification) {
+        guard notification.object as? NSPopover === popover,
+              displaySessionActive, !popover.isShown else { return }
+        displaySessionActive = false
         output?.popoverPresented(false)
+        displayGeneration &+= 1
+        correctionTask?.cancel()
+        correctionTask = nil
+        viewport?.endDisplaySession()
+        popover.contentViewController = nil
     }
 }
 
-/// 메뉴바 버튼의 접근성 이름만 갱신합니다. 이름은 매핑에서 이미 완성돼 오므로 여기서 조합하지 않습니다.
+/// 상태에 맞는 캐시 이미지를 선택하고 접근성 이름과 툴팁을 같은 문자열로 갱신합니다.
 /// 접근성 값은 설정하지 않습니다 — 상태 문자열은 접근성 이름 한 자리에만 존재합니다.
-/// 버튼 이미지와 `NSStatusItem.length`는 구성 시점 값을 그대로 유지하며 이 경로가 건드리지 않습니다.
+/// 같은 색상에서는 이미지도 교체하지 않으며 메뉴바 폭과 이미지 크기는 고정입니다.
 extension StatusBarController: CharacterPresentationSink {
     func render(_ presentation: CharacterPresentation) {
-        statusItem.button?.setAccessibilityLabel(presentation.accessibilityLabel)
+        guard let button = statusItem.button else { return }
+        let image = stateImages[presentation.state]
+        if button.image !== image { button.image = image }
+        button.setAccessibilityLabel(presentation.accessibilityLabel)
+        button.toolTip = presentation.accessibilityLabel
     }
 }

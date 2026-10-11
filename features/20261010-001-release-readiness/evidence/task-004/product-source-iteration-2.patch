@@ -1,0 +1,608 @@
+--- a/ResourceRunner/ApplicationCoordinator.swift
++++ b/ResourceRunner/ApplicationCoordinator.swift
+@@ -621,6 +621,7 @@
+ 
+ extension ApplicationCoordinator: StatusBarControllerOutput {
+     func popoverPresented(_ isPresented: Bool) {
++        if !isPresented { dashboardPresentationStore.endDisplaySession() }
+         Task { await Self.forwardPopoverPresented(isPresented, to: monitoringLifecycleStore) }
+     }
+ 
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -31,8 +31,11 @@
+     let statusItem: NSStatusItem
+     let popover: NSPopover
+     let viewport: DashboardViewport?
++    private let makePopoverContentController: () -> NSViewController
+     private var screenObserver: NSObjectProtocol?
+-    private var correctionScheduled = false
++    private var displayGeneration: UInt64 = 0
++    private var displaySessionActive = false
++    private var correctionTask: Task<Void, Never>?
+     private var keyMonitor: Any?
+     private var stateImages: [CharacterActivityState: NSImage] = [:]
+     var keyboardDismiss: (() -> Bool)?
+@@ -53,8 +56,8 @@
+         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+         popover = NSPopover()
+         self.viewport = viewport
++        makePopoverContentController = { NSHostingController(rootView: popoverContent) }
+         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
+-        popover.contentViewController = NSHostingController(rootView: popoverContent)
+ 
+         super.init()
+ 
+@@ -79,7 +82,11 @@
+             forName: NSApplication.didChangeScreenParametersNotification,
+             object: nil, queue: .main
+         ) { [weak self] _ in
+-            Task { @MainActor [weak self] in self?.scheduleFrameCorrection() }
++            let generation = MainActor.assumeIsolated { self?.displayGeneration }
++            Task { @MainActor [weak self] in
++                guard self?.displayGeneration == generation else { return }
++                self?.scheduleFrameCorrection()
++            }
+         }
+ 
+         if let button = statusItem.button {
+@@ -219,6 +226,9 @@
+         if popover.isShown {
+             popover.performClose(nil)
+         } else {
++            displayGeneration &+= 1
++            displaySessionActive = true
++            popover.contentViewController = makePopoverContentController()
+             updateViewportFromScreen()
+             NSApp.activate()
+             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+@@ -228,17 +238,23 @@
+     }
+ 
+     private func scheduleFrameCorrection() {
+-        guard !correctionScheduled else { return }
+-        correctionScheduled = true
+-        Task { @MainActor [weak self] in
++        guard popover.isShown, correctionTask == nil else { return }
++        let generation = displayGeneration
++        correctionTask = Task { @MainActor [weak self] in
+             await Task.yield()
+-            self?.correctFrames()
++            guard let self, !Task.isCancelled,
++                  self.displayGeneration == generation, self.popover.isShown else { return }
++            self.correctFrames()
+             try? await Task.sleep(for: .milliseconds(120))
+-            self?.correctFrames()
++            guard !Task.isCancelled, self.displayGeneration == generation,
++                  self.popover.isShown else { return }
++            self.correctFrames()
+             // 하단 카드 상세는 macOS가 최초 창 생성 뒤 한 번 더 앵커 위치를 조정합니다.
+             try? await Task.sleep(for: .milliseconds(380))
+-            self?.correctFrames()
+-            self?.correctionScheduled = false
++            guard !Task.isCancelled, self.displayGeneration == generation,
++                  self.popover.isShown else { return }
++            self.correctFrames()
++            self.correctionTask = nil
+         }
+     }
+ 
+@@ -321,12 +337,22 @@
+ 
+ extension StatusBarController: NSPopoverDelegate {
+     func popoverDidShow(_ notification: Notification) {
++        guard notification.object as? NSPopover === popover,
++              displaySessionActive, popover.isShown else { return }
+         scheduleFrameCorrection()
+         output?.popoverPresented(true)
+     }
+ 
+     func popoverDidClose(_ notification: Notification) {
++        guard notification.object as? NSPopover === popover,
++              displaySessionActive, !popover.isShown else { return }
++        displaySessionActive = false
+         output?.popoverPresented(false)
++        displayGeneration &+= 1
++        correctionTask?.cancel()
++        correctionTask = nil
++        viewport?.endDisplaySession()
++        popover.contentViewController = nil
+     }
+ }
+ 
+--- a/ResourceRunner/DashboardViewport.swift
++++ b/ResourceRunner/DashboardViewport.swift
+@@ -70,6 +70,22 @@
+     private var memoryOrder: UInt64 = 0
+     private var anchorFrame: CGRect?
+     private var memoryFrame: CGRect?
++    private(set) var displaySession: UInt64 = 0
++
++    /// 닫힌 화면의 앵커와 상세 창을 버리고, 이전 화면이 예약한 지연 닫기를 무효화합니다.
++    func endDisplaySession() {
++        displaySession &+= 1
++        detailWindow?.close()
++        detailWindow = nil
++        detailSelection = nil
++        lowestAnchorView = nil
++        memoryCardView = nil
++        anchorFrame = nil
++        memoryFrame = nil
++        anchorOrder = 0
++        memoryOrder = 0
++        configured = false
++    }
+ 
+     func configure(visibleCards: [DashboardSelection], revision: UInt64,
+                    normalizesMemoryHeight: Bool) {
+@@ -92,8 +108,10 @@
+     }
+ 
+     private func closeDetailWithoutAnchor(after revision: UInt64) {
++        let session = displaySession
+         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(60)) { [weak self] in
+-            guard let self, self.displayRevision == revision else { return }
++            guard let self, self.displayRevision == revision,
++                  self.displaySession == session else { return }
+             if let anchor = self.lowestAnchorView,
+                let window = anchor.window, anchor.bounds.height > 0,
+                window.screen == self.currentScreen {
+@@ -135,8 +153,9 @@
+     }
+ 
+     func registerCard(view: NSView, card: DashboardSelection, revision: UInt64,
+-                      order: UInt64, isLast: Bool) {
+-        guard configured, revision == displayRevision, visibleCards.contains(card),
++                      displaySession: UInt64, order: UInt64, isLast: Bool) {
++        guard displaySession == self.displaySession, configured,
++              revision == displayRevision, visibleCards.contains(card),
+               let window = view.window, card == .memory || isLast else { return }
+         let frame = window.convertToScreen(view.convert(view.bounds, to: nil))
+         var changed = false
+@@ -157,8 +176,10 @@
+         requestCorrection?()
+     }
+ 
+-    func unregisterCard(view: NSView, card: DashboardSelection, revision: UInt64) {
+-        guard revision == displayRevision else { return }
++    func unregisterCard(view: NSView, card: DashboardSelection, revision: UInt64,
++                        displaySession: UInt64) {
++        guard displaySession == self.displaySession,
++              revision == displayRevision else { return }
+         if card == .memory, memoryCardView === view {
+             memoryCardView = nil
+             memoryFrame = nil
+@@ -204,6 +225,7 @@
+     func makeNSView(context: Context) -> AnchorView {
+         let view = AnchorView()
+         view.viewport = viewport
++        view.displaySession = viewport.displaySession
+         view.card = card
+         view.revision = revision
+         view.isLast = isLast
+@@ -219,11 +241,13 @@
+     }
+ 
+     static func dismantleNSView(_ view: AnchorView, coordinator: ()) {
+-        view.viewport?.unregisterCard(view: view, card: view.card, revision: view.revision)
++        view.viewport?.unregisterCard(view: view, card: view.card, revision: view.revision,
++            displaySession: view.displaySession)
+     }
+ 
+     final class AnchorView: NSView {
+         weak var viewport: DashboardViewport?
++        var displaySession: UInt64 = 0
+         var card: DashboardSelection = .none
+         var revision: UInt64 = 0
+         var isLast = false
+@@ -235,7 +259,8 @@
+         override func viewDidMoveToWindow() {
+             super.viewDidMoveToWindow()
+             if window == nil {
+-                viewport?.unregisterCard(view: self, card: card, revision: revision)
++                viewport?.unregisterCard(view: self, card: card, revision: revision,
++                    displaySession: displaySession)
+             } else {
+                 report()
+             }
+@@ -245,12 +270,14 @@
+             let card = card
+             let revision = revision
+             let isLast = isLast
++            let displaySession = displaySession
+             DispatchQueue.main.async { [weak self] in
+                 guard let self, self.window != nil,
+                       self.card == card, self.revision == revision,
+                       self.isLast == isLast else { return }
+                 self.viewport?.registerCard(view: self, card: card,
+-                    revision: revision, order: self.order, isLast: isLast)
++                    revision: revision, displaySession: displaySession,
++                    order: self.order, isLast: isLast)
+             }
+         }
+     }
+@@ -263,7 +290,10 @@
+ 
+     func makeNSView(context: Context) -> TrackingView {
+         let view = TrackingView()
++        let displaySession = viewport.displaySession
++        view.displaySession = displaySession
+         view.onWindowChange = { [weak viewport] window, removed, size in
++            guard viewport?.displaySession == displaySession else { return }
+             viewport?.registerDetail(window: window, removingWindow: removed,
+                 selection: selection, contentSize: size)
+         }
+@@ -271,7 +301,9 @@
+     }
+ 
+     func updateNSView(_ view: TrackingView, context: Context) {
++        let displaySession = view.displaySession
+         view.onWindowChange = { [weak viewport] window, removed, size in
++            guard viewport?.displaySession == displaySession else { return }
+             viewport?.registerDetail(window: window, removingWindow: removed,
+                 selection: selection, contentSize: size)
+         }
+@@ -280,6 +312,7 @@
+ 
+     final class TrackingView: NSView {
+         var onWindowChange: ((NSWindow?, NSWindow?, CGSize) -> Void)?
++        var displaySession: UInt64 = 0
+         weak var lastWindow: NSWindow?
+ 
+         override func viewDidMoveToWindow() {
+--- a/ResourceRunner/DashboardPresentationStore.swift
++++ b/ResourceRunner/DashboardPresentationStore.swift
+@@ -21,8 +21,8 @@
+ }
+ 
+ /// 팝오버가 닫혀 있어도 갱신을 계속 받아 최신 카드 표시 상태를 보유하는 표시 계층 저장소.
+-/// 팝오버 콘텐츠 뷰는 앱 시작 때 한 번 만들어져 계속 살아 있으므로, 이 저장소가 항상 최신 값을
+-/// 들고 있으면 팝오버를 여는 순간 빈 화면이나 로딩 상태를 거칠 경로가 없습니다(ANALYSIS §5 DP10, SPEC §5.9).
++/// 팝오버 콘텐츠 뷰는 열 때 생성하고 닫힐 때 해제합니다. 저장소가 최신 값을 계속 보유하므로
++/// 다시 열 때 새 수집을 기다리지 않고 현재 카드 상태를 표시합니다(ANALYSIS §5 DP10, SPEC §5.9).
+ @MainActor
+ final class DashboardPresentationStore: ObservableObject {
+     @Published private(set) var preferencesSnapshot: PreferencesSnapshot
+@@ -134,12 +134,18 @@
+     func recordSampleBoundary(_ context: CollectionRunContext) {
+         lastCollectionBoundarySequence = max(lastCollectionBoundarySequence, context.boundarySequence)
+     }
+-    /// 어느 카드 옆에 상세 팝업이 열려 있는지. `selectCard(_:)`를 거쳐서만 바뀌므로 `updateCPUCard`·`updateMemoryCard`가
++    /// 어느 카드 옆에 상세 팝업이 열려 있는지. 수집 값 갱신과 독립이므로 `updateCPUCard`·`updateMemoryCard`가
+     /// 매 tick 호출되어도 선택 상태는 그대로 유지됩니다(task-010 검증 조건, ANALYSIS §2 「팝오버 열림과 카드 선택」).
+     /// 이 값이 바로 카드 옆 상세 팝업의 표시 여부를 유도하는 바인딩 원본입니다 —
+     /// 팝업이 스스로 닫히면 `dismissDetail(for:)`가 그 사실을 이 값으로 되돌립니다(ANALYSIS §5 DP14).
+     @Published private(set) var selection: DashboardSelection = .none
+     private(set) var selectionGeneration: UInt64 = 0
++
++    /// 실제 본체 닫힘에서 원본처럼 상세 선택을 해제하고 이전 host의 닫힘 콜백을 무효화합니다.
++    func endDisplaySession() {
++        selectionGeneration &+= 1
++        if selection != .none { selection = .none }
++    }
+ 
+     /// 카드 활성화 하나로만 선택 상태를 전이시킵니다.
+     /// 이미 선택된 카드를 다시 활성화하면 선택이 해제되어 요약 상태로 돌아가고,
+--- a/ResourceRunnerTests/StatusBarControllerTests.swift
++++ b/ResourceRunnerTests/StatusBarControllerTests.swift
+@@ -56,8 +56,8 @@
+         let output = RecordingOutput()
+         controller.output = output
+         let popover = controller.popover
+-        let content = popover.contentViewController
+         let delegate = popover.delegate
++        #expect(popover.contentViewController == nil)
+         #expect(popover.behavior == .applicationDefined)
+ 
+         controller.applyAutomaticallyClosesPopover(true)
+@@ -67,14 +67,12 @@
+         controller.applyAutomaticallyClosesPopover(true)
+         #expect(popover.behavior == .transient)
+         #expect(controller.popover === popover)
+-        #expect(popover.contentViewController === content)
++        #expect(popover.contentViewController == nil)
+         #expect(popover.delegate === delegate)
+         #expect(output.reportedValues.isEmpty)
+     }
+ 
+-    /// 아래 출력 테스트는 delegate 메서드를 직접 호출하므로 `NSPopover`를 거치지 않습니다.
+-    /// 배선이 끊겨도 그 테스트는 통과하므로, 실제 delegate 연결은 여기서 따로 확인합니다.
+-    /// 이 연결이 끊기면 `popoverPresented(_:)`가 영영 호출되지 않고 수집 일정이 팝오버 상태에 반응하지 않습니다.
++    /// delegate 배선이 끊기면 실제 열림·닫힘 출력이 수집 일정으로 전달되지 않습니다.
+     @Test func popoverDelegateIsWiredToController() {
+         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+ 
+@@ -85,18 +83,60 @@
+         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+         let output = RecordingOutput()
+         controller.output = output
+-
+-        // 실제 화면 표시 없이도 delegate 이벤트만으로 출력이 표시 상태를 그대로 반영하는지 확인합니다.
+-        controller.popoverDidShow(Notification(name: NSPopover.didShowNotification, object: controller.popover))
+-        controller.popoverDidClose(Notification(name: NSPopover.didCloseNotification, object: controller.popover))
+-        controller.popoverDidShow(Notification(name: NSPopover.didShowNotification, object: controller.popover))
+-
++        activateTestApp()
++        controller.togglePopover()
++        #expect(controller.popover.isShown)
++        #expect(controller.popover.contentViewController != nil)
++        controller.togglePopover()
++        waitForPopoverClose(controller)
++        #expect(!controller.popover.isShown)
++        #expect(controller.popover.contentViewController == nil)
++        controller.togglePopover()
++        #expect(controller.popover.isShown)
++        let didShowDeadline = Date().addingTimeInterval(2)
++        while output.reportedValues.count < 3 && Date() < didShowDeadline {
++            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02))
++        }
+         #expect(output.reportedValues == [true, false, true])
+-    }
+-
+-    // `togglePopover()`가 실제로 `NSPopover.isShown`을 뒤집는지는 단위 테스트 host 프로세스가
+-    // 비활성 상태라 `NSPopover.show()`가 화면에 실제로 표시되지 않아 여기서 검증하지 않습니다.
+-    // 실제 클릭 이벤트로 열고 닫는 경로는 ResourceRunnerUITests가 검증합니다.
++        controller.popover.performClose(nil)
++    }
++
++    /// 닫힘의 해제와 재열림의 새 host를 실제 AppKit delegate 경계에서 확인합니다.
++    @Test func closeReleasesHostAndRapidReopenKeepsNewHost() async {
++        let controller = StatusBarController(popoverContent: EmptyDashboardStub())
++        let output = RecordingOutput()
++        controller.output = output
++        activateTestApp()
++        controller.togglePopover()
++        guard let first = controller.popover.contentViewController,
++              controller.popover.isShown else {
++            Issue.record("첫 팝오버가 열리지 않았습니다")
++            return
++        }
++        controller.togglePopover()
++        waitForPopoverClose(controller)
++        #expect(controller.popover.contentViewController == nil)
++        let reportedAfterClose = output.reportedValues
++        controller.popoverDidShow(Notification(name: NSPopover.didShowNotification,
++            object: controller.popover))
++        #expect(output.reportedValues == reportedAfterClose)
++        controller.togglePopover()
++        guard let second = controller.popover.contentViewController,
++              controller.popover.isShown else {
++            Issue.record("두 번째 팝오버가 열리지 않았습니다")
++            return
++        }
++        #expect(second !== first)
++        let reported = output.reportedValues
++        controller.popoverDidClose(Notification(name: NSPopover.didCloseNotification,
++            object: controller.popover))
++        #expect(output.reportedValues == reported)
++        #expect(controller.popover.contentViewController === second)
++        try? await Task.sleep(for: .milliseconds(550))
++        #expect(controller.popover.isShown)
++        #expect(controller.popover.contentViewController === second)
++        controller.popover.performClose(nil)
++    }
+ 
+     /// task-012 검증 조건: `StatusBarController`가 받은 값을 버튼 접근성 이름에 그대로 반영하는지 확인합니다.
+     @Test func renderReflectsReceivedAccessibilityLabelOnButton() {
+@@ -213,21 +253,13 @@
+         let controller = StatusBarController(popoverContent: EmptyDashboardStub())
+         let output = RecordingOutput()
+         controller.output = output
+-        guard let button = controller.statusItem.button else {
++        guard controller.statusItem.button != nil else {
+             Issue.record("status item에 button이 없습니다")
+             return
+         }
+ 
+-        // 단위 테스트 host 프로세스는 비활성 상태로 시작하고 `NSPopover.show(...)`는 비활성 앱에서 표시되지 않습니다.
+-        // `togglePopover()`의 여는 경로와 같이 앱을 먼저 활성화하되, 활성화는 비동기로 완료되므로
+-        // 실제로 활성 상태가 될 때까지 run loop를 돌린 뒤 팝오버를 엽니다.
+-        NSApp.activate()
+-        let activationDeadline = Date().addingTimeInterval(2)
+-        while !NSApp.isActive && Date() < activationDeadline {
+-            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
+-        }
+-
+-        controller.popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
++        activateTestApp()
++        controller.togglePopover()
+ 
+         guard controller.popover.isShown else {
+             Issue.record("팝오버가 열리지 않아 보존 여부를 관찰할 수 없습니다 (앱 활성 상태: \(NSApp.isActive))")
+@@ -256,6 +288,21 @@
+ 
+         controller.popover.performClose(nil)
+     }
++
++    private func activateTestApp() {
++        NSApp.activate()
++        let deadline = Date().addingTimeInterval(2)
++        while !NSApp.isActive && Date() < deadline {
++            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
++        }
++    }
++
++    private func waitForPopoverClose(_ controller: StatusBarController) {
++        let deadline = Date().addingTimeInterval(2)
++        while controller.popover.contentViewController != nil && Date() < deadline {
++            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02))
++        }
++    }
+ }
+ 
+ private struct EmptyDashboardStub: View {
+--- a/ResourceRunnerTests/DashboardViewportTests.swift
++++ b/ResourceRunnerTests/DashboardViewportTests.swift
+@@ -102,8 +102,8 @@
+ 
+         viewport.configure(visibleCards: [.cpu, .memory, .disk], revision: 1,
+             normalizesMemoryHeight: true)
+-        viewport.registerCard(view: memory, card: .memory, revision: 1, order: 1, isLast: false)
+-        viewport.registerCard(view: disk, card: .disk, revision: 1, order: 2, isLast: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 1, displaySession: viewport.displaySession, order: 1, isLast: false)
++        viewport.registerCard(view: disk, card: .disk, revision: 1, displaySession: viewport.displaySession, order: 2, isLast: true)
+         #expect(viewport.expectedAnchor == .disk)
+         #expect(viewport.lowestAnchorView === disk)
+         #expect(viewport.memoryCardView === memory)
+@@ -113,15 +113,15 @@
+         #expect(viewport.expectedAnchor == .memory)
+         #expect(viewport.lowestAnchorView == nil)
+         #expect(viewport.memoryCardView == nil)
+-        viewport.registerCard(view: disk, card: .disk, revision: 1, order: 3, isLast: true)
+-        viewport.unregisterCard(view: memory, card: .memory, revision: 1)
++        viewport.registerCard(view: disk, card: .disk, revision: 1, displaySession: viewport.displaySession, order: 3, isLast: true)
++        viewport.unregisterCard(view: memory, card: .memory, revision: 1, displaySession: viewport.displaySession)
+         #expect(viewport.lowestAnchorView == nil)
+-        viewport.registerCard(view: newMemory, card: .memory, revision: 2, order: 5, isLast: true)
++        viewport.registerCard(view: newMemory, card: .memory, revision: 2, displaySession: viewport.displaySession, order: 5, isLast: true)
+         #expect(viewport.lowestAnchorView === newMemory)
+-        viewport.registerCard(view: memory, card: .memory, revision: 2, order: 1, isLast: true)
+-        viewport.unregisterCard(view: memory, card: .memory, revision: 2)
++        viewport.registerCard(view: memory, card: .memory, revision: 2, displaySession: viewport.displaySession, order: 1, isLast: true)
++        viewport.unregisterCard(view: memory, card: .memory, revision: 2, displaySession: viewport.displaySession)
+         #expect(viewport.lowestAnchorView === newMemory)
+-        viewport.unregisterCard(view: newMemory, card: .memory, revision: 2)
++        viewport.unregisterCard(view: newMemory, card: .memory, revision: 2, displaySession: viewport.displaySession)
+         #expect(viewport.lowestAnchorView == nil)
+         #expect(viewport.memoryCardView == nil)
+     }
+@@ -173,6 +173,82 @@
+             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome))
+     }
+ 
++    @Test func oldSessionDelayedCloseDoesNotCloseNewDetailAtSameRevision() async throws {
++        let viewport = DashboardViewport()
++        let oldDetail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        oldDetail.isReleasedWhenClosed = false
++        oldDetail.orderFront(nil)
++        viewport.registerDetail(window: oldDetail, selection: .cpu, contentSize: .zero)
++        viewport.configure(visibleCards: [], revision: 1, normalizesMemoryHeight: false)
++        viewport.endDisplaySession()
++        #expect(!oldDetail.isVisible)
++
++        let newDetail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        newDetail.isReleasedWhenClosed = false
++        defer { newDetail.close() }
++        newDetail.orderFront(nil)
++        viewport.registerDetail(window: newDetail, selection: .cpu, contentSize: .zero)
++        try await Task.sleep(for: .milliseconds(100))
++        #expect(newDetail.isVisible)
++        #expect(viewport.detailWindow === newDetail)
++    }
++
++    @Test func oldAnchorCallbacksDoNotCorrectOrCloseReopenedDetailAtSameRevision() async throws {
++        let viewport = DashboardViewport()
++        let body = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 280, height: 400),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        body.isReleasedWhenClosed = false
++        defer { body.close() }
++        body.orderFront(nil)
++
++        viewport.configure(visibleCards: [.cpu], revision: 1, normalizesMemoryHeight: false)
++        let oldAnchor = DashboardLowestAnchorCapture.AnchorView()
++        oldAnchor.viewport = viewport
++        oldAnchor.displaySession = viewport.displaySession
++        oldAnchor.card = .cpu
++        oldAnchor.revision = 1
++        oldAnchor.isLast = true
++        oldAnchor.frame = CGRect(x: 0, y: 0, width: 260, height: 112)
++        body.contentView?.addSubview(oldAnchor)
++        try await Task.sleep(for: .milliseconds(30))
++        #expect(viewport.lowestAnchorView === oldAnchor)
++
++        viewport.endDisplaySession()
++        viewport.configure(visibleCards: [.cpu], revision: 1, normalizesMemoryHeight: false)
++        let newAnchor = DashboardLowestAnchorCapture.AnchorView()
++        newAnchor.viewport = viewport
++        newAnchor.displaySession = viewport.displaySession
++        newAnchor.card = .cpu
++        newAnchor.revision = 1
++        newAnchor.isLast = true
++        newAnchor.frame = CGRect(x: 0, y: 120, width: 260, height: 112)
++        body.contentView?.addSubview(newAnchor)
++        try await Task.sleep(for: .milliseconds(30))
++        #expect(viewport.lowestAnchorView === newAnchor)
++
++        let detail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),
++            styleMask: .borderless, backing: .buffered, defer: false)
++        detail.isReleasedWhenClosed = false
++        defer { detail.close() }
++        detail.orderFront(nil)
++        viewport.registerDetail(window: detail, selection: .cpu, contentSize: .zero)
++        var correctionCount = 0
++        viewport.requestCorrection = { correctionCount += 1 }
++
++        DashboardLowestAnchorCapture.dismantleNSView(oldAnchor, coordinator: ())
++        #expect(correctionCount == 0)
++        oldAnchor.removeFromSuperview()
++        #expect(correctionCount == 0)
++        oldAnchor.report()
++        try await Task.sleep(for: .milliseconds(100))
++        #expect(correctionCount == 0)
++        #expect(viewport.lowestAnchorView === newAnchor)
++        #expect(viewport.detailWindow === detail)
++        #expect(detail.isVisible)
++    }
++
+     @Test func actualMemoryLastAndDiskLastFramesUseDifferentHeightCorrections() throws {
+         let screen = try #require(NSScreen.main)
+         let window = NSWindow(contentRect: CGRect(x: screen.visibleFrame.minX + 20,
+@@ -190,7 +266,7 @@
+         viewport.apply(screen: screen)
+         viewport.configure(visibleCards: [.memory], revision: 1,
+             normalizesMemoryHeight: false)
+-        viewport.registerCard(view: memory, card: .memory, revision: 1, order: 1, isLast: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 1, displaySession: viewport.displaySession, order: 1, isLast: true)
+         let memoryCenter = window.convertToScreen(memory.convert(memory.bounds, to: nil)).midY
+         let noRankingSize = viewport.detailSize
+         #expect(noRankingSize == DashboardViewportPolicy.detailSize(
+@@ -199,7 +275,7 @@
+ 
+         viewport.configure(visibleCards: [.memory], revision: 2,
+             normalizesMemoryHeight: true)
+-        viewport.registerCard(view: memory, card: .memory, revision: 2, order: 1, isLast: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 2, displaySession: viewport.displaySession, order: 1, isLast: true)
+         #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
+             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,
+             lowestAnchorCenterY: memoryCenter + CGFloat(169 - 184) / 2))
+@@ -207,8 +283,8 @@
+ 
+         viewport.configure(visibleCards: [.memory, .disk], revision: 3,
+             normalizesMemoryHeight: true)
+-        viewport.registerCard(view: memory, card: .memory, revision: 3, order: 1, isLast: false)
+-        viewport.registerCard(view: disk, card: .disk, revision: 3, order: 2, isLast: true)
++        viewport.registerCard(view: memory, card: .memory, revision: 3, displaySession: viewport.displaySession, order: 1, isLast: false)
++        viewport.registerCard(view: disk, card: .disk, revision: 3, displaySession: viewport.displaySession, order: 2, isLast: true)
+         let diskCenter = window.convertToScreen(disk.convert(disk.bounds, to: nil)).midY
+         #expect(viewport.detailSize == DashboardViewportPolicy.detailSize(
+             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome,
+--- a/ResourceRunnerTests/DashboardPresentationTests.swift
++++ b/ResourceRunnerTests/DashboardPresentationTests.swift
+@@ -818,6 +818,25 @@
+ 
+ @MainActor
+ struct DashboardPresentationStoreTests {
++
++    @Test func closedDisplayInvalidatesOldDetailCallbacksForEveryCard() {
++        for card in DashboardSelection.cardOrder {
++            let store = DashboardPresentationStore()
++            store.selectCard(card)
++            let oldGeneration = store.selectionGeneration
++            store.endDisplaySession()
++            #expect(store.selection == .none)
++            #expect(store.selectionGeneration != oldGeneration)
++
++            store.selectCard(card)
++            let newGeneration = store.selectionGeneration
++            store.dismissDetail(for: card, generation: oldGeneration)
++            #expect(store.selection == card)
++            #expect(store.selectionGeneration == newGeneration)
++            store.dismissDetail(for: card, generation: newGeneration)
++            #expect(store.selection == .none)
++        }
++    }
+ 
+     @Test func startsInCollectingStateBeforeAnyUpdate() {
+         let store = DashboardPresentationStore()

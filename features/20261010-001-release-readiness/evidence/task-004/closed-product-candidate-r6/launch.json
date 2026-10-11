@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-10-10T11:10:15.020756+00:00",
+  "pid": 50374,
+  "startLstart": "Sat Oct 10 20:09:57 2026",
+  "launchEpochConservative": 1791630598.0,
+  "exe": "/private/tmp/resourcerunner-task004-perf-diagnostic-r4.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "281a1e6eba0d0b79e84fd3dc49210d56ee9ba732cef15ac03f2bc9093b891475",
+  "windowObserverSession": 1785,
+  "commonCaffeinateSession": 63012,
+  "commonCaffeinatePID": 50217,
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "hardware": "Mac15,11 / Apple M3 Max / 36GB",
+    "power": "AC attached; 80% at preflight",
+    "appearance": "Dark",
+    "installedProductionPID": 16136,
+    "userInteraction": "19:42:15 KST user self-reported continued non-use; 20:00 KST use-resumption was allowed; 20:08 optional question unanswered, so current use unknown; diagnostic icon excluded",
+    "frontmostReadOnlyAtLaunch": {
+      "name": "Orca",
+      "pid": 57692
+    }
+  },
+  "comparison": "Original baseline 3 valid runs unchanged original exe/tools/settings/config; current user use unknown; validity from raw"
+}

@@ -10,7 +10,7 @@ import Foundation
 /// 메뉴바가 구분하는 표시 상태의 닫힌 집합.
 /// 프로젝트 기본 격리가 `MainActor`이지만 이 값은 저장된 상태가 없는 순수 값 타입이라
 /// 어느 격리에서도 비교·전달할 수 있어야 하므로 `nonisolated`로 선언합니다.
-nonisolated enum CharacterActivityState: Sendable {
+nonisolated enum CharacterActivityState: Hashable, Sendable {
     case low
     case moderate
     case high
@@ -18,13 +18,14 @@ nonisolated enum CharacterActivityState: Sendable {
     case sustainedHigh
 }
 
-/// 한 상태에 대응하는 메뉴바 접근성 이름 하나를 담는 값.
-/// 다섯 상태를 구분하는 유일한 수단이 이 이름이며 이미지나 색상 차이는 두지 않습니다.
+/// 정적 고양이의 CPU 상태 색상과 접근성 이름을 함께 전달합니다.
+/// 색상을 구분하지 못해도 접근성 이름과 툴팁으로 다섯 상태를 확인할 수 있습니다.
 /// 접근성 값은 담지 않습니다 — 메뉴바 상태 항목의 role인 `Status Menu`에서 VoiceOver가 값을 읽지 않아
 /// 값에 담은 상태는 사용자에게 도달하지 않고, 상태 문자열의 자리가 둘로 늘어나면 어긋날 여지만 생깁니다.
 struct CharacterPresentation: Equatable, Sendable {
     /// sink가 그대로 반영하는 완성된 접근성 이름. 조합은 아래 매핑에서 끝냅니다.
     let accessibilityLabel: String
+    let state: CharacterActivityState
 
     /// 메뉴바에는 여러 앱의 항목이 나란히 놓이므로 상태만으로는 어느 앱의 상태인지 알 수 없습니다.
     /// 앱 이름을 앞에 두고 쉼표로 상태를 잇습니다.
@@ -32,7 +33,8 @@ struct CharacterPresentation: Equatable, Sendable {
 
     /// `CharacterActivityState`에서 접근성 이름을 만드는 순수 매핑.
     static func presenting(_ state: CharacterActivityState) -> CharacterPresentation {
-        CharacterPresentation(accessibilityLabel: "\(applicationName), \(state.accessibilityDescription)")
+        CharacterPresentation(accessibilityLabel: "\(applicationName), \(state.accessibilityDescription)",
+            state: state)
     }
 }
 
@@ -49,7 +51,7 @@ private extension CharacterActivityState {
 }
 
 /// `CharacterPresentation`을 받아 표시에 반영하는 출력 계약.
-/// `StatusBarController`가 구현하며 메뉴바 버튼의 접근성 이름만 갱신합니다.
+/// `StatusBarController`가 구현하며 정적 아이콘의 색상·접근성 이름·툴팁을 갱신합니다.
 /// 팝오버 상태와 `SystemLifecycleSnapshot`은 이 계약의 입력이 아닙니다.
 @MainActor
 protocol CharacterPresentationSink: AnyObject {

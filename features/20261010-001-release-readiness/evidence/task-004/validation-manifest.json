@@ -1,0 +1,279 @@
+{
+  "recordedAt": "2026-10-10T11:38:52.536253+00:00",
+  "cwd": "/Users/zipkero/XcodeProjects/ResourceRunner",
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "testResult": "56 passed, 0 failed, 0 skipped; selected 8 impact suites; r12",
+  "formalRuns": "baseline and final candidate each 3 valid closed runs, 301 samples each",
+  "candidatePID": 50374,
+  "historicalCandidates": [
+    "closed-product-candidate",
+    "closed-product-candidate-r5"
+  ],
+  "files": {
+    "readme": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/README.md",
+      "bytes": 7842,
+      "sha256": "e317f10ccc411dcc8a61278ce880798cda5c30c0f7e211ae7cdeb3301ea6c6d2"
+    },
+    "sourcePatch": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/product-source.patch",
+      "bytes": 32512,
+      "sha256": "410df544ac8e389daaceeecf2aa0834e4b743b2842d4a01dc1be7ed967a651bd"
+    },
+    "sourceManifest": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/source-manifest.json",
+      "bytes": 2178,
+      "sha256": "0f58667ce36b860a56ee2bac70a63022849251b5510d565676473a1e1bf61fcf"
+    },
+    "diagnosticPreflight": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/diagnostic-preflight.json",
+      "bytes": 5633,
+      "sha256": "ccbe92d65bd75cf4e88ddd7ef6fab96576703fdc541217f96b1c05082a723646"
+    },
+    "repairReadiness": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/repair-readiness.json",
+      "bytes": 2870,
+      "sha256": "ac43656ba5a64f6b7f7df9276b3f9ac72e5ab9cbd04ff64f0a842e2fed266882"
+    },
+    "aggregate": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/aggregate.json",
+      "bytes": 9384,
+      "sha256": "c31c9af893ba5d6eade97d280e75e6c8f287270a9a1bf42eef9cecd0a01166e5"
+    },
+    "cleanup": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/cleanup.json",
+      "bytes": 712,
+      "sha256": "c5ba84f14a1d663b015f6809aef9d47b9d07939b0c0eed346e3bbe6bdf712f71"
+    },
+    "environmentEvents": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/environment-events.jsonl",
+      "bytes": 693,
+      "sha256": "3b1ee34e791faa46c7f76ab3becead200fe4280ef889672a4dcc493e60efe1db"
+    },
+    "baselineDetailReopen": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/detail-reopen.jsonl",
+      "bytes": 8763,
+      "sha256": "ba6799de247e368d4f580c009fb321e9d25a2ca3e0d7f8cea2351a4e17718452"
+    },
+    "candidateDetailReopen": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/detail-reopen.jsonl",
+      "bytes": 8675,
+      "sha256": "c54c400ec0b497613d8a518a179dfb37ffeaddb48fc81d585cfeeca11d1fe91f"
+    },
+    "iteration1Aggregate": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/aggregate-iteration-1.json",
+      "bytes": 8372,
+      "sha256": "f58535e2b5c4e4f24bfca62f298151bcbc4bc1da6e3dfa8bc492152bbd7044fe"
+    },
+    "iteration2Aggregate": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/aggregate-iteration-2.json",
+      "bytes": 9314,
+      "sha256": "ece56e2cb19e1a5ba0927d67ad1d3dee335eca0ce91cf1cfe2d4042996378090"
+    },
+    "xcresultInfo": {
+      "path": "/private/tmp/resourcerunner-task004-tests-r12.xcresult/Info.plist",
+      "bytes": 715,
+      "sha256": "ffc18a66c8f0c3b6dbe03de4705849f7d497525a394f5dacaa622b497f7c9c04"
+    },
+    "debugExe": {
+      "path": "/private/tmp/resourcerunner-task004-debug-r6/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "bytes": 40352,
+      "sha256": "9bbcd805fbfa1b31e35d1abf41408d4798cde81bd1706492cc0f8d68aeee21a7"
+    },
+    "debugDylib": {
+      "path": "/private/tmp/resourcerunner-task004-debug-r6/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+      "bytes": 9253992,
+      "sha256": "5f66788fd7363c99f9a01ba698cc6d37f4bce78bb69580aed34a39b9814b913d"
+    },
+    "releaseExe": {
+      "path": "/private/tmp/resourcerunner-task004-release-r6/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5742304,
+      "sha256": "ccab3eb6a5b27ea82555a189043f69fc643a4bc5dc19d17b742ed4e0e423fee2"
+    },
+    "candidateDiagnosticExe": {
+      "path": "/private/tmp/resourcerunner-task004-perf-diagnostic-r4.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5727712,
+      "sha256": "281a1e6eba0d0b79e84fd3dc49210d56ee9ba732cef15ac03f2bc9093b891475"
+    },
+    "originalDiagnosticExe": {
+      "path": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "bytes": 5676080,
+      "sha256": "d549f7fd7ac53cb819419f2b39ed2205aaea3254db67ae19a16530030d4528c0"
+    },
+    "releaseBuildLog": {
+      "path": "/private/tmp/resourcerunner-task004-release-r6.log",
+      "bytes": 81898,
+      "sha256": "a1898b48dd083d697a4b98e162277763ca0cdc126a47759cfbbf160541275115"
+    },
+    "debugBuildLog": {
+      "path": "/private/tmp/resourcerunner-task004-debug-r6.log",
+      "bytes": 87891,
+      "sha256": "e85a20f07720c8d17402977889a4b32f4114fa9175a22bcd51ac0e075632a806"
+    },
+    "baselineLaunch": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/launch.json",
+      "bytes": 1002,
+      "sha256": "4465396712d8ecacd3a862aca578974d328692f5812b8ff3795d3ce459ab5dc9"
+    },
+    "baselineOrchestrator": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/orchestrator.jsonl",
+      "bytes": 23487,
+      "sha256": "c0a058344a77e87301d9909cc59dd9be8a93dade8ee93ce3e807697c072c684a"
+    },
+    "baselineWindows": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/windows.jsonl",
+      "bytes": 303043,
+      "sha256": "ba0974709575ae296ab93f72796c08dfaa2bf25374b137027dfda04d6756123a"
+    },
+    "baselineR1_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r1-a1.jsonl",
+      "bytes": 271149,
+      "sha256": "949ed914bf9c049d0c191b0c71c9d509302ee4a5dd54ec17869d662de6347ac9"
+    },
+    "baselineR1_ax.jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r1-a1.ax.jsonl",
+      "bytes": 14209,
+      "sha256": "b081ecb346e476cf0cf9c1ff923b802130032e451a176975cf3cc021d79abb66"
+    },
+    "baselineR1_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r1-a1.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "baselineR1_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r1-a1.summary.json",
+      "bytes": 634,
+      "sha256": "dd884e9ade27608775d1a57679ac3772ff6c8e4e7d1a5ee0f90490c21ffec1dd"
+    },
+    "baselineR2_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r2-a1.jsonl",
+      "bytes": 271134,
+      "sha256": "9d4fa6aba61070a1d5b039401f38b124c8227cd19ae8ef05d4eafa0622996cda"
+    },
+    "baselineR2_ax.jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r2-a1.ax.jsonl",
+      "bytes": 14209,
+      "sha256": "2257e9b4be5466b49602be141a50d3aba83cbd155150370a8f9ec4bab2b0dbdf"
+    },
+    "baselineR2_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r2-a1.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "baselineR2_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r2-a1.summary.json",
+      "bytes": 635,
+      "sha256": "216dda4851af85198df1e7e1a5f906e2dda368c37887a5e2bf3f0443fdbc1191"
+    },
+    "baselineR3_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r3-a1.jsonl",
+      "bytes": 271477,
+      "sha256": "e0d06d671c3976d84729b171df395c11f88742907ee7deb1f9b56258dd971e8e"
+    },
+    "baselineR3_ax.jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r3-a1.ax.jsonl",
+      "bytes": 14209,
+      "sha256": "1869c916acb0af43abffbf5dde8085f9d752285651f94aa4abf5d93622de2928"
+    },
+    "baselineR3_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r3-a1.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "baselineR3_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline/closed-r3-a1.summary.json",
+      "bytes": 635,
+      "sha256": "f763522f8d7fa7f183e74fd655945264998768e44830f5fe92fbc74c3c7de5ca"
+    },
+    "candidateLaunch": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/launch.json",
+      "bytes": 1083,
+      "sha256": "aa9c75458e823e0982bd2d359a036d68951fa1316b67573c2149911398957bfd"
+    },
+    "candidateOrchestrator": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/orchestrator.jsonl",
+      "bytes": 23777,
+      "sha256": "4fe08285f8df15dcecaaf08aa00c3a94f25120d8bc99b4667a6d26da5856a291"
+    },
+    "candidateWindows": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/windows.jsonl",
+      "bytes": 306568,
+      "sha256": "3a44981614704121d09429a5b0d3e52f5ecd257e5f560294aed5530a8b69fdb9"
+    },
+    "candidateR1_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r1-a1.jsonl",
+      "bytes": 270569,
+      "sha256": "c9ee456bcb2ab5821ce306312cca1b24acc3812945df65f34bdad3ce06195f3d"
+    },
+    "candidateR1_ax.jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r1-a1.ax.jsonl",
+      "bytes": 14209,
+      "sha256": "d2f3eb3e72c56a91675b003bebd3ddada886b582c11d0b8fe70816c933b33a46"
+    },
+    "candidateR1_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r1-a1.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "candidateR1_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r1-a1.summary.json",
+      "bytes": 635,
+      "sha256": "2c8e30deeec9fe4e12da65ac5740414ebd5bc0149341ee72d52d1d547a1e19ed"
+    },
+    "candidateR2_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r2-a1.jsonl",
+      "bytes": 270762,
+      "sha256": "eaf379b5cfa07618a0187fef07890c853b8045d4e784dd0b0e16a4980269d0a1"
+    },
+    "candidateR2_ax.jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r2-a1.ax.jsonl",
+      "bytes": 14209,
+      "sha256": "3b03a40a38037c8ef9b4bc49e6b66adef7a72cf21e123fe3b48c5b0254167d1a"
+    },
+    "candidateR2_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r2-a1.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "candidateR2_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r2-a1.summary.json",
+      "bytes": 636,
+      "sha256": "5a1c7d24c40338149b75f1e1c03234d64b99d0fb7556a72d63e7b538b8ca0fc8"
+    },
+    "candidateR3_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r3-a1.jsonl",
+      "bytes": 270737,
+      "sha256": "6888eb017b2963134a2126d5dc41d5aae8781b3c34cc489354ff8541e4fb817a"
+    },
+    "candidateR3_ax.jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r3-a1.ax.jsonl",
+      "bytes": 14209,
+      "sha256": "65295af909a4d5d4c9f298cf00f783fd4da970a181ac8b4f9ca018d0125b5b63"
+    },
+    "candidateR3_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r3-a1.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "candidateR3_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/closed-r3-a1.summary.json",
+      "bytes": 636,
+      "sha256": "4fa5822ae494f7d71b5c841008658cef42baa80b7fc4778780c1ae056a13a9a7"
+    },
+    "candidateIdentityPreflight_jsonl": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/identity-preflight.jsonl",
+      "bytes": 2063,
+      "sha256": "dde375de8cf0124b68f2475e57c668cdb808ce5625d62c0a79b9cf032dae1af7"
+    },
+    "candidateIdentityPreflight_events": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/identity-preflight.events",
+      "bytes": 7,
+      "sha256": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3"
+    },
+    "candidateIdentityPreflight_summary.json": {
+      "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r6/identity-preflight.summary.json",
+      "bytes": 615,
+      "sha256": "86fd0f7cf1975ed054ca776afdabf9d14d4c0fc9fcfcda2c81cd9cab38bca904"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "pid": 49148,
+  "launchEpoch": 1791620591.0,
+  "startLstart": "Sat Oct 10 17:23:11 2026",
+  "exe": "/private/tmp/resourcerunner-task003-hosting-diagnostic.app/Contents/MacOS/ResourceRunner",
+  "note": "실행 직후 기존 빈 디렉터리 mkdir 실패로 고정밀 epoch 누락. ps lstart는 17:23:11 초 단위이며 실제 시작은 그 초 안이므로 +1초를 보수적 warmup 기준으로 사용. 첫 orchestrator는 GUI 행동 전 중단·별도 보존.",
+  "warmupReferenceEpoch": 1791620592.0
+}

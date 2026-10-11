@@ -70,6 +70,22 @@ final class DashboardViewport: ObservableObject {
     private var memoryOrder: UInt64 = 0
     private var anchorFrame: CGRect?
     private var memoryFrame: CGRect?
+    private(set) var displaySession: UInt64 = 0
+
+    /// 닫힌 화면의 앵커와 상세 창을 버리고, 이전 화면이 예약한 지연 닫기를 무효화합니다.
+    func endDisplaySession() {
+        displaySession &+= 1
+        detailWindow?.close()
+        detailWindow = nil
+        detailSelection = nil
+        lowestAnchorView = nil
+        memoryCardView = nil
+        anchorFrame = nil
+        memoryFrame = nil
+        anchorOrder = 0
+        memoryOrder = 0
+        configured = false
+    }
 
     func configure(visibleCards: [DashboardSelection], revision: UInt64,
                    normalizesMemoryHeight: Bool) {
@@ -92,8 +108,10 @@ final class DashboardViewport: ObservableObject {
     }
 
     private func closeDetailWithoutAnchor(after revision: UInt64) {
+        let session = displaySession
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(60)) { [weak self] in
-            guard let self, self.displayRevision == revision else { return }
+            guard let self, self.displayRevision == revision,
+                  self.displaySession == session else { return }
             if let anchor = self.lowestAnchorView,
                let window = anchor.window, anchor.bounds.height > 0,
                window.screen == self.currentScreen {
@@ -135,8 +153,9 @@ final class DashboardViewport: ObservableObject {
     }
 
     func registerCard(view: NSView, card: DashboardSelection, revision: UInt64,
-                      order: UInt64, isLast: Bool) {
-        guard configured, revision == displayRevision, visibleCards.contains(card),
+                      displaySession: UInt64, order: UInt64, isLast: Bool) {
+        guard displaySession == self.displaySession, configured,
+              revision == displayRevision, visibleCards.contains(card),
               let window = view.window, card == .memory || isLast else { return }
         let frame = window.convertToScreen(view.convert(view.bounds, to: nil))
         var changed = false
@@ -157,8 +176,10 @@ final class DashboardViewport: ObservableObject {
         requestCorrection?()
     }
 
-    func unregisterCard(view: NSView, card: DashboardSelection, revision: UInt64) {
-        guard revision == displayRevision else { return }
+    func unregisterCard(view: NSView, card: DashboardSelection, revision: UInt64,
+                        displaySession: UInt64) {
+        guard displaySession == self.displaySession,
+              revision == displayRevision else { return }
         if card == .memory, memoryCardView === view {
             memoryCardView = nil
             memoryFrame = nil
@@ -204,6 +225,7 @@ struct DashboardLowestAnchorCapture: NSViewRepresentable {
     func makeNSView(context: Context) -> AnchorView {
         let view = AnchorView()
         view.viewport = viewport
+        view.displaySession = viewport.displaySession
         view.card = card
         view.revision = revision
         view.isLast = isLast
@@ -219,11 +241,13 @@ struct DashboardLowestAnchorCapture: NSViewRepresentable {
     }
 
     static func dismantleNSView(_ view: AnchorView, coordinator: ()) {
-        view.viewport?.unregisterCard(view: view, card: view.card, revision: view.revision)
+        view.viewport?.unregisterCard(view: view, card: view.card, revision: view.revision,
+            displaySession: view.displaySession)
     }
 
     final class AnchorView: NSView {
         weak var viewport: DashboardViewport?
+        var displaySession: UInt64 = 0
         var card: DashboardSelection = .none
         var revision: UInt64 = 0
         var isLast = false
@@ -235,7 +259,8 @@ struct DashboardLowestAnchorCapture: NSViewRepresentable {
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             if window == nil {
-                viewport?.unregisterCard(view: self, card: card, revision: revision)
+                viewport?.unregisterCard(view: self, card: card, revision: revision,
+                    displaySession: displaySession)
             } else {
                 report()
             }
@@ -245,12 +270,14 @@ struct DashboardLowestAnchorCapture: NSViewRepresentable {
             let card = card
             let revision = revision
             let isLast = isLast
+            let displaySession = displaySession
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.window != nil,
                       self.card == card, self.revision == revision,
                       self.isLast == isLast else { return }
                 self.viewport?.registerCard(view: self, card: card,
-                    revision: revision, order: self.order, isLast: isLast)
+                    revision: revision, displaySession: displaySession,
+                    order: self.order, isLast: isLast)
             }
         }
     }
@@ -263,7 +290,10 @@ struct DashboardDetailWindowCapture: NSViewRepresentable {
 
     func makeNSView(context: Context) -> TrackingView {
         let view = TrackingView()
+        let displaySession = viewport.displaySession
+        view.displaySession = displaySession
         view.onWindowChange = { [weak viewport] window, removed, size in
+            guard viewport?.displaySession == displaySession else { return }
             viewport?.registerDetail(window: window, removingWindow: removed,
                 selection: selection, contentSize: size)
         }
@@ -271,7 +301,9 @@ struct DashboardDetailWindowCapture: NSViewRepresentable {
     }
 
     func updateNSView(_ view: TrackingView, context: Context) {
+        let displaySession = view.displaySession
         view.onWindowChange = { [weak viewport] window, removed, size in
+            guard viewport?.displaySession == displaySession else { return }
             viewport?.registerDetail(window: window, removingWindow: removed,
                 selection: selection, contentSize: size)
         }
@@ -280,6 +312,7 @@ struct DashboardDetailWindowCapture: NSViewRepresentable {
 
     final class TrackingView: NSView {
         var onWindowChange: ((NSWindow?, NSWindow?, CGSize) -> Void)?
+        var displaySession: UInt64 = 0
         weak var lastWindow: NSWindow?
 
         override func viewDidMoveToWindow() {

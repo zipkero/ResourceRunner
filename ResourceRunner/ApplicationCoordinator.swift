@@ -621,6 +621,7 @@ final class ApplicationCoordinator {
 
 extension ApplicationCoordinator: StatusBarControllerOutput {
     func popoverPresented(_ isPresented: Bool) {
+        if !isPresented { dashboardPresentationStore.endDisplaySession() }
         Task { await Self.forwardPopoverPresented(isPresented, to: monitoringLifecycleStore) }
     }
 

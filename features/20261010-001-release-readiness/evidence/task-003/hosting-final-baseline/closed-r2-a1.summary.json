@@ -1,0 +1,23 @@
+{
+  "cpuAveragePercent": 3.60097505487394,
+  "endEvent": {
+    "kind": "event",
+    "name": "end",
+    "sequence": -1,
+    "value": "reason=duration_complete invalid=false bytes=271470",
+    "wallTime": "2026-10-10T08:17:06Z"
+  },
+  "footprintMaximumBytes": 424543216,
+  "lifetimeMaximumFootprintBytes": 441435120,
+  "reasons": [],
+  "rssMaximumBytes": 144982016,
+  "sampleCount": 301,
+  "startEvent": {
+    "kind": "event",
+    "name": "start",
+    "sequence": -1,
+    "value": "pid=13523 startTicks=28501710513243 state=closed duration=300 interval=1.0 operator=closed",
+    "wallTime": "2026-10-10T08:12:06Z"
+  },
+  "valid": true
+}

@@ -45,6 +45,8 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .cpu)
+                .focusEffectDisabled()
+                .overlay { cardFocusOutline(for: .cpu) }
                 .onKeyPress(keys: [.space, .return]) { press in
                     guard press.modifiers.isEmpty else { return .ignored }
                     store.selectCard(.cpu)
@@ -79,6 +81,8 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .memory)
+                .focusEffectDisabled()
+                .overlay { cardFocusOutline(for: .memory) }
                 .onKeyPress(keys: [.space, .return]) { press in
                     guard press.modifiers.isEmpty else { return .ignored }
                     store.selectCard(.memory)
@@ -108,6 +112,8 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .network)
+                .focusEffectDisabled()
+                .overlay { cardFocusOutline(for: .network) }
                 .onKeyPress(keys: [.space, .return]) { press in
                     guard press.modifiers.isEmpty else { return .ignored }
                     store.selectCard(.network)
@@ -137,6 +143,8 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .focusable()
                 .focused($focusedCard, equals: .disk)
+                .focusEffectDisabled()
+                .overlay { cardFocusOutline(for: .disk) }
                 .onKeyPress(keys: [.space, .return]) { press in
                     guard press.modifiers.isEmpty else { return .ignored }
                     store.selectCard(.disk)
@@ -216,6 +224,14 @@ struct DashboardView: View {
     /// 네 상세에 공유할 크기를 줄이며, 넘치는 항목은 각 상세의 내부 `ScrollView`가 맡습니다.
     static let detailPopupWidth: CGFloat = 400
     static let detailPopupHeight: CGFloat = 480
+
+    /// 기본 macOS 포커스 halo 대신 얇은 선으로 표시하되 키보드 포커스 자체는 유지합니다.
+    private func cardFocusOutline(for card: DashboardSelection) -> some View {
+        RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
+            .strokeBorder(Color.accentColor.opacity(focusedCard == card ? 0.7 : 0), lineWidth: 1)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
 
     private func configureViewport() {
         let snapshot = store.preferencesSnapshot

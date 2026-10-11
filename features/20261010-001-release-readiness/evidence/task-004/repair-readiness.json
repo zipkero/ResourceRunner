@@ -1,0 +1,62 @@
+{
+  "recordedAt": "2026-10-10T11:07:33.425030+00:00",
+  "cwd": "/Users/zipkero/XcodeProjects/ResourceRunner",
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "source": {
+    "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/product-source.patch",
+    "sha256": "410df544ac8e389daaceeecf2aa0834e4b743b2842d4a01dc1be7ed967a651bd",
+    "bytes": 32512
+  },
+  "sourceManifest": {
+    "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/source-manifest.json",
+    "sha256": "0f58667ce36b860a56ee2bac70a63022849251b5510d565676473a1e1bf61fcf",
+    "bytes": 2178
+  },
+  "diagnosticPreflight": {
+    "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/diagnostic-preflight.json",
+    "sha256": "ccbe92d65bd75cf4e88ddd7ef6fab96576703fdc541217f96b1c05082a723646",
+    "bytes": 5633
+  },
+  "r12XcresultInfo": {
+    "path": "/private/tmp/resourcerunner-task004-tests-r12.xcresult/Info.plist",
+    "sha256": "ffc18a66c8f0c3b6dbe03de4705849f7d497525a394f5dacaa622b497f7c9c04",
+    "bytes": 715
+  },
+  "r12TestSummary": {
+    "passed": 56,
+    "failed": 0,
+    "skipped": 0
+  },
+  "debugExe": {
+    "path": "/private/tmp/resourcerunner-task004-debug-r6/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "sha256": "9bbcd805fbfa1b31e35d1abf41408d4798cde81bd1706492cc0f8d68aeee21a7",
+    "bytes": 40352
+  },
+  "debugDylib": {
+    "path": "/private/tmp/resourcerunner-task004-debug-r6/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner.debug.dylib",
+    "sha256": "5f66788fd7363c99f9a01ba698cc6d37f4bce78bb69580aed34a39b9814b913d",
+    "bytes": 9253992
+  },
+  "releaseExe": {
+    "path": "/private/tmp/resourcerunner-task004-release-r6/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "sha256": "ccab3eb6a5b27ea82555a189043f69fc643a4bc5dc19d17b742ed4e0e423fee2",
+    "bytes": 5742304
+  },
+  "diagnosticExe": {
+    "path": "/private/tmp/resourcerunner-task004-perf-diagnostic-r4.app/Contents/MacOS/ResourceRunner",
+    "sha256": "281a1e6eba0d0b79e84fd3dc49210d56ee9ba732cef15ac03f2bc9093b891475",
+    "bytes": 5727712
+  },
+  "observedEnvironment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "power": "AC attached, 80%",
+    "appearance": "Dark",
+    "installedProductionPID": 16136,
+    "installedProductionExeSHA256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80",
+    "diagnosticRunning": false,
+    "caffeinateRunning": false,
+    "userMacUse": "unknown after 20:00 use-resumption notice"
+  },
+  "measurementStatus": "not started; main environment and baseline reuse decision pending",
+  "historicalIteration": "closed-product-candidate-r5 and aggregate-iteration-2.json belong to pre-correctionTask source"
+}

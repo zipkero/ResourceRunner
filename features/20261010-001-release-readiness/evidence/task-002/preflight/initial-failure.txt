@@ -1,0 +1,4 @@
+Virgin diagnostic namespace: neither sandbox nor global preferences plist existed.
+measure 2-second smoke before GUI Restore Defaults exited 1: measure: Error Domain=initial settings/window/session unavailable Code=6 "(null)"
+No raw JSONL was created because the tool rejects input before opening the output.
+The aborted PID39156 warmup log is preserved in aborted-virgin-namespace-orchestrator.jsonl.

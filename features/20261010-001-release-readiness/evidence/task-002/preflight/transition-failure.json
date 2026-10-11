@@ -1,0 +1,9 @@
+{
+  "at_utc": "2026-10-10T05:09:49Z",
+  "expected": "network",
+  "v1_observed": "body with four cards; no DashboardDetail",
+  "actual_after_v2": "network with NetworkDetail and Network 인터페이스 heading; same PID43937 and startTicks28154177062305",
+  "cause": "v1 helper assumed DashboardDetail and Network 상세 for all four details; production NetworkDashboardView uses NetworkDetail and Network 인터페이스; DiskDashboardView uses DiskDetail and Disk 장치와 볼륨",
+  "impact": "no active 300s run affected; 12 prior valid runs preserved; network transition happened outside measurement",
+  "resolution": "v2 helper adds production identifiers/headings; same PID resumes with new 60s settle from network"
+}

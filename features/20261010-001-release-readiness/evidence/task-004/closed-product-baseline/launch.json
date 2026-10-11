@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-10T09:14:03.791578+00:00",
+  "pid": 7578,
+  "startLstart": "Sat Oct 10 18:11:47 2026",
+  "launchEpochConservative": 1791623508.0,
+  "exe": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "d549f7fd7ac53cb819419f2b39ed2205aaea3254db67ae19a16530030d4528c0",
+  "orchestratorSession": 74225,
+  "windowObserverSession": 17811,
+  "commonCaffeinateSession": 19248,
+  "commonCaffeinateCommand": "caffeinate -di -t 9000",
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "hardware": "Mac15,11 / Apple M3 Max / 36GB",
+    "power": "AC attached; 80% at preflight",
+    "appearance": "Dark",
+    "installedProductionPID": 16136,
+    "userInteraction": "Mac use allowed; diagnostic icon excluded; no claim of no user interaction"
+  },
+  "note": "Conservative epoch is ps lstart second plus 1s; both arms must retain same caff/session conditions. Baseline starts new contemporaneous pair, task-003 old baseline not reused."
+}

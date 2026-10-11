@@ -1,0 +1,4 @@
+2026-10-10 20:58:23.771 Df testmanagerd[43989:3939ef0] [com.apple.dt.xctest:Default] Enabling Automation Mode...
+2026-10-10 20:58:23.777 Df testmanagerd[43989:3939ef0] [com.apple.dt.automationmode:Default] Writer daemon requires authentication to enable automation mode.
+2026-10-10 20:58:23.779 Df testmanagerd[43989:3939ef0] [com.apple.LocalAuthentication:Client,Interactive,SPI] evaluatePolicy:2 options:{
+    2 = "Enable UI Automation";

@@ -1,0 +1,25 @@
+  PID  %CPU    RSS COMM
+59535  16.9 543456 codex
+57714  10.0 134752 /Applications/Orca.app/Contents/Frameworks/Orca Helper.app/Contents/MacOS/Orca Helper
+43937   8.3 117392 /private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner
+57805   7.1 411264 /Applications/Orca.app/Contents/Frameworks/Orca Helper (Renderer).app/Contents/MacOS/Orca Helper (Renderer)
+16136   6.8 187984 /Users/zipkero/Applications/ResourceRunner.app/Contents/MacOS/ResourceRunner
+  597   5.7 253888 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
+49309   3.6   8272 (resourcerunner-t)
+57692   2.7 429600 /Applications/Orca.app/Contents/MacOS/Orca
+ 8298   2.6  84384 /usr/libexec/syspolicyd
+  595   2.4  30704 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd
+60630   2.2  33664 /Users/zipkero/.codex/packages/standalone/releases/0.162.1-aarch64-apple-darwin/bin/codex-code-mode-host
+62627   2.1  16144 /usr/libexec/trustd
+65265   1.7 133792 /Applications/Orca.app/Contents/Frameworks/Orca Helper.app/Contents/MacOS/Orca Helper
+  706   0.9  46048 /System/Library/DriverExtensions/com.apple.DriverKit-AppleBCMWLAN.dext/com.apple.DriverKit-AppleBCMWLAN
+62791   0.6 769488 claude
+  669   0.6  20704 /usr/sbin/mDNSResponder
+  522   0.6  91312 /usr/libexec/logd
+64228   0.4 131376 /Applications/Amphetamine.app/Contents/MacOS/Amphetamine
+ 1156   0.4  11792 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/XPCServices/com.apple.hiservices-xpcservice.xpc/Contents/MacOS/com.apple.hiservices-xpcservice
+64171   0.3  23232 /System/Library/CoreServices/sharedfilelistd
+  590   0.3  11280 /usr/libexec/corebrightnessd
+45565   0.2   1504 ugrep
+19143   0.2   1504 ugrep
+  534   0.2  14880 /usr/libexec/configd

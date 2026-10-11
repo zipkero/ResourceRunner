@@ -1,0 +1,189 @@
+{
+  "baseline": [
+    {
+      "name": "closed-r1-a1",
+      "path": "features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline",
+      "hashes": {
+        "raw": "949ed914bf9c049d0c191b0c71c9d509302ee4a5dd54ec17869d662de6347ac9",
+        "ax": "b081ecb346e476cf0cf9c1ff923b802130032e451a176975cf3cc021d79abb66",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "dd884e9ade27608775d1a57679ac3772ff6c8e4e7d1a5ee0f90490c21ffec1dd"
+      },
+      "pid": 7578,
+      "startTicks": 28611162961012,
+      "exePath": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 6.57545138081672,
+      "rssMaximumBytes": 141770752,
+      "footprintMinimumBytes": 280019952,
+      "footprintMedianBytes": 414745584,
+      "footprintMaximumBytes": 419267568,
+      "footprintOver400MBCount": 175,
+      "lifetimeMaximumFootprintBytes": 423379952,
+      "maximumScheduleDelayMS": 5.097625,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r2-a1",
+      "path": "features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline",
+      "hashes": {
+        "raw": "9d4fa6aba61070a1d5b039401f38b124c8227cd19ae8ef05d4eafa0622996cda",
+        "ax": "2257e9b4be5466b49602be141a50d3aba83cbd155150370a8f9ec4bab2b0dbdf",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "216dda4851af85198df1e7e1a5f906e2dda368c37887a5e2bf3f0443fdbc1191"
+      },
+      "pid": 7578,
+      "startTicks": 28611162961012,
+      "exePath": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 6.314322148242467,
+      "rssMaximumBytes": 143097856,
+      "footprintMinimumBytes": 280380424,
+      "footprintMedianBytes": 282395656,
+      "footprintMaximumBytes": 420496392,
+      "footprintOver400MBCount": 73,
+      "lifetimeMaximumFootprintBytes": 423379952,
+      "maximumScheduleDelayMS": 10.039584,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r3-a1",
+      "path": "features/20261010-001-release-readiness/evidence/task-004/closed-product-baseline",
+      "hashes": {
+        "raw": "e0d06d671c3976d84729b171df395c11f88742907ee7deb1f9b56258dd971e8e",
+        "ax": "1869c916acb0af43abffbf5dde8085f9d752285651f94aa4abf5d93622de2928",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "f763522f8d7fa7f183e74fd655945264998768e44830f5fe92fbc74c3c7de5ca"
+      },
+      "pid": 7578,
+      "startTicks": 28611162961012,
+      "exePath": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 6.152125806851334,
+      "rssMaximumBytes": 144474112,
+      "footprintMinimumBytes": 281543688,
+      "footprintMedianBytes": 282641416,
+      "footprintMaximumBytes": 421643272,
+      "footprintOver400MBCount": 61,
+      "lifetimeMaximumFootprintBytes": 423379952,
+      "maximumScheduleDelayMS": 10.169667,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    }
+  ],
+  "candidate": [
+    {
+      "name": "closed-r1-a1",
+      "path": "features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r5",
+      "hashes": {
+        "raw": "6c0756abd1a951f3ab1499abc278bf0c482fac25e3f01f16bb55d98d3661a251",
+        "ax": "22b4e57c6457d51e6c9c03578658958a20c81e7b3ee56bc11f298be8ffe2bfb5",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "d63c9bee85f6c7e4c6a332ffcca61d2c20db5db05ba9ab761ae5832e375fb435"
+      },
+      "pid": 5757,
+      "startTicks": 28727125385110,
+      "exePath": "/private/tmp/resourcerunner-task004-perf-diagnostic-r3.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 2.546488416804115,
+      "rssMaximumBytes": 141279232,
+      "footprintMinimumBytes": 62981128,
+      "footprintMedianBytes": 63194120,
+      "footprintMaximumBytes": 63259656,
+      "footprintOver400MBCount": 0,
+      "lifetimeMaximumFootprintBytes": 431244296,
+      "maximumScheduleDelayMS": 10.046542,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r2-a1",
+      "path": "features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r5",
+      "hashes": {
+        "raw": "e3a1158d6908e8d199f94c7c61bfd8ebb42a4b407a5bbbb26dcbedbb04df918e",
+        "ax": "5cf6d3eddc687066d7ed6c007022b4faba8d2fb58b8415b3a6114ab1c39805f3",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "c15c30aff11fca8c7d078d99c5b35416ccb916cfba093b6c135f83c513d98040"
+      },
+      "pid": 5757,
+      "startTicks": 28727125385110,
+      "exePath": "/private/tmp/resourcerunner-task004-perf-diagnostic-r3.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 2.576464377129535,
+      "rssMaximumBytes": 141410304,
+      "footprintMinimumBytes": 63194120,
+      "footprintMedianBytes": 63226888,
+      "footprintMaximumBytes": 63439880,
+      "footprintOver400MBCount": 0,
+      "lifetimeMaximumFootprintBytes": 431244296,
+      "maximumScheduleDelayMS": 10.054791,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    },
+    {
+      "name": "closed-r3-a1",
+      "path": "features/20261010-001-release-readiness/evidence/task-004/closed-product-candidate-r5",
+      "hashes": {
+        "raw": "e28e1790cda5c9ad4a25c5259665df1d923f42c8f7673a42d58e790ff2c80b81",
+        "ax": "d4ef9b1ba6e0f53920e1cc3e097dec1b4febc3d402d0cce53b62921573cc8753",
+        "events": "55cba4bb35813b49ebc44b95a00002da823de6184c0fd3c9667a9aa06345bfe3",
+        "summary": "c8133ac66e92ed82058a98b0d8ee8a48480e2021542376c264b0ac09d5886c95"
+      },
+      "pid": 5757,
+      "startTicks": 28727125385110,
+      "exePath": "/private/tmp/resourcerunner-task004-perf-diagnostic-r3.app/Contents/MacOS/ResourceRunner",
+      "settingsSource": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+      "settingsSHA256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+      "cpuAveragePercent": 2.6136629892021555,
+      "rssMaximumBytes": 141508608,
+      "footprintMinimumBytes": 63357960,
+      "footprintMedianBytes": 63423496,
+      "footprintMaximumBytes": 63505416,
+      "footprintOver400MBCount": 0,
+      "lifetimeMaximumFootprintBytes": 431244296,
+      "maximumScheduleDelayMS": 10.049292,
+      "axObservations": 58,
+      "sampleCount": 301,
+      "valid": true
+    }
+  ],
+  "pairs": [
+    {
+      "repeat": 1,
+      "cpuReductionPercentagePoints": 4.028962964012605,
+      "footprintMaximumReductionBytes": 356007912,
+      "footprintMedianReductionBytes": 351551464,
+      "rssMaximumReductionBytes": 491520
+    },
+    {
+      "repeat": 2,
+      "cpuReductionPercentagePoints": 3.737857771112932,
+      "footprintMaximumReductionBytes": 357056512,
+      "footprintMedianReductionBytes": 219168768,
+      "rssMaximumReductionBytes": 1687552
+    },
+    {
+      "repeat": 3,
+      "cpuReductionPercentagePoints": 3.5384628176491786,
+      "footprintMaximumReductionBytes": 358137856,
+      "footprintMedianReductionBytes": 219217920,
+      "rssMaximumReductionBytes": 2965504
+    }
+  ],
+  "comparisonNote": "Original arm raw reused unchanged: same original exe, tools, canonical settings, OS/AC/Dark/product PID and common caffeinate protocol. Repair candidate has one extra failed 5-second body opening before the accepted body use; formal 300s windows remain independently valid. This history difference is not concealed.",
+  "baselineCpuRunRangePercentagePoints": 0.4233255739653856,
+  "baselineFootprintMaximumRunRangeBytes": 2375704,
+  "allValid": true
+}

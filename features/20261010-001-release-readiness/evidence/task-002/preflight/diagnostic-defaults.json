@@ -1,0 +1,19 @@
+{
+  "source": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+  "preferences.v1": {
+    "schemaVersion": 1,
+    "showsCPUCard": true,
+    "detailListLimit": "twenty",
+    "includesSystemProcesses": false,
+    "showsNetworkCard": true,
+    "refreshProfile": "standard",
+    "showsCPUTopApplications": true,
+    "automaticallyClosesPopover": true,
+    "showsDiskCard": true,
+    "showsMemoryCard": true,
+    "graphTimeRange": "tenMinutes",
+    "showsMemoryTopApplications": true
+  },
+  "canonical_sha256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+  "method": "GUI SettingsRestoreDefaults AXPress on preparatory diagnostic PID39156"
+}

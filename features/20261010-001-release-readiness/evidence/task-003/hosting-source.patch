@@ -1,0 +1,36 @@
+--- /tmp/resourcerunner-task001-frozen/ResourceRunner/StatusBarController.swift	2026-10-09 16:18:34
++++ /tmp/resourcerunner-task003-hosting-source/ResourceRunner/StatusBarController.swift	2026-10-10 15:09:14
+@@ -31,6 +31,7 @@
+     let statusItem: NSStatusItem
+     let popover: NSPopover
+     let viewport: DashboardViewport?
++    private let makePopoverContentController: () -> NSViewController
+     private var screenObserver: NSObjectProtocol?
+     private var correctionScheduled = false
+     private var keyMonitor: Any?
+@@ -53,8 +54,8 @@
+         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+         popover = NSPopover()
+         self.viewport = viewport
++        makePopoverContentController = { NSHostingController(rootView: popoverContent) }
+         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
+-        popover.contentViewController = NSHostingController(rootView: popoverContent)
+ 
+         super.init()
+ 
+@@ -219,6 +220,7 @@
+         if popover.isShown {
+             popover.performClose(nil)
+         } else {
++            popover.contentViewController = makePopoverContentController()
+             updateViewportFromScreen()
+             NSApp.activate()
+             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+@@ -327,6 +329,7 @@
+ 
+     func popoverDidClose(_ notification: Notification) {
+         output?.popoverPresented(false)
++        popover.contentViewController = nil
+     }
+ }
+ 

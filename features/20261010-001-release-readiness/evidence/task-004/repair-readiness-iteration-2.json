@@ -1,0 +1,57 @@
+{
+  "recordedAt": "2026-10-10T10:18:39.451533+00:00",
+  "cwd": "/Users/zipkero/XcodeProjects/ResourceRunner",
+  "head": "69842e14e920e95da179f525055b22dd75c56b74",
+  "source": {
+    "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/product-source.patch",
+    "sha256": "e980d9a87d9fa3c4f2ed2b0dffdf13cedab1ae6241d4634041f13cc0e61f238a",
+    "bytes": 30521
+  },
+  "sourceManifest": {
+    "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/source-manifest.json",
+    "sha256": "a2ba619d89e5535bc5490094a45cefab5863010c5f9de04533b695f7d7ae24d7",
+    "bytes": 2177
+  },
+  "diagnosticPreflight": {
+    "path": "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-004/diagnostic-preflight.json",
+    "sha256": "8bcf9f833456a1a5b696c2181ec6ca3fbee29e4b07fd231c7a6ec64fc59f1d90",
+    "bytes": 5603
+  },
+  "r9XcresultInfo": {
+    "path": "/private/tmp/resourcerunner-task004-tests-r9.xcresult/Info.plist",
+    "sha256": "dc29605a134c153d8ad66749ee84828e873562ff3edbf14e4ee152ebeb40b617",
+    "bytes": 715
+  },
+  "r9TestSummary": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0
+  },
+  "debugExe": {
+    "path": "/private/tmp/resourcerunner-task004-debug-r5/Build/Products/Debug/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "sha256": "9bbcd805fbfa1b31e35d1abf41408d4798cde81bd1706492cc0f8d68aeee21a7",
+    "bytes": 40352
+  },
+  "releaseExe": {
+    "path": "/private/tmp/resourcerunner-task004-release-r5/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+    "sha256": "ff3aed071f6381e4e27c1e3aa218805fdbbfbc93ddcb101702e80cd4a0421ddf",
+    "bytes": 5742304
+  },
+  "diagnosticExe": {
+    "path": "/private/tmp/resourcerunner-task004-perf-diagnostic-r3.app/Contents/MacOS/ResourceRunner",
+    "sha256": "cd5c4a1fbfddfa14fcf4c63c613405ce34cf9609cb1f114f4755e39b542d9768",
+    "bytes": 5727712
+  },
+  "observedEnvironment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "power": "AC attached, 80%",
+    "appearance": "Dark",
+    "installedProductionPID": 16136,
+    "installedProductionExeSHA256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80",
+    "diagnosticRunning": false,
+    "caffeinateRunning": false,
+    "userMacUseAfterQuietPeriod": "unknown; main to confirm"
+  },
+  "measurementStatus": "not started; main environment and baseline reuse decision pending",
+  "historicalIteration": "closed-product-candidate and aggregate-iteration-1.json belong to rejected pre-repair source"
+}

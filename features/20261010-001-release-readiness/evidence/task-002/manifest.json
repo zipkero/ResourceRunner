@@ -1,0 +1,129 @@
+{
+  "recorded_at": "2026-10-10T03:52:58.773047+00:00",
+  "source": {
+    "task001_manifest": "../task-001/manifest.json",
+    "frozen_release_path": "/tmp/resourcerunner-task001-frozen-release.app",
+    "frozen_release_exe_sha256": "dbd1f192c2496982d961989c9b487c7d22ea045034527a326f367dba988a4b6e",
+    "frozen_signed_path": "/tmp/resourcerunner-task001-frozen-release-signed.app",
+    "frozen_signed_exe_sha256": "c3a81a744699eb7c0f69880b1ec351947f41115bc9b8723b1a25d371e4bf9a7d"
+  },
+  "diagnostic": {
+    "path": "/tmp/resourcerunner-task002-perf-diagnostic.app",
+    "executable_path": "/private/tmp/resourcerunner-task002-perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+    "bundle_id": "com.zipkero.ResourceRunner.PerfDiagnostic",
+    "exe_sha256": "d549f7fd7ac53cb819419f2b39ed2205aaea3254db67ae19a16530030d4528c0",
+    "info_sha256": "c27de674f660d223c9b9f3993b6b48b0194f6cfac54e9b3d479e450c970ad018",
+    "info_semantic_difference": [
+      "CFBundleIdentifier"
+    ],
+    "resources_assets_sha256": "718c46b758536074d5b51c5de202cb7c24aa89479e50a3ff430d23dc4de2d3b0",
+    "entitlements_sha256": "011c5f9b798c9b8f9a0a08252211f893dd033bf133d0d017e795872585057155",
+    "signing": "ad hoc; original entitlements; codesign --verify --strict passed",
+    "pid": 43937,
+    "launch_local": "2026-10-10 12:54:26 +0900",
+    "prior_gui_trial_pid": [
+      35378,
+      39156
+    ],
+    "prior_gui_trial_terminated": true,
+    "initial_gui_state": "closed",
+    "pre_formal_gui_access": false,
+    "bundle_file_comparison": {
+      "source_file_count": 5,
+      "diagnostic_file_count": 6,
+      "only_source": [],
+      "only_diagnostic": [
+        "Contents/_CodeSignature/CodeResources"
+      ],
+      "changed": [
+        {
+          "relative": "Contents/Info.plist",
+          "source_sha256": "eadf6a496b1346b2ede5a08c9eacf13775f9a407a15c8f8f588f72d856c50cb0",
+          "diagnostic_sha256": "c27de674f660d223c9b9f3993b6b48b0194f6cfac54e9b3d479e450c970ad018"
+        },
+        {
+          "relative": "Contents/MacOS/ResourceRunner",
+          "source_sha256": "dbd1f192c2496982d961989c9b487c7d22ea045034527a326f367dba988a4b6e",
+          "diagnostic_sha256": "d549f7fd7ac53cb819419f2b39ed2205aaea3254db67ae19a16530030d4528c0"
+        }
+      ]
+    }
+  },
+  "installed_original": {
+    "path": "/Users/zipkero/Applications/ResourceRunner.app",
+    "pid": 16136,
+    "launch_local": "2026-10-09 16:28:46 +0900",
+    "exe_sha256": "a4073395407599a16cec757957ded1f4ecbdc535a070e7c985647a3f6bd32c80",
+    "policy": "read-only; session preserved"
+  },
+  "tools": {
+    "gui_state_source_sha256": "2de79b3dfbe7e65e5a2829a9986e85658a397d61ad6b9342a421d6dc6a42ae39",
+    "gui_state_binary_sha256": "087f8cda1961bb6fc9fd3b6935da5ea49b411a6d82c21a2ea59979ebdfa04ded",
+    "orchestrator_source_sha256": "ff4ce4170f6ad6c7b756d00d2200b691e6f71e04d7051978abaa2f7dbeb032a9",
+    "measure_source_sha256": "73a8ab6c70d42a66b80290aea84a3de1592454f5c72b581d36afe39105d39cd5",
+    "measure_binary_sha256": "572a50580d439845f93d97cc3b9562b959d8632f0349a70591b44d57beb921d4",
+    "analyze_source_sha256": "4d9b0b81fc930f19ed9300affef60e5a162728c855ade07895c2ba07c5ca154b",
+    "gui_state_warmup_revision": "AX card descriptions and focused-window fields added during warmup before any formal run; v1_hashes apply to closed/body/cpu/memory (12 runs), current v2 hashes apply to network/disk/settings (9 runs)",
+    "formal_tools_frozen_at": "2026-10-10T03:57:56.208633+00:00",
+    "observer_timeout_seconds": 4,
+    "measure_watchdog_seconds": 340,
+    "v1_hashes": {
+      "gui_state_source_sha256": "c400f3ca562a485a26f2bfdb9926311375aca01baa4d2fd176b04d776e9c7179",
+      "gui_state_binary_sha256": "109c8d0defb89eb4cd3fb205b71c24f2c9b2120bffc75eab0aef93169af9fa55",
+      "orchestrator_source_sha256": "875ab7cc26ed94493a3dd9ceea05a65f3b74dfd30a3c2b871cadacf2970a47f6"
+    },
+    "v2_applied_at": "2026-10-10T05:11:43.544796+00:00",
+    "v2_reason": "NetworkDetail/Network 인터페이스 and DiskDetail/Disk 장치와 볼륨 are production AX contracts; resume prior valid runs"
+  },
+  "environment": {
+    "model": "Mac15,11",
+    "chip": "Apple M3 Max",
+    "logical_cores": 14,
+    "memory_gb": 36,
+    "os": "macOS 26.6.2 (25G83)",
+    "power": "AC Power, 80% battery, powermode=0",
+    "display": "built-in Liquid Retina XDR physical3456x2234, logical1728x1117 at backingScale2.0, visible1728x1084; automatic brightness; dark appearance",
+    "disk": "APFS Macintosh HD disk3s1s1; root container free 812.3 GB",
+    "network": "Wi-Fi en0; other hardware ports en1-en6, bridge0 present",
+    "sleep_assertion": "caffeinate -di -t 30000, pid39033, session88627; existing Amphetamine assertion pid64228 also present",
+    "protocol": "fresh diagnostic process closed warmup 600s; seven states in closed/body/cpu/memory/network/disk/settings order; each state settle 60s then three consecutive 300s runs at 1s; AX observation every 5s; whole invalid attempts preserved"
+  },
+  "settings": {
+    "source_defaults": "ResourceRunner/AppPreferences.swift lines 38-51 frozen source",
+    "virgin_namespace": "no diagnostic preferences plist before first launch",
+    "gui_verification": "prior trial PID39156 Settings AX showed eleven expected values; Restore Defaults wrote canonical values; formal settings state will verify again",
+    "initial_namespace": "virgin before trial; diagnostic GUI Restore Defaults explicitly wrote only separate sandbox preferences before formal PID43937 launch",
+    "formal_preferences_path": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+    "formal_preferences_sha256": "a50883949d479d01d31166f524d093adf9bf3a842772cbb8c95602a1537411b4",
+    "preflight_failure": "measure Code 6 when virgin preferences.v1 plist was absent; 2s smoke passed after GUI Restore Defaults",
+    "measure_settings_source": "/Users/zipkero/Library/Containers/com.zipkero.ResourceRunner.PerfDiagnostic/Data/Library/Preferences/com.zipkero.ResourceRunner.PerfDiagnostic.plist",
+    "measure_canonical_sha256": "5588eace0f7e5afd6fd7fa8f43880a1834ea1e1d8cba751407d4dbf032f759c8",
+    "candidate_requirement": "candidate diagnostics must use the same persisted default preferences.v1 and source path; absent settings is not a performance difference"
+  },
+  "completion": {
+    "at": "2026-10-10T06:02:11.921909+00:00",
+    "official_valid_runs": 21,
+    "samples_per_run": 301,
+    "sample_count_total": 6321,
+    "all_valid": true,
+    "aggregate_path": "aggregate.json",
+    "aggregate_sha256": "6deec4a253d88546e577b219dcdbd517ef0c9404ff37b939ec67daf47fc22e0a",
+    "original_installed_after_path": "installed-original-after.json",
+    "original_installed_after_sha256": "b1ba89f19d099622dad72dc859e722f01097a0840656db13f580f2300155af5b",
+    "behavior_path": "behavior.jsonl",
+    "behavior_sha256": "de1d06e21d6824c2e0bf04223de80980dab1dd18b1ab6b4315ab9348bc1a9810",
+    "sample_path": "sample-body.txt",
+    "sample_sha256": "0334ee7e1bbac524b13a4956094476a8ba49ab6086ca796aa80634792a50e4bd",
+    "vmmap_path": "vmmap-body.txt",
+    "vmmap_sha256": "c251e181c4e68450ba715a9d4821fd141b9538a92342c8579623ff800d2dd46d",
+    "profile_state": "body after official runs; sampled separately",
+    "prior_12_valid_runs_reused": "same PID 43937 and startTicks 28154177062305; v1 AX transition failed only after memory-r3 before network run; v2 resumed with network settle 60s",
+    "orchestrator_initial": "runs/orchestrator.jsonl",
+    "orchestrator_resume": "runs/resume-orchestrator.jsonl",
+    "transition_failure": "preflight/transition-failure.json",
+    "interpretation": "baseline measurement only; target misses do not invalidate task-002 evidence",
+    "cleanup_path": "cleanup.json",
+    "cleanup_sha256": "ebbd1bee7397c0d08f9dae9ed8758f26a42c898cf94d491b9aaaafe0ca809ae0",
+    "diagnostic_and_temporary_assertion_exited": true
+  }
+}

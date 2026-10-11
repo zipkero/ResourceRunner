@@ -819,6 +819,25 @@ struct CPUCardAccessibilityLabelTests {
 @MainActor
 struct DashboardPresentationStoreTests {
 
+    @Test func closedDisplayInvalidatesOldDetailCallbacksForEveryCard() {
+        for card in DashboardSelection.cardOrder {
+            let store = DashboardPresentationStore()
+            store.selectCard(card)
+            let oldGeneration = store.selectionGeneration
+            store.endDisplaySession()
+            #expect(store.selection == .none)
+            #expect(store.selectionGeneration != oldGeneration)
+
+            store.selectCard(card)
+            let newGeneration = store.selectionGeneration
+            store.dismissDetail(for: card, generation: oldGeneration)
+            #expect(store.selection == card)
+            #expect(store.selectionGeneration == newGeneration)
+            store.dismissDetail(for: card, generation: newGeneration)
+            #expect(store.selection == .none)
+        }
+    }
+
     @Test func startsInCollectingStateBeforeAnyUpdate() {
         let store = DashboardPresentationStore()
 

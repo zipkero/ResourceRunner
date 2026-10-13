@@ -1,0 +1,158 @@
+| trial | AX probe | tap−app up 열기 | tap−app up 닫기 | app up−생성 열기/닫기 | toggle | activate 반환 | show 반환 | 첫 commit | occlusion visible | 첫 픽셀(직전 프레임) | 1% 변화 | 애니메이션 97% | didShow |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| trial-00-firstopen | Y | -1.02 | -5.60 | 1.25 / 5.73 | 1.14 | 2.14 | 80.49 | 99.72 | 117.06 | 122.91 (106.24) | 156.24 | 314.57 | 597.64 |
+
+{
+ "all": {
+  "tapMinusAppUpDequeueMs_openClose": {
+   "n": 2,
+   "min": -5.597958333333333,
+   "median": -3.3096041666666665,
+   "max": -1.02125
+  },
+  "appUpDequeueMinusCreatedMs_openClose": {
+   "n": 2,
+   "min": 1.2522086588541668,
+   "median": 3.4912503255208334,
+   "max": 5.7302919921875
+  },
+  "tapMinusCreatedMs_openClose": {
+   "n": 2,
+   "min": 0.13233365885416665,
+   "median": 0.18164615885416666,
+   "max": 0.23095865885416667
+  },
+  "togglePopoverEnter": {
+   "n": 1,
+   "min": 1.1362083333333333,
+   "median": 1.1362083333333333,
+   "max": 1.1362083333333333
+  },
+  "activateReturn": {
+   "n": 1,
+   "min": 2.139625,
+   "median": 2.139625,
+   "max": 2.139625
+  },
+  "showReturn": {
+   "n": 1,
+   "min": 80.489,
+   "median": 80.489,
+   "max": 80.489
+  },
+  "firstBeforeWaitingAfterOpen": {
+   "n": 1,
+   "min": 99.72454166666667,
+   "median": 99.72454166666667,
+   "max": 99.72454166666667
+  },
+  "occlusionVisible": {
+   "n": 1,
+   "min": 117.064875,
+   "median": 117.064875,
+   "max": 117.064875
+  },
+  "firstPixel": {
+   "n": 1,
+   "min": 122.90608333333333,
+   "median": 122.90608333333333,
+   "max": 122.90608333333333
+  },
+  "visible1pct": {
+   "n": 1,
+   "min": 156.23804166666665,
+   "median": 156.23804166666665,
+   "max": 156.23804166666665
+  },
+  "animationFull97": {
+   "n": 1,
+   "min": 314.5712916666667,
+   "median": 314.5712916666667,
+   "max": 314.5712916666667
+  },
+  "popoverDidShow": {
+   "n": 1,
+   "min": 597.6377916666667,
+   "median": 597.6377916666667,
+   "max": 597.6377916666667
+  },
+  "showDurationMs": {
+   "n": 1,
+   "min": 78.349375,
+   "median": 78.349375,
+   "max": 78.349375
+  },
+  "showReturnToFirstPixelMs": {
+   "n": 1,
+   "min": 42.41708333333334,
+   "median": 42.41708333333334,
+   "max": 42.41708333333334
+  },
+  "firstPixelToFull97Ms": {
+   "n": 1,
+   "min": 191.66520833333334,
+   "median": 191.66520833333334,
+   "max": 191.66520833333334
+  },
+  "maxFrameGapMsTo400": {
+   "n": 1,
+   "min": 25.000125,
+   "median": 25.000125,
+   "max": 25.000125
+  }
+ },
+ "reopen": {
+  "tapMinusAppUpDequeueMs_openClose": null,
+  "appUpDequeueMinusCreatedMs_openClose": null,
+  "tapMinusCreatedMs_openClose": null,
+  "togglePopoverEnter": null,
+  "activateReturn": null,
+  "showReturn": null,
+  "firstBeforeWaitingAfterOpen": null,
+  "occlusionVisible": null,
+  "firstPixel": null,
+  "visible1pct": null,
+  "animationFull97": null,
+  "popoverDidShow": null,
+  "showDurationMs": null,
+  "showReturnToFirstPixelMs": null,
+  "firstPixelToFull97Ms": null,
+  "maxFrameGapMsTo400": null
+ },
+ "reopenA_noAX": {
+  "tapMinusAppUpDequeueMs_openClose": null,
+  "appUpDequeueMinusCreatedMs_openClose": null,
+  "tapMinusCreatedMs_openClose": null,
+  "togglePopoverEnter": null,
+  "activateReturn": null,
+  "showReturn": null,
+  "firstBeforeWaitingAfterOpen": null,
+  "occlusionVisible": null,
+  "firstPixel": null,
+  "visible1pct": null,
+  "animationFull97": null,
+  "popoverDidShow": null,
+  "showDurationMs": null,
+  "showReturnToFirstPixelMs": null,
+  "firstPixelToFull97Ms": null,
+  "maxFrameGapMsTo400": null
+ },
+ "reopenB_AX": {
+  "tapMinusAppUpDequeueMs_openClose": null,
+  "appUpDequeueMinusCreatedMs_openClose": null,
+  "tapMinusCreatedMs_openClose": null,
+  "togglePopoverEnter": null,
+  "activateReturn": null,
+  "showReturn": null,
+  "firstBeforeWaitingAfterOpen": null,
+  "occlusionVisible": null,
+  "firstPixel": null,
+  "visible1pct": null,
+  "animationFull97": null,
+  "popoverDidShow": null,
+  "showDurationMs": null,
+  "showReturnToFirstPixelMs": null,
+  "firstPixelToFull97Ms": null,
+  "maxFrameGapMsTo400": null
+ }
+}

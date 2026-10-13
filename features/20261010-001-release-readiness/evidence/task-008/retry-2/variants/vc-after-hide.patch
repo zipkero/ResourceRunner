@@ -1,0 +1,15 @@
+--- /private/tmp/resourcerunner-task008-r2/src-base/ResourceRunner/StatusBarController.swift	2026-10-12 22:29:43
++++ /private/tmp/resourcerunner-task008-r2/src-vc-after-hide/ResourceRunner/StatusBarController.swift	2026-10-13 00:46:09
+@@ -356,7 +356,11 @@
+         correctionTask?.cancel()
+         correctionTask = nil
+         viewport?.endDisplaySession()
+-        popover.contentViewController = nil
++        let generation = displayGeneration
++        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in // task-008 retry-2 V-c
++            guard let self, self.displayGeneration == generation, !self.popover.isShown else { return }
++            self.popover.contentViewController = nil
++        }
+     }
+ }
+ 

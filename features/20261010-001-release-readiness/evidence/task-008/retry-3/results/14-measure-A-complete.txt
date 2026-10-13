@@ -1,0 +1,35 @@
+trial-00-firstopen   show  78.35 firstPx  122.91 complete  206.24 (prev  197.90) frame-0035.jpg s=0.645 c=0.791
+{
+ "firstopen": {
+  "showDurationMs": {
+   "n": 1,
+   "median": 78.349375,
+   "min": 78.349375,
+   "max": 78.349375
+  },
+  "showReturnMs": {
+   "n": 1,
+   "median": 80.489,
+   "min": 80.489,
+   "max": 80.489
+  },
+  "firstPixelMs": {
+   "n": 1,
+   "median": 122.90608333333333,
+   "min": 122.90608333333333,
+   "max": 122.90608333333333
+  },
+  "completeMs": {
+   "n": 1,
+   "median": 206.238,
+   "min": 206.238,
+   "max": 206.238
+  }
+ },
+ "reopen": {
+  "showDurationMs": [],
+  "showReturnMs": [],
+  "firstPixelMs": [],
+  "completeMs": []
+ }
+}

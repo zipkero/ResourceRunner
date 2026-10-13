@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-10-12T13:57:23.165083+00:00",
+  "pid": 50210,
+  "startLstart": "Mon Oct 12 22:57:23 2026",
+  "launchEpochConservative": 1791813443.0,
+  "exe": "/private/tmp/resourcerunner-task008-r1/perf-diagnostic.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "f01d2b6611963ed97e33f8dea1d91c5a2cfad961867fef10312e01128678758f",
+  "productReleaseExe": "/private/tmp/resourcerunner-task008-r1/build-Release/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+  "bundle": "task-002 diagnostic bundle copy; only executable replaced; ad hoc signed with /private/tmp/resourcerunner-task001-entitlements.plist",
+  "installedProductionPID": 16136,
+  "userInteraction": "Mac was in active use during latency runs (HID idle <1s in some trials, GoLand go build); use during this run unknown"
+}

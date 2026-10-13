@@ -1,0 +1,35 @@
+trial-00-firstopen   show  81.69 firstPx    0.75 complete  217.42 (prev  200.75) frame-0041.jpg s=0.683 c=0.798
+{
+ "firstopen": {
+  "showDurationMs": {
+   "n": 1,
+   "median": 81.68625,
+   "min": 81.68625,
+   "max": 81.68625
+  },
+  "showReturnMs": {
+   "n": 1,
+   "median": 86.5565,
+   "min": 86.5565,
+   "max": 86.5565
+  },
+  "firstPixelMs": {
+   "n": 1,
+   "median": 0.751375,
+   "min": 0.751375,
+   "max": 0.751375
+  },
+  "completeMs": {
+   "n": 1,
+   "median": 217.41791666666666,
+   "min": 217.41791666666666,
+   "max": 217.41791666666666
+  }
+ },
+ "reopen": {
+  "showDurationMs": [],
+  "showReturnMs": [],
+  "firstPixelMs": [],
+  "completeMs": []
+ }
+}

@@ -173,6 +173,21 @@ struct DashboardViewportTests {
             visibleFrame: screen.visibleFrame, chrome: viewport.detailChrome))
     }
 
+    /// 카드 포커스 테두리는 열린 직후 꺼져 있고, 키보드 탐색 뒤에만 켜지며, 마우스 입력과 화면 종료에서 꺼집니다.
+    @Test func keyboardFocusOutlineStartsHiddenAndResetsWithDisplaySession() {
+        let viewport = DashboardViewport()
+        #expect(!viewport.showsKeyboardFocus)
+
+        viewport.noteFocusNavigation(byKeyboard: true)
+        #expect(viewport.showsKeyboardFocus)
+        viewport.noteFocusNavigation(byKeyboard: false)
+        #expect(!viewport.showsKeyboardFocus)
+
+        viewport.noteFocusNavigation(byKeyboard: true)
+        viewport.endDisplaySession()
+        #expect(!viewport.showsKeyboardFocus, "다시 연 화면은 키보드 탐색 상태를 이어받지 않아야 합니다.")
+    }
+
     @Test func oldSessionDelayedCloseDoesNotCloseNewDetailAtSameRevision() async throws {
         let viewport = DashboardViewport()
         let oldDetail = NSWindow(contentRect: CGRect(x: 80, y: 80, width: 300, height: 200),

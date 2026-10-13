@@ -1,0 +1,35 @@
+trial-00-firstopen   show  71.74 firstPx  123.66 complete  198.66 (prev  190.32) frame-0034.jpg s=0.638 c=0.79
+{
+ "firstopen": {
+  "showDurationMs": {
+   "n": 1,
+   "median": 71.74175,
+   "min": 71.74175,
+   "max": 71.74175
+  },
+  "showReturnMs": {
+   "n": 1,
+   "median": 74.28004166666668,
+   "min": 74.28004166666668,
+   "max": 74.28004166666668
+  },
+  "firstPixelMs": {
+   "n": 1,
+   "median": 123.65520833333333,
+   "min": 123.65520833333333,
+   "max": 123.65520833333333
+  },
+  "completeMs": {
+   "n": 1,
+   "median": 198.655125,
+   "min": 198.655125,
+   "max": 198.655125
+  }
+ },
+ "reopen": {
+  "showDurationMs": [],
+  "showReturnMs": [],
+  "firstPixelMs": [],
+  "completeMs": []
+ }
+}

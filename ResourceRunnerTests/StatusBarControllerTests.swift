@@ -52,6 +52,18 @@ struct StatusBarControllerTests {
         #expect(controller.popover.behavior == .transient)
     }
 
+    /// 시스템 애니메이션이 완전 표시를 늦추므로 behavior 설정과 무관하게 애니메이션 없이 구성합니다.
+    @Test(arguments: [true, false])
+    func popoverIsConfiguredWithoutAnimation(automaticallyCloses: Bool) {
+        let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
+            automaticallyClosesPopover: automaticallyCloses)
+        defer { finishFixture(controller) }
+
+        #expect(controller.popover.animates == false)
+        controller.applyAutomaticallyClosesPopover(!automaticallyCloses)
+        #expect(controller.popover.animates == false)
+    }
+
     @Test func savedOffAndRapidChangesKeepPopoverAndDelegateIdentity() {
         let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
             automaticallyClosesPopover: false)

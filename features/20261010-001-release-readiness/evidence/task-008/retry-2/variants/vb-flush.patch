@@ -1,0 +1,13 @@
+--- /private/tmp/resourcerunner-task008-r2/src-base/ResourceRunner/StatusBarController.swift	2026-10-12 22:29:43
++++ /private/tmp/resourcerunner-task008-r2/src-vb-flush/ResourceRunner/StatusBarController.swift	2026-10-13 00:36:03
+@@ -356,7 +356,10 @@
+         correctionTask?.cancel()
+         correctionTask = nil
+         viewport?.endDisplaySession()
++        let closedWindow = popover.contentViewController?.view.window // task-008 retry-2 V-b
+         popover.contentViewController = nil
++        closedWindow?.contentView?.superview?.layer?.setNeedsDisplay()
++        CATransaction.flush()
+     }
+ }
+ 

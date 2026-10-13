@@ -1,0 +1,5238 @@
+{
+ "01-warmup-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0035.jpg",
+   "tMs": 159.08466666666666
+  },
+  "popoverFirst": {
+   "image": "frame-0017.jpg",
+   "tMs": 0.751375,
+   "outsideChanged": 1020,
+   "bbox": [
+    0,
+    65,
+    399,
+    748
+   ]
+  },
+  "prev": {
+   "image": "frame-0016.jpg",
+   "tMs": -15.91525
+  },
+  "frames": [
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 1020,
+    "outsideBBox": [
+     0,
+     65,
+     399,
+     748
+    ],
+    "tMs": 0.751375
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 9.084708333333333
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 17.41795833333333
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 25.751375
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 34.08470833333334
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 42.423625
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 59.084666666666664
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 67.41958333333334
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 75.75558333333333
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 84.08470833333332
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 92.418
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 100.75133333333333
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 109.08845833333334
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 117.418
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 125.75304166666668
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 36,
+    "outsideBBox": [
+     192,
+     65,
+     207,
+     74
+    ],
+    "tMs": 134.08466666666666
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 327,
+    "outsideBBox": [
+     176,
+     37,
+     207,
+     110
+    ],
+    "tMs": 142.42220833333334
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 26,
+    "outsideChanged": 1463,
+    "outsideBBox": [
+     169,
+     36,
+     223,
+     148
+    ],
+    "tMs": 150.751375
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 80,
+    "outsideChanged": 3312,
+    "outsideBBox": [
+     158,
+     38,
+     231,
+     199
+    ],
+    "tMs": 159.08466666666666
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 491,
+    "outsideChanged": 7454,
+    "outsideBBox": [
+     144,
+     38,
+     239,
+     247
+    ],
+    "tMs": 167.418
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 612,
+    "outsideChanged": 13383,
+    "outsideBBox": [
+     128,
+     37,
+     254,
+     297
+    ],
+    "tMs": 175.75183333333334
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 690,
+    "outsideChanged": 19441,
+    "outsideBBox": [
+     116,
+     36,
+     263,
+     344
+    ],
+    "tMs": 184.08458333333334
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 730,
+    "outsideChanged": 29268,
+    "outsideBBox": [
+     112,
+     36,
+     271,
+     391
+    ],
+    "tMs": 192.41791666666666
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 796,
+    "outsideChanged": 38098,
+    "outsideBBox": [
+     97,
+     36,
+     277,
+     439
+    ],
+    "tMs": 200.75125
+   },
+   {
+    "image": "frame-0041.jpg",
+    "tooltipChanged": 865,
+    "outsideChanged": 63340,
+    "outsideBBox": [
+     77,
+     36,
+     295,
+     511
+    ],
+    "tMs": 217.41791666666666
+   },
+   {
+    "image": "frame-0042.jpg",
+    "tooltipChanged": 841,
+    "outsideChanged": 75112,
+    "outsideBBox": [
+     65,
+     35,
+     302,
+     549
+    ],
+    "tMs": 225.75516666666667
+   },
+   {
+    "image": "frame-0043.jpg",
+    "tooltipChanged": 815,
+    "outsideChanged": 81718,
+    "outsideBBox": [
+     57,
+     35,
+     308,
+     575
+    ],
+    "tMs": 234.08458333333334
+   },
+   {
+    "image": "frame-0044.jpg",
+    "tooltipChanged": 840,
+    "outsideChanged": 91275,
+    "outsideBBox": [
+     49,
+     35,
+     311,
+     590
+    ],
+    "tMs": 242.41795833333333
+   },
+   {
+    "image": "frame-0045.jpg",
+    "tooltipChanged": 878,
+    "outsideChanged": 96952,
+    "outsideBBox": [
+     42,
+     35,
+     318,
+     614
+    ],
+    "tMs": 250.75454166666665
+   },
+   {
+    "image": "frame-0046.jpg",
+    "tooltipChanged": 737,
+    "outsideChanged": 102790,
+    "outsideBBox": [
+     42,
+     35,
+     318,
+     633
+    ],
+    "tMs": 259.08854166666663
+   }
+  ]
+ },
+ "02-warmup-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0024.jpg",
+   "tMs": 117.25491666666667
+  },
+  "popoverFirst": {
+   "image": "frame-0024.jpg",
+   "tMs": 117.25491666666667,
+   "outsideChanged": 128661,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0023.jpg",
+   "tMs": 100.5895
+  },
+  "frames": [
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 8.921708333333333
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 25.58845833333333
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 33.921708333333335
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 42.255
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 50.59016666666666
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 58.92641666666666
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 67.25595833333333
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 75.58825
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 83.92158333333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 92.254875
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 100.5895
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 3039,
+    "outsideChanged": 128661,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 117.25491666666667
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127870,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 125.58816666666667
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127881,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 133.9215
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127871,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 142.25483333333335
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127880,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 150.58816666666667
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127882,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 158.9215
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127881,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 167.25483333333335
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127881,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 175.58816666666667
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127881,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 183.92595833333334
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127882,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 192.25483333333335
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127882,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 200.59225
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127882,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 208.92145833333333
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127879,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 217.25483333333335
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127879,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 225.58816666666667
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127878,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 242.25479166666665
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127878,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 250.58816666666667
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127878,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 258.9252916666667
+   }
+  ]
+ },
+ "03-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0025.jpg",
+   "tMs": 122.42366666666668
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 130.75383333333332,
+   "outsideChanged": 40,
+   "bbox": [
+    192,
+    57,
+    204,
+    75
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 122.42366666666668
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 5.755333333333333
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 14.08725
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 22.420583333333333
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 30.753875
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 39.087208333333336
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 47.420791666666666
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 55.7585
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 64.08720833333334
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 72.42054166666667
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 80.753875
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 89.08720833333332
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 97.4205
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 105.75383333333333
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 122.42366666666668
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2459,
+    "outsideChanged": 40,
+    "outsideBBox": [
+     192,
+     57,
+     204,
+     75
+    ],
+    "tMs": 130.75383333333332
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2499,
+    "outsideChanged": 1569,
+    "outsideBBox": [
+     168,
+     36,
+     223,
+     149
+    ],
+    "tMs": 139.08716666666666
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2581,
+    "outsideChanged": 3460,
+    "outsideBBox": [
+     153,
+     37,
+     231,
+     201
+    ],
+    "tMs": 147.4205
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2719,
+    "outsideChanged": 7573,
+    "outsideBBox": [
+     144,
+     38,
+     244,
+     248
+    ],
+    "tMs": 155.75383333333335
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2738,
+    "outsideChanged": 13714,
+    "outsideBBox": [
+     128,
+     37,
+     251,
+     299
+    ],
+    "tMs": 164.08716666666666
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2730,
+    "outsideChanged": 19906,
+    "outsideBBox": [
+     120,
+     36,
+     263,
+     345
+    ],
+    "tMs": 172.42045833333336
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2751,
+    "outsideChanged": 29616,
+    "outsideBBox": [
+     104,
+     36,
+     270,
+     391
+    ],
+    "tMs": 180.75379166666664
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2847,
+    "outsideChanged": 38499,
+    "outsideBBox": [
+     97,
+     36,
+     279,
+     438
+    ],
+    "tMs": 189.08783333333335
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2887,
+    "outsideChanged": 50706,
+    "outsideBBox": [
+     89,
+     36,
+     287,
+     476
+    ],
+    "tMs": 197.4205
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2981,
+    "outsideChanged": 63886,
+    "outsideBBox": [
+     80,
+     36,
+     295,
+     511
+    ],
+    "tMs": 205.75379166666664
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 2937,
+    "outsideChanged": 75913,
+    "outsideBBox": [
+     68,
+     35,
+     300,
+     550
+    ],
+    "tMs": 214.087125
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3017,
+    "outsideChanged": 82259,
+    "outsideBBox": [
+     60,
+     35,
+     308,
+     575
+    ],
+    "tMs": 222.42045833333336
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 2982,
+    "outsideChanged": 91409,
+    "outsideBBox": [
+     49,
+     35,
+     311,
+     591
+    ],
+    "tMs": 230.75775
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2869,
+    "outsideChanged": 97316,
+    "outsideBBox": [
+     42,
+     35,
+     319,
+     614
+    ],
+    "tMs": 239.09175
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3004,
+    "outsideChanged": 102590,
+    "outsideBBox": [
+     40,
+     35,
+     325,
+     633
+    ],
+    "tMs": 247.42045833333336
+   }
+  ]
+ },
+ "04-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0025.jpg",
+   "tMs": 123.65520833333333
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 131.98845833333334,
+   "outsideChanged": 562,
+   "bbox": [
+    176,
+    36,
+    215,
+    120
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 123.65520833333333
+  },
+  "frames": [
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 6.988541666666667
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 15.321875
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 23.655125
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 31.988541666666666
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 40.321875
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 48.659416666666665
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 56.9885
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 65.321875
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 73.65520833333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 81.99316666666667
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 90.32183333333333
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 98.65516666666667
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 123.65520833333333
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2467,
+    "outsideChanged": 562,
+    "outsideBBox": [
+     176,
+     36,
+     215,
+     120
+    ],
+    "tMs": 131.98845833333334
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2522,
+    "outsideChanged": 1715,
+    "outsideBBox": [
+     168,
+     37,
+     223,
+     157
+    ],
+    "tMs": 140.32170833333333
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2681,
+    "outsideChanged": 3931,
+    "outsideBBox": [
+     152,
+     37,
+     238,
+     214
+    ],
+    "tMs": 148.655125
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2716,
+    "outsideChanged": 8461,
+    "outsideBBox": [
+     143,
+     38,
+     242,
+     260
+    ],
+    "tMs": 156.9885
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2743,
+    "outsideChanged": 14447,
+    "outsideBBox": [
+     128,
+     36,
+     253,
+     309
+    ],
+    "tMs": 165.32179166666666
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2782,
+    "outsideChanged": 21831,
+    "outsideBBox": [
+     120,
+     36,
+     263,
+     355
+    ],
+    "tMs": 173.655125
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2800,
+    "outsideChanged": 30769,
+    "outsideBBox": [
+     105,
+     36,
+     271,
+     399
+    ],
+    "tMs": 181.98845833333334
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2853,
+    "outsideChanged": 41321,
+    "outsideBBox": [
+     96,
+     36,
+     279,
+     446
+    ],
+    "tMs": 190.321875
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2873,
+    "outsideChanged": 54039,
+    "outsideBBox": [
+     82,
+     35,
+     287,
+     493
+    ],
+    "tMs": 198.655125
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2985,
+    "outsideChanged": 66928,
+    "outsideBBox": [
+     72,
+     36,
+     299,
+     511
+    ],
+    "tMs": 206.99395833333335
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 2884,
+    "outsideChanged": 77929,
+    "outsideBBox": [
+     64,
+     35,
+     304,
+     558
+    ],
+    "tMs": 215.32179166666666
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3025,
+    "outsideChanged": 83008,
+    "outsideBBox": [
+     59,
+     36,
+     310,
+     575
+    ],
+    "tMs": 223.655125
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 2969,
+    "outsideChanged": 92716,
+    "outsideBBox": [
+     48,
+     35,
+     319,
+     598
+    ],
+    "tMs": 231.9885
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2993,
+    "outsideChanged": 97471,
+    "outsideBBox": [
+     42,
+     35,
+     319,
+     617
+    ],
+    "tMs": 240.32175
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 2926,
+    "outsideChanged": 104204,
+    "outsideBBox": [
+     40,
+     35,
+     321,
+     638
+    ],
+    "tMs": 248.657
+   },
+   {
+    "image": "frame-0041.jpg",
+    "tooltipChanged": 3134,
+    "outsideChanged": 110654,
+    "outsideBBox": [
+     32,
+     35,
+     327,
+     655
+    ],
+    "tMs": 256.98845833333337
+   }
+  ]
+ },
+ "05-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0027.jpg",
+   "tMs": 129.5135
+  },
+  "popoverFirst": {
+   "image": "frame-0027.jpg",
+   "tMs": 129.5135,
+   "outsideChanged": 128999,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0026.jpg",
+   "tMs": 112.84683333333332
+  },
+  "frames": [
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 12.846333333333334
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 21.17966666666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 29.51291666666667
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 37.846333333333334
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 46.179625
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 54.51575
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 62.85070833333334
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 71.17958333333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 79.51645833333333
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 87.84754166666667
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 96.17966666666668
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 104.51295833333333
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 112.84683333333332
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3044,
+    "outsideChanged": 128999,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 129.5135
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127952,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 137.84625
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127961,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 146.1795
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127961,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 154.512875
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127961,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 162.84620833333335
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127961,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 171.1795
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127962,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 179.512875
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127962,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 187.84620833333335
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127962,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 196.18329166666666
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127959,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 204.51283333333333
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127959,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 212.84620833333335
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127959,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 221.1795
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127958,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 229.51466666666667
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127958,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 237.84954166666665
+   },
+   {
+    "image": "frame-0041.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127958,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 254.51279166666666
+   }
+  ]
+ },
+ "06-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0023.jpg",
+   "tMs": 114.31416666666667
+  },
+  "popoverFirst": {
+   "image": "frame-0023.jpg",
+   "tMs": 114.31416666666667,
+   "outsideChanged": 128900,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0022.jpg",
+   "tMs": 89.31154166666667
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 5.978333333333333
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 14.311583333333333
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 22.64483333333333
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 30.97825
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 39.31154166666666
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 47.64991666666666
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 55.978625
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 64.311625
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 72.650125
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 80.97820833333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 89.31154166666667
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 3041,
+    "outsideChanged": 128900,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 114.31416666666667
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127765,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 122.64483333333332
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 130.97808333333333
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     34,
+     335,
+     718
+    ],
+    "tMs": 139.31154166666667
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127775,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 147.64929166666667
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 155.97845833333335
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 164.31233333333336
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 172.64483333333334
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 180.97816666666665
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127777,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 189.3115
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127777,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 197.64529166666665
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127777,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 214.3115
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127774,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 222.64483333333334
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127774,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 230.978125
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127773,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 239.31591666666665
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127773,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 247.64983333333333
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127773,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 255.98395833333333
+   }
+  ]
+ },
+ "07-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0025.jpg",
+   "tMs": 123.36808333333333
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 131.69745833333332,
+   "outsideChanged": 91,
+   "bbox": [
+    185,
+    47,
+    207,
+    78
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 123.36808333333333
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 6.703875
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 15.031041666666667
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 23.364541666666668
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 31.697666666666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 40.03104166666667
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 48.36429166666667
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 56.697583333333334
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 65.0365
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 73.36420833333332
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 81.702625
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 90.03141666666667
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 98.36970833333334
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 106.69754166666667
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 123.36808333333333
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2463,
+    "outsideChanged": 91,
+    "outsideBBox": [
+     185,
+     47,
+     207,
+     78
+    ],
+    "tMs": 131.69745833333332
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2467,
+    "outsideChanged": 941,
+    "outsideBBox": [
+     175,
+     36,
+     222,
+     134
+    ],
+    "tMs": 140.03079166666666
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2552,
+    "outsideChanged": 2140,
+    "outsideBBox": [
+     160,
+     37,
+     231,
+     181
+    ],
+    "tMs": 148.36408333333335
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2688,
+    "outsideChanged": 5169,
+    "outsideBBox": [
+     152,
+     37,
+     237,
+     228
+    ],
+    "tMs": 156.69795833333333
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2730,
+    "outsideChanged": 10576,
+    "outsideBBox": [
+     136,
+     39,
+     247,
+     279
+    ],
+    "tMs": 165.03079166666666
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2745,
+    "outsideChanged": 16938,
+    "outsideBBox": [
+     128,
+     36,
+     255,
+     319
+    ],
+    "tMs": 173.364125
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2795,
+    "outsideChanged": 24160,
+    "outsideBBox": [
+     113,
+     36,
+     270,
+     375
+    ],
+    "tMs": 181.69770833333334
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2870,
+    "outsideChanged": 34754,
+    "outsideBBox": [
+     104,
+     36,
+     278,
+     403
+    ],
+    "tMs": 190.03075
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2863,
+    "outsideChanged": 45799,
+    "outsideBBox": [
+     94,
+     36,
+     286,
+     456
+    ],
+    "tMs": 198.36408333333335
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2941,
+    "outsideChanged": 57522,
+    "outsideBBox": [
+     82,
+     35,
+     295,
+     495
+    ],
+    "tMs": 206.69741666666667
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 2986,
+    "outsideChanged": 68737,
+    "outsideBBox": [
+     72,
+     35,
+     301,
+     519
+    ],
+    "tMs": 215.03075
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 2964,
+    "outsideChanged": 80206,
+    "outsideBBox": [
+     65,
+     35,
+     303,
+     573
+    ],
+    "tMs": 223.36408333333335
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3046,
+    "outsideChanged": 87159,
+    "outsideBBox": [
+     57,
+     35,
+     314,
+     577
+    ],
+    "tMs": 231.697375
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2870,
+    "outsideChanged": 99273,
+    "outsideBBox": [
+     41,
+     35,
+     325,
+     623
+    ],
+    "tMs": 248.36408333333335
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3083,
+    "outsideChanged": 107394,
+    "outsideBBox": [
+     40,
+     35,
+     325,
+     644
+    ],
+    "tMs": 256.69758333333334
+   }
+  ]
+ },
+ "08-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0027.jpg",
+   "tMs": 122.04970833333333
+  },
+  "popoverFirst": {
+   "image": "frame-0027.jpg",
+   "tMs": 122.04970833333333,
+   "outsideChanged": 128940,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0026.jpg",
+   "tMs": 113.7165
+  },
+  "frames": [
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 13.716541666666666
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 22.0535
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 30.38329166666667
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 38.71658333333333
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 47.049875
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 55.38645833333334
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 63.716541666666664
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 72.04975
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 80.38325
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 88.72083333333333
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 97.04983333333332
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 105.38316666666667
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 113.7165
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3041,
+    "outsideChanged": 128940,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 122.04970833333333
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3047,
+    "outsideChanged": 128937,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 130.38766666666666
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127936,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 138.716375
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127939,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 155.383125
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127948,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 163.71645833333335
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127948,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 172.05329166666667
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127949,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 180.383125
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127948,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 188.71633333333335
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127949,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 197.049625
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127949,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 205.38308333333333
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127949,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 213.71954166666666
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127946,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 222.04966666666667
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127946,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 230.38295833333333
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127946,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 238.72004166666665
+   },
+   {
+    "image": "frame-0041.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127945,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 247.05308333333335
+   },
+   {
+    "image": "frame-0042.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127945,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 255.3855
+   }
+  ]
+ },
+ "09-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0025.jpg",
+   "tMs": 123.05595833333332
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 139.722625,
+   "outsideChanged": 1014,
+   "bbox": [
+    168,
+    36,
+    222,
+    142
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 123.05595833333332
+  },
+  "frames": [
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 6.390666666666667
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 14.722708333333333
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 23.05604166666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 31.389333333333333
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 39.72266666666666
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 48.06183333333333
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 56.39295833333333
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 64.72270833333333
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 73.05608333333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 89.72320833333333
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 98.05604166666667
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 106.38929166666667
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 123.05595833333332
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2472,
+    "outsideChanged": 1014,
+    "outsideBBox": [
+     168,
+     36,
+     222,
+     142
+    ],
+    "tMs": 139.722625
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2561,
+    "outsideChanged": 2254,
+    "outsideBBox": [
+     160,
+     37,
+     227,
+     183
+    ],
+    "tMs": 148.05595833333334
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2683,
+    "outsideChanged": 5279,
+    "outsideBBox": [
+     145,
+     37,
+     237,
+     231
+    ],
+    "tMs": 156.38916666666665
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2730,
+    "outsideChanged": 10681,
+    "outsideBBox": [
+     136,
+     39,
+     247,
+     279
+    ],
+    "tMs": 164.7225
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2752,
+    "outsideChanged": 17112,
+    "outsideBBox": [
+     128,
+     36,
+     255,
+     319
+    ],
+    "tMs": 173.05808333333334
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2796,
+    "outsideChanged": 24491,
+    "outsideBBox": [
+     112,
+     36,
+     270,
+     373
+    ],
+    "tMs": 181.38916666666665
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2854,
+    "outsideChanged": 34741,
+    "outsideBBox": [
+     104,
+     36,
+     277,
+     419
+    ],
+    "tMs": 189.7225
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2863,
+    "outsideChanged": 46480,
+    "outsideBBox": [
+     92,
+     36,
+     286,
+     463
+    ],
+    "tMs": 198.05583333333334
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2910,
+    "outsideChanged": 58364,
+    "outsideBBox": [
+     80,
+     35,
+     294,
+     500
+    ],
+    "tMs": 206.39170833333336
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2992,
+    "outsideChanged": 69370,
+    "outsideBBox": [
+     65,
+     35,
+     301,
+     521
+    ],
+    "tMs": 214.7225
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3000,
+    "outsideChanged": 80204,
+    "outsideBBox": [
+     64,
+     35,
+     302,
+     567
+    ],
+    "tMs": 223.05583333333334
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3036,
+    "outsideChanged": 87519,
+    "outsideBBox": [
+     57,
+     35,
+     314,
+     580
+    ],
+    "tMs": 231.39291666666665
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 2884,
+    "outsideChanged": 95615,
+    "outsideBBox": [
+     50,
+     35,
+     317,
+     606
+    ],
+    "tMs": 239.72245833333335
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2987,
+    "outsideChanged": 99763,
+    "outsideBBox": [
+     41,
+     35,
+     325,
+     625
+    ],
+    "tMs": 248.05754166666665
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3084,
+    "outsideChanged": 106707,
+    "outsideBBox": [
+     40,
+     35,
+     326,
+     645
+    ],
+    "tMs": 256.39254166666666
+   }
+  ]
+ },
+ "10-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0024.jpg",
+   "tMs": 121.49454166666668
+  },
+  "popoverFirst": {
+   "image": "frame-0024.jpg",
+   "tMs": 121.49454166666668,
+   "outsideChanged": 129022,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0023.jpg",
+   "tMs": 104.8255
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 4.831125
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 21.4945
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 29.827916666666667
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 38.15891666666666
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 46.49225
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 54.829791666666665
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 63.16020833333334
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 71.4935
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 79.82558333333333
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 88.15970833333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 96.49220833333332
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 104.8255
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 3039,
+    "outsideChanged": 129022,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 121.49454166666668
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127865,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 129.82554166666668
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127867,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 138.15895833333335
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127876,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 146.49220833333334
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127877,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 154.8255
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127877,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 163.15929166666666
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127877,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 171.49220833333334
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127877,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 179.82545833333333
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127878,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 188.162125
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127878,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 196.49216666666666
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3061,
+    "outsideChanged": 127869,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 204.82545833333333
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127875,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 213.15933333333334
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127875,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 221.4965
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127874,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 229.82545833333333
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127874,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 246.49208333333334
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127874,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 254.82895833333333
+   }
+  ]
+ },
+ "11-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0024.jpg",
+   "tMs": 117.61858333333333
+  },
+  "popoverFirst": {
+   "image": "frame-0024.jpg",
+   "tMs": 117.61858333333333,
+   "outsideChanged": 128925,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0023.jpg",
+   "tMs": 100.95620833333332
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 0.9515833333333333
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 9.284958333333334
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 17.622
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 25.95145833333333
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 42.622166666666665
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 50.9515
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 59.28479166666666
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 67.6185
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 75.95145833333333
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 84.28483333333332
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 92.62166666666667
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 100.95620833333332
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 3039,
+    "outsideChanged": 128925,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 117.61858333333333
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127767,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 125.95141666666667
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127769,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 134.288375
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127778,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 142.61808333333335
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127779,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 150.95141666666666
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127779,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 159.28470833333336
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127779,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 167.61804166666667
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127779,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 175.95145833333333
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3061,
+    "outsideChanged": 127771,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 184.28470833333336
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127780,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 192.61804166666667
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127780,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 200.95554166666665
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127780,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 209.28475
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127777,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 225.951375
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 234.28466666666665
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 242.61804166666667
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 250.951375
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127776,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 259.2859583333333
+   }
+  ]
+ },
+ "12-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0025.jpg",
+   "tMs": 122.07266666666668
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 130.40333333333334,
+   "outsideChanged": 74,
+   "bbox": [
+    186,
+    57,
+    207,
+    77
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 122.07266666666668
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 5.403458333333333
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 13.736791666666665
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 22.07004166666667
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 30.40341666666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 38.73679166666666
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 47.07033333333334
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 55.408541666666665
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 63.73675
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 72.070125
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 80.40366666666667
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 88.73725
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 97.07058333333333
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 105.403375
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 122.07266666666668
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 74,
+    "outsideBBox": [
+     186,
+     57,
+     207,
+     77
+    ],
+    "tMs": 130.40333333333334
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2463,
+    "outsideChanged": 665,
+    "outsideBBox": [
+     176,
+     38,
+     216,
+     127
+    ],
+    "tMs": 138.73666666666665
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2533,
+    "outsideChanged": 1802,
+    "outsideBBox": [
+     160,
+     37,
+     229,
+     164
+    ],
+    "tMs": 147.07104166666664
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2668,
+    "outsideChanged": 4594,
+    "outsideBBox": [
+     152,
+     37,
+     239,
+     223
+    ],
+    "tMs": 155.40333333333334
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2721,
+    "outsideChanged": 9449,
+    "outsideBBox": [
+     136,
+     38,
+     247,
+     267
+    ],
+    "tMs": 163.74075
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2743,
+    "outsideChanged": 15691,
+    "outsideBBox": [
+     128,
+     36,
+     255,
+     314
+    ],
+    "tMs": 172.07004166666667
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2795,
+    "outsideChanged": 22034,
+    "outsideBBox": [
+     118,
+     36,
+     263,
+     367
+    ],
+    "tMs": 180.40608333333336
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2816,
+    "outsideChanged": 33496,
+    "outsideBBox": [
+     106,
+     36,
+     272,
+     399
+    ],
+    "tMs": 188.74029166666665
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2859,
+    "outsideChanged": 44155,
+    "outsideBBox": [
+     92,
+     36,
+     287,
+     454
+    ],
+    "tMs": 197.07
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2952,
+    "outsideChanged": 55765,
+    "outsideBBox": [
+     80,
+     35,
+     291,
+     487
+    ],
+    "tMs": 205.40333333333334
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 2944,
+    "outsideChanged": 78642,
+    "outsideBBox": [
+     67,
+     35,
+     304,
+     559
+    ],
+    "tMs": 222.06995833333335
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3029,
+    "outsideChanged": 84973,
+    "outsideBBox": [
+     57,
+     35,
+     311,
+     575
+    ],
+    "tMs": 230.40329166666666
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 2870,
+    "outsideChanged": 93423,
+    "outsideBBox": [
+     51,
+     35,
+     319,
+     599
+    ],
+    "tMs": 238.736625
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2995,
+    "outsideChanged": 98467,
+    "outsideBBox": [
+     41,
+     35,
+     317,
+     623
+    ],
+    "tMs": 247.07
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3020,
+    "outsideChanged": 105944,
+    "outsideBBox": [
+     40,
+     35,
+     326,
+     640
+    ],
+    "tMs": 255.40329166666666
+   }
+  ]
+ },
+ "13-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0024.jpg",
+   "tMs": 117.83970833333333
+  },
+  "popoverFirst": {
+   "image": "frame-0024.jpg",
+   "tMs": 117.83970833333333,
+   "outsideChanged": 128711,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0023.jpg",
+   "tMs": 101.17304166666668
+  },
+  "frames": [
+   {
+    "image": "frame-0012.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 9.512041666666667
+   },
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 17.839791666666667
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 26.173041666666666
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 34.50641666666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 42.83975
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 51.173125
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 59.50904166666666
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 67.83979166666667
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 76.17308333333332
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 84.50641666666667
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 92.83970833333333
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 101.17304166666668
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 3039,
+    "outsideChanged": 128711,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 117.83970833333333
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 3044,
+    "outsideChanged": 128708,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 126.17304166666668
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128055,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 134.50629166666667
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128066,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 142.83970833333333
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 128056,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 151.17308333333335
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128066,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 159.50633333333334
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128066,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 167.83966666666666
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128066,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 176.173
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128066,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 184.50633333333334
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128066,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 192.83970833333333
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128067,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 201.173
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128067,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 209.50633333333334
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3061,
+    "outsideChanged": 128058,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 217.839625
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128064,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 226.17704166666667
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128064,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 242.83966666666666
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128063,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 251.17295833333336
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128063,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 259.50629166666664
+   }
+  ]
+ },
+ "14-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0025.jpg",
+   "tMs": 122.90608333333333
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 131.23808333333332,
+   "outsideChanged": 68,
+   "bbox": [
+    186,
+    57,
+    207,
+    79
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 122.90608333333333
+  },
+  "frames": [
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 6.23825
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 14.571541666666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 39.571666666666665
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 47.904875
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 56.238125
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 64.572
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 72.90491666666667
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 81.238125
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 89.57145833333333
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 97.90529166666667
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 106.238125
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 122.90608333333333
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 68,
+    "outsideBBox": [
+     186,
+     57,
+     207,
+     79
+    ],
+    "tMs": 131.23808333333332
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2468,
+    "outsideChanged": 671,
+    "outsideBBox": [
+     176,
+     36,
+     223,
+     127
+    ],
+    "tMs": 139.57141666666666
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2536,
+    "outsideChanged": 1877,
+    "outsideBBox": [
+     160,
+     37,
+     224,
+     162
+    ],
+    "tMs": 147.90470833333333
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2670,
+    "outsideChanged": 4506,
+    "outsideBBox": [
+     152,
+     37,
+     239,
+     215
+    ],
+    "tMs": 156.23804166666665
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2716,
+    "outsideChanged": 9307,
+    "outsideBBox": [
+     136,
+     38,
+     247,
+     263
+    ],
+    "tMs": 164.574875
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2743,
+    "outsideChanged": 15291,
+    "outsideBBox": [
+     128,
+     36,
+     255,
+     312
+    ],
+    "tMs": 172.90470833333333
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2795,
+    "outsideChanged": 22783,
+    "outsideBBox": [
+     117,
+     36,
+     263,
+     367
+    ],
+    "tMs": 181.24195833333334
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2812,
+    "outsideChanged": 33537,
+    "outsideBBox": [
+     106,
+     36,
+     272,
+     399
+    ],
+    "tMs": 189.571375
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2854,
+    "outsideChanged": 44147,
+    "outsideBBox": [
+     92,
+     36,
+     287,
+     447
+    ],
+    "tMs": 197.90466666666666
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2964,
+    "outsideChanged": 54867,
+    "outsideBBox": [
+     80,
+     35,
+     291,
+     487
+    ],
+    "tMs": 206.238
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 2943,
+    "outsideChanged": 67761,
+    "outsideBBox": [
+     72,
+     35,
+     299,
+     511
+    ],
+    "tMs": 214.571375
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 2938,
+    "outsideChanged": 78832,
+    "outsideBBox": [
+     64,
+     35,
+     304,
+     558
+    ],
+    "tMs": 222.90470833333333
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3028,
+    "outsideChanged": 84659,
+    "outsideBBox": [
+     57,
+     35,
+     310,
+     575
+    ],
+    "tMs": 231.238
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2876,
+    "outsideChanged": 93671,
+    "outsideBBox": [
+     48,
+     35,
+     319,
+     599
+    ],
+    "tMs": 239.57183333333333
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 2993,
+    "outsideChanged": 98366,
+    "outsideBBox": [
+     42,
+     35,
+     319,
+     622
+    ],
+    "tMs": 247.90875
+   },
+   {
+    "image": "frame-0041.jpg",
+    "tooltipChanged": 3022,
+    "outsideChanged": 105280,
+    "outsideBBox": [
+     40,
+     35,
+     325,
+     639
+    ],
+    "tMs": 256.238
+   }
+  ]
+ },
+ "15-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0024.jpg",
+   "tMs": 120.47075
+  },
+  "popoverFirst": {
+   "image": "frame-0024.jpg",
+   "tMs": 120.47075,
+   "outsideChanged": 128960,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0023.jpg",
+   "tMs": 95.46954166666667
+  },
+  "frames": [
+   {
+    "image": "frame-0013.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 3.8024166666666663
+   },
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 20.469
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 28.80241666666667
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 37.13554166666666
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 45.47358333333334
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 53.806916666666666
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 62.1355
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 70.468875
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 78.80220833333333
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 87.13554166666667
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 95.46954166666667
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 3041,
+    "outsideChanged": 128960,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 120.47075
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 128116,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 128.80216666666666
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128125,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 137.1355
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 128117,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 145.46883333333335
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128126,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 153.80216666666666
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128126,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 162.13545833333333
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 128126,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 170.46920833333334
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128127,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 178.802125
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128127,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 187.13545833333333
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128127,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 195.47054166666666
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128127,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 203.802125
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128124,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 212.13595833333335
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128123,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 228.80208333333334
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128123,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 237.1375
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128123,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 245.47245833333335
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 128123,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 253.8075
+   }
+  ]
+ },
+ "16-measure-A": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0026.jpg",
+   "tMs": 128.21066666666667
+  },
+  "popoverFirst": {
+   "image": "frame-0027.jpg",
+   "tMs": 136.544,
+   "outsideChanged": 171,
+   "bbox": [
+    183,
+    39,
+    207,
+    103
+   ]
+  },
+  "prev": {
+   "image": "frame-0026.jpg",
+   "tMs": 128.21066666666667
+  },
+  "frames": [
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 11.545416666666666
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 19.877458333333333
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 28.210708333333333
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 36.544125
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 44.8775
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 53.21483333333334
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 61.54408333333333
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 69.87741666666668
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 78.21079166666667
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 94.87741666666668
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 103.21516666666668
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 111.547375
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 2461,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 128.21066666666667
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 2460,
+    "outsideChanged": 171,
+    "outsideBBox": [
+     183,
+     39,
+     207,
+     103
+    ],
+    "tMs": 136.544
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 2477,
+    "outsideChanged": 1229,
+    "outsideBBox": [
+     168,
+     38,
+     223,
+     143
+    ],
+    "tMs": 144.87725
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 2569,
+    "outsideChanged": 2625,
+    "outsideBBox": [
+     160,
+     37,
+     230,
+     188
+    ],
+    "tMs": 153.21070833333334
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 2701,
+    "outsideChanged": 6206,
+    "outsideBBox": [
+     151,
+     38,
+     238,
+     239
+    ],
+    "tMs": 161.54729166666667
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 2723,
+    "outsideChanged": 11723,
+    "outsideBBox": [
+     136,
+     36,
+     247,
+     286
+    ],
+    "tMs": 169.88125
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 2735,
+    "outsideChanged": 17486,
+    "outsideBBox": [
+     124,
+     36,
+     256,
+     321
+    ],
+    "tMs": 178.2145
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 2742,
+    "outsideChanged": 26746,
+    "outsideBBox": [
+     112,
+     36,
+     264,
+     380
+    ],
+    "tMs": 186.54583333333335
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 2873,
+    "outsideChanged": 35568,
+    "outsideBBox": [
+     104,
+     36,
+     278,
+     431
+    ],
+    "tMs": 194.87729166666665
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 2875,
+    "outsideChanged": 46748,
+    "outsideBBox": [
+     89,
+     35,
+     286,
+     463
+    ],
+    "tMs": 203.21066666666667
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 2916,
+    "outsideChanged": 60598,
+    "outsideBBox": [
+     80,
+     35,
+     295,
+     503
+    ],
+    "tMs": 211.544
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3022,
+    "outsideChanged": 81047,
+    "outsideBBox": [
+     64,
+     35,
+     308,
+     575
+    ],
+    "tMs": 228.210625
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3047,
+    "outsideChanged": 89153,
+    "outsideBBox": [
+     54,
+     35,
+     311,
+     583
+    ],
+    "tMs": 236.54395833333334
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 2796,
+    "outsideChanged": 96436,
+    "outsideBBox": [
+     49,
+     35,
+     318,
+     607
+    ],
+    "tMs": 244.87729166666665
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 2884,
+    "outsideChanged": 100882,
+    "outsideBBox": [
+     41,
+     35,
+     319,
+     628
+    ],
+    "tMs": 253.210625
+   }
+  ]
+ },
+ "17-measure-B": {
+  "thr": 6,
+  "tooltipRect": [
+   196,
+   24,
+   132,
+   28
+  ],
+  "tooltipVanish": {
+   "image": "frame-0026.jpg",
+   "tMs": 121.64320833333333
+  },
+  "popoverFirst": {
+   "image": "frame-0026.jpg",
+   "tMs": 121.64320833333333,
+   "outsideChanged": 128530,
+   "bbox": [
+    22,
+    24,
+    335,
+    704
+   ]
+  },
+  "prev": {
+   "image": "frame-0025.jpg",
+   "tMs": 104.97854166666667
+  },
+  "frames": [
+   {
+    "image": "frame-0014.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 4.973125
+   },
+   {
+    "image": "frame-0015.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 21.639875
+   },
+   {
+    "image": "frame-0016.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 29.973125
+   },
+   {
+    "image": "frame-0017.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 38.306416666666664
+   },
+   {
+    "image": "frame-0018.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 46.63975
+   },
+   {
+    "image": "frame-0019.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 54.978375
+   },
+   {
+    "image": "frame-0020.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 63.311083333333336
+   },
+   {
+    "image": "frame-0021.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 71.63975
+   },
+   {
+    "image": "frame-0022.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 79.97383333333333
+   },
+   {
+    "image": "frame-0023.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 88.30641666666668
+   },
+   {
+    "image": "frame-0024.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 96.63970833333333
+   },
+   {
+    "image": "frame-0025.jpg",
+    "tooltipChanged": 0,
+    "outsideChanged": 0,
+    "outsideBBox": null,
+    "tMs": 104.97854166666667
+   },
+   {
+    "image": "frame-0026.jpg",
+    "tooltipChanged": 3042,
+    "outsideChanged": 128530,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 121.64320833333333
+   },
+   {
+    "image": "frame-0027.jpg",
+    "tooltipChanged": 3047,
+    "outsideChanged": 128526,
+    "outsideBBox": [
+     22,
+     24,
+     335,
+     704
+    ],
+    "tMs": 129.97304166666666
+   },
+   {
+    "image": "frame-0028.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127893,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 138.30629166666665
+   },
+   {
+    "image": "frame-0029.jpg",
+    "tooltipChanged": 3060,
+    "outsideChanged": 127893,
+    "outsideBBox": [
+     22,
+     32,
+     335,
+     718
+    ],
+    "tMs": 146.63970833333335
+   },
+   {
+    "image": "frame-0030.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127902,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 154.973
+   },
+   {
+    "image": "frame-0031.jpg",
+    "tooltipChanged": 3058,
+    "outsideChanged": 127902,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 163.31008333333335
+   },
+   {
+    "image": "frame-0032.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127903,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 171.63966666666667
+   },
+   {
+    "image": "frame-0033.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127903,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 179.97304166666666
+   },
+   {
+    "image": "frame-0034.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127903,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 188.306375
+   },
+   {
+    "image": "frame-0035.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127900,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 196.63966666666667
+   },
+   {
+    "image": "frame-0036.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127900,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 204.973
+   },
+   {
+    "image": "frame-0037.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127900,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 213.30683333333334
+   },
+   {
+    "image": "frame-0038.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127899,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 229.973
+   },
+   {
+    "image": "frame-0039.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127899,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 238.30629166666665
+   },
+   {
+    "image": "frame-0040.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127899,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 246.639625
+   },
+   {
+    "image": "frame-0041.jpg",
+    "tooltipChanged": 3059,
+    "outsideChanged": 127897,
+    "outsideBBox": [
+     22,
+     35,
+     335,
+     718
+    ],
+    "tMs": 254.97295833333334
+   }
+  ]
+ }
+}

@@ -1,0 +1,12 @@
+[open] windows=0 container: role=AXGroup id=DashboardContainer …value=nil
+  valueDescription=Optional(focus=cpu outline=none)
+  focused: role=AXButton id=CPUCard …value=nil
+[tab] windows=0 container: role=AXGroup id=DashboardContainer …value=nil
+  valueDescription=Optional(focus=memory outline=memory)
+  focused: role=AXButton id=MemoryCard …value=nil
+[tab2] windows=0 container: role=AXGroup id=DashboardContainer …value=nil
+  valueDescription=Optional(focus=network outline=network)
+  focused: role=AXButton id=NetworkCard …value=nil
+[shift-tab] windows=0 container: role=AXGroup id=DashboardContainer …value=nil
+  valueDescription=Optional(focus=memory outline=memory)
+  focused: role=AXButton id=MemoryCard …value=nil

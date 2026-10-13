@@ -71,6 +71,15 @@ final class DashboardViewport: ObservableObject {
     private var anchorFrame: CGRect?
     private var memoryFrame: CGRect?
     private(set) var displaySession: UInt64 = 0
+    /// 본체 카드 포커스 테두리를 보일지. 이번 표시 세션의 마지막 탐색 입력이 Tab 계열 키보드면 참,
+    /// 열린 직후와 마우스 누름 뒤에는 거짓입니다. 포커스 자체(복귀 대상·접근성 포커스)와는 무관합니다.
+    @Published private(set) var showsKeyboardFocus = false
+
+    /// 본체·상세 창의 탐색 입력 종류를 기록합니다. 값이 같으면 다시 게시하지 않습니다.
+    func noteFocusNavigation(byKeyboard: Bool) {
+        guard showsKeyboardFocus != byKeyboard else { return }
+        showsKeyboardFocus = byKeyboard
+    }
 
     /// 닫힌 화면의 앵커와 상세 창을 버리고, 이전 화면이 예약한 지연 닫기를 무효화합니다.
     func endDisplaySession() {
@@ -85,6 +94,7 @@ final class DashboardViewport: ObservableObject {
         anchorOrder = 0
         memoryOrder = 0
         configured = false
+        noteFocusNavigation(byKeyboard: false)
     }
 
     func configure(visibleCards: [DashboardSelection], revision: UInt64,

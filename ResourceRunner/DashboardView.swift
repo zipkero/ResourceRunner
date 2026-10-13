@@ -208,7 +208,33 @@ struct DashboardView: View {
         // 화면 제목을 없앤 뒤에도 XCUITest가 본체 팝오버의 프레임과 카드 밖 영역을 안정적으로 특정할 수 있게 합니다.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("DashboardContainer")
+#if DEBUG
+        // UI fixture에서만 실제 포커스 카드와 테두리를 그리는 카드를 접근성 값으로 읽게 합니다.
+        // macOS에서 컨테이너 AXGroup의 `accessibilityValue`는 AXValue로 나오지 않아 XCUITest가 읽지 못하므로,
+        // 크기 0·hit test 꺼진 static text 요소에 따로 실어 둡니다. 포커스를 받지 않아 Tab 순서에 끼지 않습니다.
+        .overlay(alignment: .topLeading) {
+            if Self.observesFocusOutline {
+                Color.clear
+                    .frame(width: 0, height: 0)
+                    .allowsHitTesting(false)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityAddTraits(.isStaticText)
+                    .accessibilityLabel("FocusOutlineState")
+                    .accessibilityValue(focusOutlineState)
+                    .accessibilityIdentifier("DashboardFocusOutlineState")
+            }
+        }
+#endif
     }
+
+#if DEBUG
+    private static let observesFocusOutline =
+        ProcessInfo.processInfo.arguments.contains("--dashboard-preferences-ui-test")
+
+    private var focusOutlineState: String {
+        "focus=\(focusedCard.map { "\($0)" } ?? "none") outline=\(outlinedCard.map { "\($0)" } ?? "none")"
+    }
+#endif
 
     /// 카드가 각자의 면으로 서로 분리되어 읽히게 하는 카드 사이 간격입니다.
     static let cardSpacing = DashboardStyle.Summary.cardSpacing
@@ -225,10 +251,15 @@ struct DashboardView: View {
     static let detailPopupWidth: CGFloat = 400
     static let detailPopupHeight: CGFloat = 480
 
+    /// 테두리를 그릴 카드. 포커스는 열자마자 첫 카드에 있을 수 있으므로 키보드 탐색 뒤에만 그 카드를 돌려줍니다.
+    private var outlinedCard: DashboardSelection? {
+        viewport.showsKeyboardFocus ? focusedCard : nil
+    }
+
     /// 기본 macOS 포커스 halo 대신 얇은 선으로 표시하되 키보드 포커스 자체는 유지합니다.
     private func cardFocusOutline(for card: DashboardSelection) -> some View {
         RoundedRectangle(cornerRadius: DashboardStyle.CardSurface.cornerRadius)
-            .strokeBorder(Color.accentColor.opacity(focusedCard == card ? 0.7 : 0), lineWidth: 1)
+            .strokeBorder(Color.accentColor.opacity(outlinedCard == card ? 0.7 : 0), lineWidth: 1)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }

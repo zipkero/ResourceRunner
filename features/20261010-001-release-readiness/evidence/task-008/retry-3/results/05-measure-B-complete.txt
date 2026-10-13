@@ -1,0 +1,35 @@
+trial-00-firstopen   show  79.57 firstPx  129.51 complete  129.51 (prev  112.85) frame-0027.jpg s=1.003 c=0.96
+{
+ "firstopen": {
+  "showDurationMs": {
+   "n": 1,
+   "median": 79.56708333333333,
+   "min": 79.56708333333333,
+   "max": 79.56708333333333
+  },
+  "showReturnMs": {
+   "n": 1,
+   "median": 86.58075,
+   "min": 86.58075,
+   "max": 86.58075
+  },
+  "firstPixelMs": {
+   "n": 1,
+   "median": 129.5135,
+   "min": 129.5135,
+   "max": 129.5135
+  },
+  "completeMs": {
+   "n": 1,
+   "median": 129.5135,
+   "min": 129.5135,
+   "max": 129.5135
+  }
+ },
+ "reopen": {
+  "showDurationMs": [],
+  "showReturnMs": [],
+  "firstPixelMs": [],
+  "completeMs": []
+ }
+}

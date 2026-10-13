@@ -1,0 +1,498 @@
+{
+ "aggregate": {
+  "all": {
+   "activateReturn": {
+    "max": 2.139625,
+    "median": 2.139625,
+    "min": 2.139625,
+    "n": 1
+   },
+   "animationFull97": {
+    "max": 314.5712916666667,
+    "median": 314.5712916666667,
+    "min": 314.5712916666667,
+    "n": 1
+   },
+   "appUpDequeueMinusCreatedMs_openClose": {
+    "max": 5.7302919921875,
+    "median": 3.4912503255208334,
+    "min": 1.2522086588541668,
+    "n": 2
+   },
+   "firstBeforeWaitingAfterOpen": {
+    "max": 99.72454166666667,
+    "median": 99.72454166666667,
+    "min": 99.72454166666667,
+    "n": 1
+   },
+   "firstPixel": {
+    "max": 122.90608333333333,
+    "median": 122.90608333333333,
+    "min": 122.90608333333333,
+    "n": 1
+   },
+   "firstPixelToFull97Ms": {
+    "max": 191.66520833333334,
+    "median": 191.66520833333334,
+    "min": 191.66520833333334,
+    "n": 1
+   },
+   "maxFrameGapMsTo400": {
+    "max": 25.000125,
+    "median": 25.000125,
+    "min": 25.000125,
+    "n": 1
+   },
+   "occlusionVisible": {
+    "max": 117.064875,
+    "median": 117.064875,
+    "min": 117.064875,
+    "n": 1
+   },
+   "popoverDidShow": {
+    "max": 597.6377916666667,
+    "median": 597.6377916666667,
+    "min": 597.6377916666667,
+    "n": 1
+   },
+   "showDurationMs": {
+    "max": 78.349375,
+    "median": 78.349375,
+    "min": 78.349375,
+    "n": 1
+   },
+   "showReturn": {
+    "max": 80.489,
+    "median": 80.489,
+    "min": 80.489,
+    "n": 1
+   },
+   "showReturnToFirstPixelMs": {
+    "max": 42.41708333333334,
+    "median": 42.41708333333334,
+    "min": 42.41708333333334,
+    "n": 1
+   },
+   "tapMinusAppUpDequeueMs_openClose": {
+    "max": -1.02125,
+    "median": -3.3096041666666665,
+    "min": -5.597958333333333,
+    "n": 2
+   },
+   "tapMinusCreatedMs_openClose": {
+    "max": 0.23095865885416667,
+    "median": 0.18164615885416666,
+    "min": 0.13233365885416665,
+    "n": 2
+   },
+   "togglePopoverEnter": {
+    "max": 1.1362083333333333,
+    "median": 1.1362083333333333,
+    "min": 1.1362083333333333,
+    "n": 1
+   },
+   "visible1pct": {
+    "max": 156.23804166666665,
+    "median": 156.23804166666665,
+    "min": 156.23804166666665,
+    "n": 1
+   }
+  },
+  "reopen": {
+   "activateReturn": null,
+   "animationFull97": null,
+   "appUpDequeueMinusCreatedMs_openClose": null,
+   "firstBeforeWaitingAfterOpen": null,
+   "firstPixel": null,
+   "firstPixelToFull97Ms": null,
+   "maxFrameGapMsTo400": null,
+   "occlusionVisible": null,
+   "popoverDidShow": null,
+   "showDurationMs": null,
+   "showReturn": null,
+   "showReturnToFirstPixelMs": null,
+   "tapMinusAppUpDequeueMs_openClose": null,
+   "tapMinusCreatedMs_openClose": null,
+   "togglePopoverEnter": null,
+   "visible1pct": null
+  },
+  "reopenA_noAX": {
+   "activateReturn": null,
+   "animationFull97": null,
+   "appUpDequeueMinusCreatedMs_openClose": null,
+   "firstBeforeWaitingAfterOpen": null,
+   "firstPixel": null,
+   "firstPixelToFull97Ms": null,
+   "maxFrameGapMsTo400": null,
+   "occlusionVisible": null,
+   "popoverDidShow": null,
+   "showDurationMs": null,
+   "showReturn": null,
+   "showReturnToFirstPixelMs": null,
+   "tapMinusAppUpDequeueMs_openClose": null,
+   "tapMinusCreatedMs_openClose": null,
+   "togglePopoverEnter": null,
+   "visible1pct": null
+  },
+  "reopenB_AX": {
+   "activateReturn": null,
+   "animationFull97": null,
+   "appUpDequeueMinusCreatedMs_openClose": null,
+   "firstBeforeWaitingAfterOpen": null,
+   "firstPixel": null,
+   "firstPixelToFull97Ms": null,
+   "maxFrameGapMsTo400": null,
+   "occlusionVisible": null,
+   "popoverDidShow": null,
+   "showDurationMs": null,
+   "showReturn": null,
+   "showReturnToFirstPixelMs": null,
+   "tapMinusAppUpDequeueMs_openClose": null,
+   "tapMinusCreatedMs_openClose": null,
+   "togglePopoverEnter": null,
+   "visible1pct": null
+  }
+ },
+ "region": [
+  "80",
+  "28",
+  "240",
+  "492"
+ ],
+ "timebase": [
+  125,
+  3
+ ],
+ "trials": [
+  {
+   "appUpToShowCallMs": 0.12316666666666667,
+   "axProbe": true,
+   "closeBoundary": {
+    "appDownDequeueMach": 31063443092832,
+    "appMainBusyAtArrival": true,
+    "appUpDequeueMach": 31063443095385,
+    "appUpDequeueMinusCreatedMs": 5.7302919921875,
+    "appWakeMach": 31063443053047,
+    "appWakeMinusTapMs": 3.833875,
+    "createdMach": 31063442957857.992,
+    "tapMinusAppUpDequeueMs": -5.597958333333333,
+    "tapMinusCreatedMs": 0.13233365885416665,
+    "tapObservedMach": 31063442961034
+   },
+   "firstPixelToFull97Ms": 191.66520833333334,
+   "hidIdleSecondsBefore": 37.616012,
+   "label": "firstopen",
+   "openBoundary": {
+    "appDownDequeueMach": 31063398110882,
+    "appMainBusyAtArrival": false,
+    "appUpDequeueMach": 31063398127276,
+    "appUpDequeueMinusCreatedMs": 1.2522086588541668,
+    "appWakeMach": 31063398089756,
+    "appWakeMinusTapMs": -0.5420833333333334,
+    "createdMach": 31063398097222.992,
+    "tapMinusAppUpDequeueMs": -1.02125,
+    "tapMinusCreatedMs": 0.23095865885416667,
+    "tapObservedMach": 31063398102766
+   },
+   "openSegmentsMsFromTap": {
+    "activateReturn": 2.139625,
+    "animationFull97": 314.5712916666667,
+    "contentControllerAssigned": 1.549875,
+    "firstBeforeWaitingAfterOpen": 99.72454166666667,
+    "firstPixel": 122.90608333333333,
+    "firstPixelPrev": 106.238125,
+    "occlusionVisible": 117.064875,
+    "openBegin": 1.1444166666666666,
+    "openEnd": 80.50283333333333,
+    "popoverDidShow": 597.6377916666667,
+    "popoverWillShow": 70.38458333333332,
+    "showReturn": 80.489,
+    "togglePopoverEnter": 1.1362083333333333,
+    "viewportUpdated": 1.59625,
+    "visible1pct": 156.23804166666665
+   },
+   "pixels": {
+    "animationFull97": {
+     "image": "frame-0047.jpg",
+     "mach": 31063405652477
+    },
+    "baseline": "frame-0012.jpg",
+    "curve": [
+     {
+      "baseFrac": 0,
+      "baseMean": 0,
+      "image": "frame-0013.jpg",
+      "tMs": 6.23825
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0,
+      "image": "frame-0014.jpg",
+      "tMs": 14.571541666666667
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 6.775067750677507e-05,
+      "image": "frame-0016.jpg",
+      "tMs": 39.571666666666665
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.00013550135501355014,
+      "image": "frame-0017.jpg",
+      "tMs": 47.904875
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.00013550135501355014,
+      "image": "frame-0018.jpg",
+      "tMs": 56.238125
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.0002032520325203252,
+      "image": "frame-0019.jpg",
+      "tMs": 64.572
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.00027100271002710027,
+      "image": "frame-0020.jpg",
+      "tMs": 72.90491666666667
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.00034722222222222224,
+      "image": "frame-0021.jpg",
+      "tMs": 81.238125
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.0003218157181571816,
+      "image": "frame-0022.jpg",
+      "tMs": 89.57145833333333
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.00033028455284552844,
+      "image": "frame-0023.jpg",
+      "tMs": 97.90529166666667
+     },
+     {
+      "baseFrac": 0,
+      "baseMean": 0.0004065040650406504,
+      "image": "frame-0024.jpg",
+      "tMs": 106.238125
+     },
+     {
+      "baseFrac": 0.007079945799457994,
+      "baseMean": 0.8669715447154471,
+      "image": "frame-0025.jpg",
+      "tMs": 122.90608333333333
+     },
+     {
+      "baseFrac": 0.007079945799457994,
+      "baseMean": 0.8886178861788618,
+      "image": "frame-0026.jpg",
+      "tMs": 131.23808333333332
+     },
+     {
+      "baseFrac": 0.007181571815718157,
+      "baseMean": 0.9856792005420054,
+      "image": "frame-0027.jpg",
+      "tMs": 139.57141666666666
+     },
+     {
+      "baseFrac": 0.00872289972899729,
+      "baseMean": 1.2070968834688347,
+      "image": "frame-0028.jpg",
+      "tMs": 147.90470833333333
+     },
+     {
+      "baseFrac": 0.01638719512195122,
+      "baseMean": 1.7345274390243903,
+      "image": "frame-0029.jpg",
+      "tMs": 156.23804166666665
+     },
+     {
+      "baseFrac": 0.03145325203252033,
+      "baseMean": 2.7308265582655826,
+      "image": "frame-0030.jpg",
+      "tMs": 164.574875
+     },
+     {
+      "baseFrac": 0.05471714092140922,
+      "baseMean": 4.2549627371273715,
+      "image": "frame-0031.jpg",
+      "tMs": 172.90470833333333
+     },
+     {
+      "baseFrac": 0.07891260162601627,
+      "baseMean": 6.088905826558266,
+      "image": "frame-0032.jpg",
+      "tMs": 181.24195833333334
+     },
+     {
+      "baseFrac": 0.12033367208672087,
+      "baseMean": 9.102125677506775,
+      "image": "frame-0033.jpg",
+      "tMs": 189.571375
+     },
+     {
+      "baseFrac": 0.15222730352303523,
+      "baseMean": 12.025059281842818,
+      "image": "frame-0034.jpg",
+      "tMs": 197.90466666666666
+     },
+     {
+      "baseFrac": 0.19110772357723577,
+      "baseMean": 15.743631436314363,
+      "image": "frame-0035.jpg",
+      "tMs": 206.238
+     },
+     {
+      "baseFrac": 0.24227642276422764,
+      "baseMean": 20.37667682926829,
+      "image": "frame-0036.jpg",
+      "tMs": 214.571375
+     },
+     {
+      "baseFrac": 0.2638550135501355,
+      "baseMean": 23.128412940379405,
+      "image": "frame-0037.jpg",
+      "tMs": 222.90470833333333
+     },
+     {
+      "baseFrac": 0.27378895663956637,
+      "baseMean": 24.510264227642278,
+      "image": "frame-0038.jpg",
+      "tMs": 231.238
+     },
+     {
+      "baseFrac": 0.2848238482384824,
+      "baseMean": 26.24671409214092,
+      "image": "frame-0039.jpg",
+      "tMs": 239.57183333333333
+     },
+     {
+      "baseFrac": 0.2960619918699187,
+      "baseMean": 27.875321815718156,
+      "image": "frame-0040.jpg",
+      "tMs": 247.90875
+     },
+     {
+      "baseFrac": 0.3001693766937669,
+      "baseMean": 29.155462398373984,
+      "image": "frame-0041.jpg",
+      "tMs": 256.238
+     },
+     {
+      "baseFrac": 0.31475271002710026,
+      "baseMean": 31.162228997289972,
+      "image": "frame-0042.jpg",
+      "tMs": 272.904625
+     },
+     {
+      "baseFrac": 0.31387195121951217,
+      "baseMean": 31.77833672086721,
+      "image": "frame-0043.jpg",
+      "tMs": 281.2379583333333
+     },
+     {
+      "baseFrac": 0.31392276422764226,
+      "baseMean": 31.882350948509487,
+      "image": "frame-0044.jpg",
+      "tMs": 289.5712916666667
+     },
+     {
+      "baseFrac": 0.31837737127371274,
+      "baseMean": 32.392699864498645,
+      "image": "frame-0045.jpg",
+      "tMs": 297.904625
+     },
+     {
+      "baseFrac": 0.32632960704607045,
+      "baseMean": 33.22364498644986,
+      "image": "frame-0046.jpg",
+      "tMs": 306.2379583333333
+     },
+     {
+      "baseFrac": 0.3360179539295393,
+      "baseMean": 34.10786754742547,
+      "image": "frame-0047.jpg",
+      "tMs": 314.5712916666667
+     },
+     {
+      "baseFrac": 0.3356707317073171,
+      "baseMean": 34.24676490514905,
+      "image": "frame-0048.jpg",
+      "tMs": 322.9060416666667
+     },
+     {
+      "baseFrac": 0.3344935636856369,
+      "baseMean": 34.22831131436315,
+      "image": "frame-0049.jpg",
+      "tMs": 331.23991666666666
+     },
+     {
+      "baseFrac": 0.3338160569105691,
+      "baseMean": 34.12008807588076,
+      "image": "frame-0050.jpg",
+      "tMs": 339.575125
+     },
+     {
+      "baseFrac": 0.33317242547425474,
+      "baseMean": 34.022425474254746,
+      "image": "frame-0051.jpg",
+      "tMs": 347.904625
+     },
+     {
+      "baseFrac": 0.3317496612466125,
+      "baseMean": 33.86841971544715,
+      "image": "frame-0052.jpg",
+      "tMs": 364.5743333333333
+     },
+     {
+      "baseFrac": 0.33092818428184284,
+      "baseMean": 33.85478489159892,
+      "image": "frame-0053.jpg",
+      "tMs": 372.90454166666666
+     },
+     {
+      "baseFrac": 0.3306910569105691,
+      "baseMean": 33.857588075880756,
+      "image": "frame-0054.jpg",
+      "tMs": 381.237875
+     },
+     {
+      "baseFrac": 0.3319359756097561,
+      "baseMean": 33.876837737127374,
+      "image": "frame-0055.jpg",
+      "tMs": 389.5724166666667
+     },
+     {
+      "baseFrac": 0.33318936314363146,
+      "baseMean": 33.940946815718156,
+      "image": "frame-0056.jpg",
+      "tMs": 397.90454166666666
+     }
+    ],
+    "firstPixel": {
+     "image": "frame-0025.jpg",
+     "mach": 31063401052512
+    },
+    "firstPixelPrevMach": 31063400652481,
+    "maxFrameGapMsTo400": 25.000125,
+    "plateauMean": 34.27549119241193,
+    "reference": "frame-0177.jpg",
+    "visible1pct": {
+     "image": "frame-0029.jpg",
+     "mach": 31063401852479
+    }
+   },
+   "showDurationMs": 78.349375,
+   "showReturnToFirstPixelMs": 42.41708333333334,
+   "trial": "trial-00-firstopen"
+  }
+ ]
+}

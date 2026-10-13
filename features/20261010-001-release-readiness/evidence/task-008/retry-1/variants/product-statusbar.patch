@@ -1,0 +1,13 @@
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index 17b5867..340c5c7 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -58,6 +58,8 @@ final class StatusBarController: NSObject {
+         self.viewport = viewport
+         makePopoverContentController = { NSHostingController(rootView: popoverContent) }
+         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
++        // NSPopover 기본 열기·닫기 애니메이션은 첫 픽셀 뒤 약 70ms 동안 축소·반투명 프레임을 보여 완전 표시를 늦춥니다.
++        popover.animates = false
+ 
+         super.init()
+ 

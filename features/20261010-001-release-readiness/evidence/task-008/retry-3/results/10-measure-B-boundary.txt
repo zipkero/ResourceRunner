@@ -1,0 +1,158 @@
+| trial | AX probe | tap−app up 열기 | tap−app up 닫기 | app up−생성 열기/닫기 | toggle | activate 반환 | show 반환 | 첫 commit | occlusion visible | 첫 픽셀(직전 프레임) | 1% 변화 | 애니메이션 97% | didShow |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| trial-00-firstopen | Y | -6.45 | -4.75 | 6.75 / 4.87 | 6.56 | 8.54 | 78.18 | 98.77 | 122.01 | 121.49 (104.83) | 121.49 | 121.49 | 77.98 |
+
+{
+ "all": {
+  "tapMinusAppUpDequeueMs_openClose": {
+   "n": 2,
+   "min": -6.451,
+   "median": -5.598916666666666,
+   "max": -4.746833333333333
+  },
+  "appUpDequeueMinusCreatedMs_openClose": {
+   "n": 2,
+   "min": 4.869291666666667,
+   "median": 5.809687825520834,
+   "max": 6.750083984375
+  },
+  "tapMinusCreatedMs_openClose": {
+   "n": 2,
+   "min": 0.12245833333333332,
+   "median": 0.21077115885416667,
+   "max": 0.299083984375
+  },
+  "togglePopoverEnter": {
+   "n": 1,
+   "min": 6.558666666666667,
+   "median": 6.558666666666667,
+   "max": 6.558666666666667
+  },
+  "activateReturn": {
+   "n": 1,
+   "min": 8.538416666666667,
+   "median": 8.538416666666667,
+   "max": 8.538416666666667
+  },
+  "showReturn": {
+   "n": 1,
+   "min": 78.176375,
+   "median": 78.176375,
+   "max": 78.176375
+  },
+  "firstBeforeWaitingAfterOpen": {
+   "n": 1,
+   "min": 98.76604166666667,
+   "median": 98.76604166666667,
+   "max": 98.76604166666667
+  },
+  "occlusionVisible": {
+   "n": 1,
+   "min": 122.01341666666667,
+   "median": 122.01341666666667,
+   "max": 122.01341666666667
+  },
+  "firstPixel": {
+   "n": 1,
+   "min": 121.49454166666668,
+   "median": 121.49454166666668,
+   "max": 121.49454166666668
+  },
+  "visible1pct": {
+   "n": 1,
+   "min": 121.49454166666668,
+   "median": 121.49454166666668,
+   "max": 121.49454166666668
+  },
+  "animationFull97": {
+   "n": 1,
+   "min": 121.49454166666668,
+   "median": 121.49454166666668,
+   "max": 121.49454166666668
+  },
+  "popoverDidShow": {
+   "n": 1,
+   "min": 77.98220833333333,
+   "median": 77.98220833333333,
+   "max": 77.98220833333333
+  },
+  "showDurationMs": {
+   "n": 1,
+   "min": 69.63795833333333,
+   "median": 69.63795833333333,
+   "max": 69.63795833333333
+  },
+  "showReturnToFirstPixelMs": {
+   "n": 1,
+   "min": 43.31816666666666,
+   "median": 43.31816666666666,
+   "max": 43.31816666666666
+  },
+  "firstPixelToFull97Ms": {
+   "n": 1,
+   "min": 0.0,
+   "median": 0.0,
+   "max": 0.0
+  },
+  "maxFrameGapMsTo400": {
+   "n": 1,
+   "min": 16.669041666666665,
+   "median": 16.669041666666665,
+   "max": 16.669041666666665
+  }
+ },
+ "reopen": {
+  "tapMinusAppUpDequeueMs_openClose": null,
+  "appUpDequeueMinusCreatedMs_openClose": null,
+  "tapMinusCreatedMs_openClose": null,
+  "togglePopoverEnter": null,
+  "activateReturn": null,
+  "showReturn": null,
+  "firstBeforeWaitingAfterOpen": null,
+  "occlusionVisible": null,
+  "firstPixel": null,
+  "visible1pct": null,
+  "animationFull97": null,
+  "popoverDidShow": null,
+  "showDurationMs": null,
+  "showReturnToFirstPixelMs": null,
+  "firstPixelToFull97Ms": null,
+  "maxFrameGapMsTo400": null
+ },
+ "reopenA_noAX": {
+  "tapMinusAppUpDequeueMs_openClose": null,
+  "appUpDequeueMinusCreatedMs_openClose": null,
+  "tapMinusCreatedMs_openClose": null,
+  "togglePopoverEnter": null,
+  "activateReturn": null,
+  "showReturn": null,
+  "firstBeforeWaitingAfterOpen": null,
+  "occlusionVisible": null,
+  "firstPixel": null,
+  "visible1pct": null,
+  "animationFull97": null,
+  "popoverDidShow": null,
+  "showDurationMs": null,
+  "showReturnToFirstPixelMs": null,
+  "firstPixelToFull97Ms": null,
+  "maxFrameGapMsTo400": null
+ },
+ "reopenB_AX": {
+  "tapMinusAppUpDequeueMs_openClose": null,
+  "appUpDequeueMinusCreatedMs_openClose": null,
+  "tapMinusCreatedMs_openClose": null,
+  "togglePopoverEnter": null,
+  "activateReturn": null,
+  "showReturn": null,
+  "firstBeforeWaitingAfterOpen": null,
+  "occlusionVisible": null,
+  "firstPixel": null,
+  "visible1pct": null,
+  "animationFull97": null,
+  "popoverDidShow": null,
+  "showDurationMs": null,
+  "showReturnToFirstPixelMs": null,
+  "firstPixelToFull97Ms": null,
+  "maxFrameGapMsTo400": null
+ }
+}

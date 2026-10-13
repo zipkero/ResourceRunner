@@ -1,0 +1,1148 @@
+[
+ {
+  "seq": 1,
+  "name": "01-warmup-A",
+  "kind": "W",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 63829,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842044.650976,
+  "clickIdentityEpoch": 1791842064.8114839,
+  "driverHidIdleBefore": 206.932133166,
+  "hidSamples": 64,
+  "hidMinInWindow": 187.001205666,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842064.896309,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 9.7
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 9.4
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.4
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.7
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 5.1
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 3.4
+    },
+    {
+     "pid": 16136,
+     "command": "ResourceRunner",
+     "cpu": 3.1
+    },
+    {
+     "pid": 88487,
+     "command": "2.1.296",
+     "cpu": 2.7
+    }
+   ],
+   "cpu": {
+    "user": 3.6,
+    "sys": 3.89,
+    "idle": 93.3
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 2,
+  "name": "02-warmup-B",
+  "kind": "W",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 64945,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842084.477864,
+  "clickIdentityEpoch": 1791842104.6086771,
+  "driverHidIdleBefore": 37.534930041,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.615380166,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842104.480764,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 24.0
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.8
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.1
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.1
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.4
+    },
+    {
+     "pid": 43063,
+     "command": "goland",
+     "cpu": 4.0
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 3.3
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 2.3
+    }
+   ],
+   "cpu": {
+    "user": 3.69,
+    "sys": 3.9,
+    "idle": 92.39
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 3,
+  "name": "03-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 65865,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842124.290996,
+  "clickIdentityEpoch": 1791842144.438966,
+  "driverHidIdleBefore": 37.643654083,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.755109166,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842144.045965,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 12.0
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 10.3
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.1
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.7
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 5.2
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 4.7
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 3.0
+    },
+    {
+     "pid": 43063,
+     "command": "goland",
+     "cpu": 1.7
+    }
+   ],
+   "cpu": {
+    "user": 2.72,
+    "sys": 3.53,
+    "idle": 93.73
+   }
+  },
+  "valid": false,
+  "invalidReasons": [
+   "hot process [(1791842135.726777, 'PerfPowerService', 50.0)]"
+  ]
+ },
+ {
+  "seq": 4,
+  "name": "04-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 66672,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842164.020278,
+  "clickIdentityEpoch": 1791842184.174088,
+  "driverHidIdleBefore": 37.560866333,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.600418083,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842183.6130419,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.6
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 9.1
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.0
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.3
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.4
+    },
+    {
+     "pid": 618,
+     "command": "airportd",
+     "cpu": 4.2
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 3.3
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 3.1
+    }
+   ],
+   "cpu": {
+    "user": 3.11,
+    "sys": 3.91,
+    "idle": 92.97
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 5,
+  "name": "05-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 67485,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842203.845162,
+  "clickIdentityEpoch": 1791842224.023721,
+  "driverHidIdleBefore": 37.6571935,
+  "hidSamples": 65,
+  "hidMinInWindow": 17.468679791,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842223.265895,
+   "procs": [
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 14.5
+    },
+    {
+     "pid": 590,
+     "command": "corebrightnessd",
+     "cpu": 11.6
+    },
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 11.4
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 10.9
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 9.4
+    },
+    {
+     "pid": 64146,
+     "command": "ControlCenter",
+     "cpu": 6.7
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.7
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 3.8
+    }
+   ],
+   "cpu": {
+    "user": 3.33,
+    "sys": 5.47,
+    "idle": 91.18
+   }
+  },
+  "valid": false,
+  "invalidReasons": [
+   "hot process [(1791842216.9917362, 'goland', 54.7)]"
+  ]
+ },
+ {
+  "seq": 6,
+  "name": "06-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 68292,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842243.7032661,
+  "clickIdentityEpoch": 1791842263.8622668,
+  "driverHidIdleBefore": 37.636719208,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.512246791,
+  "topSamples": 11,
+  "lastTopBeforeClick": {
+   "epoch": 1791842264.844311,
+   "procs": [
+    {
+     "pid": 68292,
+     "command": "ResourceRunner",
+     "cpu": 22.4
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 20.7
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 10.9
+    },
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.1
+    },
+    {
+     "pid": 64146,
+     "command": "ControlCenter",
+     "cpu": 9.3
+    },
+    {
+     "pid": 8298,
+     "command": "syspolicyd",
+     "cpu": 6.7
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 6.4
+    },
+    {
+     "pid": 595,
+     "command": "tccd",
+     "cpu": 5.9
+    }
+   ],
+   "cpu": {
+    "user": 8.1,
+    "sys": 5.81,
+    "idle": 86.8
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 7,
+  "name": "07-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 69083,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842283.507512,
+  "clickIdentityEpoch": 1791842303.700724,
+  "driverHidIdleBefore": 37.601863166,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.623605125,
+  "topSamples": 11,
+  "lastTopBeforeClick": {
+   "epoch": 1791842304.476135,
+   "procs": [
+    {
+     "pid": 69083,
+     "command": "ResourceRunner",
+     "cpu": 19.0
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 17.4
+    },
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.7
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 10.2
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.3
+    },
+    {
+     "pid": 43063,
+     "command": "goland",
+     "cpu": 6.5
+    },
+    {
+     "pid": 64146,
+     "command": "ControlCenter",
+     "cpu": 6.4
+    },
+    {
+     "pid": 8298,
+     "command": "syspolicyd",
+     "cpu": 5.4
+    }
+   ],
+   "cpu": {
+    "user": 7.25,
+    "sys": 5.41,
+    "idle": 87.33
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 8,
+  "name": "08-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 69863,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842323.2615921,
+  "clickIdentityEpoch": 1791842343.41188,
+  "driverHidIdleBefore": 37.524741125,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.5685985,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842344.042122,
+   "procs": [
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 40.8
+    },
+    {
+     "pid": 69863,
+     "command": "ResourceRunner",
+     "cpu": 16.3
+    },
+    {
+     "pid": 590,
+     "command": "corebrightnessd",
+     "cpu": 15.5
+    },
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 14.7
+    },
+    {
+     "pid": 64146,
+     "command": "ControlCenter",
+     "cpu": 13.7
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 12.8
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.8
+    },
+    {
+     "pid": 8298,
+     "command": "syspolicyd",
+     "cpu": 5.4
+    }
+   ],
+   "cpu": {
+    "user": 8.13,
+    "sys": 7.36,
+    "idle": 84.49
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 9,
+  "name": "09-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 70678,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842363.101838,
+  "clickIdentityEpoch": 1791842383.255521,
+  "driverHidIdleBefore": 37.618562333,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.671061958,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842383.701762,
+   "procs": [
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 13.4
+    },
+    {
+     "pid": 70678,
+     "command": "ResourceRunner",
+     "cpu": 10.7
+    },
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.3
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.7
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.6
+    },
+    {
+     "pid": 8298,
+     "command": "syspolicyd",
+     "cpu": 5.2
+    },
+    {
+     "pid": 595,
+     "command": "tccd",
+     "cpu": 4.7
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.3
+    }
+   ],
+   "cpu": {
+    "user": 5.23,
+    "sys": 4.78,
+    "idle": 89.98
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 10,
+  "name": "10-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 71476,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842402.888181,
+  "clickIdentityEpoch": 1791842423.06452,
+  "driverHidIdleBefore": 37.640485,
+  "hidSamples": 65,
+  "hidMinInWindow": 17.444359875,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842423.348324,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.0
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.7
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.1
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.4
+    },
+    {
+     "pid": 71476,
+     "command": "ResourceRunner",
+     "cpu": 4.3
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.3
+    },
+    {
+     "pid": 8298,
+     "command": "syspolicyd",
+     "cpu": 4.2
+    },
+    {
+     "pid": 595,
+     "command": "tccd",
+     "cpu": 3.6
+    }
+   ],
+   "cpu": {
+    "user": 4.17,
+    "sys": 4.41,
+    "idle": 91.41
+   }
+  },
+  "valid": false,
+  "invalidReasons": [
+   "hot process [(1791842406.631306, 'mobileassetd', 66.7), (1791842406.631306, 'deleted', 60.6), (1791842406.631306, 'mds', 55.8)]",
+   "total cpu busy [(1791842406.631306, 28.240000000000002)]"
+  ]
+ },
+ {
+  "seq": 11,
+  "name": "11-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 72267,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842442.587807,
+  "clickIdentityEpoch": 1791842462.747818,
+  "driverHidIdleBefore": 37.501516,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.445194166,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842462.866324,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 11.5
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.6
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 7.6
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 7.2
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.0
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 2.8
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 2.6
+    },
+    {
+     "pid": 8298,
+     "command": "syspolicyd",
+     "cpu": 2.4
+    }
+   ],
+   "cpu": {
+    "user": 3.37,
+    "sys": 3.99,
+    "idle": 92.63
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 12,
+  "name": "12-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 73079,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842482.374031,
+  "clickIdentityEpoch": 1791842502.521953,
+  "driverHidIdleBefore": 37.601571333,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.646909375,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842502.56164,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 11.6
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 9.8
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 8.2
+    },
+    {
+     "pid": 16136,
+     "command": "ResourceRunner",
+     "cpu": 8.0
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.0
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 5.5
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 5.1
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 3.1
+    }
+   ],
+   "cpu": {
+    "user": 3.21,
+    "sys": 4.62,
+    "idle": 92.15
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 13,
+  "name": "13-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 73865,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842522.116291,
+  "clickIdentityEpoch": 1791842542.236295,
+  "driverHidIdleBefore": 37.534885875,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.42373775,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842542.16787,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.7
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.8
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.8
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.2
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.1
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 3.7
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 3.1
+    },
+    {
+     "pid": 31502,
+     "command": "OrbStack Helper",
+     "cpu": 2.7
+    }
+   ],
+   "cpu": {
+    "user": 2.78,
+    "sys": 3.95,
+    "idle": 93.25
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 14,
+  "name": "14-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 74646,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842561.889965,
+  "clickIdentityEpoch": 1791842582.031342,
+  "driverHidIdleBefore": 37.616012,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.524433958,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842581.803015,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 12.0
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.9
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.7
+    },
+    {
+     "pid": 31502,
+     "command": "OrbStack Helper",
+     "cpu": 7.2
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.8
+    },
+    {
+     "pid": 16136,
+     "command": "ResourceRunner",
+     "cpu": 6.3
+    },
+    {
+     "pid": 37105,
+     "command": "Google Chrome He",
+     "cpu": 5.3
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 4.6
+    }
+   ],
+   "cpu": {
+    "user": 3.91,
+    "sys": 4.49,
+    "idle": 91.58
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 15,
+  "name": "15-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 75431,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842601.660558,
+  "clickIdentityEpoch": 1791842621.78878,
+  "driverHidIdleBefore": 37.570071083,
+  "hidSamples": 65,
+  "hidMinInWindow": 17.42807325,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842621.3477051,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 11.5
+    },
+    {
+     "pid": 88487,
+     "command": "2.1.296",
+     "cpu": 11.1
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 9.1
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 7.9
+    },
+    {
+     "pid": 16136,
+     "command": "ResourceRunner",
+     "cpu": 7.3
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 6.9
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.5
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 4.2
+    }
+   ],
+   "cpu": {
+    "user": 3.62,
+    "sys": 3.79,
+    "idle": 92.57
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 16,
+  "name": "16-measure-A",
+  "kind": "M",
+  "side": "A",
+  "runnerExit": 0,
+  "pid": 76228,
+  "exeSHA256": "851127f1f01c58d6c06ab7225097f59ecadb3521b987c07c3e981d1da4e99fdc",
+  "launchEpoch": 1791842641.3868392,
+  "clickIdentityEpoch": 1791842661.544323,
+  "driverHidIdleBefore": 37.567279208,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.435621125,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842660.878565,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 11.8
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 8.4
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 7.6
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 7.0
+    },
+    {
+     "pid": 16136,
+     "command": "ResourceRunner",
+     "cpu": 5.6
+    },
+    {
+     "pid": 64248,
+     "command": "jetbrains-toolbo",
+     "cpu": 4.9
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 3.7
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 3.7
+    }
+   ],
+   "cpu": {
+    "user": 3.9,
+    "sys": 3.54,
+    "idle": 93.35
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ },
+ {
+  "seq": 17,
+  "name": "17-measure-B",
+  "kind": "M",
+  "side": "B",
+  "runnerExit": 0,
+  "pid": 77006,
+  "exeSHA256": "6e60ac74d40d246ffea76def8dbcb32bf4666eaf4f8ad37de6b9dbb3abef3133",
+  "launchEpoch": 1791842681.096849,
+  "clickIdentityEpoch": 1791842701.2223701,
+  "driverHidIdleBefore": 37.494912958,
+  "hidSamples": 64,
+  "hidMinInWindow": 17.635394875,
+  "topSamples": 10,
+  "lastTopBeforeClick": {
+   "epoch": 1791842700.465259,
+   "procs": [
+    {
+     "pid": 41526,
+     "command": "Google Chrome He",
+     "cpu": 10.3
+    },
+    {
+     "pid": 78937,
+     "command": "Orca Helper",
+     "cpu": 9.3
+    },
+    {
+     "pid": 0,
+     "command": "kernel_task",
+     "cpu": 8.3
+    },
+    {
+     "pid": 597,
+     "command": "WindowServer",
+     "cpu": 7.2
+    },
+    {
+     "pid": 16136,
+     "command": "ResourceRunner",
+     "cpu": 5.9
+    },
+    {
+     "pid": 63736,
+     "command": "top",
+     "cpu": 4.6
+    },
+    {
+     "pid": 79030,
+     "command": "Orca Helper (Ren",
+     "cpu": 4.3
+    },
+    {
+     "pid": 41407,
+     "command": "Google Chrome He",
+     "cpu": 2.7
+    }
+   ],
+   "cpu": {
+    "user": 2.69,
+    "sys": 3.68,
+    "idle": 93.61
+   }
+  },
+  "valid": true,
+  "invalidReasons": []
+ }
+]

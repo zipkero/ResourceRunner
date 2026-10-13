@@ -1,0 +1,13 @@
+2026-10-12T14:24:54.737235+00:00 ERROR Command '('/private/tmp/resourcerunner-task002-gui-state', '81700', 'inspect')' returned non-zero exit status 1.
+Traceback (most recent call last):
+  File "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/orchestrate_closed_after_open.py", line 218, in <module>
+    main()
+  File "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/orchestrate_closed_after_open.py", line 150, in main
+    initial = inspect(args.gui, args.pid)
+  File "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/orchestrate_closed_after_open.py", line 33, in inspect
+    return json.loads(command(str(gui), str(pid), 'inspect'))
+  File "/Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/tools/orchestrate_closed_after_open.py", line 30, in command
+    return subprocess.run(args, check=True, text=True, capture_output=True, timeout=4).stdout.strip()
+  File "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '('/private/tmp/resourcerunner-task002-gui-state', '81700', 'inspect')' returned non-zero exit status 1.

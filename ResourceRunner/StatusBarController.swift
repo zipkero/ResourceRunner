@@ -58,6 +58,8 @@ final class StatusBarController: NSObject {
         self.viewport = viewport
         makePopoverContentController = { NSHostingController(rootView: popoverContent) }
         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
+        // NSPopover 기본 열기·닫기 애니메이션은 첫 픽셀 뒤 약 70ms 동안 축소·반투명 프레임을 보여 완전 표시를 늦춥니다.
+        popover.animates = false
 
         super.init()
 
@@ -72,7 +74,7 @@ final class StatusBarController: NSObject {
             body.makeKey()
             return true
         }
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown]) { [weak self] event in
             MainActor.assumeIsolated {
                 guard let self else { return event }
                 return self.handleOwnedKey(event)
@@ -142,12 +144,22 @@ final class StatusBarController: NSObject {
         popover.behavior = behavior
     }
 
-    /// 현재 본체·상세 소유 창의 키만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
+    /// 현재 본체·상세 소유 창의 키와 마우스 누름만 처리해 다른 앱과 다른 창의 입력을 건드리지 않습니다.
     private func handleOwnedKey(_ event: NSEvent) -> NSEvent? {
         guard let window = event.window,
               window === popover.contentViewController?.view.window
                 || window === viewport?.detailWindow else { return event }
+        // 카드 포커스 테두리는 키보드 탐색 뒤에만 보입니다. 마우스 누름은 표시를 끄고 이벤트는 그대로 넘깁니다.
+        if event.type == .leftMouseDown {
+            viewport?.noteFocusNavigation(byKeyboard: false)
+            return event
+        }
         let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        if event.keyCode == 48, modifiers.isSubset(of: [.shift, .control]) {
+            // Tab·Shift-Tab(Control 조합 포함)은 포커스 이동에 쓰이므로 기록만 하고 이벤트는 그대로 넘깁니다.
+            viewport?.noteFocusNavigation(byKeyboard: true)
+            return event
+        }
 #if DEBUG
         // 고유 UI 앱에서 열린 본체의 실제 behavior 갱신을 검증할 때만 사용합니다.
         if debugAutoCloseInjector != nil, modifiers == [.command, .shift], event.keyCode == 27 {

@@ -1,0 +1,36 @@
+diff --git a/ResourceRunner/StatusBarController.swift b/ResourceRunner/StatusBarController.swift
+index 17b5867..340c5c7 100644
+--- a/ResourceRunner/StatusBarController.swift
++++ b/ResourceRunner/StatusBarController.swift
+@@ -58,6 +58,8 @@ final class StatusBarController: NSObject {
+         self.viewport = viewport
+         makePopoverContentController = { NSHostingController(rootView: popoverContent) }
+         popover.behavior = automaticallyClosesPopover ? .transient : .applicationDefined
++        // NSPopover 기본 열기·닫기 애니메이션은 첫 픽셀 뒤 약 70ms 동안 축소·반투명 프레임을 보여 완전 표시를 늦춥니다.
++        popover.animates = false
+ 
+         super.init()
+ 
+diff --git a/ResourceRunnerTests/StatusBarControllerTests.swift b/ResourceRunnerTests/StatusBarControllerTests.swift
+index 71a58fb..b1989c2 100644
+--- a/ResourceRunnerTests/StatusBarControllerTests.swift
++++ b/ResourceRunnerTests/StatusBarControllerTests.swift
+@@ -52,6 +52,18 @@ struct StatusBarControllerTests {
+         #expect(controller.popover.behavior == .transient)
+     }
+ 
++    /// 시스템 애니메이션이 완전 표시를 늦추므로 behavior 설정과 무관하게 애니메이션 없이 구성합니다.
++    @Test(arguments: [true, false])
++    func popoverIsConfiguredWithoutAnimation(automaticallyCloses: Bool) {
++        let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
++            automaticallyClosesPopover: automaticallyCloses)
++        defer { finishFixture(controller) }
++
++        #expect(controller.popover.animates == false)
++        controller.applyAutomaticallyClosesPopover(!automaticallyCloses)
++        #expect(controller.popover.animates == false)
++    }
++
+     @Test func savedOffAndRapidChangesKeepPopoverAndDelegateIdentity() {
+         let controller = StatusBarController(popoverContent: EmptyDashboardStub(),
+             automaticallyClosesPopover: false)

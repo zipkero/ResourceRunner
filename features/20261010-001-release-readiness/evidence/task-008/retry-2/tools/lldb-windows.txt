@@ -1,0 +1,5 @@
+expr -l objc -O -- [[NSApplication sharedApplication] windows]
+expr -l objc -O -- [(NSWindow *)[[[NSApplication sharedApplication] windows] lastObject] contentView]
+expr -l objc -O -- [[(NSView *)[(NSWindow *)[[[NSApplication sharedApplication] windows] lastObject] contentView] layer] debugDescription]
+detach
+quit

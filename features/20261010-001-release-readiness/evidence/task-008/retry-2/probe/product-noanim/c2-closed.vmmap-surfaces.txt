@@ -1,0 +1,133 @@
+IOAccelerator               11ac6c000-11ac70000    [   16K    16K    16K     0K] r--/r-- SM=SHM  
+IOAccelerator               11ac74000-11ac80000    [   48K    48K    48K     0K] r--/r-- SM=SHM  
+CoreAnimation               11c3e8000-11c3ec000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               11c3f0000-11c3f4000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               11c418000-11c41c000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               11c440000-11c444000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               11c458000-11c45c000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               11c45c000-11c460000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+IOSurface                   1221dc000-1221e0000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   1221e4000-1221e8000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   1221e8000-1221ec000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   1221ec000-1221f0000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   1221f0000-1221f4000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   1221f4000-1221f8000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   1221f8000-1221fc000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122204000-122208000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122208000-12220c000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   12220c000-122210000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122210000-122214000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122218000-12221c000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   12227c000-122280000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122280000-122284000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122288000-12228c000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   12228c000-122290000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122290000-122294000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122294000-122298000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+IOSurface                   122298000-12229c000    [   16K     0K     0K     0K] r--/r-- SM=SHM PURGE=N  
+CoreAnimation               122440000-122444000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               122740000-122744000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               12388c000-123890000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               123890000-123894000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               1238b0000-1238b4000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               1238b4000-1238b8000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               1238b8000-1238bc000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               1238bc000-1238c0000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               1238c0000-1238c4000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+CoreAnimation               123aac000-123ab0000    [   16K    16K    16K     0K] r--/r-- SM=PRV  
+IOAccelerator (graphics)    11ac84000-11ac94000    [   64K    64K    64K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    11ac94000-11ac98000    [   16K     0K     0K     0K] rw-/rw- SM=SHM PURGE=N  
+CoreAnimation               11c348000-11c34c000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c34c000-11c350000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c350000-11c354000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c354000-11c360000    [   48K    48K    48K     0K] rw-/rwx SM=ALI PURGE=N  
+IOAccelerator (graphics)    11c360000-11c380000    [  128K   128K   128K     0K] rw-/rw- SM=SHM PURGE=N  
+CoreAnimation               11c384000-11c388000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c388000-11c38c000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c38c000-11c394000    [   32K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+IOAccelerator (graphics)    11c398000-11c3a8000    [   64K    64K    64K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    11c3a8000-11c3b8000    [   64K    64K    64K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    11c3b8000-11c3d8000    [  128K   128K   128K     0K] rw-/rw- SM=SHM PURGE=N  
+CoreAnimation               11c3d8000-11c3dc000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3dc000-11c3e0000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3e0000-11c3e4000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3e4000-11c3e8000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3ec000-11c3f0000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3f4000-11c3f8000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3f8000-11c3fc000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c3fc000-11c400000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c400000-11c404000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c404000-11c408000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c408000-11c414000    [   48K    32K    32K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c414000-11c418000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c41c000-11c420000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c420000-11c424000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c424000-11c428000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c428000-11c42c000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c42c000-11c430000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c430000-11c434000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c434000-11c438000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c438000-11c43c000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c43c000-11c440000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c444000-11c448000    [   16K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+CoreAnimation               11c448000-11c450000    [   32K    16K    16K     0K] rw-/rwx SM=ALI PURGE=N  
+IOAccelerator (graphics)    11c450000-11c454000    [   16K    16K    16K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    122158000-122198000    [  256K   256K   256K     0K] rw-/rw- SM=SHM PURGE=N  
+IOSurface                   12221c000-12223c000    [  128K   128K   128K     0K] rw-/rw- SM=SHM PURGE=N  SurfaceID: 0x39d  240x240 (LA08) 128K  'CoreUI image IOSurface', shared with WindowServer[597]
+IOSurface                   12229c000-122408000    [ 1456K  1456K  1456K     0K] rw-/rw- SM=SHM PURGE=N  SurfaceID: 0x5be  960x384 (&BGA) 1456K  'QuartzCore', shared with WindowServer[597]
+IOAccelerator (graphics)    122444000-122448000    [   16K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    122458000-12245c000    [   16K    16K    16K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    12247c000-122484000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    122484000-12248c000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    12248c000-122494000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    122494000-12249c000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    12249c000-1224a4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1224a4000-1224ac000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1224ac000-1224b4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1224b4000-1225b4000    [ 1024K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225b4000-1225bc000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225bc000-1225c4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225c4000-1225cc000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225cc000-1225d4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225d4000-1225dc000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225dc000-1225e4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225e4000-1225ec000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225ec000-1225f8000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1225f8000-1226b8000    [  768K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226b8000-1226c4000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226c4000-1226cc000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226cc000-1226d4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226d4000-1226e0000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226e0000-1226ec000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226ec000-1226f4000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1226f4000-122704000    [   64K    48K    48K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    122704000-122710000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    122710000-12271c000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    12272c000-122734000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    122734000-12273c000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1227b0000-1227c0000    [   64K    16K    16K     0K] rw-/rw- SM=SHM PURGE=N  
+IOAccelerator (graphics)    1227d0000-1227d8000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOSurface                   122a48000-122d48000    [ 3072K  3072K  3072K     0K] rw-/rw- SM=SHM PURGE=N  SurfaceID: 0x253  564x1364 (RGBA) 3072K  'RenderBox', shared with WindowServer[597]
+IOSurface                   122d48000-123554000    [ 8240K  8240K  8240K     0K] rw-/rw- SM=SHM PURGE=N  SurfaceID: 0x38e  700x1498 (RGhA) 8240K  'RenderBox', shared with WindowServer[597]
+IOAccelerator (graphics)    123554000-12355c000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    12355c000-123564000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    123564000-123570000    [   48K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1235c8000-1235d0000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1235d0000-1235d8000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1235d8000-1235e0000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1235e0000-1235e8000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1235e8000-1235f0000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1235f0000-1236f0000    [ 1024K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1236f0000-1236f8000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    1236f8000-123700000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    123700000-123708000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    123708000-123710000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    123710000-123718000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    123718000-123720000    [   32K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOAccelerator (graphics)    123764000-123824000    [  768K     0K     0K     0K] rw-/rw- SM=SHM PURGE=V  
+IOSurface                   123908000-1239dc000    [  848K   848K   848K     0K] rw-/rw- SM=SHM PURGE=N  SurfaceID: 0x399  832x256 (&BGA) 840K  'QuartzCore', shared with WindowServer[597]
+IOSurface                   123fb8000-12403c000    [  528K   528K   528K     0K] rw-/rw- SM=SHM PURGE=N  SurfaceID: 0x376  512x256 (&BGA) 516K  'QuartzCore', shared with WindowServer[597]
+CoreAnimation                         832K     784K     784K       0K       0K     528K       0K       46 
+IOAccelerator                          64K      64K      64K       0K       0K       0K       0K        2 
+IOAccelerator (graphics)             5872K     800K     800K       0K       0K     800K       0K       56 
+IOSurface                            14.2M    13.9M    13.9M       0K       0K    13.9M       0K       25 

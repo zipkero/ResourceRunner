@@ -1,0 +1,17 @@
+01-warmup-A valid
+02-warmup-B valid
+03-measure-A INVALID ["hot process [(1791842135.726777, 'PerfPowerService', 50.0)]"]
+04-measure-A valid
+05-measure-B INVALID ["hot process [(1791842216.9917362, 'goland', 54.7)]"]
+06-measure-B valid
+07-measure-A valid
+08-measure-B valid
+09-measure-A valid
+10-measure-B INVALID ["hot process [(1791842406.631306, 'mobileassetd', 66.7), (1791842406.631306, 'deleted', 60.6), (1791842406.631306, 'mds', 55.8)]", 'total cpu busy [(1791842406.631306, 28.240000000000002)]']
+11-measure-B valid
+12-measure-A valid
+13-measure-B valid
+14-measure-A valid
+15-measure-B valid
+16-measure-A valid
+17-measure-B valid

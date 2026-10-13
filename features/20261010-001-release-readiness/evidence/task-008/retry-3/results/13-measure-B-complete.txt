@@ -1,0 +1,35 @@
+trial-00-firstopen   show  69.24 firstPx  117.84 complete  117.84 (prev  101.17) frame-0024.jpg s=1.003 c=0.953
+{
+ "firstopen": {
+  "showDurationMs": {
+   "n": 1,
+   "median": 69.24266666666666,
+   "min": 69.24266666666666,
+   "max": 69.24266666666666
+  },
+  "showReturnMs": {
+   "n": 1,
+   "median": 75.15204166666668,
+   "min": 75.15204166666668,
+   "max": 75.15204166666668
+  },
+  "firstPixelMs": {
+   "n": 1,
+   "median": 117.83970833333333,
+   "min": 117.83970833333333,
+   "max": 117.83970833333333
+  },
+  "completeMs": {
+   "n": 1,
+   "median": 117.83970833333333,
+   "min": 117.83970833333333,
+   "max": 117.83970833333333
+  }
+ },
+ "reopen": {
+  "showDurationMs": [],
+  "showReturnMs": [],
+  "firstPixelMs": [],
+  "completeMs": []
+ }
+}

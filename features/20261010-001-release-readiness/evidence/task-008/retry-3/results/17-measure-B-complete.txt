@@ -1,0 +1,35 @@
+trial-00-firstopen   show  69.01 firstPx  121.64 complete  121.64 (prev  104.98) frame-0026.jpg s=1.003 c=0.946
+{
+ "firstopen": {
+  "showDurationMs": {
+   "n": 1,
+   "median": 69.01195833333333,
+   "min": 69.01195833333333,
+   "max": 69.01195833333333
+  },
+  "showReturnMs": {
+   "n": 1,
+   "median": 77.90870833333332,
+   "min": 77.90870833333332,
+   "max": 77.90870833333332
+  },
+  "firstPixelMs": {
+   "n": 1,
+   "median": 121.64320833333333,
+   "min": 121.64320833333333,
+   "max": 121.64320833333333
+  },
+  "completeMs": {
+   "n": 1,
+   "median": 121.64320833333333,
+   "min": 121.64320833333333,
+   "max": 121.64320833333333
+  }
+ },
+ "reopen": {
+  "showDurationMs": [],
+  "showReturnMs": [],
+  "firstPixelMs": [],
+  "completeMs": []
+ }
+}

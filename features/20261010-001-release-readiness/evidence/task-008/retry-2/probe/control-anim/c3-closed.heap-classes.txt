@@ -1,0 +1,37 @@
+     229      10992      48.0   NSViewBackingLayer                                ObjC    AppKit
+      88       2816      32.0   CALayer                                           ObjC    QuartzCore
+      32      16384     512.0   CABackingStore                                    CFType  QuartzCore
+      25       2800     112.0   NSHostingViewBase                                 Swift   AppKit
+       7        784     112.0   NSBitmapImageRep                                  ObjC    AppKit
+       4       1280     320.0   CAContext._impl (malloc)                          C       QuartzCore
+       4         64      16.0   CAContext                                         ObjC    QuartzCore
+       3       3072    1024.0   NSWindowAuxiliary                                 ObjC    AppKit
+       3        240      80.0   NSWindowTitleController                           ObjC    AppKit
+       2        512     256.0   NSKVONotifying_NSWindowSectionControllerBoundingDivider  ObjC    AppKit
+       2        320     160.0   NSViewBackingLayerContents                        Swift   AppKit
+       2        224     112.0   NSViewBackingLayerContents.ContentLayer           Swift   AppKit
+       2        192      96.0   NSWindowLayout                                    ObjC    AppKit
+       2        160      80.0   SwiftUI.(TypedElement in $23d4abe24)<SwiftUI.EnvironmentPropertyKey<(extension in SwiftUI):SwiftUI.EnvironmentValues.(CAContextColorSpaceKey in $23d495a80)>>  Swift   SwiftUI
+       2        128      64.0   Swift.KeyPath<__C.NSApplication, Swift.Optional<__C.NSWindow>>  Swift   libswiftCore.dylib
+       1       2560    2560.0   NSKVONotifying__TtGC7SwiftUI13NSHostingViewV14ResourceRunner15PreferencesView_  Swift   SwiftUI
+       1       1024    1024.0   NSKVONotifying_NSThemeFrame                       ObjC    AppKit
+       1        768     768.0   NSPopoverFrame                                    ObjC    AppKit
+       1        640     640.0   NSKVONotifying_NSWindow                           ObjC    AppKit
+       1        640     640.0   NSKVONotifying__NSPopoverWindow                   ObjC    AppKit
+       1        512     512.0   SwiftUI.ViewGraphFeatureBuffer.(_VTable in $23d4b9bf4)<SwiftUI.NSHostingView<ResourceRunner.PreferencesView>.(HostViewGraph in $1c5bc986c)<>>  Swift   SwiftUI
+       1        448     448.0   Swift._DictionaryStorage<__C.NSObject, AppKit.(NSWindowPocketAppearanceCoordinator in $19497df60).Pocket>  Swift   libswiftCore.dylib
+       1        224     224.0   NSKVONotifying_NSWindowSectionContentController   ObjC    AppKit
+       1        224     224.0   _NSPopoverFramePrivateData                        ObjC    AppKit
+       1        192     192.0   NSKVONotifying_NSPopover                          ObjC    AppKit
+       1        112     112.0   NSKVONotifying_NSWindowSectionController          ObjC    AppKit
+       1         96      96.0   NSWindowControllerMoreIVars                       ObjC    AppKit
+       1         64      64.0   NSHostingViewRootDelegate                         Swift   SwiftUI
+       1         64      64.0   SwiftUI.PopoverBridge<ResourceRunner.PreferencesView>  Swift   SwiftUI
+       1         48      48.0   NSKVONotifying_NSViewBackingLayer                 ObjC    AppKit
+       1         48      48.0   NSWindowAnchorInfo                                ObjC    AppKit
+       1         48      48.0   NSWindowPocketAppearanceCoordinator               Swift   AppKit
+       1         48      48.0   Swift.WritableKeyPath<AppKit.(NSWindowPocketAppearanceCoordinator in $19497df60).Pocket, Swift.Int>  Swift   libswiftCore.dylib
+       1         32      32.0   NSKVONotifying_NSWindow._sizeLimits (struct CGSize)  C       AppKit
+       1         32      32.0   NSKVONotifying__NSPopoverWindow._sizeLimits (struct CGSize)  C       AppKit
+       1         16      16.0   _NSPopoverPrivateData                             ObjC    AppKit
+       1         16      16.0   _NSWindowSpringLoadingController                  ObjC    AppKit

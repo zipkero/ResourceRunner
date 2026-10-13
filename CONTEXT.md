@@ -1,55 +1,45 @@
 # Context
 
-저장: 2026-10-11 22:02 +09:00
+저장: 2026-10-13 21:00 +09:00
 
 ## 현재 목표
 개인 사용 성능 개선 feature의 IMPLEMENT를 이어간다.
-지금 초점은 팝오버 열림 지연(SPEC §5.6의 클릭 처리 100ms·팝오버 표시 200ms)을 기준 완화 없이 줄이는 task-008이다.
+다음 초점은 task-005(현재 코드의 기능 보존·반복 수명·첫 열림/재열림 100/200ms 인수)다.
 
 ## 현재 상태
-작업 주체가 Codex에서 Claude Code로 바뀌었다.
-- task-005 경계 진단은 완료했다. 외부 tap과 앱 mouse-up 수신의 차이는 최대 8.45ms였고, 첫 픽셀 지연(재열림 중앙 102ms·첫 열림 135ms)은 측정 오차가 아닌 실제 앱 지연이다.
-- task-008 원인 비교는 완료했고 결과는 `blocked`(정지 반환)다. 제품 코드는 바꾸지 않았다.
-  - hosting을 유지하면 재열림 `show` 48.0→12.3ms, 첫 픽셀 103.5→67.6ms로 줄지만, task-004의 "닫힘 시 hosting 회수" 결정을 바꿔야 한다.
-  - `animates=false`면 재열림 완전 표시 174.9→91.2ms로 줄지만, spec에 없는 사용자 가시 변경이다.
-  - 설계를 바꾸지 않는 경로(카드 `.keyboardShortcut` 비용)는 −3.6ms로 실행 간 변동 안이다.
-  - 첫 열림 첫 픽셀은 모든 변형에서 117~125ms였다(변형마다 1회). 시험한 어떤 경로도 첫 열림 100ms를 보여주지 못했다.
-- task-001~004는 `[x]`이고, task-008·005·006·007은 `[ ]`다.
-- 마지막 검증: task-008은 제품 변경이 없어 단위·UI 테스트와 verify를 하지 않았다. 진단 변형 Release 빌드는 성공했다. task-005 범위의 단위 696/696·영향 UI 56/56·Release UI 1/1은 이전에 통과했다.
-- 멈춤 원인: 개선 경로가 설계 변경이나 사용자 가시 변경뿐이라 사용자 결정이 필요하다. 사용자가 (a)·(b)·(c) 중 하나를 고르면 풀린다.
-- Git: `main`, 기준 HEAD `e02b3b2`. 이번 세션 끝에 커밋·푸시한다.
-- 기존 설치 앱 `/Users/zipkero/Applications/ResourceRunner.app` PID 16136은 유지 중이다. 성능 개선본은 설치하지 않았다.
+task-001~004, task-008(팝오버 애니메이션 끔), task-009(포커스 테두리는 키보드 탐색 때만)가 `[x]`다. task-005·006·007은 `[ ]`다.
+- 마지막 검증: task-009 독립 verify approved. 단위 698/698, 새 UI 회귀 1/1, 영향 UI 56/56, Release UI 1/1, skip 0, Debug/Release 빌드 성공.
+- 멈춤 원인: task-005의 첫 열림 100ms(첫 픽셀) 기준이 현재 약 119ms라 실패가 예상된다. 사용자가 기준 처리를 정해야 task-005를 시작할 수 있다.
+- Git: `main`, 이번 세션 변경을 1eaf321 위에 커밋·푸시했다.
+- 설치 앱 `/Users/zipkero/Applications/ResourceRunner.app` PID 16136은 유지 중이다. 성능 개선본은 설치하지 않았다.
+- UI 테스트마다 Automation Mode 사용자 인증이 필요하다(인증 요구를 끄지 않기로 함).
 
 ## 현재 작업 문서
-[feature README](./features/20261010-001-release-readiness/README.md), [implement.md task-008](./features/20261010-001-release-readiness/implement.md), [design.md §2.4](./features/20261010-001-release-readiness/design.md), [spec.md](./features/20261010-001-release-readiness/spec.md).
+[feature README](./features/20261010-001-release-readiness/README.md), [implement.md task-005](./features/20261010-001-release-readiness/implement.md), [design.md §2.4](./features/20261010-001-release-readiness/design.md).
 
 ## 확정된 결정
-- 100/200ms, Footprint 100,000,000bytes, CPU 1%/3% 기준은 완화하지 않는다. — [design.md §2.4](./features/20261010-001-release-readiness/design.md)
-- "완전 표시"는 애니메이션 종료가 아니라 네 카드 값·TOP5 행·그래프가 프레임에서 처음 모두 식별되는 시점이다. — [design.md §2.4](./features/20261010-001-release-readiness/design.md)
-- 열림 지연 개선은 task-005 앞의 task-008이 맡고, task-005는 task-008 이후 코드로 다시 판정한다. — [implement.md](./features/20261010-001-release-readiness/implement.md)
-- SPEC §5.7은 task-005에서 완성된다(task-007 참조에서 제외). — [implement.md 매핑](./features/20261010-001-release-readiness/implement.md)
-- 진단 앱은 격리 bundle ID(`com.zipkero.ResourceRunner.Task005PerfDiagnostic` 등)로만 실행하고, 설치 앱 PID 16136은 건드리지 않는다. 실제 설치는 task-006 승인 뒤 task-007에서만 한다. — [implement.md 머리말](./features/20261010-001-release-readiness/implement.md)
+- 100/200ms, Footprint 100,000,000bytes, CPU 1%/3% 기준은 사용자 결정 없이 완화하지 않는다. — [design.md §2.4](./features/20261010-001-release-readiness/design.md)
+- "완전 표시"는 네 카드 값·TOP5 행·그래프가 프레임에서 처음 모두 식별되는 시점이다. — [design.md §2.4](./features/20261010-001-release-readiness/design.md)
+- 본체 팝오버 애니메이션은 끄고(`animates = false`), 열 때마다 hosting을 만드는 구조와 닫힘 Footprint 약 9MB 증가를 수용한다. — [spec.md §3](./features/20261010-001-release-readiness/spec.md), [implement.md task-008](./features/20261010-001-release-readiness/implement.md)
+- 카드 포커스 테두리는 키보드 탐색 뒤에만 보인다. — [spec.md §3](./features/20261010-001-release-readiness/spec.md)
+- SPEC §5.7은 task-005에서 완성된다. — [implement.md 매핑](./features/20261010-001-release-readiness/implement.md)
+- 진단·UI 실행은 격리 bundle ID(`com.zipkero.ResourceRunner.Task005UITest` 등)로만 하고, 실제 설치는 task-006 승인 뒤 task-007에서만 한다. — [implement.md 머리말](./features/20261010-001-release-readiness/implement.md)
 
 ## 미확정 판단
-- task-008 진행 경로를 정해야 한다. — [evidence/task-008/README.md](./features/20261010-001-release-readiness/evidence/task-008/README.md)
-  - (a) 닫힘 시 hosting 회수를 바꾸는 design 변경. 닫힘 Footprint 61MB가 회귀할 위험이 있다.
-  - (b) 팝오버 애니메이션 끄기를 spec에 넣는 사용자 가시 변경.
-  - (c) 효과가 확정되지 않은 작은 경로를 별도 Task로 시험한다. ⌘1–4를 key monitor로 다시 구현하거나 아이콘을 미리 읽는 방식이다.
-  - (a)+(b)를 함께 고를 수도 있다.
-  - hosting을 남기되 빈 화면으로 바꿔 두는 중간안은 측정하지 않았다.
-- 첫 열림 100ms를 달성할 경로가 아직 없다. 모든 변형에서 첫 픽셀이 117~125ms였다. — [evidence/task-008/README.md](./features/20261010-001-release-readiness/evidence/task-008/README.md)
+- 첫 열림 100ms 기준 처리: 다른 메뉴바 앱(Wi-Fi·제어 센터 등)과 비교 측정할지, 100ms 종료 시점을 "첫 픽셀"에서 "show 반환" 등으로 재정의할지(`/design-init`), 그대로 두고 task-005에서 판정할지. — [evidence/task-008/retry-3](./features/20261010-001-release-readiness/evidence/task-008/retry-3/)
+- 상세를 닫은 직후 120ms 안의 Tab 입력을 지연된 포커스 복귀(`scheduleFocusReturn`)가 덮어쓰는 기존 동작을 후속으로 고칠지. — [evidence/task-009/README.md](./features/20261010-001-release-readiness/evidence/task-009/README.md)
 
 ## 다음 작업
 
-- 작업: 사용자에게 task-008 경로(a/b/c)를 받아 소유 단계로 반영한다. design 변경은 `/design-init`, spec 변경은 `/spec-init`, Task 조정은 `/implement-init`이다. 그 뒤 implementer로 task-008을 재개한다.
-- 완료 기준: task-008이 독립 verify에서 `approved`되는 것이다. 개선 전후 같은 진단 방식에서 첫 픽셀과 완전 표시가 앞당겨지고, 단위·영향 UI·Release UI·Debug/Release 빌드가 skip 0으로 통과하며, 닫힘 Footprint/CPU가 task-004 대비 회귀하지 않아야 한다.
+- 작업: 사용자에게 첫 열림 100ms 기준 처리를 받아 필요하면 소유 단계(`/spec-init`·`/design-init`)로 반영한 뒤, implementer로 task-005를 재개한다.
+- 완료 기준: task-005가 독립 verify에서 `approved`되는 것이다(implement.md task-005 검증 조건).
 
 ## 먼저 읽을 파일
-- [evidence/task-008/README.md](./features/20261010-001-release-readiness/evidence/task-008/README.md) — 이번에 만든 파일
-- [boundary-diagnostic/README.md](./features/20261010-001-release-readiness/evidence/task-005/resume-20261011/boundary-diagnostic/README.md) — 이번에 만든 파일
-- [implement.md](./features/20261010-001-release-readiness/implement.md) — task-008을 추가하고 매핑을 변경함
-- [design.md](./features/20261010-001-release-readiness/design.md) — §2.4에 완전 표시 정의를 추가함
-- [evidence/task-004/README.md](./features/20261010-001-release-readiness/evidence/task-004/README.md) — 닫힘 Footprint/CPU baseline
+- [implement.md](./features/20261010-001-release-readiness/implement.md) — task-008·009 승인 근거를 더함
+- [evidence/task-008/retry-3](./features/20261010-001-release-readiness/evidence/task-008/retry-3/) — 첫 열림 교대 측정
+- [evidence/task-009/README.md](./features/20261010-001-release-readiness/evidence/task-009/README.md) — 이번에 만든 파일
+- [design.md](./features/20261010-001-release-readiness/design.md) — §2.1·§2.4를 고침
+- [spec.md](./features/20261010-001-release-readiness/spec.md) — §3에 두 줄을 더함
 
 ## 문서 반영 필요
 없음

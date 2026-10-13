@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-12T14:24:54.661857+00:00",
+  "pid": 81700,
+  "startLstart": "Mon Oct 12 23:24:54 2026",
+  "launchEpochConservative": 1791815094.0,
+  "exe": "/private/tmp/resourcerunner-task008-r1/perf-diagnostic-control.app/Contents/MacOS/ResourceRunner",
+  "exeSHA256": "93fa1ce0506953278b3580c8f84e8cddaacc06d9adc85129bcdbde9c03f9191e",
+  "role": "control: current HEAD product source without the task-008 animates=false line",
+  "productReleaseExe": "/private/tmp/resourcerunner-task008-r1/build-control/Build/Products/Release/ResourceRunner.app/Contents/MacOS/ResourceRunner",
+  "bundle": "task-002 diagnostic bundle copy; only executable replaced; ad hoc signed with /private/tmp/resourcerunner-task001-entitlements.plist",
+  "installedProductionPID": 16136,
+  "commonCaffeinatePID": 50207
+}

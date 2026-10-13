@@ -1,0 +1,11 @@
+--- /Users/zipkero/XcodeProjects/ResourceRunner/features/20261010-001-release-readiness/evidence/task-008/tools/analyze_boundary.py	2026-10-11 21:32:34
++++ /private/tmp/resourcerunner-task008-r3/tools/analyze_boundary_firstopen.py	2026-10-13 07:05:48
+@@ -126,6 +126,8 @@
+ 
+ def summary(values):
+     values = [v for v in values if v is not None]
++    if not values:
++        return None  # retry-3: 첫 열림만 있는 run에서 빈 재열림 묶음
+     return {'n': len(values), 'min': min(values), 'median': statistics.median(values), 'max': max(values)}
+ 
+ 
